@@ -1,0 +1,28 @@
+{
+  "name": "clubw",
+  "version": "1.0.0",
+  "description": "Škálovateľná webová platforma pre športové kluby",
+  "private": true,
+  "workspaces": [
+    "license-server",
+    "backend", 
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:license\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:license": "cd license-server && npm run dev",
+    "dev:backend": "cd backend && npm run dev", 
+    "dev:frontend": "cd frontend && npm start",
+    "build": "npm run build:shared && npm run build:license && npm run build:backend && npm run build:frontend",
+    "build:shared": "cd shared && npm run build",
+    "build:license": "cd license-server && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "latest"
+  }
+}

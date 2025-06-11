@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  license-postgres-dev:
+    image: postgres:15-alpine
+    container_name: clubw-license-postgres-dev
+    environment:
+      POSTGRES_DB: license_server_dev
+      POSTGRES_USER: license_dev
+      POSTGRES_PASSWORD: license_dev_password
+    volumes:
+      - license_postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - clubw-dev-network
+
+  client-postgres-dev:
+    image: postgres:15-alpine
+    container_name: clubw-client-postgres-dev
+    environment:
+      POSTGRES_DB: clubw_client_dev
+      POSTGRES_USER: client_dev
+      POSTGRES_PASSWORD: client_dev_password
+    volumes:
+      - client_postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - clubw-dev-network
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: clubw-redis-dev
+    ports:
+      - "6380:6379"
+    networks:
+      - clubw-dev-network
+
+networks:
+  clubw-dev-network:
+    driver: bridge
+
+volumes:
+  license_postgres_dev_data:
+  client_postgres_dev_data:

@@ -1,0 +1,15 @@
+{
+  "name": "@clubw/shared",
+  "version": "1.0.0",
+  "description": "Zdieľané typy a utility pre ClubW platformu",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}
