@@ -8,7 +8,9 @@
     "test-db": "tsx src/test-db.ts",
     "clean": "rm -rf dist",
     "lint": "eslint src/**/*.ts",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "test-articles": "tsx src/test-articles.ts"
+
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

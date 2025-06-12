@@ -9,6 +9,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
 
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
@@ -16,6 +17,8 @@ import { testConnection, syncDatabase } from './config/database';
 // Import route handlerov
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import categoryRoutes, { adminCategoryRouter } from './routes/categories';
+import articleRoutes, { adminArticleRouter } from './routes/articles';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -99,6 +102,10 @@ app.get('/api/status', (req, res) => {
     endpoints: {
       auth: '/api/auth/*',
       users: '/api/users/*',
+      categories: '/api/categories/*',
+      adminCategories: '/api/admin/categories/*',
+      articles: '/api/articles/*',
+      adminArticles: '/api/admin/articles/*',
       health: '/health',
     },
     timestamp: new Date().toISOString(),
@@ -111,6 +118,14 @@ app.use('/api/auth', authRoutes);
 
 // User management routes
 app.use('/api/users', userRoutes);
+
+// Category routes
+app.use('/api/categories', categoryRoutes);
+app.use('/api/admin/categories', adminCategoryRouter);
+
+// Article routes
+app.use('/api/articles', articleRoutes);
+app.use('/api/admin/articles', adminArticleRouter);
 
 // Demo endpoints (dočasné)
 app.get('/api/teams', (req, res) => {

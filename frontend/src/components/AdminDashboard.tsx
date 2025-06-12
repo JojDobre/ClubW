@@ -3,8 +3,10 @@
 
 import React, { useState } from 'react';
 
-// Lazy import UserManagement
+// Lazy import komponentov
 const UserManagement = React.lazy(() => import('./UserManagement'));
+const CategoryManagement = React.lazy(() => import('./CategoryManagement'));
+const ArticleManagement = React.lazy(() => import('./ArticleManagement'));
 
 interface User {
   id: number;
@@ -63,6 +65,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     const items = [
       { id: 'dashboard', name: 'Dashboard', icon: '📊', roles: ['admin', 'redaktor', 'trener'] },
       { id: 'users', name: 'Správa účtov', icon: '👥', roles: ['admin'] },
+      { id: 'categories', name: 'Rubriky', icon: '📂', roles: ['admin'] },
       { id: 'articles', name: 'Články', icon: '📰', roles: ['admin', 'redaktor'] },
       { id: 'teams', name: 'Tímy', icon: '⚽', roles: ['admin', 'trener'] },
     ];
@@ -85,6 +88,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
                 <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>Publikované tento mesiac</p>
               </div>
               <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#64748b' }}>Rubriky</h3>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e293b' }}>3</div>
+                <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>Aktívne kategórie</p>
+              </div>
+              <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#64748b' }}>Tímy</h3>
                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e293b' }}>3</div>
                 <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>Aktívne tímy</p>
@@ -99,10 +107,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
               <h2 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#1e293b' }}>Posledné aktivity</h2>
               <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
                 <li style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#475569' }}>📰 Nový článok "Víťazstvo v derby" bol publikovaný</li>
+                <li style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#475569' }}>📂 Rubrika "Rozhovory" bola aktualizovaná</li>
                 <li style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#475569' }}>⚽ Aktualizované údaje A-tímu</li>
-                <li style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#475569' }}>👤 Nový hráč František Novák pridaný do U19</li>
+                <li style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px', color: '#475569' }}>👤 Nový redaktor bol pridaný do systému</li>
                 <li style={{ padding: '12px 0', fontSize: '14px', color: '#475569' }}>🏆 Výsledok zápasu proti FC Trenčín zadaný</li>
               </ul>
+              
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #f1f5f9' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#1e293b' }}>Rýchle akcie</h3>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setCurrentPage('articles')}
+                    style={{
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    📰 Nový článok
+                  </button>
+                  {user.rola === 'admin' && (
+                    <>
+                      <button
+                        onClick={() => setCurrentPage('categories')}
+                        style={{
+                          background: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        📂 Správa rubrík
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage('users')}
+                        style={{
+                          background: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        👥 Správa účtov
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -113,28 +183,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
             <UserManagement currentUser={user} />
           </React.Suspense>
         );
+
+      case 'categories':
+        return (
+          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Načítavam správu rubrík...</div>}>
+            <CategoryManagement />
+          </React.Suspense>
+        );
       
       case 'articles':
         return (
-          <div>
-            <h1 style={{ margin: '0 0 24px 0', fontSize: '28px', fontWeight: 'bold', color: '#1e293b' }}>
-              📰 Správa článkov
-            </h1>
-            <button style={{ 
-              padding: '10px 20px', 
-              background: '#3b82f6', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              marginBottom: '24px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}>
-              ➕ Nový článok
-            </button>
-            <p style={{ color: '#64748b' }}>Správa článkov a rubrík bude implementovaná v Fáze 2.</p>
-          </div>
+          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Načítavam správu článkov...</div>}>
+            <ArticleManagement currentUser={user} />
+          </React.Suspense>
         );
       
       case 'teams':
