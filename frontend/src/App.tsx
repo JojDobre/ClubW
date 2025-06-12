@@ -1,104 +1,132 @@
+// frontend/src/App.tsx
+// Hlavná aplikácia s prihlasovaním a admin rozhraním
+
 import React, { useState, useEffect } from 'react';
 
-interface ServerStatus {
-  backend: 'ok' | 'error' | 'loading';
-  license: 'ok' | 'error' | 'loading';
+interface User {
+  id: number;
+  meno: string;
+  email: string;
+  rola: 'admin' | 'redaktor' | 'trener' | 'uzivatel';
+  tim_id?: number;
+  aktivity: boolean;
+  posledne_prihlasenie: string | null;
+  vytvoreny: string;
+  aktualizovany: string;
 }
 
+// Import komponentov - lazy loading aby sme sa vyhli circular deps
+const Login = React.lazy(() => import('./components/Login'));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+
 function App() {
-  const [status, setStatus] = useState<ServerStatus>({
-    backend: 'loading',
-    license: 'loading'
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Kontrola backend statusu
-    fetch('/api/status')
-      .then(res => res.json())
-      .then(() => setStatus(prev => ({ ...prev, backend: 'ok' })))
-      .catch(() => setStatus(prev => ({ ...prev, backend: 'error' })));
+    const checkAuthStatus = async () => {
+      try {
+        const token = localStorage.getItem('clubw_token');
+        const savedUser = localStorage.getItem('clubw_user');
 
-    // Kontrola license statusu
-    fetch('http://localhost:3001/api/status')
-      .then(res => res.json())
-      .then(() => setStatus(prev => ({ ...prev, license: 'ok' })))
-      .catch(() => setStatus(prev => ({ ...prev, license: 'error' })));
+        if (token && savedUser) {
+          const response = await fetch('http://localhost:3000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              setUser(data.data.user);
+            } else {
+              localStorage.removeItem('clubw_token');
+              localStorage.removeItem('clubw_user');
+            }
+          } else {
+            localStorage.removeItem('clubw_token');
+            localStorage.removeItem('clubw_user');
+          }
+        }
+      } catch (error) {
+        console.error('Chyba pri kontrole autentifikácie:', error);
+        localStorage.removeItem('clubw_token');
+        localStorage.removeItem('clubw_user');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
-  const getStatusText = (stat: 'ok' | 'error' | 'loading') => {
-    switch(stat) {
-      case 'ok': return '✅ Pripojený';
-      case 'error': return '❌ Nedostupný';
-      case 'loading': return '⏳ Kontrolujem...';
-    }
+  const handleLoginSuccess = (userData: User) => {
+    setUser(userData);
   };
 
-  const getStatusClass = (stat: 'ok' | 'error' | 'loading') => {
-    switch(stat) {
-      case 'ok': return 'status-ok';
-      case 'error': return 'status-error';
-      case 'loading': return 'status-warning';
-    }
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('clubw_token');
+    localStorage.removeItem('clubw_user');
   };
+
+  if (loading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      }}>
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid rgba(255, 255, 255, 0.3)',
+            borderTop: '4px solid white',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p>Načítavam ClubW...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="header">
-        <div className="container">
-          <h1 style={{margin: 0, fontSize: '2rem', fontWeight: 'bold'}}>ClubW</h1>
-          <p style={{margin: '5px 0 0 0', color: '#6b7280'}}>
-            Platforma pre správu športových klubov
-          </p>
+    <div style={{ height: '100vh', overflow: 'hidden' }}>
+      <React.Suspense fallback={
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          Načítavam...
         </div>
-      </div>
-
-      <div className="container">
-        <div className="card">
-          <h2 style={{marginTop: 0}}>Vitajte v ClubW</h2>
-          <p>Systém pre kompletnú správu športového klubu je pripravený na použitie.</p>
-          
-          <h3>Status systému</h3>
-          <div className="status-item">
-            <strong>Frontend:</strong> 
-            <span className="status-ok"> ✅ Spustený</span>
-          </div>
-          <div className="status-item">
-            <strong>Backend API:</strong> 
-            <span className={getStatusClass(status.backend)}> {getStatusText(status.backend)}</span>
-          </div>
-          <div className="status-item">
-            <strong>License Server:</strong> 
-            <span className={getStatusClass(status.license)}> {getStatusText(status.license)}</span>
-          </div>
-
-          <div style={{marginTop: '20px'}}>
-            <h3>Dostupné funkcie</h3>
-            <ul>
-              <li>✅ Základná štruktúra aplikácie</li>
-              <li>✅ License server</li>
-              <li>✅ Backend API</li>
-              <li>✅ React frontend</li>
-              <li>⏳ Admin rozhranie (pripravuje sa)</li>
-              <li>⏳ Správa tímov (pripravuje sa)</li>
-              <li>⏳ Správa článkov (pripravuje sa)</li>
-            </ul>
-          </div>
-
-          <div style={{marginTop: '20px'}}>
-            <button className="btn" onClick={() => alert('Admin rozhranie bude dostupné v ďalšej fáze')}>
-              Prejsť do admin rozhrania
-            </button>
-          </div>
-        </div>
-
-        <div className="card">
-          <h3>Informácie o projekte</h3>
-          <p><strong>Verzia:</strong> 1.0.0</p>
-          <p><strong>Prostredie:</strong> Development</p>
-          <p><strong>Klient:</strong> Demo FC</p>
-          <p><strong>Posledná aktualizácia:</strong> {new Date().toLocaleString('sk-SK')}</p>
-        </div>
-      </div>
+      }>
+        {user ? (
+          <AdminDashboard 
+            user={user} 
+            onLogout={handleLogout} 
+          />
+        ) : (
+          <Login 
+            onLoginSuccess={handleLoginSuccess} 
+          />
+        )}
+      </React.Suspense>
+      
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
