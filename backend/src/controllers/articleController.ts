@@ -1,0 +1,592 @@
+// backend/src/controllers/articleController.ts
+// Controller pre správu článkov
+
+import { Request, Response } from 'express';
+import { body, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
+import Article from '../models/Article';
+import Category from '../models/Category';
+import User from '../models/user';
+
+// Validácia pre vytvorenie/úpravu článku
+export const validateArticle = [
+  body('nazov')
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Názov musí mať 5-200 znakov')
+    .trim(),
+  body('obsah')
+    .isLength({ min: 10, max: 50000 })
+    .withMessage('Obsah musí mať 10-50000 znakov'),
+  body('excerpt')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Excerpt môže mať maximálne 500 znakov')
+    .trim(),
+  body('obrazok')
+    .optional()
+    .isURL()
+    .withMessage('Obrázok musí byť platná URL'),
+  body('kategoria_id')
+    .isInt({ min: 1 })
+    .withMessage('Kategória je povinná'),
+  body('status')
+    .isIn(['draft', 'published', 'scheduled', 'archived'])
+    .withMessage('Neplatný status článku'),
+  body('publikovany_datum')
+    .optional()
+    .isISO8601()
+    .withMessage('Neplatný dátum publikovania'),
+  body('meta_title')
+    .optional()
+    .isLength({ max: 70 })
+    .withMessage('Meta title môže mať maximálne 70 znakov'),
+  body('meta_description')
+    .optional()
+    .isLength({ max: 160 })
+    .withMessage('Meta description môže mať maximálne 160 znakov'),
+  body('tags')
+    .optional()
+    .isArray()
+    .withMessage('Tagy musia byť pole'),
+];
+
+// === VEREJNÉ API ===
+
+// GET /api/articles - Zoznam publikovaných článkov
+export const getPublicArticles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const category = req.query.category as string || '';
+    const featured = req.query.featured as string || '';
+    const search = req.query.search as string || '';
+
+    const offset = (page - 1) * limit;
+
+    const whereConditions: any = {
+      status: 'published',
+      [Op.or]: [
+        { publikovany_datum: null },
+        { publikovany_datum: { [Op.lte]: new Date() } }
+      ]
+    };
+
+    // Filtrovanie podľa kategórie
+    if (category) {
+      const categoryRecord = await Category.findOne({ where: { slug: category } });
+      if (categoryRecord) {
+        whereConditions.kategoria_id = categoryRecord.id;
+      }
+    }
+
+    // Filtrovanie featured článkov
+    if (featured === 'true') {
+      whereConditions.featured = true;
+    }
+
+    // Vyhľadávanie v názve a excerpts
+    if (search) {
+      whereConditions[Op.and] = [
+        {
+          [Op.or]: [
+            { nazov: { [Op.iLike]: `%${search}%` } },
+            { excerpt: { [Op.iLike]: `%${search}%` } },
+          ]
+        }
+      ];
+    }
+
+    const { count, rows: articles } = await Article.findAndCountAll({
+      where: whereConditions,
+      limit,
+      offset,
+      order: [['publikovany_datum', 'DESC'], ['vytvoreny', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug', 'farba', 'ikona'],
+        },
+      ],
+      attributes: [
+        'id', 'nazov', 'slug', 'excerpt', 'obrazok', 
+        'publikovany_datum', 'views', 'featured', 'vytvoreny'
+      ],
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    // Formátovanie výsledkov pre frontend
+    const formattedArticles = articles.map(article => ({
+      id: article.id,
+      nazov: article.nazov,
+      slug: article.slug,
+      excerpt: article.excerpt,
+      obrazok: article.obrazok,
+      publikovany_datum: article.publikovany_datum,
+      views: article.views,
+      featured: article.featured,
+      autor: (article as any).autor,
+      kategoria: (article as any).kategoria,
+      tags: article.getTagsArray(),
+      vytvoreny: article.vytvoreny,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        articles: formattedArticles,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalArticles: count,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Chyba pri získavaní článkov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri získavaní článkov',
+    });
+  }
+};
+
+// GET /api/articles/:slug - Detail článku
+export const getPublicArticleBySlug = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { slug } = req.params;
+
+    const article = await Article.findOne({
+      where: { 
+        slug,
+        status: 'published',
+        [Op.or]: [
+          { publikovany_datum: null },
+          { publikovany_datum: { [Op.lte]: new Date() } }
+        ]
+      },
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug', 'farba', 'ikona'],
+        },
+      ],
+    });
+
+    if (!article) {
+      res.status(404).json({
+        success: false,
+        message: 'Článok nebol nájdený',
+      });
+      return;
+    }
+
+    // Zvýšenie počtu zobrazení
+    await article.incrementViews();
+
+    // Formátovanie pre frontend
+    const formattedArticle = {
+      id: article.id,
+      nazov: article.nazov,
+      slug: article.slug,
+      obsah: article.obsah,
+      excerpt: article.excerpt,
+      obrazok: article.obrazok,
+      publikovany_datum: article.publikovany_datum,
+      views: article.views + 1, // +1 pre aktuálne zobrazenie
+      autor: (article as any).autor,
+      kategoria: (article as any).kategoria,
+      tags: article.getTagsArray(),
+      komentare_povolene: article.komentare_povolene,
+      meta_title: article.meta_title,
+      meta_description: article.meta_description,
+      vytvoreny: article.vytvoreny,
+    };
+
+    res.json({
+      success: true,
+      data: { article: formattedArticle },
+    });
+  } catch (error) {
+    console.error('Chyba pri získavaní článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri získavaní článku',
+    });
+  }
+};
+
+// === ADMIN API ===
+
+// GET /api/admin/articles - Zoznam všetkých článkov pre admin
+export const getAdminArticles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string || '';
+    const category = req.query.category as string || '';
+    const author = req.query.author as string || '';
+    const search = req.query.search as string || '';
+
+    const offset = (page - 1) * limit;
+    const whereConditions: any = {};
+
+    // Filtrovanie podľa statusu
+    if (status) {
+      whereConditions.status = status;
+    }
+
+    // Filtrovanie podľa kategórie
+    if (category) {
+      whereConditions.kategoria_id = parseInt(category);
+    }
+
+    // Filtrovanie podľa autora
+    if (author) {
+      whereConditions.autor_id = parseInt(author);
+    }
+
+    // Vyhľadávanie
+    if (search) {
+      whereConditions[Op.or] = [
+        { nazov: { [Op.iLike]: `%${search}%` } },
+        { obsah: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows: articles } = await Article.findAndCountAll({
+      where: whereConditions,
+      limit,
+      offset,
+      order: [['vytvoreny', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno', 'email'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug'],
+        },
+      ],
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    // Formátovanie pre admin panel
+    const formattedArticles = articles.map(article => ({
+      ...article.toAdminJSON(),
+      autor: (article as any).autor,
+      kategoria: (article as any).kategoria,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        articles: formattedArticles,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalArticles: count,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Chyba pri získavaní admin článkov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri získavaní článkov',
+    });
+  }
+};
+
+// GET /api/admin/articles/:id - Detail článku pre admin
+export const getAdminArticleById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const article = await Article.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno', 'email'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug'],
+        },
+      ],
+    });
+
+    if (!article) {
+      res.status(404).json({
+        success: false,
+        message: 'Článok nebol nájdený',
+      });
+      return;
+    }
+
+    const formattedArticle = {
+      ...article.toAdminJSON(),
+      autor: (article as any).autor,
+      kategoria: (article as any).kategoria,
+    };
+
+    res.json({
+      success: true,
+      data: { article: formattedArticle },
+    });
+  } catch (error) {
+    console.error('Chyba pri získavaní článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri získavaní článku',
+    });
+  }
+};
+
+// POST /api/admin/articles - Vytvorenie nového článku
+export const createArticle = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validácia vstupných údajov
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        success: false,
+        message: 'Chybné vstupné údaje',
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    const {
+      nazov, obsah, excerpt, obrazok, kategoria_id,
+      status, publikovany_datum, meta_title, meta_description,
+      tags, featured, komentare_povolene
+    } = req.body;
+
+    // Kontrola existencie kategórie
+    const category = await Category.findByPk(kategoria_id);
+    if (!category) {
+      res.status(400).json({
+        success: false,
+        message: 'Kategória neexistuje',
+      });
+      return;
+    }
+
+    // Vytvorenie článku
+    const newArticle = await Article.create({
+      nazov: nazov.trim(),
+      obsah,
+      excerpt: excerpt?.trim() || null,
+      obrazok: obrazok || null,
+      autor_id: req.userId!, // Z auth middleware
+      kategoria_id,
+      status,
+      publikovany_datum: publikovany_datum ? new Date(publikovany_datum) : null,
+      meta_title: meta_title?.trim() || null,
+      meta_description: meta_description?.trim() || null,
+      featured: featured || false,
+      komentare_povolene: komentare_povolene !== false,
+    });
+
+    // Nastavenie tagov
+    if (tags && Array.isArray(tags)) {
+      newArticle.setTagsArray(tags);
+      await newArticle.save();
+    }
+
+    // Načítanie článku s vzťahmi
+    const articleWithRelations = await Article.findByPk(newArticle.id, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno', 'email'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug'],
+        },
+      ],
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Článok úspešne vytvorený',
+      data: { 
+        article: {
+          ...articleWithRelations!.toAdminJSON(),
+          autor: (articleWithRelations as any).autor,
+          kategoria: (articleWithRelations as any).kategoria,
+        }
+      },
+    });
+  } catch (error) {
+    console.error('Chyba pri vytváraní článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri vytváraní článku',
+    });
+  }
+};
+
+// PUT /api/admin/articles/:id - Úprava článku
+export const updateArticle = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validácia vstupných údajov
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        success: false,
+        message: 'Chybné vstupné údaje',
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const updateData = { ...req.body };
+
+    // Nájdenie článku
+    const article = await Article.findByPk(id);
+    if (!article) {
+      res.status(404).json({
+        success: false,
+        message: 'Článok nebol nájdený',
+      });
+      return;
+    }
+
+    // Kontrola oprávnení - len autor alebo admin môže upravovať
+    if (article.autor_id !== req.userId && req.user?.rola !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: 'Nemáte oprávnenie upravovať tento článok',
+      });
+      return;
+    }
+
+    // Kontrola kategórie ak sa mení
+    if (updateData.kategoria_id) {
+      const category = await Category.findByPk(updateData.kategoria_id);
+      if (!category) {
+        res.status(400).json({
+          success: false,
+          message: 'Kategória neexistuje',
+        });
+        return;
+      }
+    }
+
+    // Spracovanie tagov
+    if (updateData.tags && Array.isArray(updateData.tags)) {
+      article.setTagsArray(updateData.tags);
+      delete updateData.tags; // Odstránime z updateData
+    }
+
+    // Čistenie prázdnych hodnôt
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === '') {
+        updateData[key] = null;
+      }
+    });
+
+    // Aktualizácia článku
+    await article.update(updateData);
+
+    // Načítanie aktualizovaného článku s vzťahmi
+    const updatedArticle = await Article.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'meno', 'email'],
+        },
+        {
+          model: Category,
+          as: 'kategoria',
+          attributes: ['id', 'nazov', 'slug'],
+        },
+      ],
+    });
+
+    res.json({
+      success: true,
+      message: 'Článok úspešne aktualizovaný',
+      data: { 
+        article: {
+          ...updatedArticle!.toAdminJSON(),
+          autor: (updatedArticle as any).autor,
+          kategoria: (updatedArticle as any).kategoria,
+        }
+      },
+    });
+  } catch (error) {
+    console.error('Chyba pri aktualizácii článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri aktualizácii článku',
+    });
+  }
+};
+
+// DELETE /api/admin/articles/:id - Vymazanie článku
+export const deleteArticle = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const article = await Article.findByPk(id);
+    if (!article) {
+      res.status(404).json({
+        success: false,
+        message: 'Článok nebol nájdený',
+      });
+      return;
+    }
+
+    // Kontrola oprávnení - len autor alebo admin môže vymazať
+    if (article.autor_id !== req.userId && req.user?.rola !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: 'Nemáte oprávnenie vymazať tento článok',
+      });
+      return;
+    }
+
+    await article.destroy();
+
+    res.json({
+      success: true,
+      message: 'Článok úspešne vymazaný',
+    });
+  } catch (error) {
+    console.error('Chyba pri vymazávaní článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri vymazávaní článku',
+    });
+  }
+};

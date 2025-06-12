@@ -1,0 +1,322 @@
+// backend/src/models/Article.ts
+// Model pre články
+
+import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from '../config/database';
+
+// Interface pre Article atribúty
+export interface ArticleAttributes {
+  id: number;
+  nazov: string;
+  slug: string;
+  obsah: string;
+  excerpt?: string | null; // Krátky popis pre náhľady
+  obrazok?: string | null; // URL hlavného obrázka
+  autor_id: number; // Foreign key na používateľa
+  kategoria_id: number; // Foreign key na kategóriu
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
+  publikovany_datum?: Date | null; // Kedy má byť/bol publikovaný
+  views: number; // Počet zobrazení
+  meta_title?: string | null; // SEO title
+  meta_description?: string | null; // SEO popis
+  tags?: string | null; // JSON pole tagov
+  featured: boolean; // Či je článok vybraný/priliehavý
+  komentare_povolene: boolean; // Či sú povolené komentáre
+  vytvoreny: Date;
+  aktualizovany: Date;
+}
+
+// Interface pre vytvorenie článku (bez auto-generovaných polí)
+export interface ArticleCreationAttributes extends Optional<ArticleAttributes, 'id' | 'slug' | 'views' | 'vytvoreny' | 'aktualizovany'> {}
+
+// Sequelize Model class
+export class Article extends Model<ArticleAttributes, ArticleCreationAttributes> implements ArticleAttributes {
+  public id!: number;
+  public nazov!: string;
+  public slug!: string;
+  public obsah!: string;
+  public excerpt!: string | null;
+  public obrazok!: string | null;
+  public autor_id!: number;
+  public kategoria_id!: number;
+  public status!: 'draft' | 'published' | 'scheduled' | 'archived';
+  public publikovany_datum!: Date | null;
+  public views!: number;
+  public meta_title!: string | null;
+  public meta_description!: string | null;
+  public tags!: string | null;
+  public featured!: boolean;
+  public komentare_povolene!: boolean;
+  public readonly vytvoreny!: Date;
+  public readonly aktualizovany!: Date;
+
+  // Statická metóda pre generovanie slug
+  public static generateSlug(nazov: string): string {
+    return nazov
+      .toLowerCase()
+      .normalize('NFD') // Rozdelí diakritiku
+      .replace(/[\u0300-\u036f]/g, '') // Odstráni diakritiku
+      .replace(/[^a-z0-9\s-]/g, '') // Odstráni špeciálne znaky
+      .trim()
+      .replace(/\s+/g, '-') // Nahradí medzery pomlčkami
+      .replace(/-+/g, '-'); // Odstráni viacnásobné pomlčky
+  }
+
+  // Automatické generovanie excerpt z obsahu
+  public static generateExcerpt(obsah: string, maxLength: number = 160): string {
+    // Odstránenie HTML tagov
+    const textOnly = obsah.replace(/<[^>]*>/g, '');
+    
+    if (textOnly.length <= maxLength) {
+      return textOnly;
+    }
+    
+    // Skrátenie na najbližšie slovo
+    const truncated = textOnly.substring(0, maxLength);
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+    
+    return lastSpaceIndex > 0 
+      ? truncated.substring(0, lastSpaceIndex) + '...'
+      : truncated + '...';
+  }
+
+  // Parsovanie tagov z JSON stringu
+  public getTagsArray(): string[] {
+    if (!this.tags) return [];
+    try {
+      return JSON.parse(this.tags);
+    } catch {
+      return [];
+    }
+  }
+
+  // Nastavenie tagov ako JSON string
+  public setTagsArray(tags: string[]): void {
+    this.tags = JSON.stringify(tags);
+  }
+
+  // Metóda pre zväčšenie počtu zobrazení
+  public async incrementViews(): Promise<void> {
+    await this.increment('views');
+  }
+
+  // Kontrola či je článok publikovaný
+  public isPublished(): boolean {
+    return this.status === 'published' && 
+           (!this.publikovany_datum || this.publikovany_datum <= new Date());
+  }
+
+  // Metóda pre získanie bezpečných údajov pre verejné API
+  public toPublicJSON() {
+    return {
+      id: this.id,
+      nazov: this.nazov,
+      slug: this.slug,
+      excerpt: this.excerpt,
+      obrazok: this.obrazok,
+      publikovany_datum: this.publikovany_datum,
+      views: this.views,
+      tags: this.getTagsArray(),
+      featured: this.featured,
+      vytvoreny: this.vytvoreny,
+    };
+  }
+
+  // Metóda pre získanie kompletných údajov (admin)
+  public toAdminJSON() {
+    return {
+      id: this.id,
+      nazov: this.nazov,
+      slug: this.slug,
+      obsah: this.obsah,
+      excerpt: this.excerpt,
+      obrazok: this.obrazok,
+      autor_id: this.autor_id,
+      kategoria_id: this.kategoria_id,
+      status: this.status,
+      publikovany_datum: this.publikovany_datum,
+      views: this.views,
+      meta_title: this.meta_title,
+      meta_description: this.meta_description,
+      tags: this.getTagsArray(),
+      featured: this.featured,
+      komentare_povolene: this.komentare_povolene,
+      vytvoreny: this.vytvoreny,
+      aktualizovany: this.aktualizovany,
+    };
+  }
+}
+
+// Definícia modelu v databáze
+Article.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    nazov: {
+      type: DataTypes.STRING(200),
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [5, 200],
+      },
+    },
+    slug: {
+      type: DataTypes.STRING(220),
+      allowNull: false,
+      unique: true,
+      validate: {
+        notEmpty: true,
+        is: /^[a-z0-9-]+$/i,
+      },
+    },
+    obsah: {
+      type: DataTypes.TEXT('long'), // Pre dlhé články
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [10, 50000], // Min 10 znakov, max 50k
+      },
+    },
+    excerpt: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    obrazok: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      validate: {
+        isUrl: true,
+      },
+    },
+    autor_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'pouzivatelia',
+        key: 'id',
+      },
+    },
+    kategoria_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'rubriky',
+        key: 'id',
+      },
+    },
+    status: {
+      type: DataTypes.ENUM('draft', 'published', 'scheduled', 'archived'),
+      allowNull: false,
+      defaultValue: 'draft',
+    },
+    publikovany_datum: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    views: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+      },
+    },
+    meta_title: {
+      type: DataTypes.STRING(70), // SEO optimálne
+      allowNull: true,
+    },
+    meta_description: {
+      type: DataTypes.STRING(160), // SEO optimálne
+      allowNull: true,
+    },
+    tags: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    featured: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    komentare_povolene: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    vytvoreny: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    aktualizovany: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'clanky',
+    timestamps: true,
+    createdAt: 'vytvoreny',
+    updatedAt: 'aktualizovany',
+    hooks: {
+      // Automatické generovanie slug pred vytvorením
+      beforeCreate: async (article: Article) => {
+        if (!article.slug) {
+          article.slug = Article.generateSlug(article.nazov);
+        }
+        // Automatické generovanie excerpt ak nie je zadané
+        if (!article.excerpt && article.obsah) {
+          article.excerpt = Article.generateExcerpt(article.obsah);
+        }
+        // Nastavenie publikačného dátumu pre publikované články
+        if (article.status === 'published' && !article.publikovany_datum) {
+          article.publikovany_datum = new Date();
+        }
+      },
+      beforeUpdate: async (article: Article) => {
+        if (article.changed('nazov') && !article.changed('slug')) {
+          article.slug = Article.generateSlug(article.nazov);
+        }
+        // Aktualizácia excerpt pri zmene obsahu
+        if (article.changed('obsah') && !article.changed('excerpt')) {
+          article.excerpt = Article.generateExcerpt(article.obsah);
+        }
+        // Nastavenie publikačného dátumu pri prvom publikovaní
+        if (article.changed('status') && article.status === 'published' && !article.publikovany_datum) {
+          article.publikovany_datum = new Date();
+        }
+      },
+    },
+    indexes: [
+      {
+        unique: true,
+        fields: ['slug'],
+      },
+      {
+        fields: ['status'],
+      },
+      {
+        fields: ['autor_id'],
+      },
+      {
+        fields: ['kategoria_id'],
+      },
+      {
+        fields: ['publikovany_datum'],
+      },
+      {
+        fields: ['featured'],
+      },
+      {
+        fields: ['views'],
+      },
+    ],
+  }
+);
+
+export default Article;
