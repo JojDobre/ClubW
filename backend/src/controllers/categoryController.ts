@@ -1,5 +1,5 @@
 // backend/src/controllers/categoryController.ts
-// Controller pre správu rubrík (kategórií)
+// Controller pre správu rubrík (kategórií) - OPRAVENÝ
 
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
@@ -78,7 +78,6 @@ export const getAdminCategories = async (req: Request, res: Response): Promise<v
     const categories = await Category.findAll({
       where: whereConditions,
       order: [['poradie', 'ASC'], ['nazov', 'ASC']],
-      // Zatiaľ bez JOIN na články - pridáme neskôr
     });
 
     // Získanie počtu článkov pre každú kategóriu osobne
@@ -183,6 +182,8 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
 
     const { nazov, popis, farba, ikona, poradie } = req.body;
 
+    console.log('Vytváram kategóriu s údajmi:', { nazov, popis, farba, ikona, poradie });
+
     // Kontrola duplicitného názvu
     const existingCategory = await Category.findOne({
       where: { nazov: nazov.trim() },
@@ -203,15 +204,22 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
       finalPoradie = (maxPoradie || 0) + 1;
     }
 
-    // Vytvorenie kategórie
+    // KĽÚČOVÁ OPRAVA: Vygenerujeme slug EXPLICITNE pred vytvorením
+    const generatedSlug = Category.generateSlug(nazov.trim());
+    console.log('Vygenerovaný slug pred vytvorením:', generatedSlug);
+
+    // Vytvorenie kategórie s explicitne nastaveným slug
     const newCategory = await Category.create({
       nazov: nazov.trim(),
+      slug: generatedSlug, // EXPLICITNE nastavujeme slug
       popis: popis?.trim() || null,
       farba: farba || null,
       ikona: ikona?.trim() || null,
       poradie: finalPoradie,
       aktivity: true,
     });
+
+    console.log('Kategória úspešne vytvorená:', newCategory.toSafeJSON());
 
     res.status(201).json({
       success: true,
@@ -272,6 +280,12 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
       }
 
       updateData.nazov = updateData.nazov.trim();
+      
+      // OPRAVA: Ak sa mení názov, vygeneruj nový slug
+      if (updateData.nazov !== category.nazov) {
+        updateData.slug = Category.generateSlug(updateData.nazov);
+        console.log('Nový slug pre aktualizáciu:', updateData.slug);
+      }
     }
 
     // Čistenie prázdnych stringov
@@ -319,7 +333,7 @@ export const deleteCategory = async (req: Request, res: Response): Promise<void>
     if (articlesCount > 0) {
       res.status(400).json({
         success: false,
-        message: `Nemožno vymazať kategóriu, ktorá obsahuje ${articlesCount} článkov. Najprív presuňte alebo vymažte články.`,
+        message: `Nemožno vymazať kategóriu, ktorá obsahuje ${articlesCount} článkov. Najprv presuňte alebo vymažte články.`,
       });
       return;
     }

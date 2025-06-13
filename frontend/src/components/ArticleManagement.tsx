@@ -1,5 +1,5 @@
 // frontend/src/components/ArticleManagement.tsx
-// Komponenta pre správu článkov
+// Komponenta pre správu článkov - VYLEPŠENÁ VERZIA
 
 import React, { useState, useEffect } from 'react';
 
@@ -44,6 +44,7 @@ interface Category {
 
 interface ArticleFormData {
   nazov: string;
+  slug: string;
   obsah: string;
   excerpt: string;
   obrazok: string;
@@ -80,7 +81,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
-  const [filterAuthor, setFilterAuthor] = useState('');
 
   // Paginácia
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,6 +90,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   // Formulárové dáta
   const [formData, setFormData] = useState<ArticleFormData>({
     nazov: '',
+    slug: '',
     obsah: '',
     excerpt: '',
     obrazok: '',
@@ -105,6 +106,28 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
   // Tag input
   const [tagInput, setTagInput] = useState('');
+
+  // Limits pre charaktery
+  const LIMITS = {
+    nazov: 200,
+    excerpt: 500,
+    obsah: 50000,
+    meta_title: 70,
+    meta_description: 160,
+  };
+
+  // Generovanie slug z názvu
+  const generateSlug = (nazov: string): string => {
+    return nazov
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
 
   // Načítanie kategórií
   const fetchCategories = async () => {
@@ -131,7 +154,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       if (searchTerm) queryParams.append('search', searchTerm);
       if (filterStatus) queryParams.append('status', filterStatus);
       if (filterCategory) queryParams.append('category', filterCategory);
-      if (filterAuthor) queryParams.append('author', filterAuthor);
 
       const response = await fetch(
         `http://localhost:3000/api/admin/articles?${queryParams.toString()}`,
@@ -164,7 +186,17 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
   useEffect(() => {
     fetchArticles();
-  }, [currentPage, searchTerm, filterStatus, filterCategory, filterAuthor]);
+  }, [currentPage, searchTerm, filterStatus, filterCategory]);
+
+  // Validácia slug v reálnom čase
+  const checkSlugAvailability = async (slug: string, excludeId?: number) => {
+    if (!slug.trim()) return true;
+    
+    const existingArticle = articles.find(article => 
+      article.slug === slug && article.id !== excludeId
+    );
+    return !existingArticle;
+  };
 
   // Spracovanie formulára
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,6 +204,14 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     setLoading(true);
 
     try {
+      // Validácia slug
+      const isSlugAvailable = await checkSlugAvailability(formData.slug, editingArticle?.id);
+      if (!isSlugAvailable) {
+        setError('Slug už existuje. Zvoľte iný.');
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem('clubw_token');
       const url = editingArticle 
         ? `http://localhost:3000/api/admin/articles/${editingArticle.id}`
@@ -196,7 +236,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       const data = await response.json();
       
       if (data.success) {
-        await fetchArticles(); // Reload zoznamu
+        await fetchArticles();
         resetForm();
         setShowAddModal(false);
         setEditingArticle(null);
@@ -219,10 +259,11 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const resetForm = () => {
     setFormData({
       nazov: '',
+      slug: '',
       obsah: '',
       excerpt: '',
       obrazok: '',
-      kategoria_id: 0,
+      kategoria_id: categories.length > 0 ? categories[0].id : 0,
       status: 'draft',
       publikovany_datum: '',
       meta_title: '',
@@ -252,7 +293,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
       const data = await response.json();
       if (data.success) {
-        await fetchArticles(); // Reload zoznamu
+        await fetchArticles();
       } else {
         setError(data.message || 'Chyba pri vymazávaní článku');
       }
@@ -266,6 +307,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     setEditingArticle(article);
     setFormData({
       nazov: article.nazov,
+      slug: article.slug,
       obsah: article.obsah,
       excerpt: article.excerpt || '',
       obrazok: article.obrazok || '',
@@ -281,6 +323,12 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       komentare_povolene: article.komentare_povolene,
     });
     setError('');
+    setShowAddModal(true);
+  };
+
+  // Otvorenie pridávania nového článku
+  const startAdd = () => {
+    resetForm();
     setShowAddModal(true);
   };
 
@@ -325,6 +373,30 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     }
   };
 
+  // Štýl pre konzistentné inputy
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 16px',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box' as const,
+  };
+
+  // Komponenta pre počítadlo znakov
+  const CharacterCounter: React.FC<{ current: number; limit: number }> = ({ current, limit }) => (
+    <div style={{ 
+      fontSize: '12px', 
+      color: current > limit ? '#dc2626' : '#64748b', 
+      marginTop: '4px',
+      textAlign: 'right'
+    }}>
+      {current}/{limit} znakov
+      {current > limit && <span style={{ color: '#dc2626', marginLeft: '8px' }}>⚠️ Prekročený limit</span>}
+    </div>
+  );
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -332,10 +404,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
           📰 Správa článkov
         </h1>
         <button
-          onClick={() => {
-            resetForm();
-            setShowAddModal(true);
-          }}
+          onClick={startAdd}
           style={{
             background: '#3b82f6',
             color: 'white',
@@ -369,14 +438,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Názov alebo obsah..."
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
+              style={inputStyle}
             />
           </div>
           
@@ -387,14 +449,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
+              style={inputStyle}
             >
               <option value="">Všetky statusy</option>
               <option value="published">Publikované</option>
@@ -411,14 +466,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
+              style={inputStyle}
             >
               <option value="">Všetky kategórie</option>
               {categories.map(category => (
@@ -539,7 +587,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                           {article.featured && <span style={{ color: '#f59e0b' }}>⭐</span>}
                           {article.nazov}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#64748b' }}>
+                        <div style={{ fontSize: '11px', color: '#9ca3af', fontFamily: 'monospace', background: '#f3f4f6', padding: '2px 6px', borderRadius: '3px', display: 'inline-block', marginTop: '2px' }}>
                           /{article.slug}
                         </div>
                         {article.excerpt && (
@@ -749,43 +797,19 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                   <input
                     type="text"
                     value={formData.nazov}
-                    onChange={(e) => setFormData({ ...formData, nazov: e.target.value })}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      boxSizing: 'border-box'
+                    onChange={(e) => {
+                      const nazov = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        nazov,
+                        slug: editingArticle ? formData.slug : generateSlug(nazov)
+                      });
                     }}
+                    required
+                    placeholder="Zadajte názov článku..."
+                    style={inputStyle}
                   />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
-                      Kategória
-                    </label>
-                    <select
-                      value={formData.kategoria_id}
-                      onChange={(e) => setFormData({ ...formData, kategoria_id: parseInt(e.target.value) })}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value="draft">📝 Koncept</option>
-                      <option value="published">✅ Publikovaný</option>
-                      <option value="scheduled">⏰ Naplánovaný</option>
-                      <option value="archived">📦 Archivovaný</option>
-                    </select>
-                  </div>
+                  <CharacterCounter current={formData.nazov.length} limit={LIMITS.nazov} />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
@@ -798,15 +822,11 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                     rows={3}
                     placeholder="Krátky popis článku pre náhľady..."
                     style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      boxSizing: 'border-box',
+                      ...inputStyle,
                       resize: 'vertical'
                     }}
                   />
+                  <CharacterCounter current={formData.excerpt.length} limit={LIMITS.excerpt} />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
@@ -816,33 +836,30 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                   <textarea
                     value={formData.obsah}
                     onChange={(e) => setFormData({ ...formData, obsah: e.target.value })}
-                    rows={10}
+                    rows={12}
                     required
                     placeholder="Napíšte obsah článku (môžete použiť HTML tagy)..."
                     style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      boxSizing: 'border-box',
+                      ...inputStyle,
                       resize: 'vertical',
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
+                      fontSize: '13px'
                     }}
                   />
+                  <CharacterCounter current={formData.obsah.length} limit={LIMITS.obsah} />
                   <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                    Tip: Môžete použiť HTML tagy ako &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, atď.
+                    💡 Tip: Môžete použiť HTML tagy ako &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, atď.
                   </div>
                 </div>
               </div>
 
-              {/* Dodatočné možnosti */}
+              {/* Média a kategorizácia */}
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
-                  Dodatočné možnosti
+                  Média a kategorizácia
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
                       URL obrázka
@@ -852,17 +869,55 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                       value={formData.obrazok}
                       onChange={(e) => setFormData({ ...formData, obrazok: e.target.value })}
                       placeholder="https://example.com/obrazok.jpg"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        boxSizing: 'border-box'
-                      }}
+                      style={inputStyle}
                     />
                   </div>
 
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
+                      Kategória
+                    </label>
+                    <select
+                      value={formData.kategoria_id}
+                      onChange={(e) => setFormData({ ...formData, kategoria_id: parseInt(e.target.value) })}
+                      required
+                      style={inputStyle}
+                    >
+                      <option value={0}>Vyberte kategóriu</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.ikona} {category.nazov}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#9ca3af' }}>
+                      Tím (pripravuje sa)
+                    </label>
+                    <select
+                      disabled
+                      style={{
+                        ...inputStyle,
+                        backgroundColor: '#f9fafb',
+                        color: '#9ca3af',
+                        cursor: 'not-allowed'
+                      }}
+                    >
+                      <option>Bude dostupné neskôr</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Publikovanie */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+                  Publikovanie
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
                       Dátum publikovania
@@ -871,24 +926,81 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                       type="datetime-local"
                       value={formData.publikovany_datum}
                       onChange={(e) => setFormData({ ...formData, publikovany_datum: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        boxSizing: 'border-box'
-                      }}
+                      style={inputStyle}
                     />
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                       Nechajte prázdne pre okamžité publikovanie
                     </div>
                   </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
+                      Status článku
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      style={inputStyle}
+                    >
+                      <option value="draft">📝 Koncept</option>
+                      <option value="published">✅ Publikovaný</option>
+                      <option value="scheduled">⏰ Naplánovaný</option>
+                      <option value="archived">📦 Archivovaný</option>
+                    </select>
+                  </div>
                 </div>
+              </div>
+
+              {/* URL slug */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+                  URL nastavenia
+                </h3>
 
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
-                    Tagy
+                    URL slug
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={async (e) => {
+                      const slug = e.target.value;
+                      setFormData({ ...formData, slug });
+                      
+                      // Validácia slug v reálnom čase
+                      if (slug.trim()) {
+                        const isAvailable = await checkSlugAvailability(slug, editingArticle?.id);
+                        if (!isAvailable) {
+                          setError('Tento slug už existuje');
+                        } else {
+                          setError('');
+                        }
+                      }
+                    }}
+                    placeholder="automaticky-generovany-slug"
+                    pattern="^[a-z0-9-]+$"
+                    style={{
+                      ...inputStyle,
+                      fontFamily: 'monospace',
+                      fontSize: '13px'
+                    }}
+                  />
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                    URL adresa: /{formData.slug || 'slug'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tagy */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+                  Tagy
+                </h3>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' }}>
+                    Pridať tagy
                   </label>
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                     <input
@@ -960,26 +1072,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                     ))}
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.featured}
-                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>⭐ Vybraný článok</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.komentare_povolene}
-                      onChange={(e) => setFormData({ ...formData, komentare_povolene: e.target.checked })}
-                    />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>💬 Povoliť komentáre</span>
-                  </label>
-                </div>
               </div>
 
               {/* SEO možnosti */}
@@ -998,18 +1090,9 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                     onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
                     placeholder="SEO optimalizovaný názov (max 70 znakov)"
                     maxLength={70}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      boxSizing: 'border-box'
-                    }}
+                    style={inputStyle}
                   />
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                    {formData.meta_title.length}/70 znakov
-                  </div>
+                  <CharacterCounter current={formData.meta_title.length} limit={LIMITS.meta_title} />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
@@ -1023,18 +1106,47 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
                     maxLength={160}
                     rows={3}
                     style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      boxSizing: 'border-box',
+                      ...inputStyle,
                       resize: 'vertical'
                     }}
                   />
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                    {formData.meta_description.length}/160 znakov
-                  </div>
+                  <CharacterCounter current={formData.meta_description.length} limit={LIMITS.meta_description} />
+                </div>
+              </div>
+
+              {/* Nastavenia */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+                  Dodatočné nastavenia
+                </h3>
+
+                <div style={{ 
+                  background: '#f8fafc', 
+                  padding: '16px', 
+                  borderRadius: '8px', 
+                  border: '1px solid #e2e8f0',
+                  display: 'flex', 
+                  gap: '24px'
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>⭐ Vybraný článok</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.komentare_povolene}
+                      onChange={(e) => setFormData({ ...formData, komentare_povolene: e.target.checked })}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>💬 Povoliť komentáre</span>
+                  </label>
                 </div>
               </div>
 

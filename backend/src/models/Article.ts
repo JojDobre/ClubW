@@ -1,5 +1,5 @@
 // backend/src/models/Article.ts
-// Model pre články
+// Model pre články - OPRAVENÝ
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
@@ -59,7 +59,8 @@ export class Article extends Model<ArticleAttributes, ArticleCreationAttributes>
       .replace(/[^a-z0-9\s-]/g, '') // Odstráni špeciálne znaky
       .trim()
       .replace(/\s+/g, '-') // Nahradí medzery pomlčkami
-      .replace(/-+/g, '-'); // Odstráni viacnásobné pomlčky
+      .replace(/-+/g, '-') // Odstráni viacnásobné pomlčky
+      .replace(/^-+|-+$/g, ''); // Odstráni pomlčky na začiatku a konci
   }
 
   // Automatické generovanie excerpt z obsahu
@@ -265,30 +266,54 @@ Article.init(
     updatedAt: 'aktualizovany',
     hooks: {
       // Automatické generovanie slug pred vytvorením
-      beforeCreate: async (article: Article) => {
-        if (!article.slug) {
+      beforeCreate: (article: Article) => {
+        console.log('beforeCreate hook spustený pre článok:', article.nazov);
+        
+        // Vygeneruj slug ak nie je nastavený
+        if (!article.slug && article.nazov) {
           article.slug = Article.generateSlug(article.nazov);
+          console.log('Vygenerovaný slug:', article.slug);
         }
+        
         // Automatické generovanie excerpt ak nie je zadané
         if (!article.excerpt && article.obsah) {
           article.excerpt = Article.generateExcerpt(article.obsah);
+          console.log('Vygenerovaný excerpt:', article.excerpt);
         }
+        
         // Nastavenie publikačného dátumu pre publikované články
         if (article.status === 'published' && !article.publikovany_datum) {
           article.publikovany_datum = new Date();
+          console.log('Nastavený publikačný dátum:', article.publikovany_datum);
         }
       },
-      beforeUpdate: async (article: Article) => {
+      beforeUpdate: (article: Article) => {
+        console.log('beforeUpdate hook spustený pre článok:', article.nazov);
+        
         if (article.changed('nazov') && !article.changed('slug')) {
           article.slug = Article.generateSlug(article.nazov);
+          console.log('Aktualizovaný slug:', article.slug);
         }
+        
         // Aktualizácia excerpt pri zmene obsahu
         if (article.changed('obsah') && !article.changed('excerpt')) {
           article.excerpt = Article.generateExcerpt(article.obsah);
+          console.log('Aktualizovaný excerpt:', article.excerpt);
         }
+        
         // Nastavenie publikačného dátumu pri prvom publikovaní
         if (article.changed('status') && article.status === 'published' && !article.publikovany_datum) {
           article.publikovany_datum = new Date();
+          console.log('Nastavený publikačný dátum pri zmene statusu:', article.publikovany_datum);
+        }
+      },
+      beforeValidate: (article: Article) => {
+        console.log('beforeValidate hook spustený pre článok:', article.nazov);
+        
+        // KĽÚČOVÁ OPRAVA: Generuj slug aj v beforeValidate hooku
+        if (!article.slug && article.nazov) {
+          article.slug = Article.generateSlug(article.nazov);
+          console.log('Slug vygenerovaný v beforeValidate:', article.slug);
         }
       },
     },

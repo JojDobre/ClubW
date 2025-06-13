@@ -1,5 +1,5 @@
 // backend/src/models/Category.ts
-// Model pre rubriky (kategórie článkov)
+// Model pre rubriky (kategórie článkov) - OPRAVENÝ
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
@@ -43,7 +43,8 @@ export class Category extends Model<CategoryAttributes, CategoryCreationAttribut
       .replace(/[^a-z0-9\s-]/g, '') // Odstráni špeciálne znaky
       .trim()
       .replace(/\s+/g, '-') // Nahradí medzery pomlčkami
-      .replace(/-+/g, '-'); // Odstráni viacnásobné pomlčky
+      .replace(/-+/g, '-') // Odstráni viacnásobné pomlčky
+      .replace(/^-+|-+$/g, ''); // Odstráni pomlčky na začiatku a konci
   }
 
   // Metóda pre získanie bezpečných údajov
@@ -136,14 +137,31 @@ Category.init(
     updatedAt: 'aktualizovany',
     hooks: {
       // Automatické generovanie slug pred vytvorením
-      beforeCreate: async (category: Category) => {
-        if (!category.slug) {
+      beforeCreate: (category: Category) => {
+        console.log('beforeCreate hook spustený pre:', category.nazov);
+        
+        // Vygeneruj slug ak nie je nastavený
+        if (!category.slug && category.nazov) {
           category.slug = Category.generateSlug(category.nazov);
+          console.log('Vygenerovaný slug:', category.slug);
         }
       },
-      beforeUpdate: async (category: Category) => {
+      beforeUpdate: (category: Category) => {
+        console.log('beforeUpdate hook spustený pre:', category.nazov);
+        
+        // Aktualizuj slug len ak sa zmenil názov a slug sa explicitne nezadal
         if (category.changed('nazov') && !category.changed('slug')) {
           category.slug = Category.generateSlug(category.nazov);
+          console.log('Aktualizovaný slug:', category.slug);
+        }
+      },
+      beforeValidate: (category: Category) => {
+        console.log('beforeValidate hook spustený pre:', category.nazov);
+        
+        // KĽÚČOVÁ OPRAVA: Generuj slug aj v beforeValidate hooku
+        if (!category.slug && category.nazov) {
+          category.slug = Category.generateSlug(category.nazov);
+          console.log('Slug vygenerovaný v beforeValidate:', category.slug);
         }
       },
     },

@@ -1,5 +1,5 @@
 // backend/src/controllers/articleController.ts
-// Controller pre správu článkov
+// Controller pre správu článkov - OPRAVENÝ
 
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
@@ -382,8 +382,10 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     const {
       nazov, obsah, excerpt, obrazok, kategoria_id,
       status, publikovany_datum, meta_title, meta_description,
-      tags, featured, komentare_povolene
+      tags, featured, komentare_povolene, slug
     } = req.body;
+
+    console.log('Vytváram článok s údajmi:', { nazov, slug, obsah: obsah.substring(0, 50) + '...', kategoria_id });
 
     // Kontrola existencie kategórie
     const category = await Category.findByPk(kategoria_id);
@@ -395,9 +397,27 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Vytvorenie článku
+    // KĽÚČOVÁ OPRAVA: Vygenerujeme slug EXPLICITNE pred vytvorením
+    const generatedSlug = slug && slug.trim() ? slug.trim() : Article.generateSlug(nazov.trim());
+    console.log('Vygenerovaný slug pred vytvorením:', generatedSlug);
+
+    // Kontrola duplicitného slug
+    const existingArticle = await Article.findOne({
+      where: { slug: generatedSlug },
+    });
+
+    if (existingArticle) {
+      res.status(400).json({
+        success: false,
+        message: 'Článok s týmto slug už existuje',
+      });
+      return;
+    }
+
+    // Vytvorenie článku s explicitne nastaveným slug
     const newArticle = await Article.create({
       nazov: nazov.trim(),
+      slug: generatedSlug, // EXPLICITNE nastavujeme slug
       obsah,
       excerpt: excerpt?.trim() || null,
       obrazok: obrazok || null,
@@ -416,6 +436,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       newArticle.setTagsArray(tags);
       await newArticle.save();
     }
+
+    console.log('Článok úspešne vytvorený:', newArticle.toAdminJSON());
 
     // Načítanie článku s vzťahmi
     const articleWithRelations = await Article.findByPk(newArticle.id, {
@@ -499,6 +521,30 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         });
         return;
       }
+    }
+
+    // Kontrola duplicitného slug ak sa mení
+    if (updateData.slug && updateData.slug !== article.slug) {
+      const existingArticle = await Article.findOne({
+        where: { 
+          slug: updateData.slug,
+          id: { [Op.ne]: id }
+        },
+      });
+
+      if (existingArticle) {
+        res.status(400).json({
+          success: false,
+          message: 'Článok s týmto slug už existuje',
+        });
+        return;
+      }
+    }
+
+    // OPRAVA: Ak sa mení názov, vygeneruj nový slug (ak sa explicitne nenastaví)
+    if (updateData.nazov && updateData.nazov !== article.nazov && !updateData.slug) {
+      updateData.slug = Article.generateSlug(updateData.nazov);
+      console.log('Nový slug pre aktualizáciu:', updateData.slug);
     }
 
     // Spracovanie tagov
