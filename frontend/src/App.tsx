@@ -4,7 +4,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 
 // Lazy loading komponentov
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const ResponsiveAdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Login = lazy(() => import('./components/Login'));
 const ArticlesPage = lazy(() => import('./pages/ArticlesPage'));
 const ArticleDetailPage = lazy(() => import('./pages/ArticleDetailPage'));
@@ -87,21 +87,32 @@ const App: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        background: '#f3f4f6'
+        background: '#f8fafc'
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            width: '50px',
-            height: '50px',
-            border: '3px solid #e2e8f0',
-            borderTop: '3px solid #3b82f6',
+            width: '60px',
+            height: '60px',
+            border: '4px solid #e2e8f0',
+            borderTop: '4px solid #3b82f6',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px'
+            margin: '0 auto 24px'
           }}></div>
-          <p style={{ color: '#64748b', fontSize: '16px' }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '500',
+            color: '#1e293b',
+            marginBottom: '8px'
+          }}>
             Načítavam ClubW...
-          </p>
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: '#64748b'
+          }}>
+            Správa športového klubu
+          </div>
         </div>
       </div>
     );
@@ -116,7 +127,8 @@ const App: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '400px'
+            height: '400px',
+            background: '#f8fafc'
           }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{
@@ -128,7 +140,7 @@ const App: React.FC = () => {
                 animation: 'spin 1s linear infinite',
                 margin: '0 auto 15px'
               }}></div>
-              <p style={{ color: '#64748b' }}>Načítavam články...</p>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam články...</p>
             </div>
           </div>
         }
@@ -153,7 +165,8 @@ const App: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '400px'
+            height: '400px',
+            background: '#f8fafc'
           }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{
@@ -165,7 +178,7 @@ const App: React.FC = () => {
                 animation: 'spin 1s linear infinite',
                 margin: '0 auto 15px'
               }}></div>
-              <p style={{ color: '#64748b' }}>Načítavam článok...</p>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam článok...</p>
             </div>
           </div>
         }
@@ -185,7 +198,7 @@ const App: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f3f4f6',
+      background: '#f8fafc',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <Suspense
@@ -194,34 +207,59 @@ const App: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '100vh'
+            height: '100vh',
+            background: '#f8fafc'
           }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                width: '50px',
-                height: '50px',
-                border: '3px solid #e2e8f0',
-                borderTop: '3px solid #3b82f6',
+                width: '60px',
+                height: '60px',
+                border: '4px solid #e2e8f0',
+                borderTop: '4px solid #3b82f6',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
-                margin: '0 auto 20px'
+                margin: '0 auto 24px'
               }}></div>
-              <p style={{ color: '#64748b', fontSize: '16px' }}>
-                Načítavam...
-              </p>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '500',
+                color: '#1e293b',
+                marginBottom: '8px'
+              }}>
+                Načítavam administráciu...
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#64748b'
+              }}>
+                Pripravujem admin panel
+              </div>
             </div>
           </div>
         }
       >
         {user ? (
-          <AdminDashboard 
+          <ResponsiveAdminDashboard 
             user={user} 
             onLogout={handleLogout} 
           />
         ) : (
-          <Login 
-            onLoginSuccess={handleLoginSuccess} 
-          />
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            padding: '20px'
+          }}>
+            <div style={{
+              width: '100%',
+              maxWidth: '400px'
+            }}>
+              <Login 
+                onLoginSuccess={handleLoginSuccess} 
+              />
+            </div>
+          </div>
         )}
       </Suspense>
       
@@ -235,4 +273,4 @@ const App: React.FC = () => {
   );
 }
 
-export default App;   
+export default App;
