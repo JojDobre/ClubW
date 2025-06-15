@@ -197,6 +197,7 @@ export const getPublicArticleBySlug = async (req: Request, res: Response): Promi
 
     // Zvýšenie počtu zobrazení
     await article.incrementViews();
+    await article.reload();
 
     // Formátovanie pre frontend
     const formattedArticle = {
@@ -207,7 +208,8 @@ export const getPublicArticleBySlug = async (req: Request, res: Response): Promi
       excerpt: article.excerpt,
       obrazok: article.obrazok,
       publikovany_datum: article.publikovany_datum,
-      views: article.views + 1, // +1 pre aktuálne zobrazenie
+      views: article.views, 
+      
       autor: (article as any).autor,
       kategoria: (article as any).kategoria,
       tags: article.getTagsArray(),
