@@ -1,5 +1,5 @@
 // backend/src/index.ts
-// Hlavný entry point backend servera
+// Hlavný entry point backend servera - AKTUALIZOVANÝ pre FÁZU 3
 
 import express from 'express';
 import cors from 'cors';
@@ -11,7 +11,6 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
 
-
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
 
@@ -21,6 +20,8 @@ import userRoutes from './routes/users';
 import categoryRoutes, { adminCategoryRouter } from './routes/categories';
 import articleRoutes, { adminArticleRouter } from './routes/articles';
 import teamRoutes from './routes/teams';
+import playerRoutes from './routes/players'; // NOVÝ import
+import staffRoutes from './routes/staff'; // NOVÝ import
 
 // Načítanie environment premenných
 dotenv.config();
@@ -98,7 +99,7 @@ app.get('/health', (req, res) => {
 app.get('/api/status', (req, res) => {
   res.json({
     success: true,
-    message: 'ClubW Backend API v1.0.0',
+    message: 'ClubW Backend API v1.0.0 - FÁZA 3',
     client: process.env.CLIENT_NAME || 'Demo Club',
     environment: process.env.NODE_ENV || 'development',
     endpoints: {
@@ -108,9 +109,12 @@ app.get('/api/status', (req, res) => {
       adminCategories: '/api/admin/categories/*',
       articles: '/api/articles/*',
       adminArticles: '/api/admin/articles/*',
+      teams: '/api/teams/*',          // ✅ Tímy
+      players: '/api/players/*',      // ✅ Hráči - NOVÉ
+      staff: '/api/staff/*',          // ✅ Realizačný tím - NOVÉ
       health: '/health',
-      teams: '/api/teams/*',
     },
+    phase: 'FÁZA 3 - Tímy, hráči a realizačný tím',
     timestamp: new Date().toISOString(),
   });
 });
@@ -130,8 +134,10 @@ app.use('/api/admin/categories', adminCategoryRouter);
 app.use('/api/articles', articleRoutes);
 app.use('/api/admin/articles', adminArticleRouter);
 
-// Team routes - FÁZA 3
-app.use('/api/teams', teamRoutes);
+// FÁZA 3 ROUTES
+app.use('/api/teams', teamRoutes);      // ✅ Tímy
+app.use('/api/players', playerRoutes);  // ✅ Hráči - NOVÉ
+app.use('/api/staff', staffRoutes);     // ✅ Realizačný tím - NOVÉ
 
 // ===== ERROR HANDLING =====
 
@@ -151,8 +157,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     success: false,
     message: process.env.NODE_ENV === 'development' 
       ? err.message 
-      : 'Interná serverová chyba',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+      : 'Chyba servera',
+    error: process.env.NODE_ENV === 'development' 
+      ? err.stack 
+      : undefined
   });
 });
 
@@ -162,34 +170,36 @@ async function startServer() {
   try {
     console.log('🚀 Spúšťanie ClubW Backend servera...');
     
-    // Test databázového pripojenia
-    console.log('📡 Pripájanie k databáze...');
+    // Testovanie pripojenia k databáze
+    console.log('📊 Testovanie pripojenia k databáze...');
     const isConnected = await testConnection();
     
     if (!isConnected) {
-      console.error('❌ Nepodarilo sa pripojiť k databáze');
+      console.error('❌ Pripojenie k databáze zlyhalo');
       process.exit(1);
     }
 
-    // Synchronizácia databázy (bez force v production)
+    // Synchronizácia databázy
     console.log('🔄 Synchronizácia databázy...');
-    await syncDatabase(false);
+    await syncDatabase(false); // false = bez force, zachová existujúce dáta
 
     // Spustenie servera
     app.listen(PORT, () => {
-      console.log(`✅ Backend server spustený na porte ${PORT}`);
-      console.log(`🏟️  Klient: ${process.env.CLIENT_NAME || 'Demo Club'}`);
-      console.log(`🌐 Health check: http://localhost:${PORT}/health`);
-      console.log(`📊 API status: http://localhost:${PORT}/api/status`);
-      console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth/*`);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('');
-        console.log('📝 Demo prihlasovacie údaje:');
-        console.log('   Admin: admin@clubw.sk / admin123');
-        console.log('   Redaktor: redaktor@clubw.sk / redaktor123');
-        console.log('   Tréner: trener@clubw.sk / trener123');
-      }
+      console.log('✅ ClubW Backend server je spustený!');
+      console.log(`🌐 Server beží na: http://localhost:${PORT}`);
+      console.log(`📋 API dokumentácia: http://localhost:${PORT}/api/status`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+      console.log('');
+      console.log('📡 Dostupné API endpoints:');
+      console.log('   🔐 Auth:      /api/auth/*');
+      console.log('   👥 Users:     /api/users/*');
+      console.log('   📰 Articles:  /api/articles/*');
+      console.log('   📁 Categories:/api/categories/*');
+      console.log('   🏆 Teams:     /api/teams/*');
+      console.log('   ⚽ Players:   /api/players/*');
+      console.log('   👨‍💼 Staff:     /api/staff/*');
+      console.log('');
+      console.log('🎯 FÁZA 3: Tímy, hráči a realizačný tím - PRIPRAVENÉ NA TESTOVANIE');
     });
 
   } catch (error) {
@@ -198,7 +208,7 @@ async function startServer() {
   }
 }
 
-// Graceful shutdown
+// Graceful shutdown handlers
 process.on('SIGINT', () => {
   console.log('\n🛑 Vypínanie servera...');
   process.exit(0);
