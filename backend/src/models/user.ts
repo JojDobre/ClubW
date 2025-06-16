@@ -1,9 +1,13 @@
-// backend/src/models/User.ts
-// Model pre používateľov systému
+// backend/src/models/user.ts
+// Model pre používateľov systému - AKTUALIZOVANÝ pre vzťahy
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 import bcrypt from 'bcryptjs';
+
+// Forward declarations pre TypeScript associations
+class Team extends Model {}
+class Article extends Model {}
 
 // Interface pre User atribúty
 export interface UserAttributes {
@@ -34,6 +38,10 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public posledne_prihlasenie!: Date | null;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
+
+  // Association properties (pre TypeScript)
+  public tim?: Team;
+  public clanky?: Article[];
 
   // Metóda pre overenie hesla
   public async overHeslo(heslo: string): Promise<boolean> {
@@ -94,11 +102,12 @@ User.init(
     tim_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      // Foreign key pridáme neskôr keď budeme vytvárať tabuľku tímov
-      // references: {
-      //   model: 'timy',
-      //   key: 'id',
-      // },
+      references: {
+        model: 'timy',
+        key: 'id',
+      },
+      onDelete: 'SET NULL', // Ak sa vymaže tím, nastaví sa na NULL
+      onUpdate: 'CASCADE',
     },
     aktivity: {
       type: DataTypes.BOOLEAN,

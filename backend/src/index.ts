@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
 
+
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
 
@@ -19,6 +20,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import categoryRoutes, { adminCategoryRouter } from './routes/categories';
 import articleRoutes, { adminArticleRouter } from './routes/articles';
+import teamRoutes from './routes/teams';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -107,6 +109,7 @@ app.get('/api/status', (req, res) => {
       articles: '/api/articles/*',
       adminArticles: '/api/admin/articles/*',
       health: '/health',
+      teams: '/api/teams/*',
     },
     timestamp: new Date().toISOString(),
   });
@@ -127,26 +130,8 @@ app.use('/api/admin/categories', adminCategoryRouter);
 app.use('/api/articles', articleRoutes);
 app.use('/api/admin/articles', adminArticleRouter);
 
-// Demo endpoints (dočasné)
-app.get('/api/teams', (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      { id: 1, name: 'A-tím', type: 'muži', playerCount: 25 },
-      { id: 2, name: 'U19', type: 'mládež', playerCount: 18 },
-    ],
-  });
-});
-
-app.get('/api/articles', (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      { id: 1, title: 'Víťazstvo v derby!', published: true },
-      { id: 2, title: 'Ďalší článok', published: false },
-    ],
-  });
-});
+// Team routes - FÁZA 3
+app.use('/api/teams', teamRoutes);
 
 // ===== ERROR HANDLING =====
 
