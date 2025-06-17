@@ -1,5 +1,5 @@
 // backend/src/index.ts
-// Hlavný entry point backend servera - AKTUALIZOVANÝ pre FÁZU 3
+// Hlavný entry point backend servera - KOMPLETNÝ pre FÁZU 4
 
 import express from 'express';
 import cors from 'cors';
@@ -20,8 +20,11 @@ import userRoutes from './routes/users';
 import categoryRoutes, { adminCategoryRouter } from './routes/categories';
 import articleRoutes, { adminArticleRouter } from './routes/articles';
 import teamRoutes from './routes/teams';
-import playerRoutes from './routes/players'; // NOVÝ import
-import staffRoutes from './routes/staff'; // NOVÝ import
+import playerRoutes from './routes/players'; 
+import staffRoutes from './routes/staff'; 
+import ligaRoutes from './routes/liga';
+import zapasRoutes from './routes/zapas';
+import kalendarRoutes from './routes/kalendar';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -99,7 +102,7 @@ app.get('/health', (req, res) => {
 app.get('/api/status', (req, res) => {
   res.json({
     success: true,
-    message: 'ClubW Backend API v1.0.0 - FÁZA 3',
+    message: 'ClubW Backend API v1.0.0 - FÁZA 4',
     client: process.env.CLIENT_NAME || 'Demo Club',
     environment: process.env.NODE_ENV || 'development',
     endpoints: {
@@ -110,11 +113,23 @@ app.get('/api/status', (req, res) => {
       articles: '/api/articles/*',
       adminArticles: '/api/admin/articles/*',
       teams: '/api/teams/*',          // ✅ Tímy
-      players: '/api/players/*',      // ✅ Hráči - NOVÉ
-      staff: '/api/staff/*',          // ✅ Realizačný tím - NOVÉ
+      players: '/api/players/*',      // ✅ Hráči
+      staff: '/api/staff/*',          // ✅ Realizačný tím 
+      leagues: '/api/leagues/*',      // ✅ Ligy 
+      matches: '/api/matches/*',      // ✅ Zápasy
+      calendar: '/api/calendar/*',    // ✅ Kalendár 
       health: '/health',
     },
-    phase: 'FÁZA 3 - Tímy, hráči a realizačný tím',
+    phase: 'FÁZA 4 - Ligy, zápasy, štatistiky a kalendár',
+    features: [
+      '✅ Autentifikácia a správa používateľov',
+      '✅ Články a kategórie',
+      '✅ Tímy, hráči a realizačný tím',
+      '✅ Ligy a súťaže',
+      '✅ Zápasy a výsledky',
+      '✅ Štatistiky hráčov (góly, asistencie, karty)',
+      '✅ Kalendár zápasov - mesačný/týždenný'
+    ],
     timestamp: new Date().toISOString(),
   });
 });
@@ -136,8 +151,121 @@ app.use('/api/admin/articles', adminArticleRouter);
 
 // FÁZA 3 ROUTES
 app.use('/api/teams', teamRoutes);      // ✅ Tímy
-app.use('/api/players', playerRoutes);  // ✅ Hráči - NOVÉ
-app.use('/api/staff', staffRoutes);     // ✅ Realizačný tím - NOVÉ
+app.use('/api/players', playerRoutes);  // ✅ Hráči 
+app.use('/api/staff', staffRoutes);     // ✅ Realizačný tím 
+
+// FÁZA 4 ROUTES 
+app.use('/api/leagues', ligaRoutes);    // ✅ Ligy 
+app.use('/api/matches', zapasRoutes);   // ✅ Zápasy
+app.use('/api/calendar', kalendarRoutes); // ✅ Kalendár
+
+
+
+
+
+// ===== DEMO ENDPOINTS (môžeme odstrániť po úplnej implementácii) ===
+
+// Redirect na nový kalendár API
+app.get('/api/calendar', (req, res) => {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  
+  res.json({
+    success: true,
+    message: 'Kalendár API je dostupný na nových endpointoch',
+    endpoints: {
+      month: `/api/calendar/month/${currentYear}/${currentMonth}`,
+      week: `/api/calendar/week/${currentYear}/${currentMonth}/${currentDate.getDate()}`,
+      upcoming: '/api/calendar/upcoming'
+    },
+    examples: [
+      'GET /api/calendar/month/2024/8 - Mesačný kalendár',
+      'GET /api/calendar/week/2024/8/15 - Týždenný kalendár', 
+      'GET /api/calendar/upcoming?limit=5 - Nadchádzajúce zápasy',
+      'GET /api/calendar/month/2024/8?liga_id=1 - Filter podľa ligy'
+    ]
+  });
+});
+
+// Demo endpoint pre kalendár (FÁZA 4 - môže zostať ako ukážka)
+app.get('/api/calendar', async (req, res) => {
+  try {
+    // Simulácia kalendárnych dát (v skutočnosti by sme načítali zo Zapas modelu)
+    const calendar = {
+      currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
+      events: [
+        {
+          date: '2024-08-15',
+          matches: [
+            { id: 1, time: '18:00', teams: 'A-tím vs B-tím', league: 'I. liga' },
+            { id: 2, time: '20:00', teams: 'C-tím vs D-tím', league: 'I. liga' }
+          ]
+        },
+        {
+          date: '2024-08-22',
+          matches: [
+            { id: 3, time: '18:30', teams: 'B-tím vs C-tím', league: 'Regionálna liga' }
+          ]
+        }
+      ],
+      totalMatches: 3,
+      upcomingMatches: 1
+    };
+
+    res.json({
+      success: true,
+      data: calendar,
+      message: 'Demo kalendár načítaný (implementácia v príprave)'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri načítaní kalendára',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
+
+// Demo endpoint pre štatistiky (rozšírený pre FÁZU 4)
+app.get('/api/stats', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      // Základné štatistiky
+      totalArticles: 42,
+      publishedArticles: 38,
+      totalViews: 15847,
+      totalUsers: 12,
+      
+      // FÁZA 3 štatistiky
+      totalTeams: 6,
+      totalPlayers: 87,
+      totalStaff: 18,
+      
+      // FÁZA 4 štatistiky
+      totalLeagues: 4,
+      totalMatches: 24,
+      finishedMatches: 18,
+      upcomingMatches: 6,
+      totalGoals: 67,
+      totalCards: 23,
+      
+      lastUpdate: new Date().toISOString()
+    },
+    message: 'Demo štatistiky pre všetky fázy'
+  });
+});
+
+
+
+
+
+
+
+
+
 
 // ===== ERROR HANDLING =====
 
@@ -146,6 +274,27 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} nebola nájdená`,
+  });
+});
+
+// 404 handler pre API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint ${req.path} nebol nájdený`,
+    availableEndpoints: [
+      '/api/auth/*',
+      '/api/users/*', 
+      '/api/categories/*',
+      '/api/articles/*',
+      '/api/teams/*',
+      '/api/players/*',
+      '/api/staff/*',
+      '/api/leagues/*',
+      '/api/matches/*',
+      '/api/calendar/*',
+      '/api/stats'
+    ]
   });
 });
 
@@ -161,6 +310,55 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     error: process.env.NODE_ENV === 'development' 
       ? err.stack 
       : undefined
+  });
+
+    // Sequelize validation errors
+  if (err.name === 'SequelizeValidationError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validačná chyba',
+      errors: err.errors.map((e: any) => ({
+        field: e.path,
+        message: e.message,
+        value: e.value
+      }))
+    });
+  }
+
+// Sequelize foreign key constraint errors
+  if (err.name === 'SequelizeForeignKeyConstraintError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Neplatná referencia na súvisiaci záznam',
+      table: err.table || 'unknown',
+      field: err.fields || 'unknown'
+    });
+  }
+
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Neplatný autentifikačný token'
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Autentifikačný token vypršal'
+    });
+  }
+
+  // Všeobecná chyba
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'development' 
+      ? err.message 
+      : 'Interná chyba servera',
+    error: process.env.NODE_ENV === 'development' 
+      ? err.stack 
+      : undefined,
   });
 });
 
@@ -198,8 +396,12 @@ async function startServer() {
       console.log('   🏆 Teams:     /api/teams/*');
       console.log('   ⚽ Players:   /api/players/*');
       console.log('   👨‍💼 Staff:     /api/staff/*');
+      console.log('   🏆 Leagues:     /api/leagues/*');
+      console.log('   🤝 Matches:     /api/matches/*');
+      console.log('   📅 Calendar:    /api/calendar/*');
+      console.log('   📊 Stats:       /api/stats');
       console.log('');
-      console.log('🎯 FÁZA 3: Tímy, hráči a realizačný tím - PRIPRAVENÉ NA TESTOVANIE');
+      console.log('🎯 FÁZA 4 - Ligy, zápasy, štatistiky a kalendár');
     });
 
   } catch (error) {

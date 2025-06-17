@@ -1,12 +1,16 @@
 // backend/src/models/index.ts
-// Definícia vzťahov medzi všetkými modelmi - FÁZA 3 KOMPLETNÁ
+// Definícia vzťahov medzi všetkými modelmi - KOMPLETNÁ FÁZA 4
 
+import { Op } from 'sequelize';
 import User from './user';
 import Category from './Category';
 import Article from './Article';
 import Team from './Team';
 import Player from './Player';
 import Staff from './Staff';
+import Liga from './Liga';
+import Zapas from './Zapas';
+import ZapasStatistika from './ZapasStatistika';
 
 // ===== DEFINÍCIA VZŤAHOV MEDZI MODELMI =====
 
@@ -75,6 +79,80 @@ Staff.belongsTo(Team, {
   constraints: false,
 });
 
+// 4. LIGA vzťahy - FÁZA 4
+// Liga -> Zapasy (1:N) - liga má viacero zápasov
+Liga.hasMany(Zapas, {
+  foreignKey: 'liga_id',
+  as: 'zapasy',
+  onDelete: 'RESTRICT', // Nemožno vymazať ligu so zápasmi
+});
+
+Zapas.belongsTo(Liga, {
+  foreignKey: 'liga_id',
+  as: 'liga',
+});
+
+// 5. ZAPAS vzťahy - FÁZA 4
+// Zapas -> Team (domáci tím)
+Zapas.belongsTo(Team, {
+  foreignKey: 'domaci_tim_id',
+  as: 'domaci_tim',
+});
+
+Team.hasMany(Zapas, {
+  foreignKey: 'domaci_tim_id',
+  as: 'domace_zapasy',
+});
+
+// Zapas -> Team (hosťujúci tím)
+Zapas.belongsTo(Team, {
+  foreignKey: 'hostujuci_tim_id',
+  as: 'hostujuci_tim',
+});
+
+Team.hasMany(Zapas, {
+  foreignKey: 'hostujuci_tim_id',
+  as: 'hostujuce_zapasy',
+});
+
+// Zapas -> Article (voliteľné prepojenie na reportáž)
+Zapas.belongsTo(Article, {
+  foreignKey: 'clanok_id',
+  as: 'clanok',
+  constraints: false,
+});
+
+Article.hasOne(Zapas, {
+  foreignKey: 'clanok_id',
+  as: 'zapas',
+  constraints: false,
+});
+
+// 6. ZAPAS ŠTATISTIKY vzťahy - FÁZA 4
+// Zapas -> ZapasStatistika (1:N) - zápas má viacero štatistík
+Zapas.hasMany(ZapasStatistika, {
+  foreignKey: 'zapas_id',
+  as: 'statistiky',
+  onDelete: 'CASCADE', // Ak sa vymaže zápas, vymažú sa aj štatistiky
+});
+
+ZapasStatistika.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+});
+
+// Player -> ZapasStatistika (1:N) - hráč môže mať viacero štatistík
+Player.hasMany(ZapasStatistika, {
+  foreignKey: 'hrac_id',
+  as: 'statistiky',
+  onDelete: 'CASCADE', // Ak sa vymaže hráč, vymažú sa aj jeho štatistiky
+});
+
+ZapasStatistika.belongsTo(Player, {
+  foreignKey: 'hrac_id',
+  as: 'hrac',
+});
+
 // ===== EXPORT VŠETKÝCH MODELOV =====
 
 export {
@@ -84,6 +162,9 @@ export {
   Team,
   Player,
   Staff,
+  Liga,
+  Zapas,
+  ZapasStatistika,
 };
 
 // Export default objekt pre jednoduchší import
@@ -94,11 +175,14 @@ export default {
   Team,
   Player,
   Staff,
+  Liga,
+  Zapas,
+  ZapasStatistika,
 };
 
 // ===== HELPER FUNKCIE PRE VZŤAHY =====
 
-// Funkcia pre načítanie tímu s hráčmi a realizačným tímom
+// FÁZA 3 - Funkcie pre tímy a hráčov
 export const getTeamWithDetails = async (teamId: number) => {
   return await Team.findByPk(teamId, {
     include: [
@@ -114,13 +198,12 @@ export const getTeamWithDetails = async (teamId: number) => {
         as: 'realizacny_tim',
         where: { aktivity: true },
         required: false,
-        order: [['poradie', 'ASC']]
+        order: [['priezvisko', 'ASC']]
       }
     ]
   });
 };
 
-// Funkcia pre načítanie všetkých tímov s počtom hráčov
 export const getTeamsWithStats = async () => {
   return await Team.findAll({
     where: { aktivity: true },
@@ -128,112 +211,231 @@ export const getTeamsWithStats = async () => {
       {
         model: Player,
         as: 'hraci',
-        attributes: [],
         where: { aktivity: true },
-        required: false
+        required: false,
+        attributes: []
       },
       {
         model: Staff,
         as: 'realizacny_tim',
-        attributes: [],
         where: { aktivity: true },
-        required: false
+        required: false,
+        attributes: []
       }
     ],
-    attributes: {
-      include: [
-        // Počet aktívnych hráčov
-        [
-          require('sequelize').fn('COUNT', 
-            require('sequelize').fn('DISTINCT', 
-              require('sequelize').col('hraci.id')
-            )
-          ),
-          'pocet_hracov'
-        ],
-        // Počet členov realizačného tímu
-        [
-          require('sequelize').fn('COUNT', 
-            require('sequelize').fn('DISTINCT', 
-              require('sequelize').col('realizacny_tim.id')
-            )
-          ),
-          'pocet_realizacny_tim'
-        ]
-      ]
-    },
-    group: ['Team.id'],
-    order: [['poradie', 'ASC']]
+    order: [['poradie', 'ASC'], ['nazov', 'ASC']]
   });
 };
 
-// Funkcia pre vyhľadávanie hráčov naprieč tímami
-export const searchPlayers = async (searchTerm: string) => {
-  const { Op } = require('sequelize');
-  
-  return await Player.findAll({
+// FÁZA 4 - Funkcie pre ligy a zápasy
+export const getLeaguesWithStats = async () => {
+  return await Liga.findAll({
+    where: { aktivity: true },
+    include: [
+      {
+        model: Zapas,
+        as: 'zapasy',
+        where: { aktivity: true },
+        required: false,
+        attributes: []
+      }
+    ],
+    order: [['poradie', 'ASC'], ['nazov', 'ASC']]
+  });
+};
+
+export const getMatchWithDetails = async (zapasId: number) => {
+  return await Zapas.findByPk(zapasId, {
+    include: [
+      {
+        model: Liga,
+        as: 'liga',
+        attributes: ['id', 'nazov', 'sezona', 'typ']
+      },
+      {
+        model: Team,
+        as: 'domaci_tim',
+        attributes: ['id', 'nazov', 'vekova_kategoria']
+      },
+      {
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['id', 'nazov', 'vekova_kategoria']
+      },
+      {
+        model: Article,
+        as: 'clanok',
+        attributes: ['id', 'nazov', 'slug'],
+        required: false
+      },
+      {
+        model: ZapasStatistika,
+        as: 'statistiky',
+        where: { aktivity: true },
+        required: false,
+        include: [
+          {
+            model: Player,
+            as: 'hrac',
+            attributes: ['id', 'meno', 'priezvisko', 'cislo_dresu']
+          }
+        ],
+        order: [['minuta', 'ASC'], ['typ', 'ASC']]
+      }
+    ]
+  });
+};
+
+export const getMatchesByTeam = async (teamId: number, limit: number = 10) => {
+  return await Zapas.findAll({
     where: {
       aktivity: true,
       [Op.or]: [
-        { meno: { [Op.iLike]: `%${searchTerm}%` } },
-        { priezvisko: { [Op.iLike]: `%${searchTerm}%` } },
-        { pozicia: { [Op.iLike]: `%${searchTerm}%` } }
+        { domaci_tim_id: teamId },
+        { hostujuci_tim_id: teamId }
       ]
+    },
+    include: [
+      {
+        model: Liga,
+        as: 'liga',
+        attributes: ['nazov', 'sezona']
+      },
+      {
+        model: Team,
+        as: 'domaci_tim',
+        attributes: ['nazov']
+      },
+      {
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['nazov']
+      }
+    ],
+    order: [['datum_cas', 'DESC']],
+    limit
+  });
+};
+
+export const getMatchesByLeague = async (ligaId: number, limit: number = 20) => {
+  return await Zapas.findAll({
+    where: {
+      liga_id: ligaId,
+      aktivity: true
     },
     include: [
       {
         model: Team,
-        as: 'tim',
-        attributes: ['id', 'nazov', 'vekova_kategoria', 'typ']
-      }
-    ],
-    order: [['priezvisko', 'ASC'], ['meno', 'ASC']]
-  });
-};
-
-// Funkcia pre načítanie článkov s informáciami o autorovi a kategórii
-export const getArticlesWithDetails = async (limit = 10, offset = 0) => {
-  return await Article.findAndCountAll({
-    where: { status: 'published' },
-    include: [
-      {
-        model: User,
-        as: 'autor',
-        attributes: ['id', 'meno', 'email']
+        as: 'domaci_tim',
+        attributes: ['nazov']
       },
       {
-        model: Category,
-        as: 'kategoria',
-        attributes: ['id', 'nazov', 'slug', 'farba', 'ikona']
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['nazov']
       }
     ],
-    order: [['publikovany_datum', 'DESC']],
-    limit,
-    offset
+    order: [['datum_cas', 'DESC']],
+    limit
   });
 };
 
-// ===== TYPY PRE TYPESCRIPT =====
+export const getPlayerStats = async (playerId: number) => {
+  return await ZapasStatistika.findAll({
+    where: {
+      hrac_id: playerId,
+      aktivity: true
+    },
+    include: [
+      {
+        model: Zapas,
+        as: 'zapas',
+        attributes: ['nazov', 'datum_cas'],
+        include: [
+          {
+            model: Liga,
+            as: 'liga',
+            attributes: ['nazov']
+          }
+        ]
+      }
+    ],
+    order: [['vytvoreny', 'DESC']]
+  });
+};
 
-// Typ pre tím s detailmi
-export interface TeamWithDetails {
-  id: number;
-  nazov: string;
-  typ: string;
-  vekova_kategoria: string;
-  hraci?: Player[];
-  realizacny_tim?: Staff[];
-  pocet_hracov?: number;
-  pocet_realizacny_tim?: number;
-}
+export const getTopScorers = async (ligaId?: number, limit: number = 10) => {
+  const whereConditions: any = {
+    typ: 'gol',
+    aktivity: true
+  };
 
-// Typ pre hráča s tímom
-export interface PlayerWithTeam extends Player {
-  tim?: Team;
-}
+  const includeConditions: any[] = [
+    {
+      model: Player,
+      as: 'hrac',
+      attributes: ['id', 'meno', 'priezvisko', 'cislo_dresu']
+    },
+    {
+      model: Zapas,
+      as: 'zapas',
+      attributes: ['id'],
+      where: { aktivity: true }
+    }
+  ];
 
-// Typ pre článok s autormi a kategóriou
-export interface ArticleWithDetails extends Article {
-  autor?: User;
-  kategoria?: Category;
-}
+  if (ligaId) {
+    includeConditions[1].include = [
+      {
+        model: Liga,
+        as: 'liga',
+        where: { id: ligaId }
+      }
+    ];
+  }
+
+  return await ZapasStatistika.findAll({
+    where: whereConditions,
+    include: includeConditions,
+    attributes: [
+      'hrac_id',
+      [ZapasStatistika.sequelize?.fn('COUNT', '*') as any, 'goly_count']
+    ],
+    group: ['hrac_id', 'hrac.id'],
+    order: [[ZapasStatistika.sequelize?.col('goly_count') as any, 'DESC']],
+    limit
+  });
+};
+
+// Funkcia pre získanie kalendára zápasov
+export const getMatchCalendar = async (rok: number, mesiac: number) => {
+  const startDate = new Date(rok, mesiac - 1, 1);
+  const endDate = new Date(rok, mesiac, 0);
+
+  return await Zapas.findAll({
+    where: {
+      datum_cas: {
+        [Op.between]: [startDate, endDate]
+      },
+      aktivity: true
+    },
+    include: [
+      {
+        model: Liga,
+        as: 'liga',
+        attributes: ['nazov', 'typ']
+      },
+      {
+        model: Team,
+        as: 'domaci_tim',
+        attributes: ['nazov']
+      },
+      {
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['nazov']
+      }
+    ],
+    order: [['datum_cas', 'ASC']]
+  });
+};
