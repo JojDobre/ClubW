@@ -7,6 +7,9 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 const UserManagement = lazy(() => import('./UserManagement'));
 const CategoryManagement = lazy(() => import('./CategoryManagement'));
 const ArticleManagement = lazy(() => import('./ArticleManagement'));
+const TeamsManagement = lazy(() => import('./TeamsManagement'));
+const PlayersManagementAdmin = lazy(() => import('./PlayersManagementAdmin'));
+const StaffManagementAdmin = lazy(() => import('./StaffManagementAdmin'));
 
 interface User {
   id: number;
@@ -97,6 +100,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       order: 2
     },
     {
+    id: 'teams',
+    title: 'Tímy',
+    value: 0,
+    subtitle: 'Aktívnych tímov',
+    color: '#8b5cf6',
+    icon: '⚽',
+    enabled: true,
+    order: 3
+  },
+  {
+    id: 'players',
+    title: 'Hráči',
+    value: 0,
+    subtitle: 'Registrovaných hráčov',
+    color: '#f59e0b',
+    icon: '🏃',
+    enabled: true,
+    order: 4
+  },
+  {
+    id: 'staff',
+    title: 'Realizačný tím',
+    value: 0,
+    subtitle: 'Členov realizačného tímu',
+    color: '#ef4444',
+    icon: '👨‍💼',
+    enabled: true,
+    order: 5
+  },
+    {
       id: 'nextMatch',
       title: 'Najbližší zápas',
       value: 'Žiadny',
@@ -136,6 +169,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       order: 2
     },
     {
+    id: 'newTeam',
+    title: 'Nový tím',
+    icon: '⚽',
+    action: () => setCurrentPage('teams'),
+    enabled: true,
+    order: 3
+  },
+  {
+    id: 'newPlayer',
+    title: 'Nový hráč',
+    icon: '🏃',
+    action: () => setCurrentPage('players'),
+    enabled: true,
+    order: 4
+  },
+  {
+    id: 'newStaff',
+    title: 'Nový člen realizačného tímu',
+    icon: '👨‍💼',
+    action: () => setCurrentPage('staff'),
+    enabled: true,
+    order: 5
+  },
+    {
       id: 'viewWebsite',
       title: 'Zobraziť web',
       icon: '🌐',
@@ -159,7 +216,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     { id: 'articles', name: 'Články', icon: '📄', component: ArticleManagement, roles: ['admin', 'redaktor'] },
     { id: 'categories', name: 'Kategórie', icon: '🏷', component: CategoryManagement, roles: ['admin'] },
     { id: 'users', name: 'Používatelia', icon: '👥', component: UserManagement, roles: ['admin'] },
-    { id: 'teams', name: 'Tímy', icon: '⚽', roles: ['admin', 'trener'] },
+    { id: 'teams', name: 'Tímy', icon: '⚽', component: TeamsManagement, roles: ['admin', 'trener'] },
+    { id: 'players', name: 'Hráči', icon: '🏃', component: PlayersManagementAdmin, roles: ['admin', 'trener'] },
+    { id: 'staff', name: 'Realizačný tím', icon: '👨‍💼', component: StaffManagementAdmin, roles: ['admin', 'trener'] },
     { id: 'matches', name: 'Zápasy', icon: '🏆', roles: ['admin', 'redaktor'] },
     { id: 'settings', name: 'Nastavenia', icon: '⚙', roles: ['admin'] },
   ];
@@ -190,12 +249,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
+      // Načítanie tímov
+      const teamsResponse = await fetch('http://localhost:3000/api/teams', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Načítanie hráčov
+      const playersResponse = await fetch('http://localhost:3000/api/players', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Načítanie realizačného tímu
+      const staffResponse = await fetch('http://localhost:3000/api/staff', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         if (statsData.success) {
           setStats(statsData.data);
           updateDashboardCards(statsData.data);
         }
+      }
+
+      if (teamsResponse.ok) {
+      const teamsData = await teamsResponse.json();
+      setDashboardCards(prev => prev.map(card => 
+        card.id === 'teams' ? { ...card, value: teamsData.count || 0 } : card
+      ));
+      }
+
+      if (playersResponse.ok) {
+        const playersData = await playersResponse.json();
+        setDashboardCards(prev => prev.map(card => 
+          card.id === 'players' ? { ...card, value: playersData.count || 0 } : card
+        ));
+      }
+
+      if (staffResponse.ok) {
+        const staffData = await staffResponse.json();
+        setDashboardCards(prev => prev.map(card => 
+          card.id === 'staff' ? { ...card, value: staffData.count || 0 } : card
+        ));
       }
 
       // Fetch recent activities (mock for now)
