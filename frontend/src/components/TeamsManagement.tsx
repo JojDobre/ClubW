@@ -3,6 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { teamsApi, Team } from '../services/teamsApi';
+import PlayersManagementAdmin from './PlayersManagementAdmin';
+import StaffManagementAdmin from './StaffManagementAdmin';
 
 interface User {
   id: number;
@@ -313,10 +315,10 @@ const TeamsManagement: React.FC<TeamsManagementProps> = ({ currentUser }) => {
                         </span>
                       </td>
                       <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                        {team.stats?.pocet_hracov || 0}
+                        {team.pocet_hracov || 0}
                       </td>
                       <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                        {team.stats?.pocet_realizacneho_timu || 0}
+                        {team.pocet_realizacny_tim || 0}
                       </td>
                       <td style={{ padding: '16px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -420,26 +422,35 @@ const TeamForm: React.FC<TeamFormProps> = ({ team, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-      if (team) {
-        await teamsApi.updateTeam(team.id, formData);
-      } else {
-        await teamsApi.createTeam(formData);
-      }
+  try {
+    // ✅ OPRAVA: Neposielať prázdne stringy pre URL polia
+    const teamData = {
+      ...formData,
+      logo: formData.logo.trim() || undefined,
+      farba_prva: formData.farba_prva || undefined,
+      farba_druha: formData.farba_druha || undefined,
+      popis: formData.popis.trim() || undefined,
+    };
 
-      onSave();
-    } catch (err) {
-      console.error('Chyba pri ukladaní tímu:', err);
-      setError(err instanceof Error ? err.message : 'Chyba pri ukladaní tímu');
-    } finally {
-      setLoading(false);
+    if (team) {
+      await teamsApi.updateTeam(team.id, teamData);
+    } else {
+      await teamsApi.createTeam(teamData);
     }
-  };
+
+    onSave();
+  } catch (err) {
+    console.error('Chyba pri ukladaní tímu:', err);
+    setError(err instanceof Error ? err.message : 'Chyba pri ukladaní tímu');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{
@@ -656,7 +667,54 @@ interface TeamDetailProps {
   onUpdate: () => void;
 }
 
+
+
 const TeamDetail: React.FC<TeamDetailProps> = ({ team, onBack, onUpdate }) => {
+
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+const [showAddStaff, setShowAddStaff] = useState(false);
+const [showEditTeam, setShowEditTeam] = useState(false);
+const [editingPlayer, setEditingPlayer] = useState<any>(null);
+const [editingStaff, setEditingStaff] = useState<any>(null);
+
+const handleDeletePlayer = async (playerId: number) => {
+  if (!window.confirm('Naozaj chcete vymazať tohto hráča?')) return;
+  
+  try {
+    // Tu by bol API call na vymazanie hráča
+    // await playersApi.deletePlayer(playerId);
+    console.log('Vymazanie hráča:', playerId);
+    onUpdate(); // Obnovenie dát
+  } catch (err) {
+    console.error('Chyba pri mazaní hráča:', err);
+  }
+};
+
+const handleDeleteStaff = async (staffId: number) => {
+  if (!window.confirm('Naozaj chcete vymazať tohto člena realizačného tímu?')) return;
+  
+  try {
+    // Tu by bol API call na vymazanie staff
+    // await staffApi.deleteStaff(staffId);
+    console.log('Vymazanie staff:', staffId);
+    onUpdate(); // Obnovenie dát
+  } catch (err) {
+    console.error('Chyba pri mazaní člena realizačného tímu:', err);
+  }
+};
+
+const handleDeleteTeam = async () => {
+  if (!window.confirm('Naozaj chcete vymazať tento tím? Táto akcia je nevratná!')) return;
+  
+  try {
+    // Tu by bol API call na vymazanie tímu
+    console.log('Vymazanie tímu:', team.id);
+    onBack(); // Návrat na zoznam
+  } catch (err) {
+    console.error('Chyba pri mazaní tímu:', err);
+  }
+};
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('sk-SK');
   };
@@ -691,162 +749,306 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team, onBack, onUpdate }) => {
       </button>
 
       {/* Header */}
-      <div style={{
-        background: 'white',
-        padding: '24px',
-        borderRadius: '8px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '24px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-          {team.logo && (
-            <img 
-              src={team.logo} 
-              alt={`${team.nazov} logo`}
-              style={{ width: '60px', height: '60px', objectFit: 'contain' }}
-            />
-          )}
-          <div>
-            <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold', color: '#1e293b' }}>
-              {team.nazov}
-            </h1>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '16px' }}>
-              {team.vekova_kategoria} • {formatTeamType(team.typ)}
+        <div style={{
+          background: 'white',
+          padding: '24px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+            {team.logo && (
+              <img 
+                src={team.logo} 
+                alt={`${team.nazov} logo`}
+                style={{ width: '60px', height: '60px', objectFit: 'contain' }}
+              />
+            )}
+            <div style={{ flex: 1 }}>
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold', color: '#1e293b' }}>
+                {team.nazov}
+              </h1>
+              <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '16px' }}>
+                {team.vekova_kategoria} • {formatTeamType(team.typ)}
+              </p>
+              {/* Počítadlá */}
+              <div style={{ display: 'flex', gap: '24px', marginTop: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#3b82f6' }}>
+                    {team.hraci?.length || 0}
+                  </span>
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>hráčov</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981' }}>
+                    {team.realizacny_tim?.length || 0}
+                  </span>
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>členov realizačného tímu</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {team.popis && (
+            <p style={{ margin: 0, color: '#374151', lineHeight: '1.6' }}>
+              {team.popis}
             </p>
-          </div>
+          )}
         </div>
 
-        {team.popis && (
-          <p style={{ margin: 0, color: '#374151', lineHeight: '1.6' }}>
-            {team.popis}
-          </p>
-        )}
-      </div>
-
-      {/* Štatistiky */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
+        {/* Akcie */}
         <div style={{
           background: 'white',
           padding: '20px',
           borderRadius: '8px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          textAlign: 'center'
+          marginBottom: '24px'
         }}>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px' }}>
-            {team.hraci?.length || 0}
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>
+            Rýchle akcie
+          </h3>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowAddPlayer(true)}
+              style={{
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              ➕ Pridať hráča
+            </button>
+            <button
+              onClick={() => setShowAddStaff(true)}
+              style={{
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              ➕ Pridať člena realizačného tímu
+            </button>
+            <button
+              onClick={() => setShowEditTeam(true)}
+              style={{
+                background: '#fbbf24',
+                color: 'white',
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              ✏️ Upraviť tím
+            </button>
+            <button
+              onClick={() => handleDeleteTeam()}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              🗑️ Vymazať tím
+            </button>
           </div>
-          <div style={{ color: '#6b7280', fontSize: '14px' }}>Hráči</div>
         </div>
 
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981', marginBottom: '8px' }}>
-            {team.realizacny_tim?.length || 0}
-          </div>
-          <div style={{ color: '#6b7280', fontSize: '14px' }}>Realizačný tím</div>
-        </div>
-
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#8b5cf6', marginBottom: '8px' }}>
-            {formatDate(team.vytvoreny)}
-          </div>
-          <div style={{ color: '#6b7280', fontSize: '14px' }}>Vytvorený</div>
-        </div>
-      </div>
 
       {/* Hráči a realizačný tím */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
-        {/* Hráči */}
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>
-            Hráči ({team.hraci?.length || 0})
-          </h3>
-          
-          {team.hraci && team.hraci.length > 0 ? (
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {team.hraci.map((player) => (
-                <div key={player.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f1f5f9'
-                }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    background: player.cislo_dresu ? '#3b82f6' : '#e5e7eb',
-                    color: 'white',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {player.cislo_dresu || '?'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '500', fontSize: '14px' }}>
-                      {player.full_name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      {player.pozicia} • {player.vek} rokov
-                    </div>
-                  </div>
-                </div>
-              ))}
+       {/* Hráči */}
+<div style={{
+  background: 'white',
+  padding: '20px',
+  borderRadius: '8px',
+  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+}}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+      Hráči ({team.hraci?.length || 0})
+    </h3>
+    <button
+      onClick={() => setShowAddPlayer(true)}
+      style={{
+        background: '#3b82f6',
+        color: 'white',
+        border: 'none',
+        padding: '6px 12px',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '12px'
+      }}
+    >
+      ➕ Pridať
+    </button>
+  </div>
+  
+  {team.hraci && team.hraci.length > 0 ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {team.hraci.map((player) => (
+        <div 
+          key={player.id}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px',
+            background: '#f8fafc',
+            borderRadius: '6px',
+            border: '1px solid #e2e8f0'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              background: player.cislo_dresu ? '#3b82f6' : '#e5e7eb',
+              color: 'white',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {player.cislo_dresu || '?'}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚽</div>
-              <p style={{ margin: 0, fontSize: '14px' }}>Žiadni hráči</p>
+            <div>
+              <div style={{ fontWeight: '500', color: '#1e293b' }}>
+                {player.full_name}
+              </div>
+              <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                {player.pozicia} • {player.vek} rokov
+              </div>
             </div>
-          )}
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              onClick={() => {
+                setEditingPlayer(player);
+                setShowAddPlayer(true);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fbbf24',
+                cursor: 'pointer',
+                fontSize: '16px',
+                padding: '4px'
+              }}
+              title="Upraviť hráča"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => handleDeletePlayer(player.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ef4444',
+                cursor: 'pointer',
+                fontSize: '16px',
+                padding: '4px'
+              }}
+              title="Vymazať hráča"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
+      ))}
+    </div>
+  ) : (
+    <div style={{ 
+      textAlign: 'center', 
+      padding: '20px', 
+      color: '#6b7280',
+      background: '#f8fafc',
+      borderRadius: '6px',
+      border: '2px dashed #e2e8f0'
+    }}>
+      <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚽</div>
+      <p style={{ margin: 0 }}>Žiadni hráči</p>
+      <button
+        onClick={() => setShowAddPlayer(true)}
+        style={{
+          background: '#3b82f6',
+          color: 'white',
+          border: 'none',
+          padding: '8px 16px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '12px',
+          marginTop: '8px'
+        }}
+      >
+        Pridať prvého hráča
+      </button>
+    </div>
+  )}
+</div>
 
-        {/* Realizačný tím */}
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>
+      {/* Realizačný tím */}
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
             Realizačný tím ({team.realizacny_tim?.length || 0})
           </h3>
-          
-          {team.realizacny_tim && team.realizacny_tim.length > 0 ? (
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {team.realizacny_tim.map((staff) => (
-                <div key={staff.id} style={{
+          <button
+            onClick={() => setShowAddStaff(true)}
+            style={{
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            ➕ Pridať
+          </button>
+        </div>
+        
+        {team.realizacny_tim && team.realizacny_tim.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {team.realizacny_tim.map((staff) => (
+              <div 
+                key={staff.id}
+                style={{
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f1f5f9'
-                }}>
+                  padding: '12px',
+                  background: '#f0fdf4',
+                  borderRadius: '6px',
+                  border: '1px solid #dcfce7'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '32px',
                     height: '32px',
@@ -860,11 +1062,11 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team, onBack, onUpdate }) => {
                   }}>
                     👤
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '500', fontSize: '14px' }}>
+                  <div>
+                    <div style={{ fontWeight: '500', color: '#1e293b' }}>
                       {staff.full_name}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
                       {staff.funkcia}
                     </div>
                     {staff.ma_kontakt && (
@@ -891,17 +1093,206 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team, onBack, onUpdate }) => {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>👥</div>
-              <p style={{ margin: 0, fontSize: '14px' }}>Žiadny realizačný tím</p>
-            </div>
-          )}
-        </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => {
+                      setEditingStaff(staff);
+                      setShowAddStaff(true);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#fbbf24',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '4px'
+                    }}
+                    title="Upraviť člena"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeleteStaff(staff.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '4px'
+                    }}
+                    title="Vymazať člena"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '20px', 
+            color: '#6b7280',
+            background: '#f0fdf4',
+            borderRadius: '6px',
+            border: '2px dashed #dcfce7'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>👨‍💼</div>
+            <p style={{ margin: 0 }}>Žiadni členovia realizačného tímu</p>
+            <button
+              onClick={() => setShowAddStaff(true)}
+              style={{
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                marginTop: '8px'
+              }}
+            >
+              Pridať prvého člena
+            </button>
+          </div>
+        )}
       </div>
+      </div>
+      {/* Modaly pre pridanie/úpravu */}
+{showAddPlayer && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '16px',
+    zIndex: 1000
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      position: 'relative'
+    }}>
+      <button
+        onClick={() => {
+          setShowAddPlayer(false);
+          setEditingPlayer(null);
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '30px',
+          height: '30px',
+          cursor: 'pointer',
+          zIndex: 1001
+        }}
+      >
+        ✕
+      </button>
+      {/* ✅ CELÝ EXISTUJÚCI KOMPONENT */}
+      <PlayersManagementAdmin 
+        currentUser={{ 
+          id: 1, 
+          meno: 'Admin', 
+          email: 'admin@example.com', 
+          rola: 'admin',
+          aktivity: true,
+          posledne_prihlasenie: null,
+          vytvoreny: '',
+          aktualizovany: ''
+        }} 
+      />
     </div>
+  </div>
+)}
+
+{showAddStaff && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '16px',
+    zIndex: 1000
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      position: 'relative'
+    }}>
+      <button
+        onClick={() => {
+          setShowAddStaff(false);
+          setEditingStaff(null);
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '30px',
+          height: '30px',
+          cursor: 'pointer',
+          zIndex: 1001
+        }}
+      >
+        ✕
+      </button>
+      {/* ✅ CELÝ EXISTUJÚCI KOMPONENT */}
+      <StaffManagementAdmin 
+        currentUser={{ 
+          id: 1, 
+          meno: 'Admin', 
+          email: 'admin@example.com', 
+          rola: 'admin',
+          aktivity: true,
+          posledne_prihlasenie: null,
+          vytvoreny: '',
+          aktualizovany: ''
+        }} 
+      />
+    </div>
+  </div>
+)}
+
+      {showEditTeam && (
+        <TeamForm
+          team={team}
+          onClose={() => setShowEditTeam(false)}
+          onSave={() => {
+            setShowEditTeam(false);
+            onUpdate();
+          }}
+        />
+      )}
+    </div>
+
+    
   );
 };
 

@@ -1,9 +1,9 @@
 // frontend/src/services/teamsApi.ts
-// API service pre komunikáciu s backend Teams API
+// OPRAVENÉ API service pre komunikáciu s backend Teams API
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
-// Interfaces pre Teams API
+// OPRAVENÉ Interfaces pre Teams API
 export interface Team {
   id: number;
   nazov: string;
@@ -18,15 +18,17 @@ export interface Team {
   aktivity: boolean;
   vytvoreny: string;
   aktualizovany: string;
+  
   // Vypočítané hodnoty
   full_name: string;
+  
+  // OPRAVENÉ: Štatistiky sa vracajú priamo na úrovni objektu (nie vnútri stats)
+  pocet_hracov?: number;         // Backend vracia tieto hodnoty priamo
+  pocet_realizacny_tim?: number; // Backend vracia tieto hodnoty priamo
+  
   // Voliteľné - ak sú includované
   hraci?: Player[];
   realizacny_tim?: Staff[];
-  stats?: {
-    pocet_hracov: number;
-    pocet_realizacneho_timu: number;
-  };
 }
 
 export interface Player {
