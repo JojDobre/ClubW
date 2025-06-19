@@ -7,7 +7,8 @@ import {
   getMatch,
   createMatch,
   updateMatch,
-  deleteMatch
+  deleteMatch,
+  updateMatchStatuses
 } from '../controllers/ZapasController';
 
 const router = express.Router();
@@ -65,5 +66,12 @@ router.put('/:id', updateMatch);
  * @todo Pridať autentifikačný middleware
  */
 router.delete('/:id', deleteMatch);
+
+/**
+ * @route PUT /api/matches/update-statuses
+ * @desc Automatická aktualizácia statusov všetkých zápasov
+ * @access Private (Admin)
+ */
+router.put('/update-statuses', updateMatchStatuses);
 
 export default router;

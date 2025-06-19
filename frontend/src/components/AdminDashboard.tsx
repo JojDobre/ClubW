@@ -10,6 +10,8 @@ const ArticleManagement = lazy(() => import('./ArticleManagement'));
 const TeamsManagement = lazy(() => import('./TeamsManagement'));
 const PlayersManagementAdmin = lazy(() => import('./PlayersManagementAdmin'));
 const StaffManagementAdmin = lazy(() => import('./StaffManagementAdmin'));
+const LigaManagement = lazy(() => import('./LigaManagement'));
+const ZapasManagement = lazy(() => import('./ZapasManagement'));
 
 interface User {
   id: number;
@@ -148,6 +150,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       icon: '👥',
       enabled: true,
       order: 4
+    },
+    {
+      id: 'ligy',
+      title: 'Ligy',
+      value: 0,
+      subtitle: 'Aktívnych súťaží',
+      color: '#10b981',
+      icon: '🏆',
+      enabled: true,
+      order: 5
+    },
+    {
+      id: 'zapasy',
+      title: 'Zápasy',
+      value: 0,
+      subtitle: 'V tejto sezóne',
+      color: '#6366f1',
+      icon: '⚔️',
+      enabled: true,
+      order: 6
+    },
+    {
+      id: 'next_match',
+      title: 'Najbližší zápas',
+      value: 'Načítavam...',
+      subtitle: '',
+      color: '#f97316',
+      icon: '📅',
+      enabled: true,
+      order: 7
     }
   ]);
 
@@ -207,7 +239,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       action: () => alert('Štatistiky - pripravuje sa'),
       enabled: false,
       order: 4
-    }
+    },
+    {
+      id: 'newLiga',
+      title: 'Nová liga',
+      icon: '🏆',
+      action: () => setCurrentPage('ligy'),
+      enabled: true,
+      order: 6
+    },
+    {
+      id: 'newZapas',
+      title: 'Nový zápas',
+      icon: '⚔️',
+      action: () => setCurrentPage('zapasy'),
+      enabled: true,
+      order: 7
+    },
+    
+    {
+      id: 'viewWebsite',
+      title: 'Zobraziť web',
+      icon: '🌐',
+      action: () => window.open('/clanky', '_blank'),
+      enabled: true,
+      order: 8
+    },
   ]);
 
   // Menu items
@@ -219,7 +276,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     { id: 'teams', name: 'Tímy', icon: '⚽', component: TeamsManagement, roles: ['admin', 'trener'] },
     { id: 'players', name: 'Hráči', icon: '🏃', component: PlayersManagementAdmin, roles: ['admin', 'trener'] },
     { id: 'staff', name: 'Realizačný tím', icon: '👨‍💼', component: StaffManagementAdmin, roles: ['admin', 'trener'] },
-    { id: 'matches', name: 'Zápasy', icon: '🏆', roles: ['admin', 'redaktor'] },
+        
+    { id: 'ligy', name: 'Ligy & Súťaže', icon: '🏆', component: LigaManagement, roles: ['admin', 'trener'] },
+    { id: 'zapasy', name: 'Zápasy', icon: '⚔️', component: ZapasManagement, roles: ['admin', 'trener'] },
+    { id: 'kalendar', name: 'Kalendár', icon: '📅', roles: ['admin', 'trener', 'redaktor'] }, 
+    { id: 'statistiky', name: 'Štatistiky', icon: '📊', roles: ['admin', 'trener'] },
+    
     { id: 'settings', name: 'Nastavenia', icon: '⚙', roles: ['admin'] },
   ];
 
@@ -263,6 +325,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       const staffResponse = await fetch('http://localhost:3000/api/staff', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      // OPRAVENÉ: Načítanie lig - správny endpoint
+      const ligyResponse = await fetch('http://localhost:3000/api/leagues', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Načítanie zápasov
+      const zapasyResponse = await fetch('http://localhost:3000/api/zapasy/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
@@ -273,10 +345,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       }
 
       if (teamsResponse.ok) {
-      const teamsData = await teamsResponse.json();
-      setDashboardCards(prev => prev.map(card => 
-        card.id === 'teams' ? { ...card, value: teamsData.count || 0 } : card
-      ));
+        const teamsData = await teamsResponse.json();
+        setDashboardCards(prev => prev.map(card => 
+          card.id === 'teams' ? { ...card, value: teamsData.count || 0 } : card
+        ));
       }
 
       if (playersResponse.ok) {
@@ -290,6 +362,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
         const staffData = await staffResponse.json();
         setDashboardCards(prev => prev.map(card => 
           card.id === 'staff' ? { ...card, value: staffData.count || 0 } : card
+        ));
+      }
+
+      // OPRAVENÉ: Správne spracovanie odpovede z líg
+      if (ligyResponse.ok) {
+        const ligyData = await ligyResponse.json();
+        setDashboardCards(prev => prev.map(card => 
+          card.id === 'ligy' ? { ...card, value: ligyData.count || 0 } : card
+        ));
+      }
+
+      if (zapasyResponse.ok) {
+        const zapasyData = await zapasyResponse.json();
+        setDashboardCards(prev => prev.map(card => 
+          card.id === 'zapasy' ? { ...card, value: zapasyData.total || 0 } : card
         ));
       }
 

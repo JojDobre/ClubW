@@ -56,7 +56,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minút
-  max: 100, // max 100 requestov na IP za 15 minút
+  max: 500, // max 500 requestov na IP za 15 minút
   message: {
     success: false,
     message: 'Príliš veľa requestov, skúste neskôr.'

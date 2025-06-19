@@ -1,5 +1,7 @@
+// Nahraď celý kalendarController.ts súbor
+
 // backend/src/controllers/kalendarController.ts
-// Controller pre kalendár zápasov - FÁZA 4
+// Controller pre kalendár zápasov - FÁZA 4 (KOMPLETNÝ)
 
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
@@ -58,6 +60,15 @@ const getWeekDates = (rok: number, mesiac: number, den: number) => {
   
   return { startDate, endDate };
 };
+
+// Helper funkcia pre číslo týždňa
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
 
 // Formátovanie zápasu pre kalendár
 const formatMatchForCalendar = (zapas: any) => {
@@ -138,17 +149,20 @@ export const getMonthCalendar = async (req: Request, res: Response): Promise<voi
         {
           model: Liga,
           as: 'liga',
-          attributes: ['id', 'nazov', 'typ']
+          attributes: ['id', 'nazov', 'typ'],
+          required: false
         },
         {
           model: Team,
           as: 'domaci_tim',
-          attributes: ['id', 'nazov']
+          attributes: ['id', 'nazov'],
+          required: false
         },
         {
           model: Team,
           as: 'hostujuci_tim',
-          attributes: ['id', 'nazov']
+          attributes: ['id', 'nazov'],
+          required: false
         }
       ],
       order: [['datum_cas', 'ASC']]
@@ -167,27 +181,26 @@ export const getMonthCalendar = async (req: Request, res: Response): Promise<voi
     });
 
     // Informácie o mesiaci
-    const monthInfo = {
-      rok: validation.rok,
-      mesiac: validation.mesiac,
-      nazov_mesiaca: new Date(validation.rok, validation.mesiac - 1).toLocaleDateString('sk-SK', { 
-        month: 'long', 
-        year: 'numeric' 
-      }),
-      pocet_dni: new Date(validation.rok, validation.mesiac, 0).getDate(),
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString()
-    };
+    const monthNames = [
+      'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+      'Júl', 'August', 'September', 'Október', 'November', 'December'
+    ];
 
     res.json({
       success: true,
       data: {
-        month_info: monthInfo,
         calendar: calendarData,
-        matches: formattedMatches,
-        total_matches: formattedMatches.length
+        month_info: {
+          rok: validation.rok,
+          mesiac: validation.mesiac,
+          nazov_mesiaca: monthNames[validation.mesiac - 1],
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        },
+        total_matches: formattedMatches.length,
+        filters: { liga_id, tim_id }
       },
-      message: `Kalendár pre ${monthInfo.nazov_mesiaca} - ${formattedMatches.length} zápasov`
+      message: `Kalendár pre ${monthNames[validation.mesiac - 1]} ${validation.rok}`
     });
 
   } catch (error) {
@@ -207,19 +220,25 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
     const { liga_id, tim_id } = req.query;
 
     // Validácia parametrov
-    const rokNum = parseInt(rok);
-    const mesiacNum = parseInt(mesiac);
-    const denNum = parseInt(den);
-
-    if (isNaN(rokNum) || isNaN(mesiacNum) || isNaN(denNum)) {
+    const validation = validateYearMonth(rok, mesiac);
+    if (!validation.valid) {
       res.status(400).json({
         success: false,
-        message: 'Neplatné parametre dátumu'
+        message: validation.error
       });
       return;
     }
 
-    const { startDate, endDate } = getWeekDates(rokNum, mesiacNum, denNum);
+    const denNum = parseInt(den);
+    if (isNaN(denNum) || denNum < 1 || denNum > 31) {
+      res.status(400).json({
+        success: false,
+        message: 'Deň musí byť medzi 1-31'
+      });
+      return;
+    }
+
+    const { startDate, endDate } = getWeekDates(validation.rok, validation.mesiac, denNum);
 
     // Základné filter podmienky
     const whereConditions: any = {
@@ -248,23 +267,26 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
         {
           model: Liga,
           as: 'liga',
-          attributes: ['id', 'nazov', 'typ']
+          attributes: ['id', 'nazov', 'typ'],
+          required: false
         },
         {
           model: Team,
           as: 'domaci_tim',
-          attributes: ['id', 'nazov']
+          attributes: ['id', 'nazov'],
+          required: false
         },
         {
           model: Team,
           as: 'hostujuci_tim',
-          attributes: ['id', 'nazov']
+          attributes: ['id', 'nazov'],
+          required: false
         }
       ],
       order: [['datum_cas', 'ASC']]
     });
 
-    // Zoskupenie zápasov podľa dní
+    // Zoskupenie zápasov podle dní
     const calendarData: { [key: string]: any[] } = {};
     const formattedMatches = zapasy.map(formatMatchForCalendar);
 
@@ -276,24 +298,20 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
       calendarData[dateKey].push(zapas);
     });
 
-    // Informácie o týždni
-    const weekInfo = {
-      start_date: startDate.toISOString(),
-      end_date: endDate.toISOString(),
-      week_start: startDate.toLocaleDateString('sk-SK'),
-      week_end: endDate.toLocaleDateString('sk-SK'),
-      week_number: getWeekNumber(startDate)
-    };
-
     res.json({
       success: true,
       data: {
-        week_info: weekInfo,
         calendar: calendarData,
-        matches: formattedMatches,
-        total_matches: formattedMatches.length
+        week_info: {
+          week_start: startDate.toLocaleDateString('sk-SK'),
+          week_end: endDate.toLocaleDateString('sk-SK'),
+          week_number: getWeekNumber(new Date(validation.rok, validation.mesiac - 1, denNum)),
+          target_date: `${validation.rok}-${validation.mesiac.toString().padStart(2, '0')}-${denNum.toString().padStart(2, '0')}`
+        },
+        total_matches: formattedMatches.length,
+        filters: { liga_id, tim_id }
       },
-      message: `Týždenný kalendár ${weekInfo.week_start} - ${weekInfo.week_end} - ${formattedMatches.length} zápasov`
+      message: `Týždenný kalendár pre ${startDate.toLocaleDateString('sk-SK')} - ${endDate.toLocaleDateString('sk-SK')}`
     });
 
   } catch (error) {
@@ -306,80 +324,145 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
   }
 };
 
-// GET /api/calendar/upcoming - Nadchádzajúce zápasy
+// GET /api/calendar/upcoming - Nadchádzajúce zápasy + bez výsledku
 export const getUpcomingMatches = async (req: Request, res: Response): Promise<void> => {
   try {
     const { limit = '10', liga_id, tim_id } = req.query;
     const limitNum = parseInt(limit as string) || 10;
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
-    // Základné filter podmienky
-    const whereConditions: any = {
+    // Základné filter podmienky pre nadchádzajúce zápasy
+    const upcomingConditions: any = {
       datum_cas: {
-        [Op.gte]: new Date() // Len budúce zápasy
+        [Op.gte]: now // Zápasy v budúcnosti
       },
       aktivity: true
     };
 
-    // Filter podľa ligy
+    // Základné filter podmienky pre zápasy bez výsledku (ukončené ale bez skóre)
+    const withoutResultConditions: any = {
+      datum_cas: {
+        [Op.lt]: twoHoursAgo // Zápasy staršie ako 2 hodiny
+      },
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { goly_domaci: null },
+            { goly_hostia: null }
+          ]
+        }
+      ],
+      status: {
+        [Op.notIn]: ['zruseny', 'odlozeny'] // Vylúč zrušené/odložené
+      },
+      aktivity: true
+    };
+
+    // Pridaj filter podľa ligy ak je zadaný
     if (liga_id && !isNaN(Number(liga_id))) {
-      whereConditions.liga_id = Number(liga_id);
+      upcomingConditions.liga_id = Number(liga_id);
+      withoutResultConditions.liga_id = Number(liga_id);
     }
 
-    // Filter podľa tímu
+    // Pridaj filter podľa tímu ak je zadaný
     if (tim_id && !isNaN(Number(tim_id))) {
-      whereConditions[Op.or] = [
-        { domaci_tim_id: Number(tim_id) },
-        { hostujuci_tim_id: Number(tim_id) }
+      const teamFilter = {
+        [Op.or]: [
+          { domaci_tim_id: Number(tim_id) },
+          { hostujuci_tim_id: Number(tim_id) }
+        ]
+      };
+      upcomingConditions[Op.and] = [teamFilter];
+      withoutResultConditions[Op.and] = [
+        withoutResultConditions[Op.and][0], // Ponechaj existujúce AND podmienky
+        teamFilter
       ];
     }
 
-    const zapasy = await Zapas.findAll({
-      where: whereConditions,
-      include: [
-        {
-          model: Liga,
-          as: 'liga',
-          attributes: ['id', 'nazov', 'typ']
-        },
-        {
-          model: Team,
-          as: 'domaci_tim',
-          attributes: ['id', 'nazov']
-        },
-        {
-          model: Team,
-          as: 'hostujuci_tim',
-          attributes: ['id', 'nazov']
-        }
-      ],
-      order: [['datum_cas', 'ASC']],
-      limit: limitNum
+    const includeOptions = [
+      {
+        model: Liga,
+        as: 'liga',
+        attributes: ['id', 'nazov', 'typ'],
+        required: false
+      },
+      {
+        model: Team,
+        as: 'domaci_tim',
+        attributes: ['id', 'nazov'],
+        required: false
+      },
+      {
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['id', 'nazov'],
+        required: false
+      }
+    ];
+
+    // Načítaj oba typy zápasov paralelne
+    const [upcomingMatches, matchesWithoutResult] = await Promise.all([
+      Zapas.findAll({
+        where: upcomingConditions,
+        include: includeOptions,
+        order: [['datum_cas', 'ASC']],
+        limit: Math.ceil(limitNum / 2) // Polovica limitu pre nadchádzajúce
+      }),
+      Zapas.findAll({
+        where: withoutResultConditions,
+        include: includeOptions,
+        order: [['datum_cas', 'DESC']], // Najnovšie ukončené najprv
+        limit: Math.ceil(limitNum / 2) // Polovica limitu pre bez výsledku
+      })
+    ]);
+
+    // Skombiuj a formátuj výsledky
+    const allMatches = [...upcomingMatches, ...matchesWithoutResult];
+    const formattedMatches = allMatches.map(zapas => {
+      const formatted = formatMatchForCalendar(zapas);
+      return {
+        ...formatted,
+        // Pridaj informáciu o type zápasu pre frontend
+        match_type: upcomingMatches.includes(zapas) ? 'upcoming' : 'without_result',
+        actual_status: zapas.getActualStatus ? zapas.getActualStatus() : zapas.status,
+        needs_result: !zapas.hasVysledok ? zapas.hasVysledok() : 
+                     (zapas.goly_domaci === null || zapas.goly_hostia === null)
+      };
     });
 
-    const formattedMatches = zapasy.map(formatMatchForCalendar);
+    // Zoraď kombinované výsledky - najprv bez výsledku, potom nadchádzajúce
+    formattedMatches.sort((a, b) => {
+      if (a.match_type === 'without_result' && b.match_type === 'upcoming') return -1;
+      if (a.match_type === 'upcoming' && b.match_type === 'without_result') return 1;
+      
+      if (a.match_type === 'without_result' && b.match_type === 'without_result') {
+        return new Date(b.datum_cas).getTime() - new Date(a.datum_cas).getTime(); // Najnovšie najprv
+      }
+      
+      return new Date(a.datum_cas).getTime() - new Date(b.datum_cas).getTime(); // Najskoršie najprv
+    });
+
+    // Obmedz na požadovaný limit
+    const limitedMatches = formattedMatches.slice(0, limitNum);
 
     res.json({
       success: true,
-      data: formattedMatches,
-      count: formattedMatches.length,
-      message: `Nadchádzajúcich ${formattedMatches.length} zápasov`
+      data: limitedMatches,
+      count: limitedMatches.length,
+      breakdown: {
+        upcoming: formattedMatches.filter(m => m.match_type === 'upcoming').length,
+        without_result: formattedMatches.filter(m => m.match_type === 'without_result').length
+      },
+      message: `${limitedMatches.length} zápasov (nadchádzajúce + bez výsledku)`
     });
 
   } catch (error) {
-    console.error('Chyba pri načítaní nadchádzajúcich zápasov:', error);
+    console.error('Chyba pri načítaní nadchádzajúcih zápasov:', error);
     res.status(500).json({
       success: false,
-      message: 'Chyba servera pri načítaní nadchádzajúcich zápasov',
+      message: 'Chyba servera pri načítaní nadchádzajúcih zápasov',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
-
-// Helper funkcia pre číslo týždňa
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-}

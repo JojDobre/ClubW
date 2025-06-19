@@ -1,5 +1,5 @@
 // backend/src/models/Zapas.ts
-// Model pre zápasy - FÁZA 4
+// Model pre zápasy - FÁZA 4 (OPRAVENÝ)
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
@@ -8,12 +8,21 @@ import sequelize from '../config/database';
 interface ZapasAttributes {
   id: number;
   nazov: string;
-  liga_id: number;
+  
+  // Liga môže byť z databázy alebo custom
+  liga_id?: number | null;
+  liga_nazov?: string | null;
+  
   kolo?: string | null;
   datum_cas: Date;
   miesto?: string | null;
-  domaci_tim_id: number;
-  hostujuci_tim_id: number;
+  
+  // Tímy môžu byť z databázy alebo custom
+  domaci_tim_id?: number | null;
+  domaci_tim_nazov?: string | null;
+  hostujuci_tim_id?: number | null;
+  hostujuci_tim_nazov?: string | null;
+  
   goly_domaci?: number | null;
   goly_hostia?: number | null;
   status: 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny';
@@ -21,25 +30,38 @@ interface ZapasAttributes {
   poznamky?: string | null;
   video_url?: string | null;
   clanok_id?: number | null;
-  galeria_id?: number | null;
+  fotogaleria_id?: number | null;
   aktivity: boolean;
   vytvoreny: Date;
   aktualizovany: Date;
 }
 
 // Interface pre vytvorenie nového Zápasu (bez automatických polí)
-interface ZapasCreationAttributes extends Optional<ZapasAttributes, 'id' | 'kolo' | 'miesto' | 'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' | 'clanok_id' | 'galeria_id' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+interface ZapasCreationAttributes extends Optional<ZapasAttributes, 
+  'id' | 'liga_id' | 'liga_nazov' | 'kolo' | 'miesto' | 
+  'domaci_tim_id' | 'domaci_tim_nazov' | 'hostujuci_tim_id' | 'hostujuci_tim_nazov' | 
+  'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' | 
+  'clanok_id' | 'fotogaleria_id' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Trieda pre model Zapas
 class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements ZapasAttributes {
   public id!: number;
   public nazov!: string;
-  public liga_id!: number;
+  
+  // Liga handling
+  public liga_id!: number | null;
+  public liga_nazov!: string | null;
+  
   public kolo!: string | null;
   public datum_cas!: Date;
   public miesto!: string | null;
-  public domaci_tim_id!: number;
-  public hostujuci_tim_id!: number;
+  
+  // Tím handling
+  public domaci_tim_id!: number | null;
+  public domaci_tim_nazov!: string | null;
+  public hostujuci_tim_id!: number | null;
+  public hostujuci_tim_nazov!: string | null;
+  
   public goly_domaci!: number | null;
   public goly_hostia!: number | null;
   public status!: 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny';
@@ -47,7 +69,7 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public poznamky!: string | null;
   public video_url!: string | null;
   public clanok_id!: number | null;
-  public galeria_id!: number | null;
+  public fotogaleria_id!: number | null;
   public aktivity!: boolean;
   public vytvoreny!: Date;
   public aktualizovany!: Date;
@@ -57,7 +79,31 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public domaci_tim?: any;
   public hostujuci_tim?: any;
   public clanok?: any;
-  public galeria?: any;
+  public fotogaleria?: any;
+
+  // Helper method - vracia názov ligy (databáza alebo custom)
+  public getLigaNazov(): string | null {
+    if (this.liga?.nazov) {
+      return this.liga.nazov;
+    }
+    return this.liga_nazov;
+  }
+
+  // Helper method - vracia názov domáceho tímu
+  public getDomaciTimNazov(): string | null {
+    if (this.domaci_tim?.nazov) {
+      return this.domaci_tim.nazov;
+    }
+    return this.domaci_tim_nazov;
+  }
+
+  // Helper method - vracia názov hosťujúceho tímu
+  public getHostujuciTimNazov(): string | null {
+    if (this.hostujuci_tim?.nazov) {
+      return this.hostujuci_tim.nazov;
+    }
+    return this.hostujuci_tim_nazov;
+  }
 
   // Helper method - vracia výsledok zápasu
   public getVysledok(): string {
@@ -69,16 +115,40 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
 
   // Helper method - vracia názov zápasu s výsledkom
   public getFullName(): string {
+    const domaciNazov = this.getDomaciTimNazov() || 'Neznámy tím';
+    const hostujuciNazov = this.getHostujuciTimNazov() || 'Neznámy tím';
     const vysledok = this.getVysledok();
+    
     if (vysledok === '-:-') {
-      return this.nazov;
+      return `${domaciNazov} vs ${hostujuciNazov}`;
     }
-    return `${this.nazov} (${vysledok})`;
+    return `${domaciNazov} vs ${hostujuciNazov} (${vysledok})`;
   }
 
-  // Helper method - kontroluje či je zápas ukončený
-  public isUkonceny(): boolean {
-    return this.status === 'ukonceny';
+  // Helper method - vracia automatický status na základe času
+  public getAutoStatus(): 'naplanovany' | 'prebieha' | 'ukonceny' {
+    const now = new Date();
+    const matchTime = new Date(this.datum_cas);
+    const twoHoursAfter = new Date(matchTime.getTime() + 2 * 60 * 60 * 1000);
+
+    if (matchTime > now) {
+      return 'naplanovany';
+    } else if (now <= twoHoursAfter) {
+      return 'prebieha';
+    } else {
+      return 'ukonceny';
+    }
+  }
+
+  // Helper method - vracia skutočný status (auto alebo manuálny)
+  public getActualStatus(): 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny' {
+    // Ak je status manuálne nastavený na zrušený/odložený, ponechaj to
+    if (this.status === 'zruseny' || this.status === 'odlozeny') {
+      return this.status;
+    }
+    
+    // Inak použij automatický status
+    return this.getAutoStatus();
   }
 
   // Helper method - kontroluje či má zápas výsledok
@@ -101,21 +171,14 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
     }
   }
 
-  // Helper method - kontroluje či je zápas v budúcnosti
-  public isBuduci(): boolean {
-    return this.datum_cas > new Date();
+  // Helper method - kontroluje či je tím z databázy alebo custom
+  public hasDbTeams(): boolean {
+    return this.domaci_tim_id !== null && this.hostujuci_tim_id !== null;
   }
 
-  // Helper method - vracia status čitateľne
-  public getStatusName(): string {
-    const statusNames = {
-      'naplanovany': 'Naplánovaný',
-      'prebieha': 'Prebieha',
-      'ukonceny': 'Ukončený',
-      'odlozeny': 'Odložený',
-      'zruseny': 'Zrušený'
-    };
-    return statusNames[this.status] || this.status;
+  // Helper method - kontroluje či je liga z databázy alebo custom  
+  public hasDbLiga(): boolean {
+    return this.liga_id !== null;
   }
 
   // Helper method pre JSON response (bez citlivých dát)
@@ -124,28 +187,33 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
       id: this.id,
       nazov: this.nazov,
       liga_id: this.liga_id,
+      liga_nazov: this.liga_nazov,
       kolo: this.kolo,
       datum_cas: this.datum_cas,
       miesto: this.miesto,
       domaci_tim_id: this.domaci_tim_id,
+      domaci_tim_nazov: this.domaci_tim_nazov,
       hostujuci_tim_id: this.hostujuci_tim_id,
+      hostujuci_tim_nazov: this.hostujuci_tim_nazov,
       goly_domaci: this.goly_domaci,
       goly_hostia: this.goly_hostia,
       status: this.status,
+      actual_status: this.getActualStatus(), // PRIDANÉ: skutočný status
       pocet_divakov: this.pocet_divakov,
       poznamky: this.poznamky,
       video_url: this.video_url,
       clanok_id: this.clanok_id,
-      galeria_id: this.galeria_id,
+      fotogaleria_id: this.fotogaleria_id,
       aktivity: this.aktivity,
-      // Helper fields
+      // Computed properties
       vysledok: this.getVysledok(),
-      full_name: this.getFullName(),
-      is_ukonceny: this.isUkonceny(),
-      has_vysledok: this.hasVysledok(),
       vitaz: this.getVitaz(),
-      is_buduci: this.isBuduci(),
-      status_name: this.getStatusName(),
+      full_name: this.getFullName(),
+      has_db_teams: this.hasDbTeams(),
+      has_db_liga: this.hasDbLiga(),
+      liga_display_name: this.getLigaNazov(),
+      domaci_tim_display_name: this.getDomaciTimNazov(),
+      hostujuci_tim_display_name: this.getHostujuciTimNazov(),
       vytvoreny: this.vytvoreny,
       aktualizovany: this.aktualizovany,
     };
@@ -168,59 +236,106 @@ Zapas.init(
         len: [5, 200],
       },
     },
+    // Liga handling - buď ID alebo custom názov
     liga_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'ligy',
         key: 'id',
+      },
+      validate: {
+        customLigaValidation(value: any) {
+          // Aspoň jeden z týchto polí musí byť vyplnený
+          if (!value && !this.liga_nazov) {
+            throw new Error('Liga ID alebo Liga názov musí byť zadaný');
+          }
+        }
+      }
+    },
+    liga_nazov: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      validate: {
+        len: [2, 100],
       },
     },
     kolo: {
       type: DataTypes.STRING(50),
       allowNull: true,
+      validate: {
+        len: [1, 50],
+      },
     },
     datum_cas: {
       type: DataTypes.DATE,
       allowNull: false,
       validate: {
+        notEmpty: true,
         isDate: true,
       },
     },
     miesto: {
-      type: DataTypes.STRING(200),
+      type: DataTypes.STRING(100),
       allowNull: true,
-    },
-    domaci_tim_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'timy',
-        key: 'id',
+      validate: {
+        len: [2, 100],
       },
     },
-    hostujuci_tim_id: {
+    // Domáci tím handling - buď ID alebo custom názov
+    domaci_tim_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
-        model: 'timy',
+        model: 'teams',
         key: 'id',
       },
       validate: {
-        // Validácia že domáci a hosťujúci tím nie sú rovnaké
-        notSameAsHome(value: number) {
-          if (value === this.domaci_tim_id) {
-            throw new Error('Domáci a hosťujúci tím nemôžu byť rovnaké');
+        customDomaciTimValidation(value: any) {
+          // Aspoň jeden z týchto polí musí byť vyplnený
+          if (!value && !this.domaci_tim_nazov) {
+            throw new Error('Domáci tím ID alebo názov musí byť zadaný');
           }
         }
       }
+    },
+    domaci_tim_nazov: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      validate: {
+        len: [2, 100],
+      },
+    },
+    // Hosťujúci tím handling - buď ID alebo custom názov
+    hostujuci_tim_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'teams',
+        key: 'id',
+      },
+      validate: {
+        customHostujuciTimValidation(value: any) {
+          // Aspoň jeden z týchto polí musí byť vyplnený
+          if (!value && !this.hostujuci_tim_nazov) {
+            throw new Error('Hosťujúci tím ID alebo názov musí byť zadaný');
+          }
+        }
+      }
+    },
+    hostujuci_tim_nazov: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      validate: {
+        len: [2, 100],
+      },
     },
     goly_domaci: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
         min: 0,
-        max: 50, // Rozumný limit
+        max: 50,
       },
     },
     goly_hostia: {
@@ -228,7 +343,7 @@ Zapas.init(
       allowNull: true,
       validate: {
         min: 0,
-        max: 50, // Rozumný limit
+        max: 50,
       },
     },
     status: {
@@ -241,7 +356,7 @@ Zapas.init(
       allowNull: true,
       validate: {
         min: 0,
-        max: 200000, // Rozumný limit
+        max: 200000,
       },
     },
     poznamky: {
@@ -259,14 +374,14 @@ Zapas.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'clanky',
+        model: 'articles',
         key: 'id',
       },
     },
-    galeria_id: {
+    fotogaleria_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      // TODO: Pridáme referenciu na galérie v budúcej fáze
+      // TODO: Pridať referenciu na fotogalériu keď bude implementovaná
     },
     aktivity: {
       type: DataTypes.BOOLEAN,
@@ -286,11 +401,33 @@ Zapas.init(
   },
   {
     sequelize,
+    modelName: 'Zapas',
     tableName: 'zapasy',
-    timestamps: true,
-    createdAt: 'vytvoreny',
-    updatedAt: 'aktualizovany',
+    timestamps: false, // Používame vlastné polia vytvoreny/aktualizovany
+    hooks: {
+      beforeUpdate: (zapas: Zapas) => {
+        zapas.aktualizovany = new Date();
+      },
+      beforeCreate: (zapas: Zapas) => {
+        const now = new Date();
+        zapas.vytvoreny = now;
+        zapas.aktualizovany = now;
+        
+        // Automatické generovanie názvu ak nie je zadaný
+        if (!zapas.nazov) {
+          const domaciNazov = zapas.domaci_tim_nazov || 'Domáci tím';
+          const hostujuciNazov = zapas.hostujuci_tim_nazov || 'Hosťujúci tím';
+          zapas.nazov = `${domaciNazov} vs ${hostujuciNazov}`;
+        }
+      },
+    },
     indexes: [
+      {
+        fields: ['datum_cas'],
+      },
+      {
+        fields: ['status'],
+      },
       {
         fields: ['liga_id'],
       },
@@ -301,29 +438,9 @@ Zapas.init(
         fields: ['hostujuci_tim_id'],
       },
       {
-        fields: ['datum_cas'],
-      },
-      {
-        fields: ['status'],
-      },
-      {
         fields: ['aktivity'],
       },
     ],
-    hooks: {
-      // Hook pre validáciu výsledku
-      beforeSave: async (zapas: Zapas) => {
-        // Ak je zápas ukončený, musí mať výsledok
-        if (zapas.status === 'ukonceny' && (!zapas.hasVysledok())) {
-          throw new Error('Ukončený zápas musí mať zadaný výsledok');
-        }
-        
-        // Ak je zápas naplánovaný a má výsledok, zmeň status na ukončený
-        if (zapas.status === 'naplanovany' && zapas.hasVysledok()) {
-          zapas.status = 'ukonceny';
-        }
-      },
-    },
   }
 );
 
