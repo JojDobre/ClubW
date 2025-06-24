@@ -228,6 +228,46 @@ app.get('/api/calendar', async (req, res) => {
   }
 });
 
+// Starý /calendar/upcoming endpoint (bez /api) - potrebné pre ZapasManagement
+app.get('/calendar/upcoming', async (req, res) => {
+  try {
+    // Import kalendár controller
+    const { getUpcomingMatches } = await import('./controllers/kalendarController');
+    
+    // Nastav legacy flag pre starý formát odpovede
+    req.query.format = 'legacy';
+    
+    // Presmeruj na kalendár controller
+    return getUpcomingMatches(req, res);
+  } catch (error) {
+    console.error('Chyba pri legacy upcoming endpoint:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
+
+// Môžeš pridať aj pár ďalších legacy routes ak potrebuješ:
+app.get('/calendar/month/:rok/:mesiac', async (req, res) => {
+  try {
+    const { getMonthCalendar } = await import('./controllers/kalendarController');
+    return getMonthCalendar(req, res);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+app.get('/calendar/week/:rok/:mesiac/:den', async (req, res) => {
+  try {
+    const { getWeekCalendar } = await import('./controllers/kalendarController');
+    return getWeekCalendar(req, res);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Demo endpoint pre štatistiky (rozšírený pre FÁZU 4)
 app.get('/api/stats', (req, res) => {
   res.json({

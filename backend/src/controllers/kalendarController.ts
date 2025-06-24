@@ -325,12 +325,20 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
 };
 
 // GET /api/calendar/upcoming - Nadchádzajúce zápasy + bez výsledku
+// backend/src/controllers/kalendarController.ts
+// KOMPLETNÁ funkcia getUpcomingMatches - nahraď celú existujúcu funkciu
+
 export const getUpcomingMatches = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { limit = '10', liga_id, tim_id } = req.query;
+    const { limit = '10', liga_id, tim_id, format } = req.query;
     const limitNum = parseInt(limit as string) || 10;
     const now = new Date();
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+    console.log('=== UPCOMING MATCHES DEBUG ===');
+    console.log('Original URL:', req.originalUrl);
+    console.log('Format query:', format);
+    console.log('Query params:', req.query);
 
     // Základné filter podmienky pre nadchádzajúce zápasy
     const upcomingConditions: any = {
@@ -401,7 +409,11 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
       }
     ];
 
-    // Načítaj oba typy zápasov paralelne
+    // DETEKCIA FORMÁTU: Legacy alebo nový
+    const isLegacyFormat = format === 'legacy' || req.originalUrl.includes('/calendar/upcoming');
+    console.log('Is legacy format:', isLegacyFormat);
+
+    // Načítaj oba typy zápasov paralelne (pre oba formáty)
     const [upcomingMatches, matchesWithoutResult] = await Promise.all([
       Zapas.findAll({
         where: upcomingConditions,
@@ -421,13 +433,17 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
     const allMatches = [...upcomingMatches, ...matchesWithoutResult];
     const formattedMatches = allMatches.map(zapas => {
       const formatted = formatMatchForCalendar(zapas);
+      
+      // Určenie typu zápasu
+      const isUpcoming = upcomingMatches.includes(zapas);
+      const hasResult = zapas.goly_domaci !== null && zapas.goly_hostia !== null;
+      
       return {
         ...formatted,
         // Pridaj informáciu o type zápasu pre frontend
-        match_type: upcomingMatches.includes(zapas) ? 'upcoming' : 'without_result',
-        actual_status: zapas.getActualStatus ? zapas.getActualStatus() : zapas.status,
-        needs_result: !zapas.hasVysledok ? zapas.hasVysledok() : 
-                     (zapas.goly_domaci === null || zapas.goly_hostia === null)
+        match_type: isUpcoming ? 'upcoming' : 'without_result',
+        actual_status: zapas.status,
+        needs_result: !hasResult
       };
     });
 
@@ -446,22 +462,48 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
     // Obmedz na požadovaný limit
     const limitedMatches = formattedMatches.slice(0, limitNum);
 
+    // Počty pre breakdown
+    const upcomingCount = limitedMatches.filter(m => m.match_type === 'upcoming').length;
+    const withoutResultCount = limitedMatches.filter(m => m.match_type === 'without_result').length;
+
+    if (isLegacyFormat) {
+      // LEGACY FORMÁT: Priamo array (pre ZapasManagement)
+      console.log('Using LEGACY format for ZapasManagement - s oboma typmi zápasov');
+      
+      res.json({
+        success: true,
+        data: limitedMatches, // Priamo array - ale s oboma typmi zápasov
+        count: limitedMatches.length,
+        breakdown: {
+          upcoming: upcomingCount,
+          without_result: withoutResultCount
+        },
+        message: `${limitedMatches.length} zápasov (nadchádzajúce + bez výsledku)`
+      });
+      return;
+    }
+
+    // NOVÝ FORMÁT: Nested objekt (pre KalendarManagement)
+    console.log('Using NEW format for KalendarManagement');
+    
     res.json({
       success: true,
-      data: limitedMatches,
-      count: limitedMatches.length,
-      breakdown: {
-        upcoming: formattedMatches.filter(m => m.match_type === 'upcoming').length,
-        without_result: formattedMatches.filter(m => m.match_type === 'without_result').length
+      data: {
+        data: limitedMatches,              // Array zápasov
+        count: limitedMatches.length,      // Celkový počet
+        breakdown: {
+          upcoming: upcomingCount,         // Počet nadchádzajúcich
+          without_result: withoutResultCount // Počet bez výsledku
+        }
       },
       message: `${limitedMatches.length} zápasov (nadchádzajúce + bez výsledku)`
     });
 
   } catch (error) {
-    console.error('Chyba pri načítaní nadchádzajúcih zápasov:', error);
+    console.error('Chyba pri načítaní nadchádzajúcich zápasov:', error);
     res.status(500).json({
       success: false,
-      message: 'Chyba servera pri načítaní nadchádzajúcih zápasov',
+      message: 'Chyba servera pri načítaní nadchádzajúcich zápasov',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
