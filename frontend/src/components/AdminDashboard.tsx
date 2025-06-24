@@ -13,6 +13,7 @@ const StaffManagementAdmin = lazy(() => import('./StaffManagementAdmin'));
 const LigaManagement = lazy(() => import('./LigaManagement'));
 const ZapasManagement = lazy(() => import('./ZapasManagement'));
 const KalendarManagement = lazy(() => import('./KalendarManagement'));
+const PageManagement = lazy(() => import('./PageManagement')); 
 
 
 interface User {
@@ -94,6 +95,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       order: 1
     },
     {
+      id: 'pages', // NOVÉ - FÁZA 5
+      title: 'Stránky',
+      value: '8',
+      subtitle: '3 v menu',
+      color: '#10b981',
+      icon: '📄',
+      enabled: true,
+      order: 2
+    },
+    {
       id: 'views',
       title: 'Zobrazenia (30d)',
       value: 0,
@@ -101,7 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       color: '#10b981',
       icon: '👁',
       enabled: true,
-      order: 2
+      order: 3
     },
     {
     id: 'teams',
@@ -111,7 +122,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     color: '#8b5cf6',
     icon: '⚽',
     enabled: true,
-    order: 3
+    order: 4
   },
   {
     id: 'players',
@@ -121,7 +132,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     color: '#f59e0b',
     icon: '🏃',
     enabled: true,
-    order: 4
+    order: 5
   },
   {
     id: 'staff',
@@ -131,7 +142,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     color: '#ef4444',
     icon: '👨‍💼',
     enabled: true,
-    order: 5
+    order: 6
   },
     {
       id: 'nextMatch',
@@ -203,12 +214,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       order: 2
     },
     {
+      id: 'newPage', // NOVÉ - FÁZA 5
+      title: 'Nová stránka',
+      icon: '📄',
+      action: () => setCurrentPage('pages'),
+      enabled: true,
+      order: 3
+    },
+    {
     id: 'newTeam',
     title: 'Nový tím',
     icon: '⚽',
     action: () => setCurrentPage('teams'),
     enabled: true,
-    order: 3
+    order: 4
   },
   {
     id: 'newPlayer',
@@ -216,7 +235,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     icon: '🏃',
     action: () => setCurrentPage('players'),
     enabled: true,
-    order: 4
+    order: 5
   },
   {
     id: 'newStaff',
@@ -224,7 +243,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     icon: '👨‍💼',
     action: () => setCurrentPage('staff'),
     enabled: true,
-    order: 5
+    order: 6
   },
     {
       id: 'viewWebsite',
@@ -274,6 +293,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     { id: 'dashboard', name: 'Dashboard', icon: '📊', roles: ['admin', 'redaktor', 'trener'] },
     { id: 'articles', name: 'Články', icon: '📄', component: ArticleManagement, roles: ['admin', 'redaktor'] },
     { id: 'categories', name: 'Kategórie', icon: '🏷', component: CategoryManagement, roles: ['admin'] },
+        { id: 'pages', name: 'Stránky', icon: '📄', component: PageManagement, roles: ['admin', 'redaktor'] }, // NOVÉ
+
     { id: 'users', name: 'Používatelia', icon: '👥', component: UserManagement, roles: ['admin'] },
     { id: 'teams', name: 'Tímy', icon: '⚽', component: TeamsManagement, roles: ['admin', 'trener'] },
     { id: 'players', name: 'Hráči', icon: '🏃', component: PlayersManagementAdmin, roles: ['admin', 'trener'] },

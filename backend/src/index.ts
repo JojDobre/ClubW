@@ -25,6 +25,7 @@ import staffRoutes from './routes/staff';
 import ligaRoutes from './routes/liga';
 import zapasRoutes from './routes/zapas';
 import kalendarRoutes from './routes/kalendar';
+import pagesRoutes, { adminPageRouter } from './routes/pages'; 
 
 // Načítanie environment premenných
 dotenv.config();
@@ -102,7 +103,7 @@ app.get('/health', (req, res) => {
 app.get('/api/status', (req, res) => {
   res.json({
     success: true,
-    message: 'ClubW Backend API v1.0.0 - FÁZA 4',
+    message: 'ClubW Backend API v1.0.0 - FÁZA 5',
     client: process.env.CLIENT_NAME || 'Demo Club',
     environment: process.env.NODE_ENV || 'development',
     endpoints: {
@@ -118,6 +119,8 @@ app.get('/api/status', (req, res) => {
       leagues: '/api/leagues/*',      // ✅ Ligy 
       matches: '/api/matches/*',      // ✅ Zápasy
       calendar: '/api/calendar/*',    // ✅ Kalendár 
+      pages: '/api/pages/*',           // ✅ Pages
+      adminPage: '/api/admin/pages/*',
       health: '/health',
     },
     phase: 'FÁZA 4 - Ligy, zápasy, štatistiky a kalendár',
@@ -128,6 +131,7 @@ app.get('/api/status', (req, res) => {
       '✅ Ligy a súťaže',
       '✅ Zápasy a výsledky',
       '✅ Štatistiky hráčov (góly, asistencie, karty)',
+      '✅ Pages management',
       '✅ Kalendár zápasov - mesačný/týždenný'
     ],
     timestamp: new Date().toISOString(),
@@ -159,7 +163,9 @@ app.use('/api/leagues', ligaRoutes);    // ✅ Ligy
 app.use('/api/matches', zapasRoutes);   // ✅ Zápasy
 app.use('/api/calendar', kalendarRoutes); // ✅ Kalendár
 
-
+// FÁZA 5: Stránky (statický obsah)
+app.use('/api/pages', pagesRoutes);
+app.use('/api/admin/pages', adminPageRouter);
 
 
 
@@ -432,6 +438,12 @@ async function startServer() {
       console.log('   🔐 Auth:      /api/auth/*');
       console.log('   👥 Users:     /api/users/*');
       console.log('   📰 Articles:  /api/articles/*');
+      console.log('   GET  /api/articles/:slug - Detail článku');
+      console.log('   GET  /api/pages - Verejné stránky'); // NOVÉ
+      console.log('   GET  /api/pages/:slug - Detail stránky'); // NOVÉ
+      console.log('   GET  /api/pages/menu - Menu stránky'); // NOVÉ
+      console.log('   GET  /api/admin/pages - Admin stránky'); // NOVÉ
+      console.log('   POST /api/admin/pages - Vytvorenie stránky'); // NOVÉ
       console.log('   📁 Categories:/api/categories/*');
       console.log('   🏆 Teams:     /api/teams/*');
       console.log('   ⚽ Players:   /api/players/*');

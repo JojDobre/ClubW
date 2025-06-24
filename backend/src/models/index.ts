@@ -11,6 +11,7 @@ import Staff from './Staff';
 import Liga from './Liga';
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
+import Page from './Page';
 
 // ===== DEFINÍCIA VZŤAHOV MEDZI MODELMI =====
 
@@ -165,6 +166,7 @@ export {
   Liga,
   Zapas,
   ZapasStatistika,
+  Page,
 };
 
 // Export default objekt pre jednoduchší import
@@ -178,6 +180,7 @@ export default {
   Liga,
   Zapas,
   ZapasStatistika,
+  Page,
 };
 
 // ===== HELPER FUNKCIE PRE VZŤAHY =====
@@ -283,6 +286,42 @@ export const getMatchWithDetails = async (zapasId: number) => {
         order: [['minuta', 'ASC'], ['typ', 'ASC']]
       }
     ]
+  });
+};
+
+// helper funkcie pre stránky
+export const getPublishedPages = async () => {
+  return await Page.findAll({
+    where: { 
+      publikovany: true 
+    },
+    order: [['nazov', 'ASC']]
+  });
+};
+
+export const getMenuPages = async () => {
+  return await Page.findAll({
+    where: { 
+      publikovany: true,
+      v_menu: true 
+    },
+    attributes: ['id', 'nazov', 'slug', 'poradie_menu'],
+    order: [['poradie_menu', 'ASC'], ['nazov', 'ASC']]
+  });
+};
+
+export const getPageBySlug = async (slug: string) => {
+  return await Page.findOne({
+    where: { 
+      slug,
+      publikovany: true 
+    }
+  });
+};
+
+export const getAllPagesForAdmin = async () => {
+  return await Page.findAll({
+    order: [['vytvoreny', 'DESC']]
   });
 };
 

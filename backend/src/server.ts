@@ -11,6 +11,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import articleRoutes, { adminArticleRouter } from './routes/articles';
 import categoryRoutes from './routes/categories';
+import pagesRoutes, { adminPageRouter } from './routes/pages';
 import publicRoutes from './routes/public';
 
 // Načítanie environment variables
@@ -56,6 +57,7 @@ app.get('/api/status', (req, res) => {
       'Articles management ✅',
       'Categories management ✅', 
       'User authentication ✅',
+      'Pages management ✅',
       'Admin interface ✅'
     ]
   });
@@ -77,6 +79,10 @@ app.use('/api/admin/articles', adminArticleRouter);
 
 // Kategórie
 app.use('/api/categories', categoryRoutes);
+
+// Stránky (statický obsah)
+app.use('/api/pages', pagesRoutes);
+app.use('/api/admin/pages', adminPageRouter);
 
 // === DEMO ENDPOINTS (odstránime po implementácii skutočného API) ===
 
@@ -213,15 +219,20 @@ async function startServer() {
       console.log('📋 Dostupné API endpoints:');
       console.log('   GET  /api/articles - Verejné články');
       console.log('   GET  /api/articles/:slug - Detail článku');
+      console.log('   GET  /api/pages - Verejné stránky'); 
+      console.log('   GET  /api/pages/:slug - Detail stránky'); 
       console.log('   POST /api/auth/login - Prihlásenie');
       console.log('   GET  /api/auth/me - Aktuálny používateľ');
       console.log('   GET  /api/admin/articles - Admin články');
       console.log('   POST /api/admin/articles - Vytvorenie článku');
+      console.log('   GET  /api/admin/pages - Admin stránky'); 
+      console.log('   POST /api/admin/pages - Vytvorenie stránky'); 
       console.log('');
       console.log('🌐 Frontend routes:');
       console.log('   GET  / - Domovská stránka');
       console.log('   GET  /clanky - Zoznam článkov');
       console.log('   GET  /clanek/:slug - Detail článku');
+      console.log('   GET  /:slug - Statická stránka'); 
       console.log('   GET  /admin - Admin panel');
       console.log('');
       console.log(`🕐 Server spustený: ${new Date().toLocaleString('sk-SK')}`);

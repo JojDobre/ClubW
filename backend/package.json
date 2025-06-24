@@ -6,10 +6,12 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "test-db": "tsx src/test-db.ts",
+    "test-articles": "tsx src/test-articles.ts",
+    "test-pages": "tsx src/test-pages.ts",
+    "test-pages-routes": "tsx src/test-pages-routes.ts",
     "clean": "rm -rf dist",
     "lint": "eslint src/**/*.ts",
-    "format": "prettier --write src/**/*.ts",
-    "test-articles": "tsx src/test-articles.ts"
+    "format": "prettier --write src/**/*.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
