@@ -1,5 +1,5 @@
 // backend/src/routes/pages.ts
-// API routes pre správu stránok (FÁZA 5)
+// API routes pre správu stránok (FÁZA 5) - OPRAVENÉ
 
 import { Router, Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
@@ -278,6 +278,27 @@ adminPageRouter.get('/:id', [
   }
 });
 
+// ===== CUSTOM SLUG VALIDATION MIDDLEWARE =====
+// Vytvoríme vlastný validator pre slug, ktorý bude správne spracovávať prázdne hodnoty
+
+const slugValidator = (value: string, { req }: any) => {
+  // Ak je slug prázdny alebo undefined, nevalidujeme ho (automaticky sa vygeneruje)
+  if (!value || value.trim() === '') {
+    return true;
+  }
+  
+  // Ak je slug zadaný, musí spĺňať podmienky
+  if (value.length < 2 || value.length > 100) {
+    throw new Error('Slug musí mať 2-100 znakov');
+  }
+  
+  if (!/^[a-z0-9-]+$/.test(value)) {
+    throw new Error('Slug môže obsahovať len malé písmená, číslice a pomlčky');
+  }
+  
+  return true;
+};
+
 /**
  * POST /api/admin/pages
  * Vytvorenie novej stránky
@@ -285,14 +306,24 @@ adminPageRouter.get('/:id', [
 adminPageRouter.post('/', [
   authenticateToken,
   requireEditor,
-  body('nazov').isString().isLength({ min: 2, max: 200 }).trim(),
-  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim(),
-  body('slug').optional().isString().isLength({ min: 2, max: 100 }).matches(/^[a-z0-9-]+$/),
-  body('v_menu').optional().isBoolean(),
-  body('poradie_menu').optional().isInt({ min: 1, max: 9999 }),
-  body('publikovany').optional().isBoolean(),
-  body('meta_title').optional().isString().isLength({ max: 100 }).trim(),
-  body('meta_description').optional().isString().isLength({ max: 300 }).trim()
+  body('nazov').isString().isLength({ min: 2, max: 200 }).trim()
+    .withMessage('Názov musí mať 2-200 znakov'),
+  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim()
+    .withMessage('Obsah musí mať 10-100000 znakov'),
+  // ✅ OPRAVENÉ: Slug validácia - správne spracovanie prázdnych hodnôt
+  body('slug')
+    .optional({ nullable: true, checkFalsy: true }) // Akceptuje null, undefined, prázdny string
+    .custom(slugValidator),
+  body('v_menu').optional().isBoolean()
+    .withMessage('V menu musí byť boolean'),
+  body('poradie_menu').optional().isInt({ min: 1, max: 9999 })
+    .withMessage('Poradie menu musí byť číslo 1-9999'),
+  body('publikovany').optional().isBoolean()
+    .withMessage('Publikovany musí byť boolean'),
+  body('meta_title').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 100 }).trim()
+    .withMessage('Meta title môže mať max 100 znakov'),
+  body('meta_description').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 300 }).trim()
+    .withMessage('Meta description môže mať max 300 znakov')
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -315,17 +346,22 @@ adminPageRouter.post('/', [
       meta_description
     } = req.body;
 
-    // Automatické generovanie slug ak nie je zadaný
-    const finalSlug = slug || Page.generateSlug(nazov);
+    // ✅ OPRAVENÉ: Automatické generovanie unikátneho slug s číselným suffixom
+    const finalSlug = (slug && slug.trim()) 
+      ? slug.trim() 
+      : await Page.generateUniqueSlugFromTitle(nazov);
 
-    // Kontrola jedinečnosti slug
-    const isUniqueSlug = await Page.validateUniqueSlug(finalSlug);
-    if (!isUniqueSlug) {
-      return res.status(400).json({
-        success: false,
-        message: `Slug "${finalSlug}" už existuje. Použite iný slug alebo zmeňte názov.`
-      });
+    // ✅ ZJEDNODUŠENÉ: Ak je slug zadaný manuálne, skontroluj len jedinečnosť
+    if (slug && slug.trim()) {
+      const isUniqueSlug = await Page.validateUniqueSlug(finalSlug);
+      if (!isUniqueSlug) {
+        return res.status(400).json({
+          success: false,
+          message: `Slug "${finalSlug}" už existuje. Použite iný slug alebo nechajte pole prázdne pre automatické generovanie.`
+        });
+      }
     }
+    // Ak nie je slug zadaný, generateUniqueSlugFromTitle už zabezpečí jedinečnosť
 
     // Získanie automatického poradia ak je stránka v menu a nie je zadané
     const finalPoradieMenu = v_menu && !poradie_menu 
@@ -368,14 +404,24 @@ adminPageRouter.put('/:id', [
   authenticateToken,
   requireEditor,
   param('id').isInt({ min: 1 }),
-  body('nazov').isString().isLength({ min: 2, max: 200 }).trim(),
-  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim(),
-  body('slug').optional().isString().isLength({ min: 2, max: 100 }).matches(/^[a-z0-9-]+$/),
-  body('v_menu').optional().isBoolean(),
-  body('poradie_menu').optional().isInt({ min: 1, max: 9999 }),
-  body('publikovany').optional().isBoolean(),
-  body('meta_title').optional().isString().isLength({ max: 100 }).trim(),
-  body('meta_description').optional().isString().isLength({ max: 300 }).trim()
+  body('nazov').isString().isLength({ min: 2, max: 200 }).trim()
+    .withMessage('Názov musí mať 2-200 znakov'),
+  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim()
+    .withMessage('Obsah musí mať 10-100000 znakov'),
+  // ✅ OPRAVENÉ: Slug validácia pre update
+  body('slug')
+    .optional({ nullable: true, checkFalsy: true })
+    .custom(slugValidator),
+  body('v_menu').optional().isBoolean()
+    .withMessage('V menu musí byť boolean'),
+  body('poradie_menu').optional().isInt({ min: 1, max: 9999 })
+    .withMessage('Poradie menu musí byť číslo 1-9999'),
+  body('publikovany').optional().isBoolean()
+    .withMessage('Publikovany musí byť boolean'),
+  body('meta_title').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 100 }).trim()
+    .withMessage('Meta title môže mať max 100 znakov'),
+  body('meta_description').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 300 }).trim()
+    .withMessage('Meta description môže mať max 300 znakov')
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -408,14 +454,25 @@ adminPageRouter.put('/:id', [
       meta_description
     } = req.body;
 
-    // Ak sa mení slug, skontroluj jedinečnosť
-    if (slug && slug !== page.slug) {
-      const isUniqueSlug = await Page.validateUniqueSlug(slug, page.id);
-      if (!isUniqueSlug) {
-        return res.status(400).json({
-          success: false,
-          message: `Slug "${slug}" už existuje. Použite iný slug.`
-        });
+    // ✅ OPRAVENÉ: Spracovanie slug pre update s automatickým číslovaním
+    let finalSlug = page.slug; // Ponechaj pôvodný slug
+    
+    if (slug !== undefined) {
+      if (slug && slug.trim()) {
+        // Ak je zadaný nový slug, skontroluj jedinečnosť
+        finalSlug = slug.trim();
+        if (finalSlug !== page.slug) {
+          const isUniqueSlug = await Page.validateUniqueSlug(finalSlug, page.id);
+          if (!isUniqueSlug) {
+            return res.status(400).json({
+              success: false,
+              message: `Slug "${finalSlug}" už existuje. Použite iný slug.`
+            });
+          }
+        }
+      } else {
+        // Ak je slug vyčistený (nastavený na prázdny), vygeneruj nový z názvu
+        finalSlug = await Page.generateUniqueSlugFromTitle(nazov, page.id);
       }
     }
 
@@ -423,7 +480,7 @@ adminPageRouter.put('/:id', [
     await page.update({
       nazov,
       obsah,
-      slug: slug || page.slug,
+      slug: finalSlug,
       v_menu: v_menu !== undefined ? v_menu : page.v_menu,
       poradie_menu: poradie_menu !== undefined ? poradie_menu : page.poradie_menu,
       publikovany: publikovany !== undefined ? publikovany : page.publikovany,
@@ -537,24 +594,24 @@ adminPageRouter.patch('/:id/toggle-menu', [
 
     res.json({
       success: true,
-      message: v_menu ? 'Stránka pridaná do menu' : 'Stránka odstránená z menu',
+      message: v_menu ? 'Stránka bola pridaná do menu' : 'Stránka bola odstránená z menu',
       data: {
         page: page.toJSON()
       }
     });
 
   } catch (error) {
-    console.error('Chyba pri aktualizácii menu:', error);
+    console.error('Chyba pri zmene menu stránky:', error);
     res.status(500).json({
       success: false,
-      message: 'Chyba pri aktualizácii menu'
+      message: 'Chyba pri zmene menu'
     });
   }
 });
 
 /**
  * PATCH /api/admin/pages/:id/toggle-publish
- * Publikovanie/skrytie stránky
+ * Zapnutie/vypnutie publikovania stránky
  */
 adminPageRouter.patch('/:id/toggle-publish', [
   authenticateToken,
@@ -587,67 +644,19 @@ adminPageRouter.patch('/:id/toggle-publish', [
 
     res.json({
       success: true,
-      message: publikovany ? 'Stránka publikovaná' : 'Stránka skrytá',
+      message: publikovany ? 'Stránka bola publikovaná' : 'Stránka bola zmenená na koncept',
       data: {
         page: page.toJSON()
       }
     });
 
   } catch (error) {
-    console.error('Chyba pri publikovaní stránky:', error);
+    console.error('Chyba pri zmene publikovania stránky:', error);
     res.status(500).json({
       success: false,
-      message: 'Chyba pri publikovaní stránky'
+      message: 'Chyba pri zmene publikovania'
     });
   }
 });
 
-/**
- * PATCH /api/admin/pages/reorder
- * Zmena poradia stránok v menu
- */
-adminPageRouter.patch('/reorder', [
-  authenticateToken,
-  requireEditor,
-  body('pages').isArray().withMessage('Pages musí byť pole'),
-  body('pages.*.id').isInt({ min: 1 }).withMessage('Každá stránka musí mať platné ID'),
-  body('pages.*.poradie_menu').isInt({ min: 1, max: 9999 }).withMessage('Poradie musí byť medzi 1-9999')
-], async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje pre zmenu poradia',
-        errors: errors.array()
-      });
-    }
-
-    const { pages } = req.body;
-
-    // Aktualizujeme poradie pre každú stránku
-    const updatePromises = pages.map(async (pageData: any) => {
-      const page = await Page.findByPk(pageData.id);
-      if (page) {
-        await page.update({ poradie_menu: pageData.poradie_menu });
-      }
-    });
-
-    await Promise.all(updatePromises);
-
-    res.json({
-      success: true,
-      message: 'Poradie stránok bolo úspešne aktualizované'
-    });
-
-  } catch (error) {
-    console.error('Chyba pri zmene poradia:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Chyba pri zmene poradia stránok'
-    });
-  }
-});
-
-// Export hlavného routera
 export default router;

@@ -1,0 +1,317 @@
+// frontend/src/components/PageView.tsx
+// Komponenta pre zobrazenie statickej stránky podľa slug
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+
+interface Page {
+  id: number;
+  nazov: string;
+  obsah: string;
+  slug: string;
+  meta_title?: string;
+  meta_description?: string;
+  vytvoreny: string;
+  aktualizovany: string;
+  url: string;
+  word_count: number;
+}
+
+const PageView: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  
+  const [page, setPage] = useState<Page | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
+  // ✅ DEBUG: Pridaný console.log pre debugging
+  console.log('PageView slug:', slug);
+
+  // Načítanie stránky z API
+  useEffect(() => {
+    const fetchPage = async () => {
+      if (!slug) {
+        setError('Neplatný slug stránky');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError('');
+        
+        console.log('Fetching page with slug:', slug); // ✅ DEBUG
+        
+        const response = await fetch(`http://localhost:3000/api/pages/${slug}`);
+        const data = await response.json();
+        
+        console.log('API response:', data); // ✅ DEBUG
+        
+        if (response.status === 404) {
+          setError('Stránka nebola nájdená');
+        } else if (data.success) {
+          setPage(data.data.page);
+          
+          // Nastavenie SEO meta tagov
+          if (data.data.page.meta_title) {
+            document.title = data.data.page.meta_title;
+          } else {
+            document.title = `${data.data.page.nazov} | ClubW`;
+          }
+          
+          // Meta description
+          if (data.data.page.meta_description) {
+            let metaDesc = document.querySelector('meta[name="description"]');
+            if (!metaDesc) {
+              metaDesc = document.createElement('meta');
+              metaDesc.setAttribute('name', 'description');
+              document.head.appendChild(metaDesc);
+            }
+            metaDesc.setAttribute('content', data.data.page.meta_description);
+          }
+        } else {
+          setError(data.message || 'Chyba pri načítavaní stránky');
+        }
+      } catch (err) {
+        console.error('Chyba pri načítavaní stránky:', err);
+        setError('Chyba pri načítavaní stránky');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPage();
+  }, [slug]);
+
+  // Reset title pri opustení komponenty
+  useEffect(() => {
+    return () => {
+      document.title = 'ClubW';
+    };
+  }, []);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        padding: '60px 20px',
+        textAlign: 'center',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏳</div>
+        <h2 style={{ color: '#4a5568', marginBottom: '10px' }}>Načítavam stránku...</h2>
+        <p style={{ color: '#718096' }}>Prosím čakajte, načítavam obsah stránky.</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div style={{
+        padding: '60px 20px',
+        textAlign: 'center',
+        maxWidth: '600px',
+        margin: '0 auto'
+      }}>
+        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>❌</div>
+        <h2 style={{ 
+          color: '#e53e3e', 
+          marginBottom: '20px',
+          fontSize: '1.8rem' 
+        }}>
+          {error}
+        </h2>
+        <p style={{ 
+          color: '#718096', 
+          marginBottom: '30px',
+          fontSize: '1.1rem'
+        }}>
+          {error === 'Stránka nebola nájdená' 
+            ? `Stránka s adresou "/${slug}" neexistuje alebo nie je publikovaná.`
+            : 'Nastala chyba pri načítavaní obsahu stránky.'
+          }
+        </p>
+        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              padding: '12px 24px',
+              background: '#3182ce',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              textDecoration: 'none'
+            }}
+          >
+            ← Späť
+          </button>
+          <a
+            href="/"
+            style={{
+              display: 'inline-block',
+              padding: '12px 24px',
+              background: '#38a169',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '6px',
+              fontSize: '16px'
+            }}
+          >
+            🏠 Domov
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Page content
+  if (!page) {
+    return null;
+  }
+
+  return (
+    <article style={{
+      maxWidth: '900px',
+      margin: '0 auto',
+      padding: '40px 20px'
+    }}>
+      {/* Breadcrumb */}
+      <nav style={{
+        marginBottom: '30px',
+        padding: '10px 0',
+        fontSize: '14px',
+        color: '#718096'
+      }}>
+        <a href="/" style={{ color: '#3182ce', textDecoration: 'none' }}>
+          Domov
+        </a>
+        <span style={{ margin: '0 8px' }}>›</span>
+        <span>{page.nazov}</span>
+      </nav>
+
+      {/* Hlavička stránky */}
+      <header style={{
+        marginBottom: '40px',
+        paddingBottom: '20px',
+        borderBottom: '1px solid #e2e8f0'
+      }}>
+        <h1 style={{
+          fontSize: '2.5rem',
+          fontWeight: 'bold',
+          color: '#1a202c',
+          marginBottom: '15px',
+          lineHeight: '1.2'
+        }}>
+          {page.nazov}
+        </h1>
+        
+        {/* Meta informácie */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '20px',
+          color: '#718096',
+          fontSize: '14px',
+          alignItems: 'center'
+        }}>
+          <span>
+            📅 Aktualizované: {new Date(page.aktualizovany).toLocaleDateString('sk-SK', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </span>
+          <span>📖 {page.word_count} slov</span>
+          <span>🔗 /{page.slug}</span>
+        </div>
+      </header>
+
+      {/* Obsah stránky */}
+      <div 
+        style={{
+          fontSize: '1.1rem',
+          lineHeight: '1.7',
+          color: '#2d3748'
+        }}
+        dangerouslySetInnerHTML={{ __html: page.obsah }}
+      />
+
+      {/* Footer informácie */}
+      <footer style={{
+        marginTop: '60px',
+        paddingTop: '20px',
+        borderTop: '1px solid #e2e8f0',
+        color: '#718096',
+        fontSize: '14px'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '15px'
+        }}>
+          <div>
+            <p>
+              <strong>Vytvorené:</strong> {new Date(page.vytvoreny).toLocaleDateString('sk-SK')}
+            </p>
+            {page.vytvoreny !== page.aktualizovany && (
+              <p>
+                <strong>Naposledy upravené:</strong> {new Date(page.aktualizovany).toLocaleDateString('sk-SK')}
+              </p>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => window.print()}
+              style={{
+                padding: '8px 16px',
+                background: '#f7fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#4a5568'
+              }}
+            >
+              🖨️ Tlačiť
+            </button>
+            
+            <button
+              onClick={() => {
+                navigator.share?.({
+                  title: page.nazov,
+                  text: page.meta_description || page.nazov,
+                  url: window.location.href
+                }).catch(() => {
+                  // Fallback - skopírovanie do clipboard
+                  navigator.clipboard?.writeText(window.location.href);
+                  alert('Odkaz skopírovaný do schránky!');
+                });
+              }}
+              style={{
+                padding: '8px 16px',
+                background: '#3182ce',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🔗 Zdieľať
+            </button>
+          </div>
+        </div>
+      </footer>
+    </article>
+  );
+};
+
+export default PageView;

@@ -1,5 +1,5 @@
 // frontend/src/components/PageManagement.tsx
-// Komponenta pre správu statických stránok (FÁZA 5)
+// Komponenta pre správu statických stránok (FÁZA 5) - OPRAVENÉ
 
 import React, { useState, useEffect } from 'react';
 
@@ -54,6 +54,10 @@ const PageManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [menuFilter, setMenuFilter] = useState<'all' | 'in_menu' | 'not_in_menu'>('all');
+
+  // State pre chybové hlásenia
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState<PageFormData>({
@@ -130,7 +134,29 @@ const PageManagement: React.FC = () => {
         resetForm();
         return true;
       } else {
-        setFormErrors(data.errors || [data.message || 'Chyba pri vytváraní stránky']);
+        // ✅ OPRAVENÉ: Spracovanie chýb z backendu
+        const errorMessages: string[] = [];
+        
+        if (data.errors && Array.isArray(data.errors)) {
+          // Express-validator errors sú objekty s msg property
+          data.errors.forEach((error: any) => {
+            if (typeof error === 'string') {
+              errorMessages.push(error);
+            } else if (error && error.msg) {
+              errorMessages.push(error.msg);
+            } else if (error && error.message) {
+              errorMessages.push(error.message);
+            } else {
+              errorMessages.push('Neznáma chyba validácie');
+            }
+          });
+        } else if (data.message) {
+          errorMessages.push(data.message);
+        } else {
+          errorMessages.push('Chyba pri vytváraní stránky');
+        }
+        
+        setFormErrors(errorMessages);
         return false;
       }
     } catch (error) {
@@ -162,7 +188,29 @@ const PageManagement: React.FC = () => {
         resetForm();
         return true;
       } else {
-        setFormErrors(data.errors || [data.message || 'Chyba pri aktualizácii stránky']);
+        // ✅ OPRAVENÉ: Spracovanie chýb z backendu
+        const errorMessages: string[] = [];
+        
+        if (data.errors && Array.isArray(data.errors)) {
+          // Express-validator errors sú objekty s msg property
+          data.errors.forEach((error: any) => {
+            if (typeof error === 'string') {
+              errorMessages.push(error);
+            } else if (error && error.msg) {
+              errorMessages.push(error.msg);
+            } else if (error && error.message) {
+              errorMessages.push(error.message);
+            } else {
+              errorMessages.push('Neznáma chyba validácie');
+            }
+          });
+        } else if (data.message) {
+          errorMessages.push(data.message);
+        } else {
+          errorMessages.push('Chyba pri aktualizácii stránky');
+        }
+        
+        setFormErrors(errorMessages);
         return false;
       }
     } catch (error) {
@@ -174,8 +222,10 @@ const PageManagement: React.FC = () => {
     }
   };
 
+  // ===== FIXED: Používame window.confirm namiesto globalnej confirm funkcie =====
   const deletePage = async (id: number) => {
-    if (!confirm('Naozaj chcete vymazať túto stránku? Táto akcia sa nedá vrátiť.')) {
+    // ✅ OPRAVENÉ: Používame window.confirm namiesto confirm
+    if (!window.confirm('Naozaj chcete vymazať túto stránku? Táto akcia sa nedá vrátiť.')) {
       return;
     }
 
@@ -190,12 +240,18 @@ const PageManagement: React.FC = () => {
 
       if (data.success) {
         await fetchPages(); // Refresh list
+        setSuccessMessage('Stránka bola úspešne vymazaná');
+        setErrorMessage('');
+        // Vyčistenie správy po 3 sekundách
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        alert('Chyba pri mazaní stránky: ' + data.message);
+        setErrorMessage('Chyba pri mazaní stránky: ' + data.message);
+        setSuccessMessage('');
       }
     } catch (error) {
       console.error('Chyba pri mazaní stránky:', error);
-      alert('Chyba pri mazaní stránky');
+      setErrorMessage('Chyba pri mazaní stránky');
+      setSuccessMessage('');
     }
   };
 
@@ -212,12 +268,17 @@ const PageManagement: React.FC = () => {
 
       if (data.success) {
         await fetchPages(); // Refresh list
+        setSuccessMessage(`Status stránky bol zmenený na: ${publikovany ? 'publikované' : 'koncept'}`);
+        setErrorMessage('');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        alert('Chyba pri zmene statusu: ' + data.message);
+        setErrorMessage('Chyba pri zmene statusu: ' + data.message);
+        setSuccessMessage('');
       }
     } catch (error) {
       console.error('Chyba pri zmene statusu:', error);
-      alert('Chyba pri zmene statusu');
+      setErrorMessage('Chyba pri zmene statusu');
+      setSuccessMessage('');
     }
   };
 
@@ -234,12 +295,17 @@ const PageManagement: React.FC = () => {
 
       if (data.success) {
         await fetchPages(); // Refresh list
+        setSuccessMessage(`Stránka bola ${v_menu ? 'pridaná do' : 'odstránená z'} menu`);
+        setErrorMessage('');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        alert('Chyba pri zmene menu: ' + data.message);
+        setErrorMessage('Chyba pri zmene menu: ' + data.message);
+        setSuccessMessage('');
       }
     } catch (error) {
       console.error('Chyba pri zmene menu:', error);
-      alert('Chyba pri zmene menu');
+      setErrorMessage('Chyba pri zmene menu');
+      setSuccessMessage('');
     }
   };
 
@@ -253,6 +319,8 @@ const PageManagement: React.FC = () => {
       publikovany: false,
     });
     setFormErrors([]);
+    setErrorMessage('');
+    setSuccessMessage('');
     setSelectedPage(null);
   };
 
@@ -274,266 +342,622 @@ const PageManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentView === 'create') {
-      await createPage(formData);
-    } else if (currentView === 'edit' && selectedPage) {
+    if (currentView === 'edit' && selectedPage) {
       await updatePage(selectedPage.id, formData);
+    } else {
+      await createPage(formData);
     }
   };
 
+  // Filter pages based on current filters
   const filteredPages = pages.filter(page => {
-    const matchesSearch = !searchTerm || 
-      page.nazov.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      page.obsah.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'published' && page.publikovany) ||
-      (statusFilter === 'draft' && !page.publikovany);
-    
-    const matchesMenu = menuFilter === 'all' ||
-      (menuFilter === 'in_menu' && page.v_menu) ||
-      (menuFilter === 'not_in_menu' && !page.v_menu);
+    // Search filter
+    if (searchTerm && !page.nazov.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        !page.obsah.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
 
-    return matchesSearch && matchesStatus && matchesMenu;
+    // Status filter
+    if (statusFilter === 'published' && !page.publikovany) return false;
+    if (statusFilter === 'draft' && page.publikovany) return false;
+
+    // Menu filter
+    if (menuFilter === 'in_menu' && !page.v_menu) return false;
+    if (menuFilter === 'not_in_menu' && page.v_menu) return false;
+
+    return true;
   });
 
-  // ===== EFFECTS =====
+  // Load pages on component mount
+  useEffect(() => {
+    fetchPages();
+  }, []);
 
+  // Reload pages when filters change
   useEffect(() => {
     fetchPages();
   }, [searchTerm, statusFilter, menuFilter]);
 
   // ===== RENDER =====
 
-  // Loading state
-  if (loading && pages.length === 0) {
+  // Form view (create/edit)
+  if (currentView === 'create' || currentView === 'edit') {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <div style={{
-          display: 'inline-block',
-          width: '40px',
-          height: '40px',
-          border: '3px solid #e2e8f0',
-          borderTop: '3px solid #3b82f6',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '20px'
-        }}></div>
-        <p>Načítavam stránky...</p>
+      <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '10px' }}>
+            📄 {currentView === 'edit' ? 'Úprava stránky' : 'Nová stránka'}
+          </h2>
+          <button
+            onClick={() => {
+              setCurrentView('list');
+              resetForm();
+            }}
+            style={{
+              padding: '8px 16px',
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            ← Späť na zoznam
+          </button>
+        </div>
+
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div style={{
+            background: '#f0f9ff',
+            border: '1px solid #0ea5e9',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '20px',
+            color: '#0369a1'
+          }}>
+            ✅ {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '20px',
+            color: '#dc2626'
+          }}>
+            ❌ {errorMessage}
+          </div>
+        )}
+
+        {/* Error Messages */}
+        {formErrors.length > 0 && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '20px'
+          }}>
+            {formErrors.map((error, index) => (
+              <div key={index} style={{ color: '#dc2626', fontSize: '14px' }}>
+                ❌ {error}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{
+          background: 'white',
+          padding: '30px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          {/* Basic Fields */}
+          <div style={{ display: 'grid', gap: '20px', marginBottom: '30px' }}>
+            {/* Názov */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                Názov stránky *
+              </label>
+              <input
+                type="text"
+                value={formData.nazov}
+                onChange={(e) => setFormData({ ...formData, nazov: e.target.value })}
+                placeholder="Napríklad: História klubu"
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            {/* Slug */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                URL Slug (voliteľné)
+              </label>
+              <input
+                type="text"
+                value={formData.slug || ''}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                placeholder="historia-klubu (automaticky sa vygeneruje z názvu)"
+                pattern="^[a-z0-9-]*$"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+              <small style={{ color: '#6b7280', fontSize: '12px' }}>
+                Používaj len malé písmená, číslice a pomlčky. Nech prázdne pre automatické generovanie.
+              </small>
+            </div>
+
+            {/* Obsah */}
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                Obsah stránky *
+              </label>
+              <textarea
+                value={formData.obsah}
+                onChange={(e) => setFormData({ ...formData, obsah: e.target.value })}
+                placeholder="Zadajte obsah stránky (môžete použiť základné HTML tagy)"
+                required
+                rows={12}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  resize: 'vertical'
+                }}
+              />
+              <small style={{ color: '#6b7280', fontSize: '12px' }}>
+                Môžete používať HTML tagy: &lt;h1&gt;, &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;li&gt;, atď.
+              </small>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div style={{
+            background: '#f9fafb',
+            padding: '20px',
+            borderRadius: '6px',
+            marginBottom: '30px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '15px' }}>
+              ⚙️ Nastavenia
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* Publikovanie */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.publikovany}
+                    onChange={(e) => setFormData({ ...formData, publikovany: e.target.checked })}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                    🌐 Publikovať stránku
+                  </span>
+                </label>
+                <small style={{ color: '#6b7280', fontSize: '12px', marginLeft: '26px' }}>
+                  Zverejniť stránku na webovej stránke
+                </small>
+              </div>
+
+              {/* Menu */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.v_menu}
+                    onChange={(e) => setFormData({ ...formData, v_menu: e.target.checked })}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                    📍 Zobrazovať v menu
+                  </span>
+                </label>
+                <small style={{ color: '#6b7280', fontSize: '12px', marginLeft: '26px' }}>
+                  Pridať odkaz do hlavného menu
+                </small>
+              </div>
+            </div>
+
+            {/* Poradie v menu */}
+            {formData.v_menu && (
+              <div style={{ marginTop: '15px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                  Poradie v menu
+                </label>
+                <input
+                  type="number"
+                  value={formData.poradie_menu || ''}
+                  onChange={(e) => setFormData({ ...formData, poradie_menu: parseInt(e.target.value) || undefined })}
+                  placeholder="10"
+                  min="1"
+                  max="9999"
+                  style={{
+                    width: '100px',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '12px', marginLeft: '10px' }}>
+                  Nižšie číslo = vyššie v menu. Prázdne = automaticky na koniec.
+                </small>
+              </div>
+            )}
+          </div>
+
+          {/* SEO Settings */}
+          <div style={{
+            background: '#f0f9ff',
+            padding: '20px',
+            borderRadius: '6px',
+            marginBottom: '30px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '15px' }}>
+              🔍 SEO nastavenia (voliteľné)
+            </h3>
+
+            <div style={{ display: 'grid', gap: '15px' }}>
+              {/* Meta Title */}
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                  Meta Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.meta_title || ''}
+                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                  placeholder="Názov pre vyhľadávače (max 60 znakov)"
+                  maxLength={100}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '12px' }}>
+                  Aktuálne: {(formData.meta_title || '').length}/100 znakov
+                </small>
+              </div>
+
+              {/* Meta Description */}
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+                  Meta Description
+                </label>
+                <textarea
+                  value={formData.meta_description || ''}
+                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                  placeholder="Krátky popis stránky pre vyhľadávače (max 160 znakov)"
+                  maxLength={300}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    resize: 'vertical'
+                  }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '12px' }}>
+                  Aktuálne: {(formData.meta_description || '').length}/300 znakov
+                </small>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('list');
+                resetForm();
+              }}
+              style={{
+                padding: '12px 24px',
+                background: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Zrušiť
+            </button>
+            
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: '12px 24px',
+                background: submitting ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              {submitting
+                ? (currentView === 'edit' ? 'Ukladám...' : 'Vytváram...')
+                : (currentView === 'edit' ? '✅ Aktualizovať' : '✅ Vytvoriť stránku')
+              }
+            </button>
+          </div>
+        </form>
       </div>
     );
   }
 
+  // List view
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '30px',
-        borderBottom: '2px solid #e2e8f0',
-        paddingBottom: '20px'
+        marginBottom: '30px'
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '2rem', color: '#1a202c' }}>
-            📄 Správa stránok
-          </h1>
-          <p style={{ margin: '5px 0 0 0', color: '#64748b' }}>
-            Správa statického obsahu webu
-          </p>
-        </div>
-        
-        {currentView === 'list' && (
-          <button
-            onClick={() => {
-              resetForm();
-              setCurrentView('create');
-            }}
-            style={{
-              padding: '12px 24px',
-              background: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            ➕ Nová stránka
-          </button>
-        )}
-
-        {currentView !== 'list' && (
-          <button
-            onClick={() => {
-              resetForm();
-              setCurrentView('list');
-            }}
-            style={{
-              padding: '12px 24px',
-              background: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            ← Späť na zoznam
-          </button>
-        )}
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
+          📄 Správa stránok
+        </h1>
+        <button
+          onClick={() => setCurrentView('create')}
+          style={{
+            padding: '12px 20px',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          ➕ Nová stránka
+        </button>
       </div>
 
-      {/* Content based on current view */}
-      {currentView === 'list' && (
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div style={{
+          background: '#f0f9ff',
+          border: '1px solid #0ea5e9',
+          borderRadius: '6px',
+          padding: '12px',
+          marginBottom: '20px',
+          color: '#0369a1'
+        }}>
+          ✅ {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '6px',
+          padding: '12px',
+          marginBottom: '20px',
+          color: '#dc2626'
+        }}>
+          ❌ {errorMessage}
+        </div>
+      )}
+
+      {/* Filters */}
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        marginBottom: '20px'
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto auto auto',
+          gap: '15px',
+          alignItems: 'end'
+        }}>
+          {/* Search */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+              🔍 Vyhľadávanie
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Hľadať v názvoch a obsahu..."
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'published' | 'draft')}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">Všetky</option>
+              <option value="published">Publikované</option>
+              <option value="draft">Koncepty</option>
+            </select>
+          </div>
+
+          {/* Menu Filter */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>
+              Menu
+            </label>
+            <select
+              value={menuFilter}
+              onChange={(e) => setMenuFilter(e.target.value as 'all' | 'in_menu' | 'not_in_menu')}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">Všetky</option>
+              <option value="in_menu">V menu</option>
+              <option value="not_in_menu">Nie v menu</option>
+            </select>
+          </div>
+
+          {/* Clear Filters */}
+          <div>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all');
+                setMenuFilter('all');
+              }}
+              style={{
+                padding: '8px 12px',
+                background: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🗑️ Vyčistiť
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: '15px',
+        marginBottom: '20px'
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', color: '#3b82f6' }}>{pages.length}</div>
+          <div style={{ fontSize: '14px', color: '#64748b' }}>Celkom stránok</div>
+        </div>
+        
+        <div style={{
+          background: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', color: '#10b981' }}>
+            {pages.filter(p => p.publikovany).length}
+          </div>
+          <div style={{ fontSize: '14px', color: '#64748b' }}>Publikované</div>
+        </div>
+
+        <div style={{
+          background: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', color: '#f59e0b' }}>
+            {pages.filter(p => p.v_menu).length}
+          </div>
+          <div style={{ fontSize: '14px', color: '#64748b' }}>V menu</div>
+        </div>
+
+        <div style={{
+          background: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', color: '#6b7280' }}>
+            {pages.filter(p => !p.publikovany).length}
+          </div>
+          <div style={{ fontSize: '14px', color: '#64748b' }}>Koncepty</div>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div style={{
+          background: 'white',
+          padding: '60px 20px',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⏳</div>
+          <div>Načítavam stránky...</div>
+        </div>
+      )}
+
+      {/* Pages List */}
+      {!loading && (
         <>
-          {/* Filters */}
-          <div style={{
-            background: 'white',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            marginBottom: '20px'
-          }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '20px',
-              alignItems: 'end'
-            }}>
-              {/* Search */}
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  🔍 Vyhľadávanie
-                </label>
-                <input
-                  type="text"
-                  placeholder="Hľadať v názve alebo obsahu..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Status filter */}
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  📋 Status
-                </label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="all">Všetky stránky</option>
-                  <option value="published">Publikované</option>
-                  <option value="draft">Koncepty</option>
-                </select>
-              </div>
-
-              {/* Menu filter */}
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  🎛️ Menu
-                </label>
-                <select
-                  value={menuFilter}
-                  onChange={(e) => setMenuFilter(e.target.value as any)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="all">Všetky stránky</option>
-                  <option value="in_menu">V menu</option>
-                  <option value="not_in_menu">Nie v menu</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '15px',
-            marginBottom: '20px'
-          }}>
-            <div style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '2rem', color: '#3b82f6' }}>{pages.length}</div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>Celkom stránok</div>
-            </div>
-            
-            <div style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '2rem', color: '#10b981' }}>
-                {pages.filter(p => p.publikovany).length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>Publikované</div>
-            </div>
-
-            <div style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '2rem', color: '#f59e0b' }}>
-                {pages.filter(p => p.v_menu).length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>V menu</div>
-            </div>
-
-            <div style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '2rem', color: '#6b7280' }}>
-                {pages.filter(p => !p.publikovany).length}
-              </div>
-              <div style={{ fontSize: '14px', color: '#64748b' }}>Koncepty</div>
-            </div>
-          </div>
-
-          {/* Pages List */}
           {filteredPages.length === 0 ? (
             <div style={{
               background: 'white',
@@ -552,31 +976,23 @@ const PageManagement: React.FC = () => {
                   : 'Zatiaľ nemáte žiadne stránky. Vytvorte svoju prvú stránku!'
                 }
               </p>
-              <button
-                onClick={() => {
-                  if (searchTerm || statusFilter !== 'all' || menuFilter !== 'all') {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setMenuFilter('all');
-                  } else {
-                    resetForm();
-                    setCurrentView('create');
-                  }
-                }}
-                style={{
-                  padding: '12px 24px',
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                {searchTerm || statusFilter !== 'all' || menuFilter !== 'all'
-                  ? 'Vyčistiť filtre'
-                  : '➕ Vytvoriť prvú stránku'
-                }
-              </button>
+              {(!searchTerm && statusFilter === 'all' && menuFilter === 'all') && (
+                <button
+                  onClick={() => setCurrentView('create')}
+                  style={{
+                    padding: '12px 20px',
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ➕ Vytvoriť prvú stránku
+                </button>
+              )}
             </div>
           ) : (
             <div style={{
@@ -591,17 +1007,17 @@ const PageManagement: React.FC = () => {
                 gridTemplateColumns: '1fr auto auto auto auto',
                 gap: '15px',
                 padding: '20px',
-                background: '#f8fafc',
+                background: '#f9fafb',
                 borderBottom: '1px solid #e2e8f0',
                 fontWeight: 'bold',
                 fontSize: '14px',
                 color: '#374151'
               }}>
-                <div>Stránka</div>
-                <div style={{ textAlign: 'center' }}>Status</div>
-                <div style={{ textAlign: 'center' }}>Menu</div>
-                <div style={{ textAlign: 'center' }}>Slová</div>
-                <div style={{ textAlign: 'center' }}>Akcie</div>
+                <div>📄 Stránka</div>
+                <div style={{ textAlign: 'center' }}>🌐 Status</div>
+                <div style={{ textAlign: 'center' }}>📍 Menu</div>
+                <div style={{ textAlign: 'center' }}>👁️ Náhľad</div>
+                <div style={{ textAlign: 'center' }}>⚙️ Akcie</div>
               </div>
 
               {/* Table Body */}
@@ -678,69 +1094,66 @@ const PageManagement: React.FC = () => {
                         fontSize: '12px',
                         fontWeight: 'bold',
                         cursor: 'pointer',
-                        background: page.v_menu ? '#3b82f6' : '#e2e8f0',
-                        color: page.v_menu ? 'white' : '#6b7280'
+                        background: page.v_menu ? '#3b82f6' : '#9ca3af',
+                        color: 'white'
                       }}
                     >
-                      {page.v_menu ? '🎛️ Áno' : '➖ Nie'}
+                      {page.v_menu ? '📍 V menu' : '➖ Nie v menu'}
                     </button>
                   </div>
 
-                  {/* Word Count */}
-                  <div style={{ textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
-                    {page.word_count}
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    justifyContent: 'center'
-                  }}>
-                    <button
-                      onClick={() => handleEdit(page)}
+                  {/* Preview */}
+                  <div style={{ textAlign: 'center' }}>
+                    <a
+                      href={`/${page.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{
-                        padding: '8px 12px',
-                        background: '#3b82f6',
-                        color: 'white',
-                        border: 'none',
+                        padding: '6px 12px',
+                        background: '#f3f4f6',
+                        border: '1px solid #d1d5db',
                         borderRadius: '6px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✏️ Upraviť
-                    </button>
-                    
-                    <button
-                      onClick={() => window.open(page.url, '_blank')}
-                      style={{
-                        padding: '8px 12px',
-                        background: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
+                        textDecoration: 'none',
+                        color: '#374151',
+                        fontSize: '12px'
                       }}
                     >
                       👁️ Zobraziť
-                    </button>
-                    
-                    <button
-                      onClick={() => deletePage(page.id)}
-                      style={{
-                        padding: '8px 12px',
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      🗑️ Vymazať
-                    </button>
+                    </a>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => handleEdit(page)}
+                        style={{
+                          padding: '6px 10px',
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        ✏️ Upraviť
+                      </button>
+                      <button
+                        onClick={() => deletePage(page.id)}
+                        style={{
+                          padding: '6px 10px',
+                          background: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        🗑️ Zmazať
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -749,381 +1162,37 @@ const PageManagement: React.FC = () => {
         </>
       )}
 
-      {/* Create/Edit Form */}
-      {(currentView === 'create' || currentView === 'edit') && (
+      {/* Results Count */}
+      {!loading && filteredPages.length > 0 && (
         <div style={{
-          background: 'white',
-          padding: '30px',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          maxWidth: '800px',
-          margin: '0 auto'
+          textAlign: 'center',
+          marginTop: '20px',
+          color: '#6b7280',
+          fontSize: '14px'
         }}>
-          <h2 style={{ marginBottom: '20px', fontSize: '1.5rem' }}>
-            {currentView === 'create' ? '➕ Nová stránka' : '✏️ Úprava stránky'}
-          </h2>
-
-          {/* Form Errors */}
-          {formErrors.length > 0 && (
-            <div style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              padding: '15px',
-              borderRadius: '6px',
-              marginBottom: '20px'
-            }}>
-              {formErrors.map((error, index) => (
-                <div key={index} style={{ color: '#dc2626', fontSize: '14px' }}>
-                  ❌ {error}
-                </div>
-              ))}
-            </div>
+          Zobrazených {filteredPages.length} z {pages.length} stránok
+          {(searchTerm || statusFilter !== 'all' || menuFilter !== 'all') && (
+            <span style={{ marginLeft: '10px' }}>
+              • <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setMenuFilter('all');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#3b82f6',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Zobraziť všetky
+              </button>
+            </span>
           )}
-
-          <form onSubmit={handleSubmit}>
-            <div style={{
-              display: 'grid',
-              gap: '20px'
-            }}>
-              {/* Názov */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontWeight: 'bold',
-                  color: '#374151'
-                }}>
-                  📝 Názov stránky *
-                </label>
-                <input
-                  type="text"
-                  value={formData.nazov}
-                  onChange={(e) => setFormData({ ...formData, nazov: e.target.value })}
-                  placeholder="Napríklad: História klubu"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '16px'
-                  }}
-                />
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                  Z názvu sa automaticky vygeneruje URL slug
-                </div>
-              </div>
-
-              {/* Slug (voliteľný) */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontWeight: 'bold',
-                  color: '#374151'
-                }}>
-                  🔗 URL slug (voliteľné)
-                </label>
-                <input
-                  type="text"
-                  value={formData.slug || ''}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="historia-klubu"
-                  pattern="^[a-z0-9-]+$"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '16px'
-                  }}
-                />
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                  Môže obsahovať len malé písmená, číslice a pomlčky. Ak nevyplníte, vygeneruje sa automaticky.
-                </div>
-              </div>
-
-              {/* Obsah */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontWeight: 'bold',
-                  color: '#374151'
-                }}>
-                  📄 Obsah stránky *
-                </label>
-                <textarea
-                  value={formData.obsah}
-                  onChange={(e) => setFormData({ ...formData, obsah: e.target.value })}
-                  placeholder="Zadajte obsah stránky. Môžete použiť HTML tagy pre formátovanie."
-                  required
-                  rows={10}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontFamily: 'monospace',
-                    resize: 'vertical'
-                  }}
-                />
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                  Podporované sú HTML tagy: &lt;h1&gt;, &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;a&gt;, &lt;img&gt;, atď.
-                </div>
-              </div>
-
-              {/* Dve stĺpce pre settings */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '20px'
-              }}>
-                {/* Meta Title */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '5px',
-                    fontWeight: 'bold',
-                    color: '#374151'
-                  }}>
-                    🏷️ SEO Title (voliteľné)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.meta_title || ''}
-                    onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                    placeholder="SEO optimalizovaný title"
-                    maxLength={100}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e2e8f0',
-                      borderRadius: '6px',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                    Max. 100 znakov pre optimálne SEO
-                  </div>
-                </div>
-
-                {/* Poradie v menu */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '5px',
-                    fontWeight: 'bold',
-                    color: '#374151'
-                  }}>
-                    📍 Poradie v menu (voliteľné)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.poradie_menu || ''}
-                    onChange={(e) => setFormData({ ...formData, poradie_menu: parseInt(e.target.value) || undefined })}
-                    placeholder="10"
-                    min="1"
-                    max="9999"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e2e8f0',
-                      borderRadius: '6px',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                    Nižšie číslo = vyššie v menu. Ak nevyplníte, nastaví sa automaticky.
-                  </div>
-                </div>
-              </div>
-
-              {/* Meta Description */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontWeight: 'bold',
-                  color: '#374151'
-                }}>
-                  📝 SEO Description (voliteľné)
-                </label>
-                <textarea
-                  value={formData.meta_description || ''}
-                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                  placeholder="Krátky popis stránky pre vyhľadávače"
-                  maxLength={300}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '5px' }}>
-                  Max. 300 znakov. Zobrazuje sa vo vyhľadávačoch.
-                </div>
-              </div>
-
-              {/* Checkboxy */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '20px',
-                padding: '20px',
-                background: '#f8fafc',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0'
-              }}>
-                {/* Publikovanie */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <input
-                    type="checkbox"
-                    id="publikovany"
-                    checked={formData.publikovany}
-                    onChange={(e) => setFormData({ ...formData, publikovany: e.target.checked })}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <label htmlFor="publikovany" style={{
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}>
-                    ✅ Publikovať stránku
-                  </label>
-                </div>
-
-                {/* Menu */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <input
-                    type="checkbox"
-                    id="v_menu"
-                    checked={formData.v_menu}
-                    onChange={(e) => setFormData({ ...formData, v_menu: e.target.checked })}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  <label htmlFor="v_menu" style={{
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}>
-                    🎛️ Zobraziť v menu
-                  </label>
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div style={{
-                display: 'flex',
-                gap: '15px',
-                justifyContent: 'flex-end',
-                paddingTop: '20px',
-                borderTop: '1px solid #e2e8f0'
-              }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetForm();
-                    setCurrentView('list');
-                  }}
-                  style={{
-                    padding: '12px 24px',
-                    background: '#6b7280',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Zrušiť
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    padding: '12px 24px',
-                    background: submitting ? '#9ca3af' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {submitting ? (
-                    <>
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2px solid #ffffff',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }}></div>
-                      Ukladám...
-                    </>
-                  ) : (
-                    <>
-                      💾 {currentView === 'create' ? 'Vytvoriť stránku' : 'Uložiť zmeny'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
         </div>
       )}
-
-      {/* CSS Animations */}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        /* Responsive design */
-        @media (max-width: 768px) {
-          .page-management-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .page-management-actions {
-            flex-direction: column;
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // backend/src/models/Page.ts
-// Model pre správu statických stránok (Fáza 5)
+// Model pre správu statických stránok (Fáza 5) - ROZŠÍRENÝ
 
 import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../config/database';
@@ -54,6 +54,47 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
   }
 
   /**
+   * ✅ NOVÉ: Vytvorí unikátny slug pridaním číselného suffixu ak je potrebné
+   * Príklad: "historia" → "historia-1" → "historia-2" atď.
+   */
+  public static async generateUniqueSlug(baseSlug: string, excludeId?: number): Promise<string> {
+    // Najprv skús originálny slug
+    const isOriginalUnique = await this.validateUniqueSlug(baseSlug, excludeId);
+    if (isOriginalUnique) {
+      return baseSlug;
+    }
+
+    // Ak nie je unikátny, hľadaj s číslami
+    let counter = 1;
+    let uniqueSlug = `${baseSlug}-${counter}`;
+    
+    // Pokračuj kým nenájdeš unikátny
+    while (!(await this.validateUniqueSlug(uniqueSlug, excludeId))) {
+      counter++;
+      uniqueSlug = `${baseSlug}-${counter}`;
+      
+      // Bezpečnostná poistka - max 1000 pokusov
+      if (counter > 1000) {
+        // Ak sa nedá nájsť ani po 1000 pokusoch, pridaj timestamp
+        const timestamp = Date.now().toString().slice(-6);
+        uniqueSlug = `${baseSlug}-${timestamp}`;
+        break;
+      }
+    }
+
+    return uniqueSlug;
+  }
+
+  /**
+   * ✅ ROZŠÍRENÉ: Generuje unikátny slug z názvu stránky
+   * Ak slug už existuje, automaticky pridá číslo na koniec
+   */
+  public static async generateUniqueSlugFromTitle(nazov: string, excludeId?: number): Promise<string> {
+    const baseSlug = this.generateSlug(nazov);
+    return await this.generateUniqueSlug(baseSlug, excludeId);
+  }
+
+  /**
    * Validuje slug - musí byť jedinečný
    */
   public static async validateUniqueSlug(slug: string, excludeId?: number): Promise<boolean> {
@@ -78,15 +119,19 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
     return lastPage ? lastPage.poradie_menu + 10 : 10;
   }
 
+  // === INSTANCE METÓDY ===
+
   /**
-   * Skráti obsah pre náhľad
+   * Získa plnú URL stránky
+   */
+  public getUrl(): string {
+    return `/${this.slug}`;
+  }
+
+  /**
+   * Skráti obsah pre excerpt
    */
   public getExcerpt(length: number = 150): string {
-    // Ochrana proti null/undefined
-    if (!this.obsah) {
-      return '';
-    }
-    
     // Odstráni HTML tagy
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
     
@@ -98,54 +143,34 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
   }
 
   /**
-   * Vráti URL adresu stránky
-   */
-  public getUrl(): string {
-    return `/${this.slug}`;
-  }
-
-  /**
-   * Vráti počet slov v obsahu
+   * Spočíta slová v obsahu
    */
   public getWordCount(): number {
-    // Ochrana proti null/undefined
-    if (!this.obsah) {
-      return 0;
-    }
-    
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
     return plainText.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
 
   /**
-   * Overí či je stránka publikovaná a aktívna
+   * Či je stránka publikovaná
    */
   public isPublished(): boolean {
     return this.publikovany;
   }
 
   /**
-   * Overí či je stránka v menu
+   * Či je stránka v menu
    */
   public isInMenu(): boolean {
-    return this.v_menu && this.publikovany;
+    return this.v_menu;
   }
 
   /**
-   * Vráti údaje pre JSON response
+   * Konvertuje na JSON s dodatočnými informáciami
    */
   public toJSON(): any {
+    const values = super.toJSON();
     return {
-      id: this.id,
-      nazov: this.nazov,
-      obsah: this.obsah,
-      slug: this.slug,
-      v_menu: this.v_menu,
-      poradie_menu: this.poradie_menu,
-      meta_title: this.meta_title,
-      meta_description: this.meta_description,
-      publikovany: this.publikovany,
-      // Helper fields
+      ...values,
       url: this.getUrl(),
       excerpt: this.getExcerpt(),
       word_count: this.getWordCount(),
@@ -259,21 +284,15 @@ Page.init(
       },
     ],
     hooks: {
-      // Automatické generovanie slug ak nie je zadaný
+      // ✅ AKTUALIZOVANÉ: Použitie novej metódy pre unikátny slug
       beforeValidate: async (page: Page) => {
         if (!page.slug && page.nazov) {
-          page.slug = Page.generateSlug(page.nazov);
+          page.slug = await Page.generateUniqueSlugFromTitle(page.nazov);
         }
       },
       
-      // Kontrola jedinečnosti slug a automatické nastavenie poradia v menu
+      // Automatické nastavenie poradia v menu
       beforeCreate: async (page: Page) => {
-        // Kontrola jedinečnosti slug
-        const isUnique = await Page.validateUniqueSlug(page.slug);
-        if (!isUnique) {
-          throw new Error(`Slug "${page.slug}" už existuje`);
-        }
-
         // Automatické nastavenie poradia v menu
         if (page.v_menu && !page.poradie_menu) {
           page.poradie_menu = await Page.getNextMenuOrder();
