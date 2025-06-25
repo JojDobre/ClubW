@@ -12,6 +12,8 @@ import Liga from './Liga';
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
 import Page from './Page';
+import Galeria from './Galeria';              // NOVÉ - FÁZA 7
+import GaleriaObrazok from './GaleriaObrazok'; // NOVÉ - FÁZA 7
 
 // ===== DEFINÍCIA VZŤAHOV MEDZI MODELMI =====
 
@@ -154,6 +156,59 @@ ZapasStatistika.belongsTo(Player, {
   as: 'hrac',
 });
 
+// 7. FOTOGALÉRIA vzťahy - FÁZA 7 (NOVÉ)
+// Galeria -> GaleriaObrazok (1:N) - galéria má viacero obrázkov
+Galeria.hasMany(GaleriaObrazok, {
+  foreignKey: 'galeria_id',
+  as: 'obrazky',
+  onDelete: 'CASCADE', // Ak sa vymaže galéria, vymažú sa aj obrázky
+});
+
+GaleriaObrazok.belongsTo(Galeria, {
+  foreignKey: 'galeria_id',
+  as: 'galeria',
+});
+
+// Galeria -> Team (voliteľné priradenie k tímu)
+Galeria.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
+  constraints: false,
+});
+
+Team.hasMany(Galeria, {
+  foreignKey: 'tim_id',
+  as: 'galerie',
+  constraints: false,
+});
+
+// Galeria -> Article (voliteľné priradenie k článku)
+Galeria.belongsTo(Article, {
+  foreignKey: 'clanok_id',
+  as: 'clanok',
+  constraints: false,
+});
+
+Article.hasMany(Galeria, {
+  foreignKey: 'clanok_id',
+  as: 'galerie',
+  constraints: false,
+});
+
+// Galeria -> Zapas (voliteľné priradenie k zápasu)
+Galeria.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+  constraints: false,
+});
+
+Zapas.hasMany(Galeria, {
+  foreignKey: 'zapas_id',
+  as: 'galerie',
+  constraints: false,
+});
+
+
 // ===== EXPORT VŠETKÝCH MODELOV =====
 
 export {
@@ -167,6 +222,8 @@ export {
   Zapas,
   ZapasStatistika,
   Page,
+  Galeria,          
+  GaleriaObrazok,   
 };
 
 // Export default objekt pre jednoduchší import
@@ -181,6 +238,8 @@ export default {
   Zapas,
   ZapasStatistika,
   Page,
+  Galeria,           
+  GaleriaObrazok,
 };
 
 // ===== HELPER FUNKCIE PRE VZŤAHY =====
@@ -476,5 +535,101 @@ export const getMatchCalendar = async (rok: number, mesiac: number) => {
       }
     ],
     order: [['datum_cas', 'ASC']]
+  });
+};
+
+
+// FÁZA 7 - Helper funkcie pre fotogalérie (NOVÉ)
+export const getGalleryWithImages = async (galeriaId: number) => {
+  return await Galeria.findByPk(galeriaId, {
+    include: [
+      {
+        model: GaleriaObrazok,
+        as: 'obrazky',
+        where: { aktivity: true },
+        required: false,
+        order: [['poradie', 'ASC'], ['vytvoreny', 'ASC']]
+      },
+      {
+        model: Team,
+        as: 'tim',
+        attributes: ['id', 'nazov'],
+        required: false
+      },
+      {
+        model: Article,
+        as: 'clanok',
+        attributes: ['id', 'nazov', 'slug'],
+        required: false
+      },
+      {
+        model: Zapas,
+        as: 'zapas',
+        attributes: ['id', 'nazov', 'datum_cas'],
+        required: false
+      }
+    ]
+  });
+};
+
+export const getGalleriesByType = async (typ: 'tim' | 'clanok' | 'zapas' | 'volna', objectId?: number) => {
+  const whereClause: any = { aktivity: true };
+  
+  if (typ === 'volna') {
+    whereClause.tim_id = null;
+    whereClause.clanok_id = null;
+    whereClause.zapas_id = null;
+  } else if (objectId) {
+    whereClause[`${typ}_id`] = objectId;
+  }
+
+  return await Galeria.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: GaleriaObrazok,
+        as: 'obrazky',
+        where: { aktivity: true },
+        required: false,
+        attributes: ['id', 'cesta_suboru', 'nahladovy_maly'],
+        limit: 1, // Len náhľadový obrázok
+        order: [['je_nahladovy', 'DESC'], ['poradie', 'ASC']]
+      }
+    ],
+    order: [['vytvoreny', 'DESC']]
+  });
+};
+
+export const getAllGalleriesForAdmin = async () => {
+  return await Galeria.findAll({
+    include: [
+      {
+        model: GaleriaObrazok,
+        as: 'obrazky',
+        where: { aktivity: true },
+        required: false,
+        attributes: ['id'],
+        limit: 1 // Len pre počet
+      },
+      {
+        model: Team,
+        as: 'tim',
+        attributes: ['id', 'nazov'],
+        required: false
+      },
+      {
+        model: Article,
+        as: 'clanok',
+        attributes: ['id', 'nazov'],
+        required: false
+      },
+      {
+        model: Zapas,
+        as: 'zapas',
+        attributes: ['id', 'nazov'],
+        required: false
+      }
+    ],
+    order: [['vytvoreny', 'DESC']]
   });
 };

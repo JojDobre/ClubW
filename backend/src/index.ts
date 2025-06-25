@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
+import path from 'path';
 
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
@@ -26,12 +27,17 @@ import ligaRoutes from './routes/liga';
 import zapasRoutes from './routes/zapas';
 import kalendarRoutes from './routes/kalendar';
 import pagesRoutes, { adminPageRouter } from './routes/pages'; 
+import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
+import { adminGalleryImagesRouter } from './routes/gallery-images';
 
 // Načítanie environment premenných
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Static serving pre upload súbory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ===== MIDDLEWARE SETUP =====
 
@@ -167,6 +173,10 @@ app.use('/api/calendar', kalendarRoutes); // ✅ Kalendár
 app.use('/api/pages', pagesRoutes);
 app.use('/api/admin/pages', adminPageRouter);
 
+// FÁZA 7: Fotogalérie
+app.use('/api/galleries', galleriesRoutes);
+app.use('/api/admin/galleries', adminGalleryRouter);
+app.use('/api/admin/galleries', adminGalleryImagesRouter);
 
 
 // ===== DEMO ENDPOINTS (môžeme odstrániť po úplnej implementácii) ===
