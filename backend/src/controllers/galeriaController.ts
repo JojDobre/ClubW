@@ -454,7 +454,10 @@ export const deleteGallery = async (req: Request, res: Response) => {
     const { id } = req.params;
     const galeriaId = parseInt(id, 10);
 
+    console.log('🗑️ DELETE request pre galériu ID:', galeriaId); // DEBUG LOG
+
     if (isNaN(galeriaId)) {
+      console.log('❌ Neplatné ID galérie:', id); // DEBUG LOG
       return res.status(400).json({
         success: false,
         message: 'Neplatné ID galérie'
@@ -464,6 +467,7 @@ export const deleteGallery = async (req: Request, res: Response) => {
     // Nájdenie galérie
     const galeria = await Galeria.findByPk(galeriaId);
     if (!galeria) {
+      console.log('❌ Galéria nenájdená, ID:', galeriaId); // DEBUG LOG
       return res.status(404).json({
         success: false,
         message: 'Galéria nenájdená'
@@ -471,6 +475,7 @@ export const deleteGallery = async (req: Request, res: Response) => {
     }
 
     const nazovGalerie = galeria.nazov;
+    console.log('✅ Vymazávam galériu:', nazovGalerie); // DEBUG LOG
 
     // Soft delete - nastavenie aktivity na false
     await galeria.update({ aktivity: false });
@@ -481,13 +486,15 @@ export const deleteGallery = async (req: Request, res: Response) => {
       { where: { galeria_id: galeriaId } }
     );
 
+    console.log('✅ Galéria úspešne vymazaná:', nazovGalerie); // DEBUG LOG
+
     res.json({
       success: true,
       message: `Galéria "${nazovGalerie}" bola úspešne vymazaná`
     });
 
   } catch (error: any) {
-    console.error('Chyba pri vymazávaní galérie:', error);
+    console.error('❌ Chyba pri vymazávaní galérie:', error); // DEBUG LOG
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vymazávaní galérie',

@@ -14,6 +14,7 @@ const LigaManagement = lazy(() => import('./LigaManagement'));
 const ZapasManagement = lazy(() => import('./ZapasManagement'));
 const KalendarManagement = lazy(() => import('./KalendarManagement'));
 const PageManagement = lazy(() => import('./PageManagement')); 
+const GaleriaManagement = lazy(() => import('./GaleriaManagement'));
 
 
 interface User {
@@ -193,6 +194,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       icon: '📅',
       enabled: true,
       order: 7
+    },
+    {
+      id: 'galerie',
+      title: 'Fotogalérie',
+      value: 0,
+      subtitle: 'Aktívnych galérií',
+      color: '#8b5cf6',
+      icon: '📸',
+      enabled: true,
+      order: 8
     }
   ]);
 
@@ -246,7 +257,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     order: 6
   },
     {
-      id: 'viewWebsite',
+      id: 'viewWebsite2',
       title: 'Zobraziť web',
       icon: '🌐',
       action: () => window.open('/clanky', '_blank'),
@@ -286,6 +297,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       enabled: true,
       order: 8
     },
+    {
+      id: 'newGaleria',
+      title: 'Nová galéria',
+      icon: '📸',
+      action: () => setCurrentPage('galerie'),
+      enabled: true,
+      order: 9
+    },
   ]);
 
   // Menu items
@@ -293,7 +312,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     { id: 'dashboard', name: 'Dashboard', icon: '📊', roles: ['admin', 'redaktor', 'trener'] },
     { id: 'articles', name: 'Články', icon: '📄', component: ArticleManagement, roles: ['admin', 'redaktor'] },
     { id: 'categories', name: 'Kategórie', icon: '🏷', component: CategoryManagement, roles: ['admin'] },
-        { id: 'pages', name: 'Stránky', icon: '📄', component: PageManagement, roles: ['admin', 'redaktor'] }, // NOVÉ
+    { id: 'pages', name: 'Stránky', icon: '📄', component: PageManagement, roles: ['admin', 'redaktor'] }, // NOVÉ
+    { id: 'galerie', name: 'Fotogalérie', icon: '📸', component: GaleriaManagement, roles: ['admin', 'redaktor'] },
 
     { id: 'users', name: 'Používatelia', icon: '👥', component: UserManagement, roles: ['admin'] },
     { id: 'teams', name: 'Tímy', icon: '⚽', component: TeamsManagement, roles: ['admin', 'trener'] },

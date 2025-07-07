@@ -175,8 +175,8 @@ app.use('/api/admin/pages', adminPageRouter);
 
 // FÁZA 7: Fotogalérie
 app.use('/api/galleries', galleriesRoutes);
-app.use('/api/admin/galleries', adminGalleryRouter);
 app.use('/api/admin/galleries', adminGalleryImagesRouter);
+app.use('/api/admin/galleries', adminGalleryRouter);
 
 
 // ===== DEMO ENDPOINTS (môžeme odstrániť po úplnej implementácii) ===

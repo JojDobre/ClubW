@@ -1,0 +1,314 @@
+/* src/styles/layout.css */
+
+/* ========================================
+   MAIN DASHBOARD LAYOUT
+======================================== */
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: var(--color-background);
+}
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ========================================
+   LEFT SIDEBAR
+======================================== */
+
+.dashboard-left-sidebar {
+  width: 212px;
+  flex-shrink: 0;
+  background: var(--color-background);
+  border-right: 1px solid var(--black-10);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  position: relative;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .dashboard-left-sidebar,
+[data-theme="dark-bright"] .dashboard-left-sidebar {
+  border-right: 1px solid var(--white-10);
+}
+
+/* ========================================
+   RIGHT SIDEBAR
+======================================== */
+
+.dashboard-right-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--color-background);
+  border-left: 1px solid var(--black-10);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  position: relative;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .dashboard-right-sidebar,
+[data-theme="dark-bright"] .dashboard-right-sidebar {
+  border-left: 1px solid var(--white-10);
+}
+
+/* ========================================
+   MAIN CONTENT AREA
+======================================== */
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  background: var(--color-background);
+}
+
+/* ========================================
+   NAVBAR
+======================================== */
+
+.dashboard-navbar {
+  height: 64px;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--black-10);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .dashboard-navbar,
+[data-theme="dark-bright"] .dashboard-navbar {
+  border-bottom: 1px solid var(--white-10);
+}
+
+/* ========================================
+   CONTENT AREA
+======================================== */
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-background);
+}
+
+/* ========================================
+   FOOTER
+======================================== */
+
+.dashboard-footer {
+  flex-shrink: 0;
+  background: var(--color-background);
+}
+
+/* ========================================
+   SIDEBAR ANIMATIONS
+======================================== */
+
+/* Keď sa left sidebar zatvorí */
+.dashboard-layout:not(:has(.dashboard-left-sidebar)) .dashboard-main {
+  /* Navbar sa roztiahne na celú šírku */
+}
+
+/* Keď sa right sidebar zatvorí */
+.dashboard-layout:not(:has(.dashboard-right-sidebar)) .dashboard-main {
+  /* Navbar sa roztiahne na celú šírku */
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
+
+@media (max-width: 1024px) {
+  .dashboard-right-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  
+  .dashboard-left-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 2000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .dashboard-left-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .dashboard-right-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 2000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .dashboard-right-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .dashboard-main {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   CLOSE BUTTONS PRE SIDEBARY
+======================================== */
+
+.sidebar-close-button,
+.rightbar-close-button {
+  position: absolute;
+  top: 16px;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.sidebar-close-button {
+  right: 16px;
+}
+
+.rightbar-close-button {
+  left: 16px;
+}
+
+.sidebar-close-button:hover,
+.rightbar-close-button:hover {
+  background: var(--black-5);
+}
+
+/* Dark theme support pre close buttons */
+[data-theme="dark"] .sidebar-close-button:hover,
+[data-theme="dark"] .rightbar-close-button:hover,
+[data-theme="dark-bright"] .sidebar-close-button:hover,
+[data-theme="dark-bright"] .rightbar-close-button:hover {
+  background: var(--white-5);
+}
+
+/* ========================================
+   SIDEBAR ADJUSTMENTS PRE CLOSE BUTTON
+======================================== */
+
+.sidebar {
+  padding-top: 60px; /* Priestor pre close button */
+}
+
+.rightbar {
+  padding-top: 60px; /* Priestor pre close button */
+}
+
+/* ========================================
+   OVERLAY PRE MOBILE
+======================================== */
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1500;
+}
+
+@media (max-width: 768px) {
+  .mobile-overlay.active {
+    display: block;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+======================================== */
+
+.sidebar-transition {
+  transition: all 0.3s ease;
+}
+
+.content-expanded {
+  /* Pre rozšírený obsah keď sú sidebary zatvorené */
+  max-width: none;
+}
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.sidebar-enter {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.sidebar-exit {
+  animation: slideOutLeft 0.3s ease-out;
+}
+
+.rightbar-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.rightbar-exit {
+  animation: slideOutRight 0.3s ease-out;
+}

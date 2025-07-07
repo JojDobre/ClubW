@@ -1,0 +1,31 @@
+[data-theme="dark"] {
+  --color-primary: var(--primary-purple-pastel);
+  --color-primary-hover: var(--primary-blue);
+  --color-secondary: var(--secondary-purple-pastel);
+  --color-background: var(--black-100);
+  --color-surface: var(--white-5);
+  --color-border: var(--white-10);
+  --color-text-primary: var(--white-100);
+  --color-text-secondary: var(--white-80);
+  --color-text-muted: var(--white-40);
+  
+  --color-success: var(--secondary-green-pastel);
+  --color-warning: var(--secondary-yellow-pastel);
+  --color-error: var(--secondary-red-pastel);
+}
+
+[data-theme="dark-bright"] {
+  --color-primary: var(--primary-blue);
+  --color-primary-hover: var(--secondary-blue);
+  --color-secondary: var(--secondary-purple);
+  --color-background: var(--black-100);
+  --color-surface: var(--white-5);
+  --color-border: var(--white-10);
+  --color-text-primary: var(--white-100);
+  --color-text-secondary: var(--white-80);
+  --color-text-muted: var(--white-40);
+  
+  --color-success: var(--secondary-green);
+  --color-warning: var(--secondary-yellow);
+  --color-error: var(--secondary-red);
+}

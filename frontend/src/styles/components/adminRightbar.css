@@ -1,0 +1,339 @@
+/* Rightbar Component - OPRAVENÉ */
+.rightbar {
+  position: fixed;
+  top: 0; /* OPRAVENÉ: Od vrchu namiesto 68px */
+  right: 0;
+  width: 320px;
+  height: 100vh; /* OPRAVENÉ: Celá výška namiesto calc(100vh - 68px) */
+  background-color: var(--color-background);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+  z-index: 1000; /* OPRAVENÉ: Rovnaký z-index ako sidebar */
+  padding: var(--spacing-lg) var(--spacing-md);
+  padding-top: var(--spacing-lg); /* OPRAVENÉ: Pridaný padding-top pre navbar */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  transition: all var(--transition-normal);
+}
+
+/* Section */
+.rightbar-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.rightbar-section-title {
+  color: var(--black-100);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+  margin: 0;
+}
+
+.rightbar-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Notification Item */
+.rightbar-notification-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.rightbar-notification-item:hover {
+  background-color: var(--black-5);
+}
+
+.rightbar-notification-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--primary-purple);
+  flex-shrink: 0;
+}
+
+.rightbar-notification-icon.new {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--primary-blue-light);
+  flex-shrink: 0;
+}
+
+.rightbar-notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.rightbar-notification-text {
+  color: var(--black-100);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.rightbar-notification-time {
+  color: var(--black-40);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+/* Activity Item */
+.rightbar-activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.rightbar-activity-item:hover {
+  background-color: var(--black-5);
+}
+
+.rightbar-activity-avatar {
+  flex-shrink: 0;
+}
+
+.rightbar-activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.rightbar-activity-text {
+  color: var(--black-100);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.rightbar-activity-time {
+  color: var(--black-40);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+/* Contact Item */
+.rightbar-contact-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.rightbar-contact-item:hover {
+  background-color: var(--black-5);
+}
+
+.rightbar-contact-avatar {
+  flex-shrink: 0;
+}
+
+.rightbar-contact-name {
+  color: var(--black-100);
+  font-feature-settings: 'ss01' on, 'cv01' on, 'cv11' on;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+  flex: 1;
+}
+
+/* Avatar Component Styles */
+.avatar {
+  position: relative;
+}
+
+.avatar-text {
+  pointer-events: none;
+}
+
+/* Scrollbar styling */
+.rightbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rightbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rightbar::-webkit-scrollbar-thumb {
+  background: var(--black-10);
+  border-radius: 3px;
+}
+
+.rightbar::-webkit-scrollbar-thumb:hover {
+  background: var(--black-20);
+}
+
+/* ========================================
+   DARK THEME SUPPORT PRE RIGHTBAR
+======================================== */
+
+/* Dark Mode */
+[data-theme="dark"] .rightbar {
+  border-left: 1px solid var(--white-10);
+}
+
+[data-theme="dark"] .rightbar-section-title {
+  color: var(--white-100);
+}
+
+[data-theme="dark"] .rightbar-notification-item:hover,
+[data-theme="dark"] .rightbar-activity-item:hover,
+[data-theme="dark"] .rightbar-contact-item:hover {
+  background-color: var(--white-5);
+}
+
+[data-theme="dark"] .rightbar-notification-icon {
+  background: rgba(229, 236, 246, 0.2);
+}
+
+[data-theme="dark"] .rightbar-notification-icon.new {
+  background: var(--secondary-indigo-pastel);
+}
+
+[data-theme="dark"] .rightbar-notification-text,
+[data-theme="dark"] .rightbar-activity-text,
+[data-theme="dark"] .rightbar-contact-name {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+[data-theme="dark"] .rightbar-notification-time,
+[data-theme="dark"] .rightbar-activity-time {
+  color: rgba(255, 255, 255, 0.40);
+}
+
+[data-theme="dark"] .rightbar-contact-name {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+/* Dark mode - ikony */
+[data-theme="dark"] .rightbar svg path[fill="var(--black-100)"] {
+  fill: var(--white-100);
+}
+
+[data-theme="dark"] .rightbar svg path[stroke="var(--black-100)"] {
+  stroke: var(--white-100);
+}
+
+/* Scrollbar pre dark mode */
+[data-theme="dark"] .rightbar::-webkit-scrollbar-thumb {
+  background: var(--white-20);
+}
+
+[data-theme="dark"] .rightbar::-webkit-scrollbar-thumb:hover {
+  background: var(--white-40);
+}
+
+/* Dark Bright Mode */
+[data-theme="dark-bright"] .rightbar {
+  border-left: 1px solid var(--white-10);
+}
+
+[data-theme="dark-bright"] .rightbar-section-title {
+  color: var(--white-100);
+}
+
+[data-theme="dark-bright"] .rightbar-notification-item:hover,
+[data-theme="dark-bright"] .rightbar-activity-item:hover,
+[data-theme="dark-bright"] .rightbar-contact-item:hover {
+  background-color: var(--white-5);
+}
+
+[data-theme="dark-bright"] .rightbar-notification-icon {
+  background: rgba(229, 236, 246, 0.2);
+}
+
+[data-theme="dark-bright"] .rightbar-notification-icon.new {
+  background: var(--secondary-indigo-pastel);
+}
+
+[data-theme="dark-bright"] .rightbar-notification-text,
+[data-theme="dark-bright"] .rightbar-activity-text,
+[data-theme="dark-bright"] .rightbar-contact-name {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+[data-theme="dark-bright"] .rightbar-notification-time,
+[data-theme="dark-bright"] .rightbar-activity-time {
+  color: rgba(255, 255, 255, 0.40);
+}
+
+[data-theme="dark-bright"] .rightbar-contact-name {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+/* Dark Bright mode - ikony */
+[data-theme="dark-bright"] .rightbar svg path[fill="var(--black-100)"] {
+  fill: var(--white-100);
+}
+
+[data-theme="dark-bright"] .rightbar svg path[stroke="var(--black-100)"] {
+  stroke: var(--white-100);
+}
+
+/* Scrollbar pre dark bright mode */
+[data-theme="dark-bright"] .rightbar::-webkit-scrollbar-thumb {
+  background: var(--white-20);
+}
+
+[data-theme="dark-bright"] .rightbar::-webkit-scrollbar-thumb:hover {
+  background: var(--white-40);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rightbar {
+    transform: translateX(100%);
+    transition: transform var(--transition-normal);
+  }
+  
+  .rightbar.open {
+    transform: translateX(0);
+  }
+}

@@ -1,0 +1,514 @@
+:root {
+  /* Black variations */
+  --black-100: #1C1C1C;
+  --black-80: rgba(28, 28, 28, 0.80);
+  --black-40: rgba(28, 28, 28, 0.40);
+  --black-20: rgba(28, 28, 28, 0.20);
+  --black-10: rgba(28, 28, 28, 0.10);
+  --black-5: rgba(28, 28, 28, 0.05);
+  
+  /* White variations */
+  --white-100: #FFF;
+  --white-80: rgba(255, 255, 255, 0.80);
+  --white-40: rgba(255, 255, 255, 0.40);
+  --white-20: rgba(255, 255, 255, 0.20);
+  --white-10: rgba(255, 255, 255, 0.10);
+  --white-5: rgba(255, 255, 255, 0.05);
+  
+  /* Bright variations */
+  --bright-black-100: #2E343E;
+  --bright-black-80: rgba(46, 52, 62, 0.80);
+  --bright-black-40: rgba(46, 52, 62, 0.40);
+  --bright-black-20: rgba(46, 52, 62, 0.20);
+  --bright-black-10: rgba(46, 52, 62, 0.10);
+  --bright-black-5: rgba(46, 52, 62, 0.05);
+  
+  /* Primary colors */
+  --primary-blue: #1886FE;
+  --primary-blue-light: #E3F5FF;
+  --primary-purple: #E5ECF6;
+  --primary-purple-50: rgba(229, 236, 246, 0.50);
+  --primary-light: #F7F9FB;
+  --primary-purple-pastel: #C6C7F8;
+  
+  /* Dark-bright theme card colors */
+  --card-dark-bright-default: #E6F1FD;
+  --card-dark-bright-accent: #EDEEFC;
+  
+  /* Secondary colors */
+  --secondary-indigo: #5856D6;
+  --secondary-indigo-pastel: #95A4FC;
+  --secondary-purple: #AF52DE;
+  --secondary-purple-pastel: #C6C7F8;
+  --secondary-cyan: #32ADE6;
+  --secondary-cyan-pastel: #A8C5DA;
+  --secondary-blue: #1886FE;
+  --secondary-blue-pastel: #B1E3FF;
+  --secondary-green: #34C759;
+  --secondary-green-pastel: #A1E3CB;
+  --secondary-mint: #00C7BE;
+  --secondary-mint-pastel: #BAEDBD;
+  --secondary-yellow: #FC0;
+  --secondary-yellow-pastel: #FFE999;
+  --secondary-orange: #FF9500;
+  --secondary-orange-pastel: #FFCB83;
+  --secondary-red: #FF3B30;
+  --secondary-red-pastel: #FF4747;
+  
+  /* Default theme - Pastel Light */
+  --color-primary: var(--black-100);
+  --color-primary-hover: var(--primary-blue);
+  --color-secondary: var(--secondary-purple-pastel);
+  --color-background: var(--white-100);
+  --color-surface: var(--primary-light);
+  --color-border: var(--black-10);
+  --color-text-primary: var(--black-100);
+  --color-text-secondary: var(--black-80);
+  --color-text-muted: var(--black-40);
+  
+  /* Success, Warning, Error colors */
+  --color-success: var(--secondary-green);
+  --color-warning: var(--secondary-yellow);
+  --color-error: var(--secondary-red);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+  
+  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Layout */
+  --sidebar-width: 280px;
+  --header-height: 64px;
+  
+  /* Typography System */
+  
+  /* Font Family - Smart SF Pro usage */
+  --font-family-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --font-family-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  
+  /* Main font family - uses SF Pro Text by default */
+  --font-family: var(--font-family-text);
+  
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  
+  /* Font Sizes with Line Heights - optimalizované pre SF Pro */
+  
+  /* 64px variants - použije SF Pro Display */
+  --font-64-regular: var(--font-weight-regular) 64px/78px var(--font-family-display);
+  --font-64-semibold: var(--font-weight-semibold) 64px/78px var(--font-family-display);
+  
+  /* 48px variants - použije SF Pro Display */
+  --font-48-regular: var(--font-weight-regular) 48px/58px var(--font-family-display);
+  --font-48-semibold: var(--font-weight-semibold) 48px/58px var(--font-family-display);
+  
+  /* 32px variants - použije SF Pro Display */
+  --font-32-regular: var(--font-weight-regular) 32px/38px var(--font-family-display);
+  --font-32-semibold: var(--font-weight-semibold) 32px/38px var(--font-family-display);
+  
+  /* 24px variants - použije SF Pro Display */
+  --font-24-regular: var(--font-weight-regular) 24px/29px var(--font-family-display);
+  --font-24-semibold: var(--font-weight-semibold) 24px/29px var(--font-family-display);
+  
+  /* 18px variants - použije SF Pro Text */
+  --font-18-regular: var(--font-weight-regular) 18px/22px var(--font-family-text);
+  --font-18-semibold: var(--font-weight-semibold) 18px/22px var(--font-family-text);
+  
+  /* 16px variants - použije SF Pro Text */
+  --font-16-regular: var(--font-weight-regular) 16px/20px var(--font-family-text);
+  --font-16-semibold: var(--font-weight-semibold) 16px/20px var(--font-family-text);
+  
+  /* 14px variants - použije SF Pro Text */
+  --font-14-regular: var(--font-weight-regular) 14px/17px var(--font-family-text);
+  --font-14-semibold: var(--font-weight-semibold) 14px/17px var(--font-family-text);
+  
+  /* 12px variants - použije SF Pro Text */
+  --font-12-regular: var(--font-weight-regular) 12px/15px var(--font-family-text);
+  --font-12-semibold: var(--font-weight-semibold) 12px/15px var(--font-family-text);
+}
+
+/* Typography Utility Classes */
+
+/* 64px variants */
+.text-64-regular {
+  font: var(--font-64-regular);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.text-64-semibold {
+  font: var(--font-64-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+/* 48px variants */
+.text-48-regular {
+  font: var(--font-48-regular);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.text-48-semibold {
+  font: var(--font-48-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+/* 32px variants */
+.text-32-regular {
+  font: var(--font-32-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-32-semibold {
+  font: var(--font-32-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 24px variants */
+.text-24-regular {
+  font: var(--font-24-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-24-semibold {
+  font: var(--font-24-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 18px variants */
+.text-18-regular {
+  font: var(--font-18-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-18-semibold {
+  font: var(--font-18-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 16px variants */
+.text-16-regular {
+  font: var(--font-16-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-16-semibold {
+  font: var(--font-16-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 14px variants */
+.text-14-regular {
+  font: var(--font-14-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-14-semibold {
+  font: var(--font-14-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 12px variants */
+.text-12-regular {
+  font: var(--font-12-regular);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.text-12-semibold {
+  font: var(--font-12-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* Semantic Typography Classes */
+.heading-1 { font: var(--font-64-semibold); letter-spacing: var(--letter-spacing-tight); }
+.heading-2 { font: var(--font-48-semibold); letter-spacing: var(--letter-spacing-tight); }
+.heading-3 { font: var(--font-32-semibold); letter-spacing: var(--letter-spacing-normal); }
+.heading-4 { font: var(--font-24-semibold); letter-spacing: var(--letter-spacing-normal); }
+.heading-5 { font: var(--font-18-semibold); letter-spacing: var(--letter-spacing-normal); }
+.heading-6 { font: var(--font-16-semibold); letter-spacing: var(--letter-spacing-normal); }
+
+.body-large { font: var(--font-18-regular); letter-spacing: var(--letter-spacing-normal); }
+.body-regular { font: var(--font-16-regular); letter-spacing: var(--letter-spacing-normal); }
+.body-small { font: var(--font-14-regular); letter-spacing: var(--letter-spacing-normal); }
+
+.caption-large { font: var(--font-14-semibold); letter-spacing: var(--letter-spacing-normal); }
+.caption-regular { font: var(--font-12-semibold); letter-spacing: var(--letter-spacing-wide); }
+.caption-small { font: var(--font-12-regular); letter-spacing: var(--letter-spacing-wide); }
+
+
+
+
+
+
+:root {
+  /* Black variations */
+  --black-100: #1C1C1C;
+  --black-80: rgba(28, 28, 28, 0.80);
+  --black-40: rgba(28, 28, 28, 0.40);
+  --black-20: rgba(28, 28, 28, 0.20);
+  --black-10: rgba(28, 28, 28, 0.10);
+  --black-5: rgba(28, 28, 28, 0.05);
+  
+  /* White variations */
+  --white-100: #FFF;
+  --white-80: rgba(255, 255, 255, 0.80);
+  --white-40: rgba(255, 255, 255, 0.40);
+  --white-20: rgba(255, 255, 255, 0.20);
+  --white-10: rgba(255, 255, 255, 0.10);
+  --white-5: rgba(255, 255, 255, 0.05);
+  
+  /* Bright variations */
+  --bright-black-100: #2E343E;
+  --bright-black-80: rgba(46, 52, 62, 0.80);
+  --bright-black-40: rgba(46, 52, 62, 0.40);
+  --bright-black-20: rgba(46, 52, 62, 0.20);
+  --bright-black-10: rgba(46, 52, 62, 0.10);
+  --bright-black-5: rgba(46, 52, 62, 0.05);
+  
+  /* Primary colors */
+  --primary-blue: #1886FE;
+  --primary-blue-light: #E3F5FF;
+  --primary-purple: #E5ECF6;
+  --primary-purple-50: rgba(229, 236, 246, 0.50);
+  --primary-light: #F7F9FB;
+  --primary-purple-pastel: #C6C7F8;
+  
+  /* Dark-bright theme card colors */
+  --card-dark-bright-default: #E6F1FD;
+  --card-dark-bright-accent: #EDEEFC;
+  
+  /* Secondary colors */
+  --secondary-indigo: #5856D6;
+  --secondary-indigo-pastel: #95A4FC;
+  --secondary-purple: #AF52DE;
+  --secondary-purple-pastel: #C6C7F8;
+  --secondary-cyan: #32ADE6;
+  --secondary-cyan-pastel: #A8C5DA;
+  --secondary-blue: #1886FE;
+  --secondary-blue-pastel: #B1E3FF;
+  --secondary-green: #34C759;
+  --secondary-green-pastel: #A1E3CB;
+  --secondary-mint: #00C7BE;
+  --secondary-mint-pastel: #BAEDBD;
+  --secondary-yellow: #FC0;
+  --secondary-yellow-pastel: #FFE999;
+  --secondary-orange: #FF9500;
+  --secondary-orange-pastel: #FFCB83;
+  --secondary-red: #FF3B30;
+  --secondary-red-pastel: #FF4747;
+  
+  /* Default theme - Pastel Light */
+  --color-primary: var(--black-100);
+  --color-primary-hover: var(--primary-blue);
+  --color-secondary: var(--secondary-purple-pastel);
+  --color-background: var(--white-100);
+  --color-surface: var(--primary-light);
+  --color-border: var(--black-10);
+  --color-text-primary: var(--black-100);
+  --color-text-secondary: var(--black-80);
+  --color-text-muted: var(--black-40);
+  
+  /* Success, Warning, Error */
+  --color-success: var(--secondary-green-pastel);
+  --color-warning: var(--secondary-yellow-pastel);
+  --color-error: var(--secondary-red-pastel);
+  
+  /* ========================================
+     CHART COLORS - LIGHT THEME (DEFAULT)
+  ======================================== */
+  
+  /* Bar Chart Colors */
+  --chart-bar-primary: var(--secondary-indigo-pastel);
+  --chart-bar-secondary: var(--secondary-blue-pastel);
+  --chart-bar-tertiary: var(--secondary-purple-pastel);
+  --chart-bar-quaternary: var(--secondary-green-pastel);
+  --chart-bar-quinary: var(--secondary-yellow-pastel);
+  --chart-bar-senary: var(--secondary-cyan-pastel);
+  --chart-bar-quenary: var(--secondary-orange-pastel);
+  --chart-bar-ninary: var(--secondary-mint-pastel);
+  --chart-bar-ten: var(--secondary-red-pastel);
+  
+  /* Trend Chart Colors */
+  --chart-trend-base: var(--secondary-indigo-pastel);
+  --chart-trend-highlight: var(--secondary-indigo);
+  
+  /* Semi Doughnut Chart Colors */
+  --chart-semi-primary: var(--black-100);
+  --chart-semi-secondary: var(--secondary-purple-pastel);
+  --chart-semi-tertiary: var(--black-20);
+  --chart-semi-quaternary: var(--secondary-blue-pastel);
+  --chart-semi-background: var(--black-5);
+  
+  /* Chart Grid and Text */
+  --chart-grid-color: var(--black-10);
+  --chart-text-color: var(--black-40);
+  
+  /* Typography variables */
+  --font-family-base: 'Inter', sans-serif;
+  
+  /* Spacing and layout variables */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Shadow variables */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Transition variables */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Typography scale variables */
+  --font-12-regular: 400 12px/16px var(--font-family-base);
+  --font-12-medium: 500 12px/16px var(--font-family-base);
+  --font-12-semibold: 600 12px/16px var(--font-family-base);
+  --font-14-regular: 400 14px/20px var(--font-family-base);
+  --font-14-medium: 500 14px/20px var(--font-family-base);
+  --font-14-semibold: 600 14px/20px var(--font-family-base);
+  --font-16-regular: 400 16px/24px var(--font-family-base);
+  --font-16-medium: 500 16px/24px var(--font-family-base);
+  --font-16-semibold: 600 16px/24px var(--font-family-base);
+  --font-18-regular: 400 18px/28px var(--font-family-base);
+  --font-18-medium: 500 18px/28px var(--font-family-base);
+  --font-18-semibold: 600 18px/28px var(--font-family-base);
+  --font-18-bold: 700 18px/28px var(--font-family-base);
+  --font-24-regular: 400 24px/32px var(--font-family-base);
+  --font-24-medium: 500 24px/32px var(--font-family-base);
+  --font-24-semibold: 600 24px/32px var(--font-family-base);
+  --font-24-bold: 700 24px/32px var(--font-family-base);
+  --font-28-bold: 700 28px/36px var(--font-family-base);
+  --font-32-bold: 700 32px/40px var(--font-family-base);
+  
+  /* Letter spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+}
+
+/* ========================================
+   DARK THEME - Chart Colors
+======================================== */
+
+[data-theme="dark"] {
+  --color-primary: var(--primary-purple-pastel);
+  --color-primary-hover: var(--primary-blue);
+  --color-secondary: var(--secondary-purple-pastel);
+  --color-background: var(--black-100);
+  --color-surface: var(--white-5);
+  --color-border: var(--white-10);
+  --color-text-primary: var(--white-100);
+  --color-text-secondary: var(--white-80);
+  --color-text-muted: var(--white-40);
+  
+  --color-success: var(--secondary-green-pastel);
+  --color-warning: var(--secondary-yellow-pastel);
+  --color-error: var(--secondary-red-pastel);
+  
+  /* Chart Colors - Dark Theme */
+  --chart-bar-primary: var(--secondary-indigo);
+  --chart-bar-secondary: var(--secondary-blue);
+  --chart-bar-tertiary: var(--secondary-purple);
+  --chart-bar-quaternary: var(--secondary-green);
+  --chart-bar-quinary: var(--secondary-yellow);
+  --chart-bar-senary: var(--secondary-cyan);
+  --chart-bar-quenary: var(--secondary-orange);
+  --chart-bar-ninary: var(--secondary-mint);
+  --chart-bar-ten: var(--secondary-red);
+  
+  --chart-trend-base: var(--secondary-indigo-pastel);
+  --chart-trend-highlight: var(--secondary-purple);
+  
+  --chart-semi-primary: var(--white-100);
+  --chart-semi-secondary: var(--secondary-purple-pastel);
+  --chart-semi-tertiary: var(--white-20);
+  --chart-semi-quaternary: var(--secondary-blue-pastel);
+  --chart-semi-background: var(--white-5);
+  
+  --chart-grid-color: var(--white-10);
+  --chart-text-color: var(--white-40);
+}
+
+/* ========================================
+   DARK BRIGHT THEME - Chart Colors
+======================================== */
+
+[data-theme="dark-bright"] {
+  --color-primary: var(--primary-blue);
+  --color-primary-hover: var(--secondary-blue);
+  --color-secondary: var(--secondary-purple);
+  --color-background: var(--black-100);
+  --color-surface: var(--white-5);
+  --color-border: var(--white-10);
+  --color-text-primary: var(--white-100);
+  --color-text-secondary: var(--white-80);
+  --color-text-muted: var(--white-40);
+  
+  --color-success: var(--secondary-green);
+  --color-warning: var(--secondary-yellow);
+  --color-error: var(--secondary-red);
+  
+  /* Chart Colors - Dark Bright Theme */
+  --chart-bar-primary: var(--secondary-indigo-pastel);
+  --chart-bar-secondary: var(--secondary-blue-pastel);
+  --chart-bar-tertiary: var(--secondary-yellow-pastel);
+  --chart-bar-quaternary: var(--secondary-green-pastel);
+  --chart-bar-quinary: var(--secondary-purple-pastel);
+  --chart-bar-senary: var(--secondary-cyan-pastel);
+  --chart-bar-quenary: var(--secondary-orange-pastel);
+  --chart-bar-ninary: var(--secondary-mint);
+  --chart-bar-ten: var(--secondary-red-pastel);
+  
+  --chart-trend-base: var(--secondary-indigo-pastel);
+  --chart-trend-highlight: var(--secondary-purple);
+  
+  --chart-semi-primary: var(--black-100);
+  --chart-semi-secondary: var(--secondary-purple);
+  --chart-semi-tertiary: var(--white-20);
+  --chart-semi-quaternary: var(--secondary-blue);
+  --chart-semi-background: var(--white-5);
+  
+  --chart-grid-color: var(--white-10);
+  --chart-text-color: var(--white-40);
+}

@@ -14,18 +14,26 @@ import sharp from 'sharp';
 // Konfigurácia úložiska súborov
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    // Vytvorenie adresárovej štruktúry: uploads/galerie/YYYY/MM/
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const uploadPath = path.join(process.cwd(), 'uploads', 'galerie', String(year), month);
-    
     try {
+      const galeriaId = req.params.id;
+      
+      // Získame galériu z databázy pre názov
+      const galeria = await Galeria.findByPk(galeriaId);
+      if (!galeria) {
+        return cb(new Error('Galéria nenájdená'), '');
+      }
+
+      // Vytvoríme bezpečný názov adresára zo slug galérie
+      const safeDirName = galeria.slug || `galeria-${galeriaId}`;
+      
+      // Vytvorenie adresárovej štruktúry: uploads/galerie/nazov-galerie/
+      const uploadPath = path.join(process.cwd(), 'uploads', 'galerie', safeDirName);
+      
       await fs.mkdir(uploadPath, { recursive: true });
       cb(null, uploadPath);
     } catch (error) {
       console.error('Chyba pri vytváraní upload adresára:', error);
-      cb(error as Error, uploadPath);
+      cb(error as Error, '');
     }
   },
   filename: (req, file, cb) => {

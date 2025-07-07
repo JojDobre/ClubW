@@ -602,6 +602,7 @@ export const getGalleriesByType = async (typ: 'tim' | 'clanok' | 'zapas' | 'voln
 
 export const getAllGalleriesForAdmin = async () => {
   return await Galeria.findAll({
+    where: { aktivity: true }, // PRIDAŤ túto podmienku!
     include: [
       {
         model: GaleriaObrazok,

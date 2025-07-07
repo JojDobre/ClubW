@@ -5,14 +5,67 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import PublicLayout from './components/PublicLayout';
 import PageView from './components/PageView';
+import { RouterProvider, useRouter } from './context/RouterContext';
+import { LayoutProvider, useLayout } from './context/LayoutContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { FavoritesProvider } from './context/FavoritesContext';
+
+// Desktop Layout Components
+import AdminSidebar from './components/layout/AdminSidebar';
+import AdminNavbar from './components/layout/AdminNavbar';
+import AdminRightbar from './components/layout/AdminRightbar';
+import AdminFooter from './components/layout/AdminFooter';
+
+// Mobile Layout Components
+import AdminMobileBottomNavbar from './components/layout/AdminMobileBottomNavbar';
+import AdminMobileSidebar from './components/layout/AdminMobileSidebar';
+import AdminMobileRightbar from './components/layout/AdminMobileRightbar';
 
 // Lazy loading komponentov
+import { 
+  DashboardPage, 
+  EcommercePage, 
+  ProjectsPage, 
+  OnlineCoursesPage, 
+  UserProfilePage,
+  UserProfileOverviewPage,
+  UserProfileProjectsPage,
+  UserProfileCampaignsPage,
+  UserProfileDocumentsPage,
+  UserProfileFollowersPage,
+  AccountPage,
+  CorporatePage,
+  BlogPage,
+  SocialPage
+} from './pages/TestPages';
+
+//STYLES
+import './styles/globals.css';
+import './styles/pages/pageStyles.css';
+import './styles/components/ui/ui-components.css';
+import './styles/components/ui/notificationPopup.css';
+import './styles/components/ui/activityPopup.css';
+import './styles/components/adminSidebar.css';
+import './styles/components/adminNavbar.css';
+import './styles/components/adminRightbar.css';
+import './styles/components/adminFooter.css';
+import './styles/components/adminMobileBottomNavbar.css';
+import './styles/components/adminMobileSidebar.css';
+import './styles/components/adminMobileRightbar.css';
+import './styles/animations.css';
+
+// UI COMPONENT STYLES - TABLE
+import './styles/components/ui/table.css'; // PRIDANÉ - štýly pre Table
+import './styles/components/ui/modal.css';
+import './styles/components/ui/filterPopup.css'; // PRIDANÉ - štýly pre FilterPopup
+
+
 const ResponsiveAdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Login = lazy(() => import('./components/Login'));
 const ArticlesPage = lazy(() => import('./pages/ArticlesPage'));
 const ArticleDetailPage = lazy(() => import('./pages/ArticleDetailPage'));
 
-
+// ===== INTERFACES =====
 interface User {
   id: number;
   meno: string;
@@ -25,7 +78,121 @@ interface User {
   aktualizovany: string;
 }
 
-// ✅ PRIDANÉ: Nová komponenta pre routing logiku
+// ===== TEST PAGES ROUTER (pre /test-pages route) =====
+const TestPagesRouter: React.FC = () => {
+  const { currentRoute } = useRouter();
+  const { getMainContentMargins, isMobile } = useLayout();
+  const margins = getMainContentMargins();
+
+  // Mobile sidebar state
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileRightbarOpen, setMobileRightbarOpen] = useState(false);
+
+  const toggleMobileSidebar = () => {
+    setMobileSidebarOpen(!mobileSidebarOpen);
+  };
+
+  const closeMobileSidebar = () => {
+    setMobileSidebarOpen(false);
+  };
+
+  const toggleMobileRightbar = () => {
+    setMobileRightbarOpen(!mobileRightbarOpen);
+  };
+
+  const closeMobileRightbar = () => {
+    setMobileRightbarOpen(false);
+  };
+
+  const renderPage = () => {
+    switch (currentRoute) {
+      case '/dashboard':
+        return <DashboardPage />;
+      case '/ecommerce':
+        return <EcommercePage />;
+      case '/projects':
+        return <ProjectsPage />;
+      case '/courses':
+        return <OnlineCoursesPage />;
+      case '/user-profile':
+        return <UserProfilePage />;
+      case '/user-profile/overview':
+        return <UserProfileOverviewPage />;
+      case '/user-profile/projects':
+        return <UserProfileProjectsPage />;
+      case '/user-profile/campaigns':
+        return <UserProfileCampaignsPage />;
+      case '/user-profile/documents':
+        return <UserProfileDocumentsPage />;
+      case '/user-profile/followers':
+        return <UserProfileFollowersPage />;
+      case '/account':
+        return <AccountPage />;
+      case '/corporate':
+        return <CorporatePage />;
+      case '/blog':
+        return <BlogPage />;
+      case '/social':
+        return <SocialPage />;
+      default:
+        return <DashboardPage />;
+    }
+  };
+  
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="mobile-layout">
+        {/* Mobile Sidebar */}
+        <AdminMobileSidebar 
+          isOpen={mobileSidebarOpen} 
+          onClose={closeMobileSidebar} 
+        />
+        
+        {/* Mobile Rightbar */}
+        <AdminMobileRightbar 
+          isOpen={mobileRightbarOpen} 
+          onClose={closeMobileRightbar} 
+        />
+        
+        {/* Main Content na mobile */}
+        <main className="mobile-main-content">
+          {renderPage()}
+        </main>
+        
+        {/* Mobile Bottom Navbar */}
+        <AdminMobileBottomNavbar 
+          onHomeClick={toggleMobileSidebar}
+          sidebarOpen={mobileSidebarOpen}
+          onBellClick={toggleMobileRightbar}
+        />
+      </div>
+    );
+  }
+
+  // Desktop Layout (pôvodný)
+  return (
+    <div className="dashboard-container">
+      <AdminSidebar />
+      <div 
+        className="main-content"
+        style={{
+          marginLeft: margins.marginLeft,
+          marginRight: margins.marginRight,
+        }}
+      >
+        <AdminNavbar />
+        <main className="content">
+          {renderPage()}
+        </main>
+        <AdminFooter />
+      </div>
+      <AdminRightbar />
+    </div>
+  );
+};
+
+// ===== HLAVNÁ ROUTING LOGIKA =====
 const AppContent: React.FC<{
   user: User | null;
   onLoginSuccess: (userData: User) => void;
@@ -36,9 +203,28 @@ const AppContent: React.FC<{
   const isArticlesPage = currentPath === '/clanky';
   const isArticleDetailPage = currentPath.startsWith('/clanek/');
   const isAdminPath = currentPath.startsWith('/admin');
+  const isTestPagesPath = currentPath.startsWith('/test-pages');
   const isHomePage = currentPath === '/';
 
-  // Pre domovskú stránku - zobraz verejný layout
+  // ===== TEST PAGES ROUTE (ÚVODNÁ STRÁNKA) =====
+  if (isTestPagesPath) {
+    return (
+      <RouterProvider>
+        <ThemeProvider initialTheme="light">
+          <LayoutProvider 
+            initialSidebarExpanded={true}
+            initialRightbarExpanded={false}
+          >
+            <FavoritesProvider>
+              <TestPagesRouter />
+            </FavoritesProvider>
+          </LayoutProvider>
+        </ThemeProvider>
+      </RouterProvider>
+    );
+  }
+
+  // ===== DOMOVSKÁ STRÁNKA =====
   if (isHomePage) {
     return (
       <PublicLayout>
@@ -54,6 +240,7 @@ const AppContent: React.FC<{
           <p style={{ fontSize: '1.2rem', color: '#4a5568', marginBottom: '30px' }}>
             Moderná platforma pre správu športových klubov
           </p>
+          
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -80,6 +267,7 @@ const AppContent: React.FC<{
                 Zobraziť články
               </a>
             </div>
+            
             <div style={{
               background: 'white',
               padding: '30px',
@@ -100,13 +288,34 @@ const AppContent: React.FC<{
                 Admin panel
               </a>
             </div>
+
+            <div style={{
+              background: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <h3 style={{ color: '#2d3748', marginBottom: '15px' }}>🧪 Test UI</h3>
+              <p style={{ color: '#718096' }}>Demo stránka s UI komponentami</p>
+              <a href="/test-pages" style={{
+                display: 'inline-block',
+                marginTop: '15px',
+                padding: '8px 16px',
+                background: '#805ad5',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '6px'
+              }}>
+                Test Pages
+              </a>
+            </div>
           </div>
         </div>
       </PublicLayout>
     );
   }
 
-  // Ak je stránka /clanky, zobraz len ArticlesPage
+  // ===== ČLÁNKY STRÁNKA =====
   if (isArticlesPage) {
     return (
       <Suspense
@@ -138,17 +347,11 @@ const AppContent: React.FC<{
         <PublicLayout>
           <ArticlesPage />
         </PublicLayout>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </Suspense>
     );
   }
 
-  // Ak je stránka /clanek/:slug, zobraz detail článku
+  // ===== DETAIL ČLÁNKU =====
   if (isArticleDetailPage) {
     return (
       <Suspense
@@ -180,17 +383,11 @@ const AppContent: React.FC<{
         <PublicLayout>
           <ArticleDetailPage />
         </PublicLayout>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </Suspense>
     );
   }
 
-  // ✅ UPRAVENÉ: Pre admin cesty - kontrola prihlásenia
+  // ===== ADMIN CESTY =====
   if (isAdminPath) {
     if (!user) {
       return (
@@ -212,6 +409,7 @@ const AppContent: React.FC<{
       );
     }
 
+    // Admin dashboard s AdminLayout
     return (
       <Suspense
         fallback={
@@ -258,7 +456,7 @@ const AppContent: React.FC<{
     );
   }
 
-  // ✅ PRIDANÉ: Pre ostatné cesty - dynamické stránky z databázy
+  // ===== OSTATNÉ CESTY - DYNAMICKÉ STRÁNKY =====
   return (
     <Routes>
       <Route path="/:slug" element={
@@ -302,6 +500,7 @@ const AppContent: React.FC<{
   );
 };
 
+// ===== HLAVNÁ APP KOMPONENTA =====
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -394,7 +593,7 @@ const App: React.FC = () => {
     );
   }
 
-  // ✅ UPRAVENÉ: Hlavný return s Router wrapper
+  // ===== HLAVNÝ RETURN S ROUTER WRAPPER =====
   return (
     <Router>
       <div style={{

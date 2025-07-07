@@ -1,0 +1,240 @@
+/* ========================================
+   PAGE WRAPPER STYLES
+======================================== */
+
+.page-wrapper {
+  padding-top: 100px;
+  padding: 32px;
+  min-height: 100vh;
+  background: var(--color-background);
+  transition: background-color var(--transition-normal);
+}
+
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  margin-bottom: 32px;
+}
+
+.page-title h1 {
+  color: var(--color-text-primary);
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.2;
+}
+
+.page-title p {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ========================================
+   CARD COMPONENT
+======================================== */
+
+.page-card {
+  background: var(--color-surface);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 16px;
+  transition: all var(--transition-normal);
+}
+
+.page-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   RESPONSIVE GRID LAYOUTS
+======================================== */
+
+.page-grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.page-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.page-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.page-grid-docs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+======================================== */
+
+@media (max-width: 768px) {
+  .page-wrapper {
+    padding-top: 16px; /* Odstránený desktop navbar padding */
+    padding: 16px;
+    padding-bottom: 84px; /* Priestor pre mobile bottom navbar */
+  }
+  
+  .page-title {
+    margin-bottom: 24px;
+  }
+  
+  .page-title h1 {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+  
+  .page-title p {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  
+  .page-card {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  
+  /* Mobile grid adjustments */
+  .page-grid-auto {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .page-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .page-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .page-grid-docs {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+}
+
+/* ========================================
+   TABLET RESPONSIVE STYLES
+======================================== */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .page-wrapper {
+    padding: 24px;
+    padding-top: 68px; /* Zachovať desktop navbar spacing */
+  }
+  
+  .page-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .page-grid-3 {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 18px;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES FOR PAGES
+======================================== */
+
+.page-flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-flex-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.page-stats-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-stats-item:last-child {
+  border-bottom: none;
+}
+
+.page-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.page-badge-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.page-badge-warning {
+  background: var(--color-warning);
+  color: white;
+}
+
+.page-badge-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.page-badge-secondary {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* ========================================
+   THEME SUPPORT
+======================================== */
+
+[data-theme="dark"] .page-card:hover,
+[data-theme="dark-bright"] .page-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+.content-fade-in {
+  animation: contentFadeIn 0.5s ease-out;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
