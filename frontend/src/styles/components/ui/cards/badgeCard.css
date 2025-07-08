@@ -1,0 +1,175 @@
+/* BadgeCard.css */
+
+.badge-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  
+  /* Flexbox layout pre vyplnenie celej výšky */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.badge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Badge */
+.badge-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font: var(--font-12-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  color: white;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+/* Content */
+.badge-card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.badge-card-title {
+  font: var(--font-18-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.badge-card-description {
+  font: var(--font-14-regular);
+  line-height: 20px;
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer */
+.badge-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+/* Avatar */
+.badge-card-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.badge-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge-card-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: var(--font-14-semibold);
+  letter-spacing: var(--letter-spacing-normal);
+  color: white;
+  text-transform: uppercase;
+}
+
+/* Stats */
+.badge-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.badge-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-card-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+}
+
+.badge-card-stat-value {
+  font: var(--font-14-regular);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-secondary);
+}
+
+/* Dark theme support */
+[data-theme="dark"] .badge-card {
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+}
+
+[data-theme="dark"] .badge-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark-bright"] .badge-card {
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+}
+
+[data-theme="dark-bright"] .badge-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark-bright theme - svetlé pozadie s tmavým textom */
+[data-theme="dark-bright"] .badge-card {
+  background: var(--white-5);
+  border: 1px solid var(--black-10);
+}
+
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .badge-card {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .badge-card-title {
+    font: var(--font-16-semibold);
+  }
+  
+  .badge-card-stats {
+    gap: 12px;
+  }
+  
+  .badge-card-stat-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
