@@ -65,10 +65,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         ].join(' | '),
         content_style: `
           body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            font-size: 16px; 
-            line-height: 1.6;
-            color: #374151;
+            font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); 
+            font-size: 14px; 
+            background: var(--color-surface, #ffffff) !important;
+            color: var(--color-text-primary, #374151) !important;
+            margin: 8px;
+            min-height: ${height - 100}px;
           }
           h1, h2, h3, h4, h5, h6 { 
             color: #1e293b; 
@@ -116,7 +118,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             height: auto; 
             border-radius: 8px; 
           }
-        `,
+
+          /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+          body {
+            background: var(--color-surface, #1f2937) !important;
+            color: var(--color-text-primary, #f9fafb) !important;
+          }
+        }
+      `,
+        
+        skin: window.matchMedia('(prefers-color-scheme: oxide)').matches ? 'oxide-dark' : 'dark',
         placeholder: placeholder,
         branding: false,
         promotion: false,

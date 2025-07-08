@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 import StatCard from './ui/cards/StatCard';
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
+import AddArticleModal, { ArticleFormData } from './ui/table/AddArticleModal';
+
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
@@ -78,6 +80,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Filtre
   const [searchTerm, setSearchTerm] = useState('');
@@ -333,9 +336,45 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   }));
 
   // ===== EVENT HANDLERS =====
-  const handleAddArticle = () => {
-    console.log('Pridanie nového článku');
-    // TODO: Implementovať modal pre pridanie článku
+  const handleAddArticle = async (articleData: ArticleFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      console.log('Pridanie nového článku:', articleData);
+      
+      // TODO: Implementovať API volanie
+      const token = localStorage.getItem('clubw_token');
+      const response = await fetch('http://localhost:3000/api/admin/articles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...articleData,
+          autor_id: currentUser.id,
+          tags: articleData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh článkov a štatistík
+        await fetchArticles(currentPage);
+        await fetchStats();
+        
+        alert(`Článok "${articleData.nazov}" bol úspešne ${articleData.status === 'published' ? 'publikovaný' : 'uložený ako koncept'}!`);
+      } else {
+        alert(`Chyba pri ukladaní článku: ${data.message}`);
+      }
+      
+    } catch (err) {
+      console.error('Error adding article:', err);
+      alert('Chyba pripojenia k serveru. Skúste to znovu.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEdit = (articleId: number) => {
@@ -452,6 +491,11 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
           data={tableData}
           showCheckboxes={true}
           itemsPerPage={10}
+          onAddArticle={handleAddArticle}
+          modalData={{
+            categories: categories,
+            loading: isSubmitting
+          }}
         />
       </div>
     </div>
