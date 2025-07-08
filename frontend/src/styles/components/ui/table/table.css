@@ -4,7 +4,7 @@
    TABLE CONTAINER
 ======================================== */
 
-.table-container {
+.management-table-container {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -382,6 +382,11 @@
   color: var(--color-text-primary);
 }
 
+.table-nazov {
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
 /* Status Cell */
 .table-cell-status {
   display: flex;
@@ -402,19 +407,23 @@
 }
 
 /* Status variants - podľa Figma farieb */
-.table-cell-status.status-complete .status-dot {
+.table-cell-status.status-complete .status-dot, 
+.table-cell-status.status-publikované .status-dot {
   background: #10B981; /* Zelená */
 }
 
-.table-cell-status.status-complete .status-text {
+.table-cell-status.status-complete .status-text,
+.table-cell-status.status-publikované .status-text {
   color: #10B981;
 }
 
-.table-cell-status.status-pending .status-dot {
+.table-cell-status.status-pending .status-dot,
+.table-cell-status.status-koncept .status-dot {
   background: #F59E0B; /* Žltá */
 }
 
-.table-cell-status.status-pending .status-text {
+.table-cell-status.status-pending .status-text,
+.table-cell-status.status-koncept .status-text{
   color: #F59E0B;
 }
 
@@ -426,19 +435,23 @@
   color: #6366F1;
 }
 
-.table-cell-status.status-rejected .status-dot {
+.table-cell-status.status-rejected .status-dot,
+.table-cell-status.status-archivované .status-dot {
   background: #EF4444; /* Červená */
 }
 
-.table-cell-status.status-rejected .status-text {
+.table-cell-status.status-rejected .status-text,
+.table-cell-status.status-archivované .status-text {
   color: #EF4444;
 }
 
-.table-cell-status.status-in-progress .status-dot {
+.table-cell-status.status-in-progress .status-dot,
+.table-cell-status.status-naplánované .status-dot {
   background: #8B5CF6; /* Fialová pre In Progress */
 }
 
-.table-cell-status.status-in-progress .status-text {
+.table-cell-status.status-in-progress .status-text,
+.table-cell-status.status-naplánované .status-text {
   color: #8B5CF6;
 }
 

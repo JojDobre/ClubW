@@ -26,7 +26,6 @@ import { DashboardPage } from './pages/TestPages';
 
 // PRIDANÉ - Štýly pre nový layout
 import './styles/globals.css';
-import './styles/pages/pageStyles.css';
 import './styles/components/ui/ui-components.css';
 import './styles/components/ui/notificationPopup.css';
 import './styles/components/ui/activityPopup.css';
@@ -38,9 +37,17 @@ import './styles/components/adminMobileBottomNavbar.css';
 import './styles/components/adminMobileSidebar.css';
 import './styles/components/adminMobileRightbar.css';
 import './styles/animations.css';
-import './styles/components/ui/table.css';
-import './styles/components/ui/modal.css';
-import './styles/components/ui/filterPopup.css';
+import './styles/components/ui/table/table.css';
+import './styles/components/ui/table/modal.css';
+import './styles/components/ui/table/filterPopup.css';
+import './styles/components/ui/cards/badgeCard.css';
+import './styles/components/ui/cards/detailCard.css';
+import './styles/components/ui/cards/eventCard.css';
+import './styles/components/ui/cards/statCard.css';
+import './styles/components/ui/cards/LittleCard.css';
+import './styles/components/ui/cards/quickAction.css';
+import './styles/components/managementPages.css';
+
 
 // PRIDANÉ - Pôvodné admin management komponenty
 const UserManagement = lazy(() => import('./components/UserManagement'));

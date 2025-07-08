@@ -101,12 +101,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             overflow-x: auto; 
           }
           table { 
-            border-collapse: collapse; 
             width: 100%; 
             margin: 1em 0; 
           }
           table td, table th { 
-            border: 1px solid #d1d5db; 
             padding: 8px 12px; 
           }
           table th { 
@@ -211,8 +209,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         style={{
           width: '100%',
           minHeight: `${height}px`,
-          border: '1px solid #d1d5db',
-          borderRadius: '8px',
           padding: '12px',
           fontFamily: 'inherit',
           fontSize: '14px',

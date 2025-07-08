@@ -170,7 +170,7 @@ const Table: React.FC<TableProps> = ({
   };
 
   return (
-    <div className={`table-container ${className}`}>
+    <div className={`management-table-container ${className}`}>
       {/* Filter Menu */}
       <div className="table-filter-menu">
         <div className="table-filter-left">
