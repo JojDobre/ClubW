@@ -3,8 +3,8 @@
 ======================================== */
 
 .page-wrapper {
-  padding-top: 100px;
-  padding: 32px;
+  padding: '32px';
+  padding-top: '68px';
   min-height: 100vh;
   background: var(--color-background);
   transition: background-color var(--transition-normal);

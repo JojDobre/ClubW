@@ -2,7 +2,7 @@ import React from 'react';
 
 // Page wrapper component
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div style={{ padding: '32px', paddingTop: '68px', minHeight: '100vh', background: 'var(--color-background)' }}>
+  <div className='page-wrapper'>
     <div style={{ maxWidth: '1200px', margin: '0 auto' }} className="content-fade-in">
       {children}
     </div>

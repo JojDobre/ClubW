@@ -31,17 +31,19 @@ export const useRouter = () => {
 
 // Mapovanie ciest na názvy stránok
 const PAGE_NAMES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/ecommerce': 'eCommerce',
-  '/projects': 'Projects',
-  '/courses': 'Online Courses',
-  '/cards': 'Cards', // PRIDANÉ - nová Card stránka
-  '/charts': 'Charts', // OPRAVENÉ - hlavná Charts stránka
-  '/charts/bar': 'Bar Charts', // PRIDANÉ - Bar Charts stránka
-  '/charts/line': 'Line Charts', // PRIDANÉ - Line Charts stránka  
-  '/charts/curve': 'Curve Charts', // PRIDANÉ - Curve Charts stránka
-  '/charts/trend': 'Trend Charts', // PRIDANÉ - Trend Charts stránka
-  '/charts/pie': 'Pie Charts', // PRIDANÉ - Trend Charts stránka
+  '/articles': 'Články',
+  '/categories': 'Rubriky',
+  '/pages': 'Stránky',
+  '/galleries': 'FotoGaléria',
+  '/users': 'Používatelia',
+  '/teams': 'Prehľad Tímov', // OPRAVENÉ - hlavná Charts stránka
+  '/players': 'Hráči', // PRIDANÉ - Bar Charts stránka
+  '/staff': 'Realizačný Tím', // PRIDANÉ - Line Charts stránka  
+  '/leagues': 'Súťaže', // PRIDANÉ - Curve Charts stránka
+  '/matches': 'Zápasy', // PRIDANÉ - Trend Charts stránka
+  '/calendar': 'Kalendar', // PRIDANÉ - Trend Charts stránka
+
+  
   '/charts/semidoughnut': 'Semi Doughnut Chart',
   '/table': 'Tables', // PRIDANÉ - nová Table stránka
   '/user-profile': 'User Profile',

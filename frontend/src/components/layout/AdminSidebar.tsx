@@ -10,6 +10,8 @@ import { useNavigation } from '../../hooks/useNavigation';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useLayout } from '../../context/LayoutContext';
 
+
+
 const AdminSidebar: React.FC = () => {
   const { currentRoute, navigate } = useNavigation();
   const { favorites, getRecentItems } = useFavorites();
@@ -103,6 +105,76 @@ const AdminSidebar: React.FC = () => {
     </svg>
   );
 
+  const ArticleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M4 3C3.44772 3 3 3.44772 3 4V16C3 16.5523 3.44772 17 4 17H16C16.5523 17 17 16.5523 17 16V4C17 3.44772 16.5523 3 16 3H4Z" stroke="var(--black-100)" strokeWidth="1.5" fill="none"/>
+    <path d="M6 7H14M6 9H14M6 11H14M6 13H10" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const TeamIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <circle cx="7" cy="6" r="2.5" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <circle cx="13" cy="6" r="2.5" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M2 16V14C2 12.3431 3.34315 11 5 11H9C9.55228 11 10.0522 11.1671 10.4649 11.4649" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M18 16V14C18 12.3431 16.6569 11 15 11H11C10.4477 11 9.94775 11.1671 9.53505 11.4649" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+ const PlayerIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <circle cx="10" cy="5" r="2" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M8 9H12C13.1046 9 14 9.89543 14 11V11C14 11.5523 13.5523 12 13 12H12V17C12 17.5523 11.5523 18 11 18H9C8.44772 18 8 17.5523 8 17V12H7C6.44772 12 6 11.5523 6 11V11C6 9.89543 6.89543 9 8 9Z" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <circle cx="10" cy="10" r="8" stroke="var(--black-10)" strokeWidth="1"/>
+  </svg>
+);
+
+const StaffIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <circle cx="10" cy="6" r="2.5" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M6 17V15C6 12.7909 7.79086 11 10 11V11C12.2091 11 14 12.7909 14 15V17" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M10 11V8M8 9L12 9" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M3 4L5 3L6 5L4 6L3 4Z" fill="var(--black-100)"/>
+    <path d="M17 4L15 3L14 5L16 6L17 4Z" fill="var(--black-100)"/>
+  </svg>
+);
+
+const LeagueIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M10 2L12.09 6.26L17 7.27L13.5 10.14L14.18 15.02L10 12.77L5.82 15.02L6.5 10.14L3 7.27L7.91 6.26L10 2Z" stroke="var(--black-100)" strokeWidth="1.5" fill="var(--black-10)"/>
+    <circle cx="10" cy="10" r="8" stroke="var(--black-10)" strokeWidth="1"/>
+  </svg>
+);
+
+ const MatchIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <rect x="2" y="5" width="16" height="10" rx="2" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <circle cx="10" cy="10" r="2.5" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M10 5V15M2 10H18" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <circle cx="5" cy="7" r="1" fill="var(--black-100)"/>
+    <circle cx="15" cy="7" r="1" fill="var(--black-100)"/>
+    <path d="M6 3H7M13 3H14" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <rect x="3" y="4" width="14" height="13" rx="2" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M6 2V6M14 2V6M3 8H17" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+    <circle cx="8" cy="12" r="1" fill="var(--black-100)"/>
+    <circle cx="12" cy="12" r="1" fill="var(--black-100)"/>
+    <circle cx="8" cy="15" r="1" fill="var(--black-100)"/>
+  </svg>
+);
+ const StatsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M3 16V13C3 12.4477 3.44772 12 4 12H6C6.55228 12 7 12.4477 7 13V16" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M8.5 16V9C8.5 8.44772 8.94772 8 9.5 8H11.5C12.0523 8 12.5 8.44772 12.5 9V16" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M14 16V5C14 4.44772 14.4477 4 15 4H17C17.5523 4 18 4.44772 18 5V16" stroke="var(--black-100)" strokeWidth="1.5"/>
+    <path d="M2 17H18" stroke="var(--black-100)" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
   return (
     <div 
       className={`sidebar ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}
@@ -113,7 +185,7 @@ const AdminSidebar: React.FC = () => {
     >
       <div className="sidebar-content">
         {/* Name Badge */}
-        <NameBadge name="ByeWind" />
+        <NameBadge name="User123" />
 
         {/* Favorites/Recently + Overview/Projects */}
         <SidebarSection>
@@ -179,187 +251,161 @@ const AdminSidebar: React.FC = () => {
       <SidebarSection title="Dashboards">
         <SidebarMenuItem 
           icon={<DashboardIcon />}
-          text="Default"
+          text="Domov"
           isActive={isActive('/dashboard')}
           onClick={() => navigate('/dashboard')}
         />
-        <SidebarMenuItem 
-          icon={<EcommerceIcon />}
-          text="eCommerce"
-          isActive={isActive('/ecommerce')}
-          onClick={() => navigate('/ecommerce')}
-        />
+        <div 
+          className="sidebar-expandable-header"
+          onClick={() => handleExpandableClick('articles', '/articles')}
+        >
+          <SidebarMenuItem 
+            arrow={<ArrowIcon isExpanded={expandedSections.includes('articles')} />}
+            icon={<ArticleIcon />}
+            text="Články"
+            isActive={isActive('/articles') || currentRoute.startsWith('/articles/')}
+          />
+        </div>
+
+          {expandedSections.includes('articles') && (
+            <div className="sidebar-submenu">
+              <SidebarMenuItem 
+                text="Prekľad článkov"
+                isSubmenu={true}
+                isActive={isActive('/articles')}
+                onClick={() => navigate('/articles')}
+              />
+              <SidebarMenuItem 
+                text="Rubriky"
+                isSubmenu={true}
+                isActive={isActive('/categories')}
+                onClick={() => navigate('/categories')}
+              />
+            </div>
+          )}
         <SidebarMenuItem 
           icon={<ProjectIcon />}
-          text="Projects"
-          isActive={isActive('/projects')}
-          onClick={() => navigate('/projects')}
+          text="Stránky"
+          isActive={isActive('/pages')}
+          onClick={() => navigate('/pages')}
         />
         <SidebarMenuItem 
           icon={<CoursesIcon />}
-          text="Online Courses"
-          isActive={isActive('/courses')}
-          onClick={() => navigate('/courses')}
+          text="Fotogaléria"
+          isActive={isActive('/galleries')}
+          onClick={() => navigate('/galleries')}
         />
       </SidebarSection>
 
-      {/* Pages */}
-      <SidebarSection title="Pages">
-        <div 
-          className="sidebar-expandable-header"
-          onClick={() => handleExpandableClick('pages', '/user-profile')}
-        >
+
+
+      {/* Sprava Timu */}
+      <SidebarSection title="Správa klubu">
           <SidebarMenuItem 
-            arrow={<ArrowIcon isExpanded={expandedSections.includes('pages')} />}
             icon={<UserIcon />}
-            text="User Profile"
-            isActive={isActive('/user-profile') || currentRoute.startsWith('/user-profile/')}
+            text="Používatelia"
+            isActive={isActive('/users')}
+            onClick={() => navigate('/users')}
           />
-        </div>
-        
-        {expandedSections.includes('pages') && (
-          <div className="sidebar-submenu">
+          
+          {/* Tímy s rozbaľovacím menu */}
+          <div 
+            className="sidebar-expandable-header"
+            onClick={() => handleExpandableClick('teams', '/teams')}
+          >
             <SidebarMenuItem 
-              text="Overview"
-              isSubmenu={true}
-              isActive={isActive('/user-profile/overview')}
-              onClick={() => navigate('/user-profile/overview')}
-            />
-            <SidebarMenuItem 
-              text="Projects"
-              isSubmenu={true}
-              isActive={isActive('/user-profile/projects')}
-              onClick={() => navigate('/user-profile/projects')}
-            />
-            <SidebarMenuItem 
-              text="Campaigns"
-              isSubmenu={true}
-              isActive={isActive('/user-profile/campaigns')}
-              onClick={() => navigate('/user-profile/campaigns')}
-            />
-            <SidebarMenuItem 
-              text="Documents"
-              isSubmenu={true}
-              isActive={isActive('/user-profile/documents')}
-              onClick={() => navigate('/user-profile/documents')}
-            />
-            <SidebarMenuItem 
-              text="Followers"
-              isSubmenu={true}
-              isActive={isActive('/user-profile/followers')}
-              onClick={() => navigate('/user-profile/followers')}
+              arrow={<ArrowIcon isExpanded={expandedSections.includes('teams')} />}
+              icon={<TeamIcon />}
+              text="Tímy"
+              isActive={isActive('/teams') || currentRoute.startsWith('/teams/') || 
+                      isActive('/players') || isActive('/staff')}
             />
           </div>
-        )}
-      </SidebarSection>
+          
+          {expandedSections.includes('teams') && (
+            <div className="sidebar-submenu">
+              <SidebarMenuItem 
+                text="Prehľad tímov"
+                isSubmenu={true}
+                isActive={isActive('/teams')}
+                onClick={() => navigate('/teams')}
+              />
+              <SidebarMenuItem 
+                text="Hráči"
+                isSubmenu={true}
+                isActive={isActive('/players')}
+                onClick={() => navigate('/players')}
+              />
+              <SidebarMenuItem 
+                text="Realizačný tím"
+                isSubmenu={true}
+                isActive={isActive('/staff')}
+                onClick={() => navigate('/staff')}
+              />
+            </div>
+          )}
+        </SidebarSection>
 
-      {/* Components - PRIDANÉ nová sekcia */}
-      <SidebarSection title="Components">
-        <SidebarMenuItem 
-          icon={<DashboardIcon />}
-          text="Cards"
-          isActive={isActive('/cards')}
-          onClick={() => navigate('/cards')}
-        />
-        <SidebarMenuItem 
-          icon={<DashboardIcon />}
-          text="Charts"
-          isActive={isActive('/charts')}
-          onClick={() => navigate('/charts')}
-        />
+      {/* Súťaže & Zápasy */}
+        <SidebarSection title="Súťaže">
+          <SidebarMenuItem 
+            icon={<LeagueIcon />}
+            text="Ligy & Súťaže"
+            isActive={isActive('/leagues')}
+            onClick={() => navigate('/leagues')}
+          />
+          
+          {/* Zápasy s rozbaľovacím menu */}
+          <div 
+            className="sidebar-expandable-header"
+            onClick={() => handleExpandableClick('matches', '/matches')}
+          >
+            <SidebarMenuItem 
+              arrow={<ArrowIcon isExpanded={expandedSections.includes('matches')} />}
+              icon={<MatchIcon />}
+              text="Zápasy"
+              isActive={isActive('/matches') || currentRoute.startsWith('/matches/')}
+            />
+          </div>
+          
+          {expandedSections.includes('matches') && (
+            <div className="sidebar-submenu">
+              <SidebarMenuItem 
+                text="Všetky zápasy"
+                isSubmenu={true}
+                isActive={isActive('/matches')}
+                onClick={() => navigate('/matches')}
+              />
+              <SidebarMenuItem 
+                text="Nový zápas"
+                isSubmenu={true}
+                isActive={isActive('/matches/new')}
+                onClick={() => navigate('/matches/new')}
+              />
+              <SidebarMenuItem 
+                text="Výsledky"
+                isSubmenu={true}
+                isActive={isActive('/matches/results')}
+                onClick={() => navigate('/matches/results')}
+              />
+            </div>
+          )}
+          
+          <SidebarMenuItem 
+            icon={<CalendarIcon />}
+            text="Kalendár"
+            isActive={isActive('/calendar')}
+            onClick={() => navigate('/calendar')}
+          />
+          <SidebarMenuItem 
+            icon={<StatsIcon />}
+            text="Štatistiky"
+            isActive={isActive('/statistics')}
+            onClick={() => navigate('/statistics')}
+          />
+        </SidebarSection>
 
-
-{/* Charts s rozbaľovacím menu */}
-  <div 
-    className="sidebar-expandable-header"
-    onClick={() => handleExpandableClick('charts', '/charts')}
-  >
-    <SidebarMenuItem 
-      arrow={<ArrowIcon isExpanded={expandedSections.includes('charts')} />}
-      icon={<DashboardIcon />}
-      text="Charts"
-      isActive={isActive('/charts') || currentRoute.startsWith('/charts/')}
-    />
-  </div>
-  
-  {expandedSections.includes('charts') && (
-    <div className="sidebar-submenu">
-      <SidebarMenuItem 
-        text="Bar Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/bar')}
-        onClick={() => navigate('/charts/bar')}
-      />
-      <SidebarMenuItem 
-        text="Line Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/line')}
-        onClick={() => navigate('/charts/line')}
-      />
-      <SidebarMenuItem 
-        text="Curve Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/curve')}
-        onClick={() => navigate('/charts/curve')}
-      />
-      <SidebarMenuItem 
-        text="Trend Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/trend')}
-        onClick={() => navigate('/charts/trend')}
-      />
-      <SidebarMenuItem 
-        text="Pie Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/pie')}
-        onClick={() => navigate('/charts/pie')}
-      />
-
-      <SidebarMenuItem 
-        text="Semi Doughnut Charts"
-        isSubmenu={true}
-        isActive={isActive('/charts/semidoughnut')}
-        onClick={() => navigate('/charts/semidoughnut')}
-      />
-    </div>
-  )}
-
-
-        <SidebarMenuItem 
-          icon={<DashboardIcon />}
-          text="Tables"
-          isActive={isActive('/table')}
-          onClick={() => navigate('/table')}
-        />
-      </SidebarSection>
-
-      {/* Authentication */}
-      <SidebarSection title="Authentication">
-        <SidebarMenuItem 
-          icon={<UserIcon />}
-          text="Account"
-          isActive={isActive('/account')}
-          onClick={() => navigate('/account')}
-        />
-        <SidebarMenuItem 
-          icon={<UserIcon />}
-          text="Corporate"
-          isActive={isActive('/corporate')}
-          onClick={() => navigate('/corporate')}
-        />
-        <SidebarMenuItem 
-          icon={<UserIcon />}
-          text="Blog"
-          isActive={isActive('/blog')}
-          onClick={() => navigate('/blog')}
-        />
-        <SidebarMenuItem 
-          icon={<UserIcon />}
-          text="Social"
-          isActive={isActive('/social')}
-          onClick={() => navigate('/social')}
-        />
-      </SidebarSection>
+      
       </div>
               
               
