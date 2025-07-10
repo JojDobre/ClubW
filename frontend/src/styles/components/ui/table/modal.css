@@ -432,3 +432,29 @@
   border-color: var(--color-primary, #3b82f6);
 }
 
+
+
+
+
+
+
+
+
+
+
+option:first-of-type {
+  border-radius: 8px 8px 0 0;
+}
+
+option:last-of-type {
+  border-radius: 0 0 8px 8px;
+}
+
+option:not(option:last-of-type) {
+  border-bottom: none;
+}
+
+option:hover,
+option:focus {
+  background: plum;
+}

@@ -1,0 +1,631 @@
+/* frontend/src/styles/components/managementPages.css */
+/* PRIDANÉ - Kompletné štýly pre NewArticleManagement s modal štýlmi a dark modes */
+
+/* ===== EXISTING STYLES + NEW ARTICLE FORM ===== */
+
+/* Back button štýly */
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 16px;
+}
+
+.back-button:hover {
+  background: #e2e8f0;
+  color: #334155;
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: translateX(-1px) scale(0.98);
+}
+
+/* Header layout pre back button */
+.management-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.management-title-section {
+  flex: 1;
+}
+
+/* ===== NEW ARTICLE FORM LAYOUT ===== */
+
+/* Hlavný kontainer formulára */
+.new-article-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Sekcie formulára */
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+}
+
+.form-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-section-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: #3b82f6;
+  border-radius: 2px;
+}
+
+/* Form rows pre flex layout */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+/* ===== MODAL FORM STYLES (importované z modálu) ===== */
+
+/* Form fields */
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-field:last-child {
+  margin-bottom: 0;
+}
+
+/* Labels */
+.modal-label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+/* Input fields */
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-input.error {
+  border-color: #ef4444;
+}
+
+.modal-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select fields */
+.modal-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  background: #ffffff;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 32px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-select.error {
+  border-color: #ef4444;
+}
+
+/* Textarea fields */
+.modal-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  background: #ffffff;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Error messages */
+.modal-error {
+  display: block;
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ===== CHECKBOXES ===== */
+
+.form-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.modal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.modal-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-custom {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  background: #ffffff;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.modal-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.modal-checkbox input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.modal-checkbox:hover .checkbox-custom {
+  border-color: #9ca3af;
+}
+
+/* ===== RICH EDITOR ===== */
+
+.rich-editor-container {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 200px;
+  background: #ffffff;
+}
+
+.rich-editor-container.error {
+  border-color: #ef4444;
+}
+
+/* ===== ACTION BUTTONS ===== */
+
+.form-actions {
+  padding: 24px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== DARK MODE ===== */
+
+[data-theme="dark-bright"] .new-article-form {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme="dark-bright"] .form-section {
+  border-color: #374151;
+}
+
+[data-theme="dark-bright"] .form-section-title {
+  color: #f9fafb;
+}
+
+[data-theme="dark-bright"] .modal-label {
+  color: #d1d5db;
+}
+
+[data-theme="dark-bright"] .modal-input,
+[data-theme="dark-bright"] .modal-select,
+[data-theme="dark-bright"] .modal-textarea {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-theme="dark-bright"] .modal-input:focus,
+[data-theme="dark-bright"] .modal-select:focus,
+[data-theme="dark-bright"] .modal-textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark-bright"] .modal-input::placeholder,
+[data-theme="dark-bright"] .modal-textarea::placeholder {
+  color: #9ca3af;
+}
+
+[data-theme="dark-bright"] .checkbox-custom {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+[data-theme="dark-bright"] .modal-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+  background: #60a5fa;
+  border-color: #60a5fa;
+}
+
+[data-theme="dark-bright"] .modal-checkbox {
+  color: #d1d5db;
+}
+
+[data-theme="dark-bright"] .rich-editor-container {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+[data-theme="dark-bright"] .form-actions {
+  background: #111827;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+[data-theme="dark-bright"] .btn-secondary:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+[data-theme="dark-bright"] .btn-primary {
+  background: #60a5fa;
+}
+
+[data-theme="dark-bright"] .btn-primary:hover {
+  background: #3b82f6;
+}
+
+[data-theme="dark-bright"] .back-button {
+  background: #374151;
+  color: #9ca3af;
+}
+
+[data-theme="dark-bright"] .back-button:hover {
+  background: #4b5563;
+  color: #d1d5db;
+}
+
+/* ===== DARK-BRIGHT MODE ===== */
+
+[data-theme="dark"] .new-article-form {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .form-section {
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .form-section-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .form-section-title::before {
+  background: #38bdf8;
+}
+
+[data-theme="dark"] .modal-label {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .modal-input,
+[data-theme="dark"] .modal-select,
+[data-theme="dark"] .modal-textarea {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .modal-input:focus,
+[data-theme="dark"] .modal-select:focus,
+[data-theme="dark"] .modal-textarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+[data-theme="dark"] .modal-input::placeholder,
+[data-theme="dark"] .modal-textarea::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .checkbox-custom {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .modal-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+  background: #38bdf8;
+  border-color: #38bdf8;
+}
+
+[data-theme="dark"] .modal-checkbox {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .rich-editor-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .form-actions {
+  background: #020617;
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #334155;
+  border-color: #475569;
+}
+
+[data-theme="dark"] .btn-primary {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background: #0ea5e9;
+}
+
+[data-theme="dark"] .back-button {
+  background: #1e293b;
+  color: #64748b;
+}
+
+[data-theme="dark"] .back-button:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .management-header-main {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .back-button {
+    align-self: flex-start;
+    margin-right: 0;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+  }
+  
+  .new-article-form {
+    margin: 0 -16px;
+    border-radius: 0;
+  }
+  
+  .form-section {
+    padding: 16px;
+  }
+  
+  .form-actions {
+    padding: 16px;
+  }
+}
+
+/* ===== LOADING STATES ===== */
+
+.management-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+}
+
+[data-theme="dark"] .management-loading {
+  color: #9ca3af;
+}
+
+[data-theme="dark-bright"] .management-loading {
+  color: #64748b;
+}
+
+/* ===== FOCUS STATES ===== */
+
+.modal-input:focus,
+.modal-select:focus,
+.modal-textarea:focus,
+.btn-primary:focus,
+.btn-secondary:focus,
+.back-button:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* ===== VALIDATION STATES ===== */
+
+.modal-input.error,
+.modal-select.error,
+.modal-textarea.error {
+  border-color: #ef4444;
+}
+
+[data-theme="dark"] .modal-input.error,
+[data-theme="dark"] .modal-select.error,
+[data-theme="dark"] .modal-textarea.error {
+  border-color: #f87171;
+}
+
+[data-theme="dark-bright"] .modal-input.error,
+[data-theme="dark-bright"] .modal-select.error,
+[data-theme="dark-bright"] .modal-textarea.error {
+  border-color: #f87171;
+}
+
+/* ===== ANIMATIONS ===== */
+
+.new-article-form {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

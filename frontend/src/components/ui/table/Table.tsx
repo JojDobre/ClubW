@@ -1,8 +1,7 @@
-// Table.tsx - Updated with Column Visibility Filter
+// Table.tsx
 import React, { useState, useRef } from 'react';
 import AddUserModal, { UserFormData } from './AddUserModal';
 import FilterPopup, { ColumnFilterState } from './FilterPopup';
-import AddArticleModal, { ArticleFormData } from './AddArticleModal';
 
 export interface TableColumn {
   id: string;
@@ -25,11 +24,7 @@ export interface TableProps {
   className?: string;
   onAddUser?: (userData: UserFormData) => void;
 
-  onAddArticle?: (articleData: ArticleFormData) => void;
-  modalData?: {
-    categories?: any[];
-    loading?: boolean;
-  };
+  onAddArticle?: () => void;
 }
 
 const Table: React.FC<TableProps> = ({
@@ -39,8 +34,7 @@ const Table: React.FC<TableProps> = ({
   itemsPerPage = 10,
   className = '',
   onAddUser,
-  onAddArticle,
-  modalData
+  onAddArticle
 }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,18 +101,16 @@ const Table: React.FC<TableProps> = ({
   };
 
   // Handle add article
-  const handleAddArticle = (articleData: ArticleFormData) => {
+  const handleAddArticle = () => {
     if (onAddArticle) {
-      onAddArticle(articleData);
+      onAddArticle();
     }
-    setIsAddModalOpen(false);
   };
 
   // Detekcia typu modalu
   const detectModalType = () => {
-    if (onAddArticle) return 'article';
     if (onAddUser) return 'user';
-    return 'user'; // fallback
+    return null; // fallback
   };
 
   // Handle filter button click
@@ -199,7 +191,19 @@ const Table: React.FC<TableProps> = ({
       <div className="table-filter-menu">
         <div className="table-filter-left">
           {/* Pôvodné menu - vždy zobrazené */}
-          <button className="filter-action-item" title="Add Data" onClick={() => setIsAddModalOpen(true)}>
+          <button 
+              className="filter-action-item" 
+              title="Add Data" 
+              onClick={() => {
+              // Ak existuje onAddUser, otvor modal
+                  if (onAddUser) {
+                    setIsAddModalOpen(true);
+                  }
+              // Ak existuje onAddArticle, zavolaj navigáciu
+                  else if (onAddArticle) {
+                    onAddArticle();
+                  }
+                 }}>
             <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <line x1="50" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="10"/>
               <line x1="20" y1="50" x2="80" y2="50" stroke="currentColor" strokeWidth="10"/>
@@ -380,16 +384,6 @@ const Table: React.FC<TableProps> = ({
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSave={handleAddUser}
-        />
-      )}
-
-      {detectModalType() === 'article' && (
-        <AddArticleModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSave={handleAddArticle}
-          categories={modalData?.categories || []}
-          loading={modalData?.loading || false}
         />
       )}
 

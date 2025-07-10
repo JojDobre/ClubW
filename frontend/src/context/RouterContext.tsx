@@ -1,3 +1,4 @@
+//routerContext
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Typy pre routing
@@ -32,16 +33,18 @@ export const useRouter = () => {
 // Mapovanie ciest na názvy stránok
 const PAGE_NAMES: Record<string, string> = {
   '/articles': 'Články',
+  '/article': 'Články',
   '/categories': 'Rubriky',
   '/pages': 'Stránky',
   '/galleries': 'FotoGaléria',
   '/users': 'Používatelia',
-  '/teams': 'Prehľad Tímov', // OPRAVENÉ - hlavná Charts stránka
-  '/players': 'Hráči', // PRIDANÉ - Bar Charts stránka
-  '/staff': 'Realizačný Tím', // PRIDANÉ - Line Charts stránka  
-  '/leagues': 'Súťaže', // PRIDANÉ - Curve Charts stránka
-  '/matches': 'Zápasy', // PRIDANÉ - Trend Charts stránka
-  '/calendar': 'Kalendar', // PRIDANÉ - Trend Charts stránka
+  '/teams': 'Prehľad Tímov', 
+  '/players': 'Hráči', 
+  '/staff': 'Realizačný Tím', 
+  '/leagues': 'Súťaže', 
+  '/matches': 'Zápasy', 
+  '/calendar': 'Kalendar', 
+  '/article/new': 'Nový článok',
 
   
   '/charts/semidoughnut': 'Semi Doughnut Chart',

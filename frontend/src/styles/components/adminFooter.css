@@ -1,7 +1,7 @@
 /* Footer Component */
 .footer {
   padding: 24px 32px;
-  background: transparent;
+  background: var(--color-background);
   border-top: none;
   margin-top: auto; /* Push footer to bottom */
 }

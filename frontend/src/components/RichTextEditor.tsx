@@ -1,15 +1,9 @@
 // frontend/src/components/RichTextEditor.tsx
-// TinyMCE Rich Text Editor komponenta pre články
+// Vlastný Rich Text Editor bez externých knižníc - okamžité načítanie
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-// Import TinyMCE
-declare global {
-  interface Window {
-    tinymce: any;
-  }
-}
-
+// ===== TYPY A INTERFACE =====
 interface RichTextEditorProps {
   value: string;
   onChange: (content: string) => void;
@@ -17,216 +11,456 @@ interface RichTextEditorProps {
   height?: number;
   disabled?: boolean;
   onInit?: () => void;
+  id?: string;
 }
 
+// ===== HLAVNÁ KOMPONENTA =====
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   value,
   onChange,
   placeholder = 'Začnite písať váš článok...',
   height = 400,
   disabled = false,
-  onInit
+  onInit,
+  id
 }) => {
-  const editorRef = useRef<any>(null);
-  const textareaId = `tinymce-editor-${Math.random().toString(36).substr(2, 9)}`;
+  // ===== STATE MANAGEMENT =====
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [currentTheme, setCurrentTheme] = useState<string>('white');
+  const [isActive, setIsActive] = useState(false);
 
+  // ===== DETEKCIA TÉMY =====
   useEffect(() => {
-    // Načítanie TinyMCE scriptu
-    const loadTinyMCE = () => {
-      if (window.tinymce) {
-        initializeEditor();
-        return;
-      }
-
-      // Načítanie TinyMCE z CDN
-      const script = document.createElement('script');
-      script.src = 'https://cdn.tiny.cloud/1/rprmbak86jnp5brxy5pmsuid6ce819giawy9ost6xtfgtc6h/tinymce/7/tinymce.min.js';
-      script.onload = () => {
-        initializeEditor();
-      };
-      document.head.appendChild(script);
+    const detectTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'white';
+      setCurrentTheme(theme);
     };
 
-    const initializeEditor = () => {
-      window.tinymce.init({
-        selector: `#${textareaId}`,
-        height: height,
-        menubar: true,
-        plugins: [
-          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-          'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons',
-          'template', 'codesample'
-        ],
-        toolbar: [
-          'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor',
-          'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
-          'removeformat | link image media table | code fullscreen preview | help'
-        ].join(' | '),
-        content_style: `
-          body { 
-            font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); 
-            font-size: 14px; 
-            background: var(--color-surface, #ffffff) !important;
-            color: var(--color-text-primary, #374151) !important;
-            margin: 8px;
-            min-height: ${height - 100}px;
-          }
-          h1, h2, h3, h4, h5, h6 { 
-            color: #1e293b; 
-            margin-top: 1.5em; 
-            margin-bottom: 0.5em; 
-          }
-          h1 { font-size: 2em; }
-          h2 { font-size: 1.5em; }
-          h3 { font-size: 1.25em; }
-          p { margin-bottom: 1em; }
-          a { color: #3b82f6; text-decoration: underline; }
-          blockquote { 
-            border-left: 4px solid #3b82f6; 
-            padding-left: 1em; 
-            margin: 1em 0; 
-            font-style: italic; 
-            color: #64748b; 
-          }
-          code { 
-            background: #f3f4f6; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-family: 'Courier New', monospace; 
-          }
-          pre { 
-            background: #1e293b; 
-            color: #f8fafc; 
-            padding: 1em; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-          }
-          table { 
-            width: 100%; 
-            margin: 1em 0; 
-          }
-          table td, table th { 
-            padding: 8px 12px; 
-          }
-          table th { 
-            background: #f8fafc; 
-            font-weight: bold; 
-          }
-          img { 
-            max-width: 100%; 
-            height: auto; 
-            border-radius: 8px; 
-          }
+    detectTheme();
+    
+    const observer = new MutationObserver(detectTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
 
-          /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-          body {
-            background: var(--color-surface, #1f2937) !important;
-            color: var(--color-text-primary, #f9fafb) !important;
-          }
+    return () => observer.disconnect();
+  }, []);
+
+  // ===== POMOCNÉ FUNKCIE =====
+  
+  // Získanie pozadia editora podľa témy
+  const getEditorBackground = (theme: string): string => {
+    switch (theme) {
+      case 'dark':
+        return 'var(--color-surface, #1e293b)';
+      case 'dark-bright':
+        return 'var(--color-background, #0f172a)';
+      default:
+        return 'var(--color-surface, #ffffff)';
+    }
+  };
+
+  // Získanie farby textu podľa témy
+  const getTextColor = (theme: string): string => {
+    switch (theme) {
+      case 'dark':
+      case 'dark-bright':
+        return 'var(--color-text-primary, #f8fafc)';
+      default:
+        return 'var(--color-text-primary, #374151)';
+    }
+  };
+
+  // ===== EDITOR FUNKCIE =====
+  
+  // Vykonanie formátovacieho príkazu
+  const execCommand = useCallback((command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    handleContentChange();
+  }, []);
+
+  // Handling zmeny obsahu
+  const handleContentChange = useCallback(() => {
+    if (editorRef.current) {
+      const content = editorRef.current.innerHTML;
+      onChange(content);
+    }
+  }, [onChange]);
+
+  // Handling paste eventu
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+    handleContentChange();
+  }, [handleContentChange]);
+
+  // Handling key events
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Ctrl+B = Bold
+    if (e.ctrlKey && e.key === 'b') {
+      e.preventDefault();
+      execCommand('bold');
+    }
+    // Ctrl+I = Italic
+    else if (e.ctrlKey && e.key === 'i') {
+      e.preventDefault();
+      execCommand('italic');
+    }
+    // Ctrl+U = Underline
+    else if (e.ctrlKey && e.key === 'u') {
+      e.preventDefault();
+      execCommand('underline');
+    }
+    // Enter = nový riadok
+    else if (e.key === 'Enter' && !e.shiftKey) {
+      // Nechaj default behavior pre <p> tagy
+    }
+  }, [execCommand]);
+
+  // ===== TOOLBAR KOMPONENTY =====
+  
+  // Toolbar tlačidlo
+  const ToolbarButton: React.FC<{
+    onClick: () => void;
+    active?: boolean;
+    title: string;
+    children: React.ReactNode;
+  }> = ({ onClick, active = false, title, children }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: '8px 12px',
+        border: '1px solid var(--color-border)',
+        borderRadius: '6px',
+        background: active ? 'var(--color-primary)' : 'var(--color-surface)',
+        color: active ? 'white' : 'var(--color-text-primary)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '14px',
+        fontWeight: '500',
+        transition: 'all 0.2s ease',
+        minWidth: '36px',
+        height: '36px'
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          (e.target as HTMLElement).style.background = 'var(--color-background)';
         }
-      `,
-        
-        skin: window.matchMedia('(prefers-color-scheme: oxide)').matches ? 'oxide-dark' : 'dark',
-        placeholder: placeholder,
-        branding: false,
-        promotion: false,
-        statusbar: true,
-        resize: true,
-        setup: (editor: any) => {
-          editorRef.current = editor;
-          
-          // Event listenery
-          editor.on('init', () => {
-            editor.setContent(value || '');
-            if (onInit) onInit();
-          });
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          (e.target as HTMLElement).style.background = 'var(--color-surface)';
+        }
+      }}
+    >
+      {children}
+    </button>
+  );
 
-          editor.on('change', () => {
-            const content = editor.getContent();
-            onChange(content);
-          });
+  // Select pre nadpisy
+  const HeadingSelect: React.FC = () => (
+    <select
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value === 'p') {
+          execCommand('formatBlock', '<p>');
+        } else {
+          execCommand('formatBlock', `<${value}>`);
+        }
+        e.target.value = '';
+      }}
+      style={{
+        padding: '8px 12px',
+        border: '1px solid var(--color-border)',
+        borderRadius: '6px',
+        background: 'var(--color-surface)',
+        color: 'var(--color-text-primary)',
+        fontSize: '14px',
+        cursor: 'pointer',
+        minWidth: '120px',
+        height: '36px'
+      }}
+      defaultValue=""
+    >
+      <option value="" disabled>Formát</option>
+      <option value="p">Odsek</option>
+      <option value="h1">Nadpis 1</option>
+      <option value="h2">Nadpis 2</option>
+      <option value="h3">Nadpis 3</option>
+    </select>
+  );
 
-          editor.on('keyup', () => {
-            const content = editor.getContent();
-            onChange(content);
-          });
-
-          editor.on('paste', () => {
-            setTimeout(() => {
-              const content = editor.getContent();
-              onChange(content);
-            }, 100);
-          });
-        },
-        // Slovenské lokalizácie
-        language: 'sk',
-        language_url: 'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/langs/sk.js',
-        
-        // Nastavenia obrázkov
-        image_advtab: true,
-        image_caption: true,
-        image_title: true,
-        
-        // Nastavenia linkov
-        link_title: false,
-        target_list: false,
-        
-        // Nastavenia tabuliek
-        table_toolbar: 'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
-        table_appearance_options: false,
-        table_grid: false,
-        table_cell_advtab: false,
-        
-        // Zakázanie drag&drop obrázkov (zatiaľ)
-        paste_data_images: false,
-        automatic_uploads: false,
-        
-        // Formáty
-        formats: {
-          alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left' },
-          aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center' },
-          alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right' },
-          alignjustify: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-justify' }
-        },
-        
-        // Disabled stav
-        readonly: disabled
-      });
-    };
-
-    loadTinyMCE();
-
-    // Cleanup
-    return () => {
-      if (editorRef.current) {
-        window.tinymce.remove(`#${textareaId}`);
-      }
-    };
-  }, [textareaId, height, placeholder, disabled]);
-
-  // Update obsahu keď sa zmení value prop
+  // ===== INICIALIZÁCIA =====
   useEffect(() => {
-    if (editorRef.current && editorRef.current.getContent() !== value) {
-      editorRef.current.setContent(value || '');
+    if (editorRef.current) {
+      editorRef.current.innerHTML = value || '';
+      if (onInit) onInit();
+    }
+  }, []);
+
+  // Update obsahu pri zmene value prop
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value || '';
     }
   }, [value]);
 
+  // ===== RENDER =====
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <textarea
-        id={textareaId}
-        defaultValue={value}
+    <div 
+      style={{ 
+        marginBottom: '20px',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px',
+        background: 'var(--color-surface)',
+        overflow: 'hidden'
+      }}
+      className="rich-text-editor-container"
+    >
+      {/* Toolbar */}
+      <div style={{
+        padding: '12px',
+        borderBottom: '1px solid var(--color-border)',
+        display: 'flex',
+        gap: '8px',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        background: 'var(--color-surface)'
+      }}>
+        {/* Formát */}
+        <HeadingSelect />
+        
+        {/* Separator */}
+        <div style={{
+          width: '1px',
+          height: '24px',
+          background: 'var(--color-border)',
+          margin: '0 4px'
+        }} />
+        
+        {/* Základné formátovanie */}
+        <ToolbarButton
+          onClick={() => execCommand('bold')}
+          title="Tučné (Ctrl+B)"
+        >
+          <strong>B</strong>
+        </ToolbarButton>
+        
+        <ToolbarButton
+          onClick={() => execCommand('italic')}
+          title="Kurzíva (Ctrl+I)"
+        >
+          <em>I</em>
+        </ToolbarButton>
+        
+        <ToolbarButton
+          onClick={() => execCommand('underline')}
+          title="Podčiarknuté (Ctrl+U)"
+        >
+          <u>U</u>
+        </ToolbarButton>
+        
+        {/* Separator */}
+        <div style={{
+          width: '1px',
+          height: '24px',
+          background: 'var(--color-border)',
+          margin: '0 4px'
+        }} />
+        
+        {/* Zarovnanie */}
+        <ToolbarButton
+          onClick={() => execCommand('justifyLeft')}
+          title="Zarovnať vľavo"
+        >
+          ⫷
+        </ToolbarButton>
+        
+        <ToolbarButton
+          onClick={() => execCommand('justifyCenter')}
+          title="Zarovnať na stred"
+        >
+          ≡
+        </ToolbarButton>
+        
+        <ToolbarButton
+          onClick={() => execCommand('justifyRight')}
+          title="Zarovnať vpravo"
+        >
+          ⫸
+        </ToolbarButton>
+        
+        {/* Separator */}
+        <div style={{
+          width: '1px',
+          height: '24px',
+          background: 'var(--color-border)',
+          margin: '0 4px'
+        }} />
+        
+        {/* Zoznamy */}
+        <ToolbarButton
+          onClick={() => execCommand('insertUnorderedList')}
+          title="Zoznam s odrážkami"
+        >
+          • • •
+        </ToolbarButton>
+        
+        <ToolbarButton
+          onClick={() => execCommand('insertOrderedList')}
+          title="Číslovaný zoznam"
+        >
+          1. 2. 3.
+        </ToolbarButton>
+        
+        {/* Separator */}
+        <div style={{
+          width: '1px',
+          height: '24px',
+          background: 'var(--color-border)',
+          margin: '0 4px'
+        }} />
+        
+        {/* Link */}
+        <ToolbarButton
+          onClick={() => {
+            const url = prompt('Zadajte URL:');
+            if (url) {
+              execCommand('createLink', url);
+            }
+          }}
+          title="Vložiť odkaz"
+        >
+          🔗
+        </ToolbarButton>
+        
+        {/* Odstránenie formátovania */}
+        <ToolbarButton
+          onClick={() => execCommand('removeFormat')}
+          title="Odstrániť formátovanie"
+        >
+          ✕
+        </ToolbarButton>
+      </div>
+
+      {/* Editor */}
+      <div
+        ref={editorRef}
+        contentEditable={!disabled}
+        onInput={handleContentChange}
+        onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsActive(true)}
+        onBlur={() => setIsActive(false)}
         style={{
-          width: '100%',
-          minHeight: `${height}px`,
-          padding: '12px',
-          fontFamily: 'inherit',
-          fontSize: '14px',
-          resize: 'vertical'
+          minHeight: `${height - 60}px`, // -60px pre toolbar
+          padding: '16px',
+          background: getEditorBackground(currentTheme),
+          color: getTextColor(currentTheme),
+          fontSize: '16px',
+          lineHeight: '1.6',
+          outline: 'none',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          cursor: 'text',
+          overflowY: 'auto'
         }}
+        data-placeholder={placeholder}
       />
+
+      {/* CSS štýly */}
+      <style>
+        {`
+          .rich-text-editor-container [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: var(--color-text-muted, #9ca3af);
+            font-style: italic;
+          }
+          
+          .rich-text-editor-container [contenteditable] h1,
+          .rich-text-editor-container [contenteditable] h2,
+          .rich-text-editor-container [contenteditable] h3 {
+            margin: 1.5em 0 0.5em 0;
+            font-weight: 600;
+            color: ${getTextColor(currentTheme)};
+          }
+          
+          .rich-text-editor-container [contenteditable] h1 {
+            font-size: 1.8em;
+          }
+          
+          .rich-text-editor-container [contenteditable] h2 {
+            font-size: 1.4em;
+          }
+          
+          .rich-text-editor-container [contenteditable] h3 {
+            font-size: 1.2em;
+          }
+          
+          .rich-text-editor-container [contenteditable] p {
+            margin: 0 0 1em 0;
+          }
+          
+          .rich-text-editor-container [contenteditable] ul,
+          .rich-text-editor-container [contenteditable] ol {
+            margin: 1em 0;
+            padding-left: 2em;
+          }
+          
+          .rich-text-editor-container [contenteditable] li {
+            margin: 0.5em 0;
+          }
+          
+          .rich-text-editor-container [contenteditable] a {
+            color: var(--color-primary, #3b82f6);
+            text-decoration: underline;
+          }
+          
+          .rich-text-editor-container [contenteditable] strong {
+            font-weight: 600;
+          }
+          
+          .rich-text-editor-container [contenteditable] em {
+            font-style: italic;
+          }
+          
+          .rich-text-editor-container [contenteditable]:focus {
+            box-shadow: inset 0 0 0 1px var(--color-primary, #3b82f6);
+          }
+          
+          /* Dark mode support */
+          [data-theme="dark"] .rich-text-editor-container [contenteditable] h1,
+          [data-theme="dark"] .rich-text-editor-container [contenteditable] h2,
+          [data-theme="dark"] .rich-text-editor-container [contenteditable] h3,
+          [data-theme="dark-bright"] .rich-text-editor-container [contenteditable] h1,
+          [data-theme="dark-bright"] .rich-text-editor-container [contenteditable] h2,
+          [data-theme="dark-bright"] .rich-text-editor-container [contenteditable] h3 {
+            color: var(--color-text-primary, #f8fafc);
+          }
+          
+          /* Responsive toolbar */
+          @media (max-width: 768px) {
+            .rich-text-editor-container > div:first-child {
+              padding: 8px;
+              gap: 6px;
+            }
+            
+            .rich-text-editor-container > div:first-child button,
+            .rich-text-editor-container > div:first-child select {
+              min-width: 32px;
+              height: 32px;
+              padding: 6px 8px;
+              font-size: 13px;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

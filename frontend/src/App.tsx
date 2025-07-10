@@ -47,6 +47,9 @@ import './styles/components/ui/cards/statCard.css';
 import './styles/components/ui/cards/LittleCard.css';
 import './styles/components/ui/cards/quickAction.css';
 import './styles/components/managementPages.css';
+import './styles/pages/NewArticleManagement.css';
+import './styles/pages/pageStyles.css';
+
 
 
 // PRIDANÉ - Pôvodné admin management komponenty
@@ -61,6 +64,8 @@ const ZapasManagement = lazy(() => import('./components/ZapasManagement'));
 const KalendarManagement = lazy(() => import('./components/KalendarManagement'));
 const PageManagement = lazy(() => import('./components/PageManagement'));
 const GaleriaManagement = lazy(() => import('./components/GaleriaManagement'));
+const NewArticleManagement = lazy(() => import('./components/NewArticleManagement'));
+
 
 // Pôvodné lazy loading komponenty
 const ResponsiveAdminDashboard = lazy(() => import('./components/AdminDashboard'));
@@ -131,8 +136,14 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
 
   // Rendering stránok - používame pôvodné komponenty so starým page ID systémom
   const renderAdminPage = () => {
+    if (currentRoute === '/article/new') {
+    return (
+      <Suspense fallback={<div style={{ padding: '32px', textAlign: 'center' }}>Načítavam...</div>}>
+        <NewArticleManagement />
+      </Suspense>
+    );
+  }
     const oldPageId = getOldPageId(currentRoute);
-    
     switch (oldPageId) {
       case 'dashboard':
         return <DashboardPage />;
