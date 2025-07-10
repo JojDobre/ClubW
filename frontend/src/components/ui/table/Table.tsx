@@ -25,6 +25,18 @@ export interface TableProps {
   onAddUser?: (userData: UserFormData) => void;
 
   onAddArticle?: () => void;
+
+  serverSidePagination?: boolean;
+  paginationData?: PaginationData;
+  onPageChange?: (page: number) => void;
+}
+
+export interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
 
 const Table: React.FC<TableProps> = ({
@@ -34,7 +46,10 @@ const Table: React.FC<TableProps> = ({
   itemsPerPage = 10,
   className = '',
   onAddUser,
-  onAddArticle
+  onAddArticle,
+  serverSidePagination = false,
+  paginationData,
+  onPageChange
 }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,10 +79,30 @@ const Table: React.FC<TableProps> = ({
   });
 
   // Počítanie stránok
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = data.slice(startIndex, endIndex);
+  const totalPages = serverSidePagination && paginationData 
+    ? paginationData.totalPages 
+    : Math.ceil(data.length / itemsPerPage);
+
+  const currentPageNumber = serverSidePagination && paginationData 
+    ? paginationData.currentPage 
+    : currentPage;
+
+  const currentData = serverSidePagination ? data : data.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
+
+  const totalItems = serverSidePagination && paginationData 
+    ? paginationData.totalItems 
+    : data.length;
+
+  const startIndex = serverSidePagination && paginationData 
+    ? (paginationData.currentPage - 1) * itemsPerPage
+    : (currentPage - 1) * itemsPerPage;
+
+  const endIndex = serverSidePagination && paginationData 
+    ? Math.min(startIndex + data.length, totalItems)
+    : Math.min(startIndex + itemsPerPage, totalItems);
 
   // Funkcia pre označenie všetkých riadkov
   const handleSelectAll = () => {
@@ -89,7 +124,15 @@ const Table: React.FC<TableProps> = ({
 
   // Funkcia pre zmenu stránky
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (page < 1 || page > totalPages) return;
+  
+    if (serverSidePagination && onPageChange) {
+      // Pre server-side pagináciu zavoláme callback
+      onPageChange(page);
+    } else {
+      // Pre client-side pagináciu upravíme lokálny state
+      setCurrentPage(page);
+    }
   };
 
   // Handle add user
@@ -183,6 +226,36 @@ const Table: React.FC<TableProps> = ({
       default:
         return <span className="table-cell-text">{value}</span>;
     }
+  };
+
+
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages: number[] = [];
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const current = currentPageNumber;
+      
+      if (current <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+      } else if (current >= totalPages - 2) {
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        for (let i = current - 2; i <= current + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
   };
 
   return (
@@ -339,13 +412,15 @@ const Table: React.FC<TableProps> = ({
       {/* Paginácia */}
       <div className="table-pagination">
         <div className="pagination-info">
-          <span>Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries</span>
+          <span>
+            Zobrazené {startIndex + 1} až {endIndex} z {totalItems} záznamov
+          </span>
         </div>
         
         <div className="pagination-controls">
           {/* Šípka doľava */}
           <button
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            onClick={() => handlePageChange(currentPageNumber - 1)}
             className="pagination-arrow"
             disabled={currentPage === 1}
           >
@@ -355,21 +430,20 @@ const Table: React.FC<TableProps> = ({
           </button>
           
           {/* Čísla stránok */}
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
+          {getPageNumbers().map((page) => (
             <button
               key={page}
               onClick={() => handlePageChange(page)}
-              className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+              className={`pagination-button ${page === currentPageNumber ? 'active' : ''}`}
             >
               {page}
             </button>
           ))}
           
-          {/* Šípka doprava */}
           <button
-            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            onClick={() => handlePageChange(currentPageNumber + 1)}
             className="pagination-arrow"
-            disabled={currentPage === totalPages}
+            disabled={currentPageNumber === totalPages}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

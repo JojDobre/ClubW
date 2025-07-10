@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from './ui/cards/StatCard';
 import Table from './ui/table/Table';
-import type { TableColumn, TableData } from './ui/table/Table';
 import { useRouter } from '../context/RouterContext'; // PRIDANÉ
+import type { TableColumn, TableData, PaginationData } from './ui/table/Table';
 
 
 // Import CSS štýlov
@@ -77,6 +77,14 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   //Router hook pre navigáciu
   const { navigate } = useRouter();
 
+  const [paginationData, setPaginationData] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   // ===== STATE MANAGEMENT =====
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -110,7 +118,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       const token = localStorage.getItem('clubw_token');
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: '15',
       });
 
       // Pridanie filtrov ak sú nastavené
@@ -129,9 +137,19 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         setArticles(data.data.articles);
         // Ak je dostupná paginácia, nastavíme ju
         if (data.data.pagination) {
-          setCurrentPage(data.data.pagination.currentPage);
-          setTotalPages(data.data.pagination.totalPages);
-          setTotalArticles(data.data.pagination.totalArticles);
+          const pagination = data.data.pagination;
+          setCurrentPage(pagination.currentPage);
+          setTotalPages(pagination.totalPages);
+          setTotalArticles(pagination.totalArticles);
+          
+          // Nastavenie dát pre Table komponent
+          setPaginationData({
+            currentPage: pagination.currentPage,
+            totalPages: pagination.totalPages,
+            totalItems: pagination.totalArticles,
+            hasNextPage: pagination.hasNextPage,
+            hasPrevPage: pagination.hasPrevPage
+          });
         }
         setError('');
       } else {
@@ -222,6 +240,12 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     }
   };
 
+
+  const handlePageChange = (page: number) => {
+    console.log('Zmena stránky na:', page);
+    fetchArticles(page);
+  };
+
   // ===== USE EFFECTS =====
   
   // Načítanie dát pri spustení komponentu
@@ -271,14 +295,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       header: 'Názov článku',
       type: 'text',
       sortable: true,
-      width: '25%'
-    },
-    {
-      id: 'views',
-      header: 'Zobrazenia',
-      type: 'text',
-      sortable: true,
-      width: '10%'
+      width: '35%'
     },
     {
       id: 'status',
@@ -286,13 +303,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       type: 'status',
       sortable: true,
       width: '12%'
-    },
-    {
-      id: 'muzstvo',
-      header: 'Mužstvo',
-      type: 'text',
-      sortable: true,
-      width: '10%'
     },
     {
       id: 'rubrika',
@@ -314,6 +324,13 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       type: 'text',
       sortable: true,
       width: '13%'
+    },
+    {
+      id: 'views',
+      header: 'Zobrazenia',
+      type: 'text',
+      sortable: true,
+      width: '5%'
     },
     {
       id: 'actions',
@@ -454,8 +471,12 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
           columns={tableColumns}
           data={tableData}
           showCheckboxes={true}
-          itemsPerPage={10}
+          itemsPerPage={15}
           onAddArticle={handleAddArticle}
+
+          serverSidePagination={true}
+          paginationData={paginationData}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>

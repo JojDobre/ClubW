@@ -334,14 +334,14 @@ const NewArticleManagement: React.FC = () => {
   const renderCategorySelect = () => (
     <div className="modal-field">
       <label className="modal-label">
-        Kategória *
+        Rubrika *
       </label>
       <select
         className={`modal-select ${errors.kategoria_id ? 'error' : ''}`}
         value={formData.kategoria_id}
         onChange={(e) => handleInputChange('kategoria_id', parseInt(e.target.value))}
       >
-        <option value={0}>Vyberte kategóriu</option>
+        <option value={0}>Vyberte rubriku</option>
         {categories.map(category => (
           <option key={category.id} value={category.id}>
             {category.nazov}
@@ -448,9 +448,6 @@ const NewArticleManagement: React.FC = () => {
             
             <div className="form-row">
               <div className="modal-field flex-2">
-                <label className="modal-label">
-                  Názov článku *
-                </label>
                 <input
                   type="text"
                   className={`modal-input ${errors.nazov ? 'error' : ''}`}
@@ -464,9 +461,6 @@ const NewArticleManagement: React.FC = () => {
               </div>
               
               <div className="modal-field flex-1">
-                <label className="modal-label">
-                  URL slug
-                </label>
                 <input
                   type="text"
                   className="modal-input"
