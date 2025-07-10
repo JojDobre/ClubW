@@ -7,6 +7,8 @@ import { Op } from 'sequelize';
 import Article from '../models/Article';
 import Category from '../models/Category';
 import User from '../models/user';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Validácia pre vytvorenie/úpravu článku
 export const validateArticle = [
@@ -22,10 +24,6 @@ export const validateArticle = [
     .isLength({ max: 500 })
     .withMessage('Excerpt môže mať maximálne 500 znakov')
     .trim(),
-  body('obrazok')
-    .optional()
-    .isURL()
-    .withMessage('Obrázok musí byť platná URL'),
   body('kategoria_id')
     .isInt({ min: 1 })
     .withMessage('Kategória je povinná'),
@@ -635,6 +633,46 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Chyba pri vymazávaní článku',
+    });
+  }
+};
+
+// Pridaj túto funkciu na koniec súboru:
+export const uploadArticleImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: 'Žiadny súbor nebol nahraný'
+      });
+      return;
+    }
+
+    const filename = req.file.filename;
+    const filePath = `/uploads/articles/${filename}`;
+
+    console.log('✅ Obrázok článku nahraný:', {
+      originalName: req.file.originalname,
+      filename: filename,
+      size: req.file.size,
+      path: filePath
+    });
+
+    res.json({
+      success: true,
+      data: {
+        filename: filePath,
+        originalName: req.file.originalname,
+        size: req.file.size
+      },
+      message: 'Obrázok bol úspešne nahraný'
+    });
+
+  } catch (error) {
+    console.error('Chyba pri uploade obrázka článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri uploade obrázka'
     });
   }
 };

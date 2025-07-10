@@ -22,6 +22,7 @@ interface ArticleFormData {
   tags: string;
   meta_title?: string;
   meta_description?: string;
+  obrazok?: string;
 }
 
 interface Category {
@@ -41,21 +42,25 @@ const NewArticleManagement: React.FC = () => {
     nazov: '',
     slug: '',
     kategoria_id: 0,
-    status: 'published', // ZMENENÉ: defaultne publikovaný
+    status: 'published', 
     excerpt: '',
     obsah: '',
     publikovany_datum: '',
-    featured: false,
-    komentare_povolene: true,
+    featured: true,
+    komentare_povolene: false,
     tags: '',
     meta_title: '',
-    meta_description: ''
+    meta_description: '',
+    obrazok: ''
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // ===== LIFECYCLE HOOKS =====
   useEffect(() => {
@@ -160,6 +165,82 @@ const NewArticleManagement: React.FC = () => {
     handleInputChange('obsah', content);
   };
 
+
+  // Handling image upload
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validácia súboru
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      
+      if (!allowedTypes.includes(file.type)) {
+        alert('Podporované sú iba obrázky (JPG, PNG, GIF, WebP)');
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        alert('Obrázok môže mať maximálne 5MB');
+        return;
+      }
+      
+      setSelectedImage(file);
+      
+      // Vytvorenie preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Odstránenie obrázka
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, obrazok: '' }));
+    
+    // Reset file input
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  // Upload obrázka na server
+  const uploadImage = async (): Promise<string | null> => {
+    if (!selectedImage) return null;
+    
+    try {
+      setIsUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      
+      const response = await fetch('http://localhost:3000/api/admin/articles/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`
+        },
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        console.log('✅ Obrázok nahraný:', data.data.filename);
+        return data.data.filename;
+      } else {
+        throw new Error(data.message || 'Chyba pri uploade obrázka');
+      }
+    } catch (error) {
+      console.error('❌ Chyba pri uploade obrázka:', error);
+      alert('Chyba pri uploade obrázka: ' + (error as Error).message);
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+
   // Form validation - OPRAVENÉ podľa backend validácie
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -223,12 +304,21 @@ const NewArticleManagement: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Upload obrázka ak je vybraný
+      let uploadedImagePath = formData.obrazok;
+      if (selectedImage) {
+        const uploadedPath = await uploadImage();
+        if (uploadedPath) {
+          uploadedImagePath = uploadedPath;
+        }
+      }
       // Príprava dát pre backend - OPRAVENÉ tags handling
       const articleData = {
         nazov: formData.nazov.trim(),
         slug: formData.slug.trim() || undefined, // Nech backend vygeneruje ak je prázdny
         obsah: formData.obsah,
         excerpt: formData.excerpt?.trim() || undefined,
+        obrazok: uploadedImagePath || undefined, 
         kategoria_id: Number(formData.kategoria_id),
         status: formData.status,
         publikovany_datum: formData.publikovany_datum || undefined,
@@ -498,6 +588,44 @@ const NewArticleManagement: React.FC = () => {
               )}
             </div>
           </div>
+
+            {/* Upload obrázka */}
+              <div className="form-section">
+                <h3 className="form-section-title">Obrázok článku</h3>
+                
+                <div className="image-upload-section">
+                  {!imagePreview ? (
+                    <div className="image-upload-area">
+                      <input
+                        type="file"
+                        id="image-upload"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="image-upload-input"
+                      />
+                      <label htmlFor="image-upload" className="image-upload-label">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                          <path d="M21 15V19C21 19.5523 20.5523 20 20 20H4C3.44772 20 3 19.5523 3 19V15M17 8L12 3M12 3L7 8M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span className="upload-text">Kliknite alebo pretiahnite obrázok</span>
+                        <span className="upload-subtext">PNG, JPG, GIF do 5MB</span>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="image-preview-container">
+                      <img src={imagePreview} alt="Náhľad" className="image-preview" />
+                      <div className="image-preview-actions">
+                        <button type="button" onClick={handleRemoveImage} className="btn-remove-image">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Odstrániť
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
           {/* Obsah článku */}
           <div className="form-section">

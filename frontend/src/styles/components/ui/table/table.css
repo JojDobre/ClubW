@@ -278,6 +278,17 @@
   background: var(--color-background);
 }
 
+.table-cell-title-nazov {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.table-cell-title-views {
+  align-items: center;
+  text-align: center;
+  color: var(--color-text-primary);
+}
+
 [data-theme="dark-bright"] .table-header-cell {
   color: var(--white-40);
 }

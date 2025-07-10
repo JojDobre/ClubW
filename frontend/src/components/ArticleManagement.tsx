@@ -70,6 +70,16 @@ interface ArticleStats {
   publikovane_30dni: number;
   koncepty: number;
   zobrazenia_30dni: number;
+
+  celkovo_zmena?: string;
+  celkovo_zmena_typ?: 'positive' | 'negative' | 'neutral';
+  publikovane_zmena?: string;
+  publikovane_zmena_typ?: 'positive' | 'negative' | 'neutral';
+  koncepty_zmena?: string;
+  koncepty_zmena_typ?: 'positive' | 'negative' | 'neutral';
+  zobrazenia_zmena?: string;
+  zobrazenia_zmena_typ?: 'positive' | 'negative' | 'neutral';
+
 }
 
 // ===== MAIN COMPONENT =====
@@ -189,56 +199,142 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
   // Načítanie štatistík z API
   const fetchStats = async () => {
-    try {
-      const token = localStorage.getItem('clubw_token');
-      // Načítame všetky články bez limitu pre presné štatistiky
-      const response = await fetch('http://localhost:3000/api/admin/articles?limit=1000', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+  try {
+    const token = localStorage.getItem('clubw_token');
+    // Načítame všetky články bez limitu pre presné štatistiky
+    const response = await fetch('http://localhost:3000/api/admin/articles?limit=1000', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-      const data = await response.json();
-      if (data.success) {
-        const allArticles = data.data.articles;
-        
-        // Výpočet štatistík z všetkých článkov
-        const celkovo = allArticles.length;
-        const publikovane_30dni = allArticles.filter((article: Article) => {
-          if (article.status !== 'published') return false;
+    const data = await response.json();
+    if (data.success) {
+      const allArticles = data.data.articles;
+      
+      // Aktuálne dátumy
+      const teraz = new Date();
+      const pred30Dni = new Date();
+      pred30Dni.setDate(pred30Dni.getDate() - 30);
+      const pred60Dni = new Date();
+      pred60Dni.setDate(pred60Dni.getDate() - 60);
+      const predchaddzujuciMesiac = new Date();
+      predchaddzujuciMesiac.setDate(predchaddzujuciMesiac.getDate() - 60);
+
+      // === AKTUÁLNE HODNOTY (posledných 30 dní) ===
+      const celkovo = allArticles.length;
+      
+      const publikovane_30dni = allArticles.filter((article: Article) => {
+        if (article.status !== 'published') return false;
+        const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
+        return publikovanyDatum >= pred30Dni;
+      }).length;
+      
+      const koncepty = allArticles.filter((article: Article) => article.status === 'draft').length;
+      
+      const zobrazenia_30dni = allArticles
+        .filter((article: Article) => {
           const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
-          const pred30Dni = new Date();
-          pred30Dni.setDate(pred30Dni.getDate() - 30);
           return publikovanyDatum >= pred30Dni;
-        }).length;
-        const koncepty = allArticles.filter((article: Article) => article.status === 'draft').length;
-        const zobrazenia_30dni = allArticles
-          .filter((article: Article) => {
-            const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
-            const pred30Dni = new Date();
-            pred30Dni.setDate(pred30Dni.getDate() - 30);
-            return publikovanyDatum >= pred30Dni;
-          })
-          .reduce((sum: number, article: Article) => sum + article.views, 0);
+        })
+        .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
 
-        setStats({
-          celkovo,
-          publikovane_30dni,
-          koncepty,
-          zobrazenia_30dni
-        });
-      }
-    } catch (err) {
-      console.error('Chyba pri načítavaní štatistík:', err);
-      // Ak zlyhá API, ponechávame mock dáta
+      // === PREDCHÁDZAJÚCE HODNOTY (30-60 dní dozadu) ===
+      const publikovane_predchadzajuce = allArticles.filter((article: Article) => {
+        if (article.status !== 'published') return false;
+        const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
+        return publikovanyDatum >= pred60Dni && publikovanyDatum < pred30Dni;
+      }).length;
+
+      const zobrazenia_predchadzajuce = allArticles
+        .filter((article: Article) => {
+          const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
+          return publikovanyDatum >= pred60Dni && publikovanyDatum < pred30Dni;
+        })
+        .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
+
+      // Koncepy pred mesiacom (pre porovnanie trendu)
+      const koncepty_predchadzajuce = allArticles.filter((article: Article) => {
+        const vytvoreny = new Date(article.vytvoreny);
+        return article.status === 'draft' && vytvoreny >= pred60Dni && vytvoreny < pred30Dni;
+      }).length;
+
+      // === VÝPOČET ZMIEN ===
+      
+      // Funkcia na výpočet percentuálnej zmeny
+      const vypocitajZmenu = (aktualne: number, predchadzajuce: number) => {
+        if (predchadzajuce === 0) {
+          return aktualne > 0 ? { text: `+${aktualne}`, typ: 'positive' as const } : { text: '0', typ: 'neutral' as const };
+        }
+        const zmena = ((aktualne - predchadzajuce) / predchadzajuce) * 100;
+        const zaokruhlenaZmena = Math.round(zmena * 10) / 10; // Zaokrúhlenie na 1 desatinné miesto
+        
+        if (zaokruhlenaZmena > 0) {
+          return { text: `+${zaokruhlenaZmena}%`, typ: 'positive' as const };
+        } else if (zaokruhlenaZmena < 0) {
+          return { text: `${zaokruhlenaZmena}%`, typ: 'negative' as const };
+        } else {
+          return { text: '0%', typ: 'neutral' as const };
+        }
+      };
+
+      // Funkcia na výpočet absolútnej zmeny
+      const vypocitajAbsolutnaZmenu = (aktualne: number, predchadzajuce: number) => {
+        const rozdiel = aktualne - predchadzajuce;
+        if (rozdiel > 0) {
+          return { text: `+${rozdiel} tento mesiac`, typ: 'positive' as const };
+        } else if (rozdiel < 0) {
+          return { text: `${rozdiel} tento mesiac`, typ: 'negative' as const };
+        } else {
+          return { text: 'Bez zmeny', typ: 'neutral' as const };
+        }
+      };
+
+      // Výpočet zmien
+      const publikovaneZmena = vypocitajAbsolutnaZmenu(publikovane_30dni, publikovane_predchadzajuce);
+      const konceptyZmena = vypocitajAbsolutnaZmenu(koncepty, koncepty_predchadzajuce);
+      const zobrazeniZmena = vypocitajZmenu(zobrazenia_30dni, zobrazenia_predchadzajuce);
+      
+      // Celkový počet článkov - porovnanie s minulým mesiacom
+      const celkovo_minuly_mesiac = allArticles.filter((article: Article) => {
+        const vytvoreny = new Date(article.vytvoreny);
+        return vytvoreny < pred30Dni;
+      }).length;
+      const celkovoZmena = vypocitajAbsolutnaZmenu(celkovo, celkovo_minuly_mesiac);
+
       setStats({
-        celkovo: 0,
-        publikovane_30dni: 0,
-        koncepty: 0,
-        zobrazenia_30dni: 0
+        celkovo,
+        publikovane_30dni,
+        koncepty,
+        zobrazenia_30dni,
+        
+        // Zmeny
+        celkovo_zmena: celkovoZmena.text,
+        celkovo_zmena_typ: celkovoZmena.typ,
+        publikovane_zmena: publikovaneZmena.text,
+        publikovane_zmena_typ: publikovaneZmena.typ,
+        koncepty_zmena: konceptyZmena.text,
+        koncepty_zmena_typ: konceptyZmena.typ,
+        zobrazenia_zmena: zobrazeniZmena.text,
+        zobrazenia_zmena_typ: zobrazeniZmena.typ,
+      });
+      
+      console.log('📊 Štatistiky vypočítané:', {
+        publikovane: { aktualne: publikovane_30dni, predchadzajuce: publikovane_predchadzajuce, zmena: publikovaneZmena },
+        zobrazenia: { aktualne: zobrazenia_30dni, predchadzajuce: zobrazenia_predchadzajuce, zmena: zobrazeniZmena }
       });
     }
-  };
+  } catch (err) {
+    console.error('Chyba pri načítavaní štatistík:', err);
+    // Fallback hodnoty
+    setStats({
+      celkovo: 0,
+      publikovane_30dni: 0,
+      koncepty: 0,
+      zobrazenia_30dni: 0
+    });
+  }
+};
 
 
   const handlePageChange = (page: number) => {
@@ -327,7 +423,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     },
     {
       id: 'views',
-      header: 'Zobrazenia',
+      header: '👁',
       type: 'text',
       sortable: true,
       width: '5%'
@@ -434,6 +530,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         <StatCard
           title="Celkovo článkov"
           value={stats.celkovo}
+          change={stats.celkovo_zmena}
+          changeType={stats.celkovo_zmena_typ}
           icon={<ArticleIcon />}
           variant="default"
         />
@@ -441,8 +539,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         <StatCard
           title="Publikované (30 dní)"
           value={stats.publikovane_30dni}
-          change="+3 tento mesiac"
-          changeType="positive"
+          change={stats.publikovane_zmena}
+          changeType={stats.publikovane_zmena_typ}
           icon={<EyeIcon />}
           variant="accent"
         />
@@ -450,6 +548,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         <StatCard
           title="Koncepty"
           value={stats.koncepty}
+          change={stats.koncepty_zmena}
+          changeType={stats.koncepty_zmena_typ}
           icon={<DraftIcon />}
           variant="default"
         />
@@ -457,8 +557,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         <StatCard
           title="Zobrazenia (30 dní)"
           value={stats.zobrazenia_30dni.toLocaleString()}
-          change="+12.3%"
-          changeType="positive"
+          change={stats.zobrazenia_zmena}
+          changeType={stats.zobrazenia_zmena_typ}
           icon={<EyeIcon />}
           variant="accent"
         />

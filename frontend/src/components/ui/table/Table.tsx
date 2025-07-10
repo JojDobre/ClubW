@@ -188,6 +188,14 @@ const Table: React.FC<TableProps> = ({
   const renderCell = (column: TableColumn, row: TableData) => {
     const value = row[column.id];
 
+     if (column.id === 'nazov') {
+        return <span className="table-cell-title-nazov">{value}</span>;
+      }
+
+    if (column.id === 'views') {
+      return <span className="table-cell-title-views">{value}</span>;
+    }
+
     switch (column.type) {
       case 'user':
         return (
@@ -474,5 +482,6 @@ const Table: React.FC<TableProps> = ({
     </div>
   );
 };
+
 
 export default Table;

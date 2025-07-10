@@ -188,9 +188,6 @@ Article.init(
     obrazok: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      validate: {
-        isUrl: true,
-      },
     },
     autor_id: {
       type: DataTypes.INTEGER,
