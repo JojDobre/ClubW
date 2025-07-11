@@ -33,6 +33,11 @@ export interface TableProps {
 
   onDeleteSelected?: (selectedIds: string[]) => void;
   onDuplicateSelected?: (selectedIds: string[]) => void;
+
+  onSearchChange?: (searchTerm: string) => void;
+  searchTerm?: string; // PRIDAJ TENTO RIADOK
+
+
 }
 
 export interface PaginationData {
@@ -59,17 +64,26 @@ const Table: React.FC<TableProps> = ({
 
   onDeleteSelected,
   onDuplicateSelected,
+
+  onSearchChange,
+  searchTerm: externalSearchTerm,
+
 }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState<TableData[]>(data);
+  const [internalSearchTerm, setInternalSearchTerm] = useState(''); 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+
+  // Rozhodni, ktorý search term používať
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  const isServerSideSearch = externalSearchTerm !== undefined;
 
   // Filter popup state
   const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
@@ -222,14 +236,19 @@ const Table: React.FC<TableProps> = ({
 
  //useEffect na sledovanie zmien vyhľadávania:
   useEffect(() => {
-    const filtered = filterData(data, searchTerm);
-    setFilteredData(filtered);
-    
-    // Reset na prvú stránku pri novom vyhľadávaní
-    if (searchTerm && !serverSidePagination) {
-      setCurrentPage(1);
+    if (serverSidePagination && onSearchChange && isServerSideSearch) {
+      // Server-side search sa už vykonáva cez onChange
+      return;
+    } else {
+      // Client-side pagination filtrujeme lokálne
+      const filtered = filterData(data, searchTerm);
+      setFilteredData(filtered);
+      
+      if (searchTerm && !serverSidePagination) {
+        setCurrentPage(1);
+      }
     }
-  }, [data, searchTerm]);
+  }, [data, searchTerm, serverSidePagination]);
 
   // Handle add user
   const handleAddUser = (userData: UserFormData) => {
@@ -430,7 +449,7 @@ const Table: React.FC<TableProps> = ({
               <button 
                 className="filter-action-item" 
                 title="Vymazať vyhľadávanie"
-                onClick={() => setSearchTerm('')}
+                onClick={() => onSearchChange && onSearchChange('')} 
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -501,13 +520,25 @@ const Table: React.FC<TableProps> = ({
               placeholder="Hľadať..."
               className="table-search-input"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                if (isServerSideSearch && onSearchChange) {
+                  onSearchChange(e.target.value);
+                } else {
+                  setInternalSearchTerm(e.target.value);
+                }
+              }}
             />
             {/* Tlačidlo na vymazanie vyhľadávania */}
             {searchTerm && (
               <button
                 className="search-clear-button"
-                onClick={() => setSearchTerm('')}
+                onClick={() => {
+                  if (isServerSideSearch && onSearchChange) {
+                    onSearchChange('');
+                  } else {
+                    setInternalSearchTerm('');
+                  }
+                }}
                 title="Vymazať vyhľadávanie"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -555,7 +586,7 @@ const Table: React.FC<TableProps> = ({
                         <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       <div>Žiadne výsledky pre "{searchTerm}"</div>
-                      <button onClick={() => setSearchTerm('')} style={{ marginTop: '8px', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <button onClick={() => onSearchChange && onSearchChange('')} style={{ marginTop: '8px', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}>
                         Vymazať filter
                       </button>
                     </div>

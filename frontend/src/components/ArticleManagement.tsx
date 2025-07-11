@@ -119,6 +119,10 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     zobrazenia_30dni: 0
   });
 
+  //SEARCH
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+
   // ===== FUNKCIE PRE API =====
   
   // Načítanie článkov z API
@@ -132,7 +136,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       });
 
       // Pridanie filtrov ak sú nastavené
-      if (searchTerm) params.append('search', searchTerm);
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm); // Zmeň searchTerm na debouncedSearchTerm
       if (filterStatus) params.append('status', filterStatus);
       if (filterCategory) params.append('category', filterCategory);
 
@@ -344,6 +348,15 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
   // ===== USE EFFECTS =====
   
+  // Debouncing pre search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Načítanie dát pri spustení komponentu
   useEffect(() => {
     const initializeData = async () => {
@@ -366,10 +379,10 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
   // Načítanie článkov pri zmene filtrov alebo stránky
   useEffect(() => {
-    if (categories.length > 0) { // Počkáme kým sa načítajú kategórie
+    if (categories.length > 0 && (debouncedSearchTerm.length === 0 || debouncedSearchTerm.length > 2)) {
       fetchArticles(currentPage);
     }
-  }, [currentPage, searchTerm, filterStatus, filterCategory]);
+  }, [currentPage, debouncedSearchTerm, filterStatus, filterCategory]);
 
   // ===== HELPER FUNCTIONS =====
   const getStatusDisplay = (status: string) => {
@@ -653,7 +666,11 @@ const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
           showCheckboxes={true}
           itemsPerPage={15}
           onAddArticle={handleAddArticle}
-          onDeleteSelected={handleBulkDeleteArticles}      
+          onDeleteSelected={handleBulkDeleteArticles}  
+          
+          onSearchChange={(term) => setSearchTerm(term)}
+          searchTerm={searchTerm}
+
           onDuplicateSelected={handleBulkDuplicateArticles}
 
           serverSidePagination={true}
