@@ -1,5 +1,5 @@
 // Table.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import AddUserModal, { UserFormData } from './AddUserModal';
 import FilterPopup, { ColumnFilterState } from './FilterPopup';
 
@@ -25,6 +25,7 @@ export interface TableProps {
   onAddUser?: (userData: UserFormData) => void;
 
   onAddArticle?: () => void;
+  onAddCategory?: () => void; 
 
   serverSidePagination?: boolean;
   paginationData?: PaginationData;
@@ -47,6 +48,8 @@ const Table: React.FC<TableProps> = ({
   className = '',
   onAddUser,
   onAddArticle,
+  onAddCategory,
+
   serverSidePagination = false,
   paginationData,
   onPageChange
@@ -56,7 +59,9 @@ const Table: React.FC<TableProps> = ({
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredData, setFilteredData] = useState<TableData[]>(data);
+
   // Filter popup state
   const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
   const [filterPopupPosition, setFilterPopupPosition] = useState({ top: 0, left: 0 });
@@ -78,23 +83,28 @@ const Table: React.FC<TableProps> = ({
     return columnState?.visible ?? true;
   });
 
+
+
+  // Vypočti peg s aktualizaciou vyhladavania
+  const dataToUse = serverSidePagination ? data : filteredData;
+
   // Počítanie stránok
   const totalPages = serverSidePagination && paginationData 
-    ? paginationData.totalPages 
-    : Math.ceil(data.length / itemsPerPage);
+  ? paginationData.totalPages 
+  : Math.ceil(dataToUse.length / itemsPerPage);
 
   const currentPageNumber = serverSidePagination && paginationData 
     ? paginationData.currentPage 
     : currentPage;
 
-  const currentData = serverSidePagination ? data : data.slice(
+  const currentData = serverSidePagination ? data : dataToUse.slice(
     (currentPage - 1) * itemsPerPage, 
     currentPage * itemsPerPage
   );
 
   const totalItems = serverSidePagination && paginationData 
     ? paginationData.totalItems 
-    : data.length;
+    : dataToUse.length;
 
   const startIndex = serverSidePagination && paginationData 
     ? (paginationData.currentPage - 1) * itemsPerPage
@@ -135,6 +145,43 @@ const Table: React.FC<TableProps> = ({
     }
   };
 
+  // Funckia na filtrovanie dat - vyhladavanie
+  const filterData = (data: TableData[], searchTerm: string): TableData[] => {
+    if (!searchTerm.trim()) {
+      return data;
+    }
+
+    const lowercaseSearch = searchTerm.toLowerCase();
+    
+    return data.filter(row => {
+      // Prehľadáva všetky stĺpce (nie len viditeľné)
+      return columns.some(column => {
+        const value = row[column.id];
+        
+        if (value === null || value === undefined) return false;
+        
+        // Pre user stĺpce hľadaj v mene
+        if (column.type === 'user' && value.name) {
+          return value.name.toLowerCase().includes(lowercaseSearch);
+        }
+        
+        // Pre ostatné stĺpce konvertuj na string a hľadaj
+        return String(value).toLowerCase().includes(lowercaseSearch);
+      });
+    });
+  };
+
+ //useEffect na sledovanie zmien vyhľadávania:
+  useEffect(() => {
+    const filtered = filterData(data, searchTerm);
+    setFilteredData(filtered);
+    
+    // Reset na prvú stránku pri novom vyhľadávaní
+    if (searchTerm && !serverSidePagination) {
+      setCurrentPage(1);
+    }
+  }, [data, searchTerm]);
+
   // Handle add user
   const handleAddUser = (userData: UserFormData) => {
     if (onAddUser) {
@@ -153,6 +200,7 @@ const Table: React.FC<TableProps> = ({
   // Detekcia typu modalu
   const detectModalType = () => {
     if (onAddUser) return 'user';
+    if (onAddCategory) return 'category';
     return null; // fallback
   };
 
@@ -187,6 +235,17 @@ const Table: React.FC<TableProps> = ({
   // Renderovanie bunky podľa typu stĺpca
   const renderCell = (column: TableColumn, row: TableData) => {
     const value = row[column.id];
+
+
+    // Špeciálne renderovanie pre názov kategórie
+    if (column.id === 'nazov' && row.farba && row.ikona) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '16px' }}>{row.ikona}</span>
+          <strong style={{ color: row.farba }}>{value}</strong>
+        </div>
+      );
+    }
 
      if (column.id === 'nazov') {
         return <span className="table-cell-title-nazov">{value}</span>;
@@ -280,11 +339,15 @@ const Table: React.FC<TableProps> = ({
                   if (onAddUser) {
                     setIsAddModalOpen(true);
                   }
+                  else if (onAddCategory){
+                    onAddCategory();
+                  }
               // Ak existuje onAddArticle, zavolaj navigáciu
                   else if (onAddArticle) {
                     onAddArticle();
                   }
                  }}>
+
             <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <line x1="50" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="10"/>
               <line x1="20" y1="50" x2="80" y2="50" stroke="currentColor" strokeWidth="10"/>
@@ -308,6 +371,25 @@ const Table: React.FC<TableProps> = ({
             </svg>
           </button>
           
+          {/* Info o vyhľadávaní */}
+          {searchTerm && (
+            <>
+              <div className="filter-divider"></div>
+              <span className="search-results-info">
+                {filteredData.length} výsledkov pre "{searchTerm}"
+              </span>
+              <button 
+                className="filter-action-item" 
+                title="Vymazať vyhľadávanie"
+                onClick={() => setSearchTerm('')}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </>
+          )}
+
           {/* Akčné možnosti - zobrazujú sa len keď sú vybrané riadky */}
           {selectedRows.length > 0 && (
             <>
@@ -357,9 +439,23 @@ const Table: React.FC<TableProps> = ({
             </svg>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Hľadať..."
               className="table-search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {/* Tlačidlo na vymazanie vyhľadávania */}
+            {searchTerm && (
+              <button
+                className="search-clear-button"
+                onClick={() => setSearchTerm('')}
+                title="Vymazať vyhľadávanie"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -391,28 +487,48 @@ const Table: React.FC<TableProps> = ({
             </tr>
           </thead>
           <tbody className="table-body">
-            {currentData.map((row) => (
-              <tr 
-                key={row.id} 
-                className={`table-row ${selectedRows.includes(row.id) ? 'selected' : ''}`}
-              >
-                {showCheckboxes && (
-                  <td className="table-cell checkbox-cell">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
-                      className="table-checkbox"
-                    />
-                  </td>
-                )}
-                {visibleColumns.map((column) => (
-                  <td key={column.id} className="table-cell">
-                    {renderCell(column, row)}
-                  </td>
-                ))}
+            {currentData.length === 0 ? (
+              <tr>
+                <td colSpan={visibleColumns.length + (showCheckboxes ? 1 : 0)} className="no-search-results">
+                  {searchTerm ? (
+                    <div>
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <div>Žiadne výsledky pre "{searchTerm}"</div>
+                      <button onClick={() => setSearchTerm('')} style={{ marginTop: '8px', color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                        Vymazať filter
+                      </button>
+                    </div>
+                  ) : (
+                    <div>Žiadne dáta na zobrazenie</div>
+                  )}
+                </td>
               </tr>
-            ))}
+            ) : (
+              currentData.map((row) => (
+                <tr 
+                  key={row.id} 
+                  className={`table-row ${selectedRows.includes(row.id) ? 'selected' : ''}`}
+                >
+                  {showCheckboxes && (
+                    <td className="table-cell checkbox-cell">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                        className="table-checkbox"
+                      />
+                    </td>
+                  )}
+                  {visibleColumns.map((column) => (
+                    <td key={column.id} className="table-cell">
+                      {renderCell(column, row)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

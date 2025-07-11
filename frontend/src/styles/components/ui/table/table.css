@@ -874,3 +874,145 @@
   }
   
 }
+
+
+
+
+
+
+
+
+
+/* ===== CATEGORY SPECIFIC STYLES ===== */
+
+/* Kategória názov s ikonou */
+.table-cell-category-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-cell-category-icon {
+  font-size: 16px;
+}
+
+.table-cell-category-title {
+  font-weight: 600;
+}
+
+/* Slug rendering */
+.table-cell-slug {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--color-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="dark"] .table-cell-slug,
+[data-theme="dark-bright"] .table-cell-slug {
+  background: var(--white-5);
+  border-color: var(--white-10);
+}
+
+/* Status styling pre kategórie */
+.table-cell-status.status-aktívna .status-dot {
+  background: var(--color-success);
+}
+
+.table-cell-status.status-aktívna .status-text {
+  color: var(--color-success);
+}
+
+.table-cell-status.status-neaktívna .status-dot {
+  background: var(--color-text-muted);
+}
+
+.table-cell-status.status-neaktívna .status-text {
+  color: var(--color-text-muted);
+}
+
+/* Poradie stĺpec */
+.table-cell-order {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* Počet článkov */
+.table-cell-article-count {
+  font-weight: 500;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+/* Hover effects pre kategórie */
+.table-row:hover .table-cell-category-name .table-cell-category-title {
+  color: var(--color-primary);
+  transition: color var(--transition-fast);
+}
+
+/* Responsive pre kategórie */
+@media (max-width: 768px) {
+  .table-cell-category-name {
+    gap: 6px;
+  }
+  
+  .table-cell-category-icon {
+    font-size: 14px;
+  }
+  
+  .table-cell-slug {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}
+
+
+/* No results message */
+.no-search-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+}
+
+.no-search-results svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Search clear button */
+.search-clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.search-clear-button:hover {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* Search input adjustments */
+.table-search-input {
+  padding-right: 32px; /* Priestor pre clear button */
+}
+
+/* Search results info */
+.search-results-info {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-left: 8px;
+}
