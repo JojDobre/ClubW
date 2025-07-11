@@ -12,6 +12,8 @@ import {
   deleteCategory,
   toggleCategoryStatus,
   reorderCategories,
+  bulkDeleteCategories,    
+  bulkDuplicateCategories,
   validateCategory,
 } from '../controllers/categoryController';
 import { authenticateToken, requireAdmin, requireEditor } from '../middleware/auth';
@@ -51,3 +53,9 @@ adminCategoryRouter.patch('/:id/toggle-status', authenticateToken, requireAdmin,
 
 // PATCH /api/admin/categories/reorder - Zmena poradia (len admin)
 adminCategoryRouter.patch('/reorder', authenticateToken, requireAdmin, reorderCategories);
+
+// POST /api/admin/categories/bulk-delete - Bulk vymazanie kategórií (len admin)
+adminCategoryRouter.post('/bulk-delete', authenticateToken, requireAdmin, bulkDeleteCategories);
+
+// POST /api/admin/categories/bulk-duplicate - Bulk duplikovanie kategórií (len admin)
+adminCategoryRouter.post('/bulk-duplicate', authenticateToken, requireAdmin, bulkDuplicateCategories);

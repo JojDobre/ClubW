@@ -9,6 +9,8 @@ import {
   updateUser,
   deleteUser,
   toggleUserStatus,
+  bulkDeleteUsers,        
+  bulkDuplicateUsers,
   validateCreateUser,
   validateUpdateUser,
 } from '../controllers/userController';
@@ -36,5 +38,11 @@ router.delete('/:id', requireAdmin, deleteUser);
 
 // PATCH /api/users/:id/toggle-status - Prepnutie aktivity (len admin)
 router.patch('/:id/toggle-status', requireAdmin, toggleUserStatus);
+
+// POST /api/users/bulk-delete - Bulk vymazanie používateľov (len admin)
+router.post('/bulk-delete', requireAdmin, bulkDeleteUsers);
+
+// POST /api/users/bulk-duplicate - Bulk duplikovanie používateľov (len admin)
+router.post('/bulk-duplicate', requireAdmin, bulkDuplicateUsers);
 
 export default router;

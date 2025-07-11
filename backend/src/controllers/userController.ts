@@ -351,3 +351,136 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     });
   }
 };
+
+
+// POST /api/users/bulk-delete - Bulk vymazanie používateľov
+export const bulkDeleteUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID používateľov - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Kontrola, že sa používateľ nepokúša vymazať sám seba
+    if (req.userId && ids.includes(req.userId.toString())) {
+      res.status(400).json({
+        success: false,
+        message: 'Nemôžete vymazať svoj vlastný účet',
+      });
+      return;
+    }
+
+    // Nájdenie používateľov, ktorí existujú
+    const users = await User.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      },
+      attributes: ['id', 'meno', 'email']
+    });
+
+    if (users.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadni používatelia neboli nájdení',
+      });
+      return;
+    }
+
+    // Vymazanie používateľov
+    const deletedCount = await User.destroy({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Úspešne vymazaných ${deletedCount} používateľov`,
+      data: {
+        deletedCount,
+        deletedUsers: users.map(u => ({ id: u.id, meno: u.meno, email: u.email }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk delete používateľov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri mazaní používateľov',
+    });
+  }
+};
+
+// POST /api/users/bulk-duplicate - Bulk duplikovanie používateľov
+export const bulkDuplicateUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID používateľov - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Nájdenie pôvodných používateľov
+    const originalUsers = await User.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    if (originalUsers.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadni používatelia neboli nájdení',
+      });
+      return;
+    }
+
+    // Vytvorenie duplikátov
+    const duplicatedUsers = [];
+    const timestamp = Date.now();
+    
+    for (const user of originalUsers) {
+      const duplicate = await User.create({
+        meno: `${user.meno} (kópia)`,
+        email: `copy_${timestamp}_${user.email}`,
+        heslo: user.heslo, // Zachová hash hesla
+        rola: user.rola,
+        tim_id: user.tim_id,
+        aktivity: false, // Duplikáty sú defaultne neaktívne
+      });
+      
+      duplicatedUsers.push(duplicate.toSafeJSON());
+    }
+
+    res.json({
+      success: true,
+      message: `Úspešne duplikovaných ${duplicatedUsers.length} používateľov`,
+      data: {
+        duplicatedCount: duplicatedUsers.length,
+        duplicatedUsers
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk duplicate používateľov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri duplikovaní používateľov',
+    });
+  }
+};

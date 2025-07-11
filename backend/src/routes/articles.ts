@@ -14,6 +14,8 @@ import {
   createArticle,
   updateArticle,
   deleteArticle,
+  bulkDeleteArticles,    
+  bulkDuplicateArticles,
   validateArticle,
   uploadArticleImage, 
 } from '../controllers/articleController';
@@ -84,3 +86,10 @@ adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticle
 adminArticleRouter.delete('/:id', authenticateToken, requireEditor, deleteArticle);
 
 adminArticleRouter.post('/upload-image', authenticateToken, requireEditor, upload.single('image'), uploadArticleImage);
+
+
+// POST /api/admin/articles/bulk-delete - Bulk vymazanie článkov
+adminArticleRouter.post('/bulk-delete', authenticateToken, requireEditor, bulkDeleteArticles);
+
+// POST /api/admin/articles/bulk-duplicate - Bulk duplikovanie článkov
+adminArticleRouter.post('/bulk-duplicate', authenticateToken, requireEditor, bulkDuplicateArticles);

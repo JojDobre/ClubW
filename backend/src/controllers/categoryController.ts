@@ -418,3 +418,157 @@ export const reorderCategories = async (req: Request, res: Response): Promise<vo
     });
   }
 };
+
+
+
+// POST /api/admin/categories/bulk-delete - Bulk vymazanie kategórií
+export const bulkDeleteCategories = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID kategórií - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Nájdenie kategórií a kontrola článkov
+    const categories = await Category.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    if (categories.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadne kategórie neboli nájdené',
+      });
+      return;
+    }
+
+    // Kontrola, či kategórie nemajú články
+    const categoriesWithArticles = [];
+    for (const category of categories) {
+      const articlesCount = await Article.count({
+        where: { kategoria_id: category.id }
+      });
+      
+      if (articlesCount > 0) {
+        categoriesWithArticles.push({
+          id: category.id,
+          nazov: category.nazov,
+          pocetClankov: articlesCount
+        });
+      }
+    }
+
+    if (categoriesWithArticles.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Niektoré kategórie obsahujú články a nemožno ich vymazať',
+        data: {
+          categoriesWithArticles
+        }
+      });
+      return;
+    }
+
+    // Vymazanie kategórií
+    const deletedCount = await Category.destroy({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Úspešne vymazaných ${deletedCount} kategórií`,
+      data: {
+        deletedCount,
+        deletedCategories: categories.map(c => ({ id: c.id, nazov: c.nazov }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk delete kategórií:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri mazaní kategórií',
+    });
+  }
+};
+
+// POST /api/admin/categories/bulk-duplicate - Bulk duplikovanie kategórií
+export const bulkDuplicateCategories = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID kategórií - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Nájdenie pôvodných kategórií
+    const originalCategories = await Category.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    if (originalCategories.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadne kategórie neboli nájdené',
+      });
+      return;
+    }
+
+    // Vytvorenie duplikátov
+    const duplicatedCategories = [];
+    
+    for (const category of originalCategories) {
+      const duplicateName = `${category.nazov} (kópia)`;
+      const duplicateSlug = Category.generateSlug(duplicateName);
+      
+      const duplicate = await Category.create({
+        nazov: duplicateName,
+        slug: duplicateSlug,
+        popis: category.popis,
+        farba: category.farba,
+        ikona: category.ikona,
+        poradie: category.poradie + 1000, // Posun poradie
+        aktivity: false, // Duplikáty sú defaultne neaktívne
+      });
+      
+      duplicatedCategories.push(duplicate.toSafeJSON());
+    }
+
+    res.json({
+      success: true,
+      message: `Úspešne duplikovaných ${duplicatedCategories.length} kategórií`,
+      data: {
+        duplicatedCount: duplicatedCategories.length,
+        duplicatedCategories
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk duplicate kategórií:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri duplikovaní kategórií',
+    });
+  }
+};

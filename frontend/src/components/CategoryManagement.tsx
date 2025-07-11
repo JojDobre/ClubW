@@ -164,6 +164,79 @@ const CategoryManagement: React.FC = () => {
     }
   };
 
+
+  // Funkcia na bulk vymazanie kategórií
+    const handleBulkDeleteCategories = async (selectedIds: string[]) => {
+      try {
+        const token = localStorage.getItem('clubw_token');
+        
+        const response = await fetch('http://localhost:3000/api/admin/categories/bulk-delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: selectedIds }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Chyba pri mazaní kategórií');
+        }
+
+        // Aktualizácia lokálnych dát
+        setCategories(prevCategories => 
+          prevCategories.filter(category => !selectedIds.includes(category.id.toString()))
+        );
+
+        // Aktualizácia štatistík
+        await fetchStats();
+
+        console.log(`✅ ${data.message}`);
+        return data;
+        
+      } catch (error) {
+        console.error('❌ Chyba pri bulk delete kategórií:', error);
+        throw error;
+      }
+    };
+
+    // Funkcia na bulk duplikovanie kategórií
+    const handleBulkDuplicateCategories = async (selectedIds: string[]) => {
+      try {
+        const token = localStorage.getItem('clubw_token');
+        
+        const response = await fetch('http://localhost:3000/api/admin/categories/bulk-duplicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: selectedIds }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Chyba pri duplikovaní kategórií');
+        }
+
+        // Aktualizácia lokálnych dát
+        setCategories(prevCategories => [...prevCategories, ...data.data.duplicatedCategories]);
+
+        // Aktualizácia štatistík
+        await fetchStats();
+
+        console.log(`✅ ${data.message}`);
+        return data;
+        
+      } catch (error) {
+        console.error('❌ Chyba pri bulk duplicate kategórií:', error);
+        throw error;
+      }
+    };
+
   // ===== EVENT HANDLERS =====
 
   // Handler pre pridanie novej kategórie
@@ -321,6 +394,8 @@ const CategoryManagement: React.FC = () => {
           showCheckboxes={true}
           itemsPerPage={10}
           onAddCategory={handleAddCategory} 
+          onDeleteSelected={handleBulkDeleteCategories}    
+          onDuplicateSelected={handleBulkDuplicateCategories}
         />
       </div>
 

@@ -676,3 +676,170 @@ export const uploadArticleImage = async (req: Request, res: Response): Promise<v
     });
   }
 };
+
+
+// POST /api/admin/articles/bulk-delete - Bulk vymazanie článkov
+export const bulkDeleteArticles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID článkov - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Nájdenie článkov
+    const articles = await Article.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      },
+      attributes: ['id', 'nazov', 'autor_id']
+    });
+
+    if (articles.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadne články neboli nájdené',
+      });
+      return;
+    }
+
+    // Kontrola oprávnení - len admin alebo autor môže mazať
+    if (req.user?.rola !== 'admin') {
+      const unauthorizedArticles = articles.filter(article => 
+        article.autor_id !== req.userId
+      );
+      
+      if (unauthorizedArticles.length > 0) {
+        res.status(403).json({
+          success: false,
+          message: 'Nemáte oprávnenie vymazať niektoré články',
+          data: {
+            unauthorizedArticles: unauthorizedArticles.map(a => ({ id: a.id, nazov: a.nazov }))
+          }
+        });
+        return;
+      }
+    }
+
+    // Vymazanie článkov
+    const deletedCount = await Article.destroy({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Úspešne vymazaných ${deletedCount} článkov`,
+      data: {
+        deletedCount,
+        deletedArticles: articles.map(a => ({ id: a.id, nazov: a.nazov }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk delete článkov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri mazaní článkov',
+    });
+  }
+};
+
+// POST /api/admin/articles/bulk-duplicate - Bulk duplikovanie článkov
+export const bulkDuplicateArticles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné ID článkov - musí byť neprázdne pole',
+      });
+      return;
+    }
+
+    // Nájdenie pôvodných článkov
+    const originalArticles = await Article.findAll({
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      }
+    });
+
+    if (originalArticles.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Žiadne články neboli nájdené',
+      });
+      return;
+    }
+
+    // Kontrola oprávnení - len admin alebo autor môže duplikovať
+    if (req.user?.rola !== 'admin') {
+      const unauthorizedArticles = originalArticles.filter(article => 
+        article.autor_id !== req.userId
+      );
+      
+      if (unauthorizedArticles.length > 0) {
+        res.status(403).json({
+          success: false,
+          message: 'Nemáte oprávnenie duplikovať niektoré články',
+        });
+        return;
+      }
+    }
+
+    // Vytvorenie duplikátov
+    const duplicatedArticles = [];
+    const timestamp = Date.now();
+    
+    for (const article of originalArticles) {
+      const duplicateTitle = `${article.nazov} (kópia)`;
+      const duplicateSlug = Article.generateSlug(`${duplicateTitle}-${timestamp}`);
+      
+      const duplicate = await Article.create({
+        nazov: duplicateTitle,
+        slug: duplicateSlug,
+        obsah: article.obsah,
+        excerpt: article.excerpt,              // Správny názov poľa
+        obrazok: article.obrazok,              // Správny názov poľa
+        autor_id: req.userId!,                 // Duplikát bude mať aktuálneho používateľa ako autora
+        kategoria_id: article.kategoria_id,
+        tags: article.tags,                    // Správny názov poľa
+        status: 'draft',                       // Duplikáty sú defaultne draft
+        featured: false,                       // Duplikáty nie sú featured
+        komentare_povolene: article.komentare_povolene,
+        meta_title: article.meta_title,        // Správny názov poľa
+        meta_description: article.meta_description, // Správny názov poľa
+      });
+      
+      duplicatedArticles.push(duplicate.toAdminJSON());
+    }
+
+    res.json({
+      success: true,
+      message: `Úspešne duplikovaných ${duplicatedArticles.length} článkov`,
+      data: {
+        duplicatedCount: duplicatedArticles.length,
+        duplicatedArticles
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri bulk duplicate článkov:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba servera pri duplikovaní článkov',
+    });
+  }
+};

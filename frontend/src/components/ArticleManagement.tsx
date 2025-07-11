@@ -444,9 +444,9 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     views: article.views.toLocaleString(),
     status: getStatusDisplay(article.status), // Vracia anglické názvy pre CSS
     muzstvo: 'A', // TODO: Pridať pole mužstvo do Article interface a API
-    rubrika: article.kategoria.nazov,
+    rubrika: article.kategoria.nazov || 'Bez kategórie',
     datum: new Date(article.vytvoreny).toLocaleDateString('sk-SK'),
-    autor: article.autor.meno
+    autor: article.autor.meno || 'Neznámy autor' 
   }));
 
   // ===== EVENT HANDLERS =====
@@ -468,6 +468,86 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     console.log('Náhľad článku:', articleId);
     // TODO: Implementovať náhľad článku
   };
+
+  // Funkcia na bulk vymazanie článkov
+const handleBulkDeleteArticles = async (selectedIds: string[]) => {
+  try {
+    const token = localStorage.getItem('clubw_token');
+    
+    const response = await fetch('http://localhost:3000/api/admin/articles/bulk-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Chyba pri mazaní článkov');
+    }
+
+    // Aktualizácia lokálnych dát - odstránenie vymazaných článkov
+    setArticles(prevArticles => 
+      prevArticles.filter(article => !selectedIds.includes(article.id.toString()))
+    );
+
+    // Aktualizácia štatistík
+    await fetchStats();
+
+    // Ak sa vymazali všetky články na aktuálnej stránke, prejdi na predchádzajúcu
+    const remainingArticles = articles.filter(article => !selectedIds.includes(article.id.toString()));
+    if (remainingArticles.length === 0 && currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    } else {
+      // Inak refresh aktuálnu stránku
+      await fetchArticles(currentPage);
+    }
+
+    console.log(`✅ ${data.message}`);
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Chyba pri bulk delete článkov:', error);
+    throw error;
+  }
+};
+
+// Funkcia na bulk duplikovanie článkov
+const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
+  try {
+    const token = localStorage.getItem('clubw_token');
+    
+    const response = await fetch('http://localhost:3000/api/admin/articles/bulk-duplicate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Chyba pri duplikovaní článkov');
+    }
+
+    console.log(`✅ ${data.message}`);
+    
+    // JEDNODUCHÉ RIEŠENIE: Refresh celú stránku
+    await fetchArticles(currentPage);
+    await fetchStats();
+    
+    return data;
+    
+  } catch (error) {
+    console.error('❌ Chyba pri bulk duplicate článkov:', error);
+    throw error;
+  }
+};
 
   // ===== ICONS =====
   const ArticleIcon = () => (
@@ -573,6 +653,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
           showCheckboxes={true}
           itemsPerPage={15}
           onAddArticle={handleAddArticle}
+          onDeleteSelected={handleBulkDeleteArticles}      
+          onDuplicateSelected={handleBulkDuplicateArticles}
 
           serverSidePagination={true}
           paginationData={paginationData}

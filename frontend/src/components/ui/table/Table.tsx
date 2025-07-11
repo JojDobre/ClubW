@@ -30,6 +30,9 @@ export interface TableProps {
   serverSidePagination?: boolean;
   paginationData?: PaginationData;
   onPageChange?: (page: number) => void;
+
+  onDeleteSelected?: (selectedIds: string[]) => void;
+  onDuplicateSelected?: (selectedIds: string[]) => void;
 }
 
 export interface PaginationData {
@@ -52,7 +55,10 @@ const Table: React.FC<TableProps> = ({
 
   serverSidePagination = false,
   paginationData,
-  onPageChange
+  onPageChange,
+
+  onDeleteSelected,
+  onDuplicateSelected,
 }) => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,6 +67,9 @@ const Table: React.FC<TableProps> = ({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState<TableData[]>(data);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Filter popup state
   const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
@@ -143,6 +152,46 @@ const Table: React.FC<TableProps> = ({
       // Pre client-side pagináciu upravíme lokálny state
       setCurrentPage(page);
     }
+  };
+
+  //handle delete
+  const handleDeleteSelected = async () => {
+    if (!onDeleteSelected || selectedRows.length === 0) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDeleteSelected(selectedRows);
+      // Po úspešnom vymazaní vyčistíme výber
+      setSelectedRows([]);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Chyba pri mazaní:', error);
+      // Tu môžete pridať notifikáciu o chybe
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // NOVÁ FUNKCIA - Handle duplicate selected
+  const handleDuplicateSelected = async () => {
+    if (!onDuplicateSelected || selectedRows.length === 0) return;
+    
+    setIsDuplicating(true);
+    try {
+      await onDuplicateSelected(selectedRows);
+      // Po úspešnom duplikovaní vyčistíme výber
+      setSelectedRows([]);
+    } catch (error) {
+      console.error('Chyba pri duplikovaní:', error);
+      // Tu môžete pridať notifikáciu o chybe
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  // NOVÁ FUNKCIA - Confirm delete dialog
+  const confirmDelete = () => {
+    setShowDeleteConfirm(true);
   };
 
   // Funckia na filtrovanie dat - vyhladavanie
@@ -397,13 +446,23 @@ const Table: React.FC<TableProps> = ({
               
               <span className="selected-count">{selectedRows.length} Selected</span>
               
-              <button className="filter-action-item" title="Delete">
+              <button 
+                  className={`filter-action-item ${isDeleting ? 'loading' : ''}`} 
+                  title="Vymazať označené"
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M2 4H14M5.5 4V3C5.5 2.44772 5.94772 2 6.5 2H9.5C10.0523 2 10.5 2.44772 10.5 3V4M6.5 7V12M9.5 7V12M4 4V13C4 13.5523 4.44772 14 5 14H11C11.5523 14 12 13.5523 12 13V4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
               
-              <button className="filter-action-item" title="Duplicate">
+              <button 
+                  className={`filter-action-item ${isDuplicating ? 'loading' : ''}`} 
+                  title="Duplikovať označené"
+                  onClick={handleDuplicateSelected}
+                  disabled={isDuplicating}
+                >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 9H3C2.44772 9 2 8.55228 2 8V3C2 2.44772 2.44772 2 3 2H8C8.55228 2 9 2.44772 9 3V4M8 7H13C13.5523 7 14 7.44772 14 8V13C14 13.5523 13.5523 14 13 14H8C7.44772 14 7 13.5523 7 13V8C7 7.44772 7.44772 7 8 7Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -583,6 +642,35 @@ const Table: React.FC<TableProps> = ({
           onClose={() => setIsAddModalOpen(false)}
           onSave={handleAddUser}
         />
+      )}
+
+      {/* NOVÝ - Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content confirmation-modal">
+            <h3>Potvrdiť vymazanie</h3>
+            <p>
+              Naozaj chcete vymazať {selectedRows.length} označených položiek? 
+              Táto akcia sa nedá vrátiť späť.
+            </p>
+            <div className="modal-actions">
+              <button 
+                className="btn-secondary"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Zrušiť
+              </button>
+              <button 
+                className="btn-danger"
+                onClick={handleDeleteSelected}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Mazanie...' : 'Vymazať'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Filter Popup */}
