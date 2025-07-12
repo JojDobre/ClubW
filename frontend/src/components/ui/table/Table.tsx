@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import AddUserModal, { UserFormData } from './AddUserModal';
 import FilterPopup, { ColumnFilterState } from './FilterPopup';
+import ActionsPopup, { ActionItem } from './ActionsPopup';
+
 
 export interface TableColumn {
   id: string;
@@ -79,7 +81,9 @@ const Table: React.FC<TableProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
+  const [actionsPopupOpen, setActionsPopupOpen] = useState(false);
+  const [actionsPopupPosition, setActionsPopupPosition] = useState({ top: 0, left: 0 });
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   // Rozhodni, ktorý search term používať
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
@@ -137,6 +141,37 @@ const Table: React.FC<TableProps> = ({
     ? Math.min(startIndex + data.length, totalItems)
     : Math.min(startIndex + itemsPerPage, totalItems);
 
+
+    // Handler pre otvorenie actions popup (nahradí existujúcu three-dots funkciu)
+    const handleActionsClick = (event: React.MouseEvent, rowId: string) => {
+      event.stopPropagation();
+      
+      const rect = event.currentTarget.getBoundingClientRect();
+      setActionsPopupPosition({
+        top: rect.bottom + 4,
+        left: rect.left - 180 // Posunie popup trochu doľava
+      });
+      
+      setSelectedRowId(rowId);
+      setActionsPopupOpen(true);
+    };
+
+    // Handlers pre jednotlivé akcie (pridaj tieto funkcie do Table komponenty)
+    const handleEditRow = (rowId: string) => {
+      console.log('Editovanie riadku:', rowId);
+      // Tu bude logika pre editovanie
+    };
+
+    const handleDuplicateRow = (rowId: string) => {
+      console.log('Duplikovanie riadku:', rowId);
+      // Tu bude logika pre duplikovanie
+    };
+
+    const handleDeleteRow = (rowId: string) => {
+      console.log('Mazanie riadku:', rowId);
+      // Tu bude logika pre mazanie
+    };
+
   // Funkcia pre označenie všetkých riadkov
   const handleSelectAll = () => {
     if (selectedRows.length === currentData.length) {
@@ -185,6 +220,44 @@ const Table: React.FC<TableProps> = ({
       setIsDeleting(false);
     }
   };
+
+  //  funkcie pre akcie v action menu
+  const getActionItems = (rowId: string): ActionItem[] => [
+  {
+    id: 'edit',
+    label: 'Upraviť',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M11.334 2.00004C11.7018 1.6322 12.1686 1.42908 12.6537 1.42908C13.1387 1.42908 13.6055 1.6322 13.9733 2.00004C14.3412 2.36787 14.5443 2.83469 14.5443 3.31971C14.5443 3.80473 14.3412 4.27155 13.9733 4.63938L5.00001 13.6127L1.33334 14.6661L2.38668 10.9994L11.334 2.00004Z" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    onClick: () => handleEditRow(rowId)
+  },
+  {
+    id: 'duplicate',
+    label: 'Duplikovať',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M13.333 6H7.33301C6.59662 6 5.99967 6.59695 5.99967 7.33333V13.3333C5.99967 14.0697 6.59662 14.6667 7.33301 14.6667H13.333C14.0694 14.6667 14.6663 14.0697 14.6663 13.3333V7.33333C14.6663 6.59695 14.0694 6 13.333 6Z" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M3.33301 10H2.66634C2.31272 10 1.97358 9.85952 1.72353 9.60948C1.47348 9.35943 1.33301 9.02029 1.33301 8.66667V2.66667C1.33301 2.31305 1.47348 1.97391 1.72353 1.72386C1.97358 1.47381 2.31272 1.33333 2.66634 1.33333H8.66634C9.01996 1.33333 9.3591 1.47381 9.60915 1.72386C9.8592 1.97391 9.99967 2.31305 9.99967 2.66667V3.33333" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    onClick: () => handleDuplicateRow(rowId),
+    separator: true // Pridá oddeľovač za túto akciu
+  },
+  {
+    id: 'delete',
+    label: 'Zmazať',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 4H14" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12.6667 4V13.3333C12.6667 14.0697 12.0697 14.6667 11.3333 14.6667H4.66667C3.93029 14.6667 3.33333 14.0697 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93029 5.93029 1.33333 6.66667 1.33333H9.33333C10.0697 1.33333 10.6667 1.93029 10.6667 2.66667V4" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    onClick: () => handleDeleteRow(rowId),
+    danger: true // Označí ako nebezpečnú akciu
+  }
+];
 
   // NOVÁ FUNKCIA - Handle duplicate selected
   const handleDuplicateSelected = async () => {
@@ -348,7 +421,9 @@ const Table: React.FC<TableProps> = ({
       case 'actions':
         return (
           <div className="table-cell-actions">
-            <button className="table-action-button">
+            <button className="table-action-button"
+              onClick={(e) => handleActionsClick(e, row.id)}
+            >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="2" r="1" fill="currentColor"/>
                 <circle cx="8" cy="8" r="1" fill="currentColor"/>
@@ -712,6 +787,14 @@ const Table: React.FC<TableProps> = ({
         columns={columns}
         columnVisibility={columnVisibility}
         onApplyFilter={handleApplyColumnFilter}
+      />
+
+      {/* Actions Popup */}
+      <ActionsPopup
+        isOpen={actionsPopupOpen}
+        onClose={() => setActionsPopupOpen(false)}
+        position={actionsPopupPosition}
+        actions={selectedRowId ? getActionItems(selectedRowId) : []}
       />
 
     </div>

@@ -6,6 +6,7 @@ import StatCard from './ui/cards/StatCard';
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
 import AddCategoryModal from './ui/table/AddCategoryModal';
+import ActionsPopup, { ActionItem } from './ui/table/ActionsPopup';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
@@ -54,6 +55,13 @@ const CategoryManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  //state pre action popup window
+  const [actionsPopupOpen, setActionsPopupOpen] = useState(false);
+  const [actionsPopupPosition, setActionsPopupPosition] = useState({ top: 0, left: 0 });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Štatistiky
   const [stats, setStats] = useState<CategoryStats>({

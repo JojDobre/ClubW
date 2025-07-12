@@ -38,6 +38,7 @@ import './styles/components/adminMobileSidebar.css';
 import './styles/components/adminMobileRightbar.css';
 import './styles/animations.css';
 import './styles/components/ui/table/table.css';
+import './styles/components/ui/table/actionPopup.css';
 import './styles/components/ui/table/modal.css';
 import './styles/components/ui/table/filterPopup.css';
 import './styles/components/ui/cards/badgeCard.css';
