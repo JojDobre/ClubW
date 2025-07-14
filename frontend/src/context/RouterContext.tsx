@@ -74,8 +74,16 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({
   const [currentRoute, setCurrentRoute] = useState(initialRoute);
   const [routes, setRoutes] = useState<Route[]>([]);
 
-  const navigate = (path: string) => {
-    setCurrentRoute(path);
+  const navigate = (path: string, articleId?: string) => {
+    // Ak ide o edit route a máme articleId, pridaj ho do cesty
+    if (path.includes('/edit') && articleId) {
+      setCurrentRoute(`${path}/${articleId}`);
+    } else {
+      setCurrentRoute(path);
+    }
+    
+    // Update URL in browser
+    window.history.pushState({}, '', path + (articleId ? `/${articleId}` : ''));
   };
 
   const addRoute = (route: Route) => {

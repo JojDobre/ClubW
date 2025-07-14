@@ -799,28 +799,42 @@ export const bulkDuplicateArticles = async (req: Request, res: Response): Promis
       }
     }
 
+    // Helper funkcia pre generovanie unikátneho názvu
+    const generateUniqueName = async (originalName: string): Promise<string> => {
+      let counter = 1;
+      let duplicateName = `${originalName} (kópia)`;
+      
+      // Kontrolujeme, či už existuje
+      while (await Article.findOne({ where: { nazov: duplicateName } })) {
+        counter++;
+        duplicateName = `${originalName} (kópia ${counter})`;
+      }
+      
+      return duplicateName;
+    };
+
     // Vytvorenie duplikátov
     const duplicatedArticles = [];
     const timestamp = Date.now();
     
     for (const article of originalArticles) {
-      const duplicateTitle = `${article.nazov} (kópia)`;
+      const duplicateTitle = await generateUniqueName(article.nazov);
       const duplicateSlug = Article.generateSlug(`${duplicateTitle}-${timestamp}`);
       
       const duplicate = await Article.create({
         nazov: duplicateTitle,
         slug: duplicateSlug,
         obsah: article.obsah,
-        excerpt: article.excerpt,              // Správny názov poľa
-        obrazok: article.obrazok,              // Správny názov poľa
-        autor_id: req.userId!,                 // Duplikát bude mať aktuálneho používateľa ako autora
+        excerpt: article.excerpt,              
+        obrazok: article.obrazok,              
+        autor_id: req.userId!,                 
         kategoria_id: article.kategoria_id,
-        tags: article.tags,                    // Správny názov poľa
-        status: 'draft',                       // Duplikáty sú defaultne draft
-        featured: false,                       // Duplikáty nie sú featured
+        tags: article.tags,                    
+        status: 'draft',                       // OPRAVA: Duplikáty sú vždy draft
+        featured: false,                       // OPRAVA: Duplikáty nie sú featured
         komentare_povolene: article.komentare_povolene,
-        meta_title: article.meta_title,        // Správny názov poľa
-        meta_description: article.meta_description, // Správny názov poľa
+        meta_title: article.meta_title,        
+        meta_description: article.meta_description, 
       });
       
       duplicatedArticles.push(duplicate.toAdminJSON());

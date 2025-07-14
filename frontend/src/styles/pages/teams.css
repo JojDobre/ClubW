@@ -1,0 +1,55 @@
+/* frontend/src/styles/Teams.css */
+/* Štýly pre Teams stránku */
+
+/* Hover efekt pre team kartu */
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+/* Responzívne upravy */
+@media (max-width: 768px) {
+  .teams-container {
+    padding: 16px;
+  }
+  
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .teams-header h1 {
+    font-size: 2rem;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-card {
+    margin: 0 -8px;
+  }
+  
+  .team-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .team-logo {
+    align-self: center;
+  }
+  
+  .team-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}

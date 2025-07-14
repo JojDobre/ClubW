@@ -37,9 +37,11 @@ export interface TableProps {
   onDuplicateSelected?: (selectedIds: string[]) => void;
 
   onSearchChange?: (searchTerm: string) => void;
-  searchTerm?: string; // PRIDAJ TENTO RIADOK
+  searchTerm?: string; 
 
-
+  onDeleteRow?: (rowId: string) => void;        // Pre jednotlivé odstránenie
+  onDuplicateRow?: (rowId: string) => void;     // Pre jednotlivé duplikovanie
+  onEditRow?: (rowId: string) => void;          // Pre editáciu riadku
 }
 
 export interface PaginationData {
@@ -66,6 +68,9 @@ const Table: React.FC<TableProps> = ({
 
   onDeleteSelected,
   onDuplicateSelected,
+  onDeleteRow,       
+  onDuplicateRow,    
+  onEditRow,          
 
   onSearchChange,
   searchTerm: externalSearchTerm,
@@ -158,18 +163,53 @@ const Table: React.FC<TableProps> = ({
 
     // Handlers pre jednotlivé akcie (pridaj tieto funkcie do Table komponenty)
     const handleEditRow = (rowId: string) => {
-      console.log('Editovanie riadku:', rowId);
-      // Tu bude logika pre editovanie
+      if (onEditRow) {
+        onEditRow(rowId);
+      } else {
+        console.log('Editovanie riadku:', rowId);
+        // Fallback: môžete pridať default logiku pre editáciu
+      }
+      setActionsPopupOpen(false); // Zatvorí popup po akcii
     };
 
-    const handleDuplicateRow = (rowId: string) => {
-      console.log('Duplikovanie riadku:', rowId);
-      // Tu bude logika pre duplikovanie
+    const handleDuplicateRow = async (rowId: string) => {
+      if (onDuplicateRow) {
+        // Používame prop callback ak je dostupný
+        onDuplicateRow(rowId);
+      } else if (onDuplicateSelected) {
+        // Fallback: použijeme bulk funkciu pre jeden riadok
+        setIsDuplicating(true);
+        try {
+          await onDuplicateSelected([rowId]);
+        } catch (error) {
+          console.error('Chyba pri duplikovaní riadku:', error);
+        } finally {
+          setIsDuplicating(false);
+        }
+      } else {
+        console.log('Duplikovanie riadku:', rowId);
+      }
+      setActionsPopupOpen(false); // Zatvorí popup po akcii
     };
 
-    const handleDeleteRow = (rowId: string) => {
-      console.log('Mazanie riadku:', rowId);
-      // Tu bude logika pre mazanie
+    const handleDeleteRow = async (rowId: string) => {
+      if (onDeleteRow) {
+        // Používame prop callback ak je dostupný
+        onDeleteRow(rowId);
+      } else if (onDeleteSelected) {
+        // Fallback: použijeme bulk funkciu pre jeden riadok
+        setIsDeleting(true);
+        try {
+          await onDeleteSelected([rowId]);
+        } catch (error) {
+          console.error('Chyba pri mazaní riadku:', error);
+        } finally {
+          setIsDeleting(false);
+        }
+      } else {
+        console.log('Mazanie riadku:', rowId);
+      }
+      setActionsPopupOpen(false); // Zatvorí popup po akcii
     };
 
   // Funkcia pre označenie všetkých riadkov

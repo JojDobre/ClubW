@@ -6,7 +6,6 @@ import Table from './ui/table/Table';
 import { useRouter } from '../context/RouterContext'; // PRIDANÉ
 import type { TableColumn, TableData, PaginationData } from './ui/table/Table';
 
-
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
 
@@ -118,6 +117,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     koncepty: 0,
     zobrazenia_30dni: 0
   });
+  
 
   //SEARCH
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -467,15 +467,34 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     navigate('/article/new');
   };
 
-  const handleEdit = (articleId: number) => {
-    console.log('Úprava článku:', articleId);
-    // TODO: Implementovať úpravu článku
+  const handleEditArticle = (articleId: string) => {
+    console.log('Editovanie článku ID:', articleId);
+    // Navigácia na edit stránku článku
+    navigate(`/articles/edit/${articleId}`);
   };
 
-  const handleDelete = (articleId: number) => {
-    console.log('Mazanie článku:', articleId);
-    // TODO: Implementovať mazanie článku
-  };
+  const handleDeleteArticle = async (articleId: string) => {
+  // Potvrdenie pred vymazaním
+  if (window.confirm('Naozaj chcete vymazať tento článok?')) {
+    try {
+      await handleBulkDeleteArticles([articleId]);
+      console.log('Článok úspešne vymazaný');
+    } catch (error) {
+      console.error('Chyba pri mazaní článku:', error);
+      alert('Chyba pri mazaní článku');
+    }
+  }
+};
+
+const handleDuplicateArticle = async (articleId: string) => {
+  try {
+    await handleBulkDuplicateArticles([articleId]);
+    console.log('Článok úspešne duplikovaný');
+  } catch (error) {
+    console.error('Chyba pri duplikovaní článku:', error);
+    alert('Chyba pri duplikovaní článku');
+  }
+};
 
   const handlePreview = (articleId: number) => {
     console.log('Náhľad článku:', articleId);
@@ -667,6 +686,10 @@ const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
           itemsPerPage={15}
           onAddArticle={handleAddArticle}
           onDeleteSelected={handleBulkDeleteArticles}  
+
+          onEditRow={handleEditArticle}        
+          onDeleteRow={handleDeleteArticle}   
+          onDuplicateRow={handleDuplicateArticle}
           
           onSearchChange={(term) => setSearchTerm(term)}
           searchTerm={searchTerm}

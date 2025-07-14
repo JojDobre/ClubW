@@ -535,11 +535,25 @@ export const bulkDuplicateCategories = async (req: Request, res: Response): Prom
       return;
     }
 
+    // Helper funkcia pre generovanie unikátneho názvu
+    const generateUniqueName = async (originalName: string): Promise<string> => {
+      let counter = 1;
+      let duplicateName = `${originalName} (kópia)`;
+      
+      // Kontrolujeme, či už existuje
+      while (await Category.findOne({ where: { nazov: duplicateName } })) {
+        counter++;
+        duplicateName = `${originalName} (kópia ${counter})`;
+      }
+      
+      return duplicateName;
+    };
+
     // Vytvorenie duplikátov
     const duplicatedCategories = [];
     
     for (const category of originalCategories) {
-      const duplicateName = `${category.nazov} (kópia)`;
+      const duplicateName = await generateUniqueName(category.nazov);
       const duplicateSlug = Category.generateSlug(duplicateName);
       
       const duplicate = await Category.create({
@@ -549,7 +563,7 @@ export const bulkDuplicateCategories = async (req: Request, res: Response): Prom
         farba: category.farba,
         ikona: category.ikona,
         poradie: category.poradie + 1000, // Posun poradie
-        aktivity: false, // Duplikáty sú defaultne neaktívne
+        aktivity: false, // OPRAVA: Duplikáty sú vždy neaktívne
       });
       
       duplicatedCategories.push(duplicate.toSafeJSON());

@@ -7,6 +7,7 @@ import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
 import AddCategoryModal from './ui/table/AddCategoryModal';
 import ActionsPopup, { ActionItem } from './ui/table/ActionsPopup';
+import EditCategoryModal from './ui/table/EditCategoryModal';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
@@ -287,34 +288,119 @@ const CategoryManagement: React.FC = () => {
     }
   };
 
-  // Handler pre vymazanie kategórie
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!window.confirm('Naozaj chcete vymazať túto kategóriu?')) {
-      return;
+  // Handler funkcie pre jednotlivé riadky
+  const handleEditCategory = (categoryId: string) => {
+    const category = categories.find(cat => cat.id.toString() === categoryId);
+    if (category) {
+      setEditingCategory(category);
+      setIsEditModalOpen(true);
     }
+  };
+
+  //handle pre save editacie
+  const handleUpdateCategory = async (categoryData: any) => {
+    if (!editingCategory) return;
 
     try {
       const token = localStorage.getItem('clubw_token');
-      
-      const response = await fetch(`http://localhost:3000/api/admin/categories/${categoryId}`, {
-        method: 'DELETE',
+      const response = await fetch(`http://localhost:3000/api/admin/categories/${editingCategory.id}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
+        body: JSON.stringify(categoryData)
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log('✅ Kategória vymazaná');
-        await fetchCategories();
-        await fetchStats();
+      if (response.ok) {
+        // Obnovíme zoznam kategórií
+        fetchCategories();
+        setIsEditModalOpen(false);
+        setEditingCategory(null);
+        console.log('Kategória úspešne aktualizovaná');
       } else {
-        alert('Chyba pri vymazávaní kategórie: ' + data.message);
+        throw new Error('Chyba pri aktualizácii kategórie');
       }
     } catch (error) {
-      console.error('❌ Chyba pri vymazávaní:', error);
-      alert('Chyba spojenia so serverom');
+      console.error('Chyba pri aktualizácii kategórie:', error);
+    }
+  };
+
+  // Handler pre vymazanie kategórie
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (window.confirm('Naozaj chcete vymazať túto kategóriu?')) {
+      try {
+        const token = localStorage.getItem('clubw_token');
+        const response = await fetch(`http://localhost:3000/api/admin/categories/${categoryId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          // Obnovíme zoznam kategórií
+          fetchCategories();
+          console.log('Kategória úspešne vymazaná');
+        } else {
+          throw new Error('Chyba pri mazaní kategórie');
+        }
+      } catch (error) {
+        console.error('Chyba pri mazaní kategórie:', error);
+      }
+    }
+  };
+
+  const handleDuplicateCategory = async (categoryId: string) => {
+    try {
+      // Najprv získame údaje kategórie
+      const category = categories.find(cat => cat.id.toString() === categoryId);
+      if (!category) {
+        console.error('Kategória nenájdená');
+        return;
+      }
+
+      // Helper funkcia pre generovanie unikátneho názvu
+      const generateUniqueName = (originalName: string): string => {
+        let counter = 1;
+        let duplicateName = `${originalName} (kópia)`;
+        
+        // Kontrolujeme existujúce kategórie v našom lokálnom state
+        while (categories.some(cat => cat.nazov === duplicateName)) {
+          counter++;
+          duplicateName = `${originalName} (kópia ${counter})`;
+        }
+        
+        return duplicateName;
+      };
+
+      const uniqueName = generateUniqueName(category.nazov);
+      
+      const token = localStorage.getItem('clubw_token');
+      const response = await fetch('http://localhost:3000/api/admin/categories', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nazov: uniqueName,
+          popis: category.popis,
+          aktivity: false, // OPRAVA: Duplikáty sú vždy neaktívne
+          poradie: category.poradie + 1000 // Posunieme poradie
+        })
+      });
+
+      if (response.ok) {
+        // Obnovíme zoznam kategórií
+        fetchCategories();
+        console.log('Kategória úspešne duplikovaná');
+      } else {
+        throw new Error('Chyba pri duplikovaní kategórie');
+      }
+    } catch (error) {
+      console.error('Chyba pri duplikovaní kategórie:', error);
     }
   };
 
@@ -404,6 +490,9 @@ const CategoryManagement: React.FC = () => {
           onAddCategory={handleAddCategory} 
           onDeleteSelected={handleBulkDeleteCategories}    
           onDuplicateSelected={handleBulkDuplicateCategories}
+          onEditRow={handleEditCategory}          
+          onDeleteRow={handleDeleteCategory}      
+          onDuplicateRow={handleDuplicateCategory}
         />
       </div>
 
@@ -412,6 +501,16 @@ const CategoryManagement: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSaveCategory}
+      />
+
+      <EditCategoryModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingCategory(null);
+        }}
+        onSave={handleUpdateCategory}
+        category={editingCategory}
       />
     </div>
   );

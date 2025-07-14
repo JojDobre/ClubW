@@ -66,6 +66,7 @@ const KalendarManagement = lazy(() => import('./components/KalendarManagement'))
 const PageManagement = lazy(() => import('./components/PageManagement'));
 const GaleriaManagement = lazy(() => import('./components/GaleriaManagement'));
 const NewArticleManagement = lazy(() => import('./components/NewArticleManagement'));
+const EditArticleManagement = lazy(() => import('./components/EditArticleManagement'));
 
 
 // Pôvodné lazy loading komponenty
@@ -73,6 +74,15 @@ const ResponsiveAdminDashboard = lazy(() => import('./components/AdminDashboard'
 const Login = lazy(() => import('./components/Login'));
 const ArticlesPage = lazy(() => import('./pages/ArticlesPage'));
 const ArticleDetailPage = lazy(() => import('./pages/ArticleDetailPage'));
+
+const Teams = lazy(() => import('./pages/Teams'));
+const TeamDetail = lazy(() => import('./pages/TeamDetail'));
+const PlayerDetail = lazy(() => import('./pages/PlayerDetail'));
+const StaffDetail = lazy(() => import('./pages/StaffDetail'));
+const Leagues = lazy(() => import('./pages/Leagues'));
+const LeagueDetail = lazy(() => import('./pages/LeagueDetail'));
+const Matches = lazy(() => import('./pages/Matches'));
+
 
 interface User {
   id: number;
@@ -112,6 +122,13 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
     setMobileRightbarOpen(false);
   };
 
+  // Helper funkcia pre extrahovanie ID článku z route
+  const extractArticleIdFromRoute = (route: string): string => {
+    const parts = route.split('/');
+    const editIndex = parts.indexOf('edit');
+    return editIndex !== -1 && editIndex + 1 < parts.length ? parts[editIndex + 1] : '';
+  };
+
   // Mapovanie starých ID na nové cesty
   const routeMapping: Record<string, string> = {
     'dashboard': '/dashboard',
@@ -144,6 +161,16 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
       </Suspense>
     );
   }
+  // OPRAVA: Lepšia kontrola pre articles edit routes  
+  else if (currentRoute.startsWith('/articles/edit/')) {
+    const articleId = currentRoute.split('/')[3]; // Extraktuje ID z /articles/edit/123
+    return (
+      <Suspense fallback={<div>Načítavam editátor článkov...</div>}>
+        <EditArticleManagement articleId={articleId} />
+      </Suspense>
+    );
+  }
+
     const oldPageId = getOldPageId(currentRoute);
     switch (oldPageId) {
       case 'dashboard':
@@ -295,6 +322,16 @@ const AppContent: React.FC<{
   const location = useLocation();
   const currentPath = location.pathname;
   const isArticlesPage = currentPath === '/clanky';
+
+  const isTeamsPage = currentPath === '/teams';
+  const isTeamDetailPageNew = currentPath.startsWith('/teams/') && currentPath !== '/teams';
+  const isPlayerDetailPage = currentPath.startsWith('/players/');
+  const isStaffDetailPage = currentPath.startsWith('/staff/');
+  const isLeaguesPage = currentPath === '/leagues';
+  const isLeagueDetailPage = currentPath.startsWith('/leagues/') && currentPath !== '/leagues';
+  const isMatchesPage = currentPath === '/matches';
+
+
   const isArticleDetailPage = currentPath.startsWith('/clanek/');
   const isAdminPath = currentPath.startsWith('/admin');
   const isHomePage = currentPath === '/';
@@ -366,6 +403,185 @@ const AppContent: React.FC<{
       </PublicLayout>
     );
   }
+
+  // Players Detail
+if (isPlayerDetailPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam hráča...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <PlayerDetail />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+// Staff Detail  
+if (isStaffDetailPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam člena realizačného tímu...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <StaffDetail />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+// Leagues
+if (isLeaguesPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam ligy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <Leagues />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isLeagueDetailPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam tabuľku ligy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <LeagueDetail />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isMatchesPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam zápasy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <Matches />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
 
   // Ak je stránka /clanky, zobraz len ArticlesPage
   if (isArticlesPage) {
@@ -451,6 +667,82 @@ const AppContent: React.FC<{
     );
   }
 
+  if (isTeamsPage) {
+    return (
+      <Suspense
+        fallback={
+          <PublicLayout>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '400px',
+              background: '#f8fafc'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid #e2e8f0',
+                  borderTop: '3px solid #3b82f6',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 15px'
+                }}></div>
+                <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam tim...</p>
+              </div>
+            </div>
+          </PublicLayout>
+        }
+      >
+        <PublicLayout>
+          <Teams />
+        </PublicLayout>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </Suspense>
+    );
+  }
+
+  if (isTeamDetailPageNew) {
+    return (
+      <Suspense
+        fallback={
+          <PublicLayout>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '400px',
+              background: '#f8fafc'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid #e2e8f0',
+                  borderTop: '3px solid #3b82f6',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 15px'
+                }}></div>
+                <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam detail tímu...</p>
+              </div>
+            </div>
+          </PublicLayout>
+        }
+      >
+        <PublicLayout>
+          <TeamDetail />
+        </PublicLayout>
+      </Suspense>
+    );
+  }
+
   // ✅ UPRAVENÉ: Pre admin cesty - NOVÝ LAYOUT namiesto starého AdminDashboard
   if (isAdminPath) {
     if (!user) {
@@ -521,7 +813,8 @@ const AppContent: React.FC<{
               <FavoritesProvider>
                 <NewAdminDashboard 
                   user={user} 
-                  onLogout={onLogout} 
+                  onLogout={onLogout}
+                   
                 />
               </FavoritesProvider>
             </LayoutProvider>
