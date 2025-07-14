@@ -82,6 +82,11 @@ const StaffDetail = lazy(() => import('./pages/StaffDetail'));
 const Leagues = lazy(() => import('./pages/Leagues'));
 const LeagueDetail = lazy(() => import('./pages/LeagueDetail'));
 const Matches = lazy(() => import('./pages/Matches'));
+const MatchDetail = lazy(() => import('./pages/MatchDetail'));
+const Calendar = lazy(() => import('./pages/CalendarPage')); //nefunguje uplne
+const Galleries = lazy(() => import('./pages/Galleries'));
+const GalleryDetail = lazy(() => import('./pages/GalleryDetail'));
+const Stats = lazy(() => import('./pages/Stats'));
 
 
 interface User {
@@ -330,6 +335,11 @@ const AppContent: React.FC<{
   const isLeaguesPage = currentPath === '/leagues';
   const isLeagueDetailPage = currentPath.startsWith('/leagues/') && currentPath !== '/leagues';
   const isMatchesPage = currentPath === '/matches';
+  const isMatchDetailPage = currentPath.startsWith('/matches/') && currentPath !== '/matches';
+  const isCalendarPage = currentPath === '/calendar'; //nefunguje uplne
+  const isGalleriesPage = currentPath === '/galleries'; 
+  const isGalleryDetailPage = currentPath.startsWith('/galleries/') && currentPath !== '/galleries';
+  const isStatsPage = currentPath === '/stats';
 
 
   const isArticleDetailPage = currentPath.startsWith('/clanek/');
@@ -582,6 +592,181 @@ if (isMatchesPage) {
   );
 }
 
+if (isMatchDetailPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam zápas...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <MatchDetail />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isCalendarPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam kalendar</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <Calendar />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+
+if (isGalleriesPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam zápasy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <Galleries />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isGalleryDetailPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam zápasy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <GalleryDetail />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isStatsPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam zápasy...</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <Stats />
+      </PublicLayout>
+    </Suspense>
+  );
+}
 
   // Ak je stránka /clanky, zobraz len ArticlesPage
   if (isArticlesPage) {
