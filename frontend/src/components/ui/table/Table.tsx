@@ -27,7 +27,8 @@ export interface TableProps {
   onAddUser?: (userData: UserFormData) => void;
 
   onAddArticle?: () => void;
-  onAddCategory?: () => void; 
+  onAddCategory?: () => void;
+  onAddPage?: () => void; 
 
   serverSidePagination?: boolean;
   paginationData?: PaginationData;
@@ -61,6 +62,7 @@ const Table: React.FC<TableProps> = ({
   onAddUser,
   onAddArticle,
   onAddCategory,
+  onAddPage,
 
   serverSidePagination = false,
   paginationData,
@@ -378,6 +380,12 @@ const Table: React.FC<TableProps> = ({
     }
   };
 
+  const handleAddPage = () => {
+    if (onAddPage) {
+      onAddPage();
+    }
+  };
+
   // Detekcia typu modalu
   const detectModalType = () => {
     if (onAddUser) return 'user';
@@ -524,6 +532,9 @@ const Table: React.FC<TableProps> = ({
                   }
                   else if (onAddCategory){
                     onAddCategory();
+                  }
+                  else if (onAddPage) {
+                    onAddPage();
                   }
               // Ak existuje onAddArticle, zavolaj navigáciu
                   else if (onAddArticle) {

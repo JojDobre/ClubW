@@ -67,6 +67,8 @@ const PageManagement = lazy(() => import('./components/PageManagement'));
 const GaleriaManagement = lazy(() => import('./components/GaleriaManagement'));
 const NewArticleManagement = lazy(() => import('./components/NewArticleManagement'));
 const EditArticleManagement = lazy(() => import('./components/EditArticleManagement'));
+const NewPageManagement = lazy(() => import('./components/NewPageManagement'));
+
 
 
 // Pôvodné lazy loading komponenty
@@ -175,6 +177,25 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
       </Suspense>
     );
   }
+
+  // Routing pre addnewpage a editpage
+  else if (currentRoute === '/pages/new') {
+      return (
+        <Suspense fallback={<div style={{ padding: '32px', textAlign: 'center' }}>Načítavam...</div>}>
+          <NewPageManagement />
+        </Suspense>
+      );
+    }
+    
+    // PRIDANÉ - Editácia stránok
+    else if (currentRoute.startsWith('/pages/edit/')) {
+      const pageId = currentRoute.split('/')[3]; // Extraktuje ID z /pages/edit/123
+      return (
+        <Suspense fallback={<div>Načítavam editátor stránok...</div>}>
+          <NewPageManagement pageId={pageId} />
+        </Suspense>
+      );
+    }
 
     const oldPageId = getOldPageId(currentRoute);
     switch (oldPageId) {

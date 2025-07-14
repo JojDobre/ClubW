@@ -419,12 +419,14 @@
 
 /* Status variants - podľa Figma farieb */
 .table-cell-status.status-complete .status-dot, 
-.table-cell-status.status-publikované .status-dot {
+.table-cell-status.status-publikované .status-dot,
+.table-cell-status.status-áno .status-dot {
   background: #10B981; /* Zelená */
 }
 
 .table-cell-status.status-complete .status-text,
-.table-cell-status.status-publikované .status-text {
+.table-cell-status.status-publikované .status-text,
+.table-cell-status.status-áno .status-text {
   color: #10B981;
 }
 
@@ -434,7 +436,7 @@
 }
 
 .table-cell-status.status-pending .status-text,
-.table-cell-status.status-koncept .status-text{
+.table-cell-status.status-koncept .status-text {
   color: #F59E0B;
 }
 
@@ -447,12 +449,14 @@
 }
 
 .table-cell-status.status-rejected .status-dot,
-.table-cell-status.status-archivované .status-dot {
+.table-cell-status.status-archivované .status-dot,
+.table-cell-status.status-nie .status-dot {
   background: #EF4444; /* Červená */
 }
 
 .table-cell-status.status-rejected .status-text,
-.table-cell-status.status-archivované .status-text {
+.table-cell-status.status-archivované .status-text,
+.table-cell-status.status-nie .status-text {
   color: #EF4444;
 }
 
