@@ -15,7 +15,6 @@
 /* Špeciálne elementy s rýchlejšími transitions */
 button, 
 .navbar-icon-button,
-.sidebar-menu-item,
 .rightbar-notification-item,
 .rightbar-activity-item,
 .rightbar-contact-item {
@@ -308,9 +307,7 @@ button:focus-visible,
 }
 
 /* Hover states */
-.sidebar-menu-item:hover {
-  transform: translateX(2px);
-}
+
 
 .rightbar-notification-item:hover,
 .rightbar-activity-item:hover,
@@ -345,3 +342,5 @@ button:focus-visible,
     transition-duration: 0.2s;
   }
 }
+
+

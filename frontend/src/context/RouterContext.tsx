@@ -34,7 +34,7 @@ export const useRouter = () => {
 const PAGE_NAMES: Record<string, string> = {
   '/articles': 'Články',
   '/article': 'Články',
-  '/categories': 'Rubriky',
+  '/article/categories': 'Rubriky',
   '/pages': 'Stránky',
   '/galleries': 'FotoGaléria',
   '/users': 'Používatelia',

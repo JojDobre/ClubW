@@ -11,6 +11,8 @@ export interface SidebarMenuItemProps {
   expandIcon?: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  onArrowClick?: () => void; // Nový prop pre klik na šípku
+
 }
 
 const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({ 
@@ -23,7 +25,8 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
   isSimpleItem = false,
   expandIcon,
   className = '',
-  onClick 
+  onClick, 
+  onArrowClick
 }) => {
   return (
     <div 
@@ -47,19 +50,7 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
         
         {/* Dashboard/Pages items */}
         {!isSimpleItem && !isSubmenu && (
-          <>
-            {/* Arrow - zobrazuje sa len ak existuje */}
-            {arrow && (
-              <div className="sidebar-menu-item-arrow">
-                {arrow}
-              </div>
-            )}
-            
-            {/* Spacer - len ak nie je arrow */}
-            {!arrow && (
-              <div className="sidebar-menu-item-spacer"></div>
-            )}
-            
+          <>         
             {/* Hlavná ikona */}
             {icon && (
               <div className="sidebar-menu-item-icon-set">
@@ -71,6 +62,20 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
             <div className="sidebar-menu-item-text-container">
               <span className="sidebar-menu-item-text">{text}</span>
             </div>
+
+            {/* Arrow - zobrazuje sa len ak existuje */}
+            {arrow && (
+              <button 
+                className="sidebar-menu-item-arrow-button"
+                onClick={(e) => {
+                  e.stopPropagation(); // Zabráni spusteniu onClick hlavného item-u
+                  onArrowClick?.(); // Zavolá callback pre arrow click
+                }}
+              >
+                {arrow}
+              </button>
+            )}
+            
           </>
         )}
         

@@ -223,25 +223,52 @@
   flex-wrap: wrap;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: 
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  justify-content: space-between;
 }
 
-.sidebar-menu-item.active {
+/* Jemný hover efekt */
+.sidebar-menu-item:hover {
   background: var(--black-5);
+}
+
+[data-theme="dark-bright"] .sidebar-menu-item:hover,
+[data-theme="dark"] .sidebar-menu-item:hover  {
+  background: var(--white-10);
+}
+
+.sidebar-menu-item:active {
+  transform: scale(0.98);
+  transition: transform 100ms ease-out;
 }
 
 /* Active indicator (čierna čiarka) - na úplnom začiatku */
 .sidebar-menu-item.active::before {
   content: '';
   position: absolute;
-  left: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
   height: 16px;
   background: var(--black-100);
   border-radius: 0 2px 2px 0;
+  animation: activeLineUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: bottom;
+}
+
+/* Keyframes pre čiarku zdola nahor */
+@keyframes activeLineUp {
+  0% {
+    transform: translateY(-50%) scaleY(0);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: translateY(-50%) scaleY(1);
+    transform-origin: bottom;
+  }
 }
 
 /* Simple items (Overview, Projects) - SPRÁVNE zarovnanie na úroveň s Favorites */
@@ -260,14 +287,22 @@
 }
 
 .sidebar-menu-item.submenu {
-  padding: 2px 8px 2px 0px;
+  padding: 2px 8px 2px 8px;
+  border-radius: 6px 6px 6px 6px; /* Zaoblenie len vľavo */
+  width: 100%;
+  transition: 
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
 }
 
 /* Submenu active states - bez čiarky, len farebné zvýraznenie */
 .sidebar-menu-item.submenu.active {
   background: var(--black-5);
   border-radius: 6px;
-  margin: 2px 0;
+  padding: 2px 8px 2px 8px;
+}
+
+.sidebar-menu-item.submenu:hover {
+  background: var(--black-5);
 }
 
 /* Submenu NEMÁ čiarku */
@@ -275,18 +310,17 @@
   display: none !important;
 }
 
-/* Submenu text centering */
+/* Text centering v submenu */
 .sidebar-menu-item.submenu .sidebar-menu-item-text-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
+  padding-left: 4px; /* Malé odsadenie textu */
 }
 
 .sidebar-menu-item.submenu.active .sidebar-menu-item-text {
   color: var(--black-100);
   font-weight: 500;
-  text-align: center;
+  text-align: left; /* Zmena z center na left */
   width: 100%;
 }
 
@@ -300,7 +334,6 @@
   border-radius: 8px;
 }
 
-/* Active indicator sa teraz riadi z animations.css */
 
 /* Arrow pre expandovateľné sekcie */
 .sidebar-menu-item-arrow {
@@ -308,6 +341,37 @@
   justify-content: center;
   align-items: center;
   min-width: 20px;
+}
+
+
+.sidebar-menu-item-arrow-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+
+.sidebar-menu-item-arrow-button:hover {
+  background: var(--black-10);
+  transform: scale(1.05);
+}
+
+/* Dark mode support pre arrow button */
+[data-theme="dark"] .sidebar-menu-item-arrow-button:hover,
+[data-theme="dark-bright"] .sidebar-menu-item-arrow-button:hover {
+  background: var(--white-10);
+}
+
+.sidebar-menu-item-arrow-button:active {
+  transform: scale(0.95);
 }
 
 /* Spacer pre neaktívne položky */
@@ -376,9 +440,21 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-left: 20px;
+  margin-left: 18px;
   border-left: 1px solid var(--black-10);
-  padding-left: 12px;
+  padding-left: 10px;
+  animation: submenuOpen 0.3s ease;
+}
+
+@keyframes submenuOpen {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Sidebar Logo */
@@ -432,7 +508,7 @@
 [data-theme="dark"] .sidebar-menu-item.submenu.active .sidebar-menu-item-text {
   color: var(--white-100);
   font-weight: 500;
-  text-align: center;
+  text-align: left;
   width: 100%;
 }
 
@@ -451,8 +527,8 @@
 
 [data-theme="dark-bright"] .sidebar-menu-item.submenu.active .sidebar-menu-item-text {
   color: var(--white-100);
+  text-align: left;
   font-weight: 500;
-  text-align: center;
   width: 100%;
 }
 
@@ -543,3 +619,7 @@
 [data-theme="dark-bright"] .sidebar svg path[stroke="var(--black-40)"] {
   stroke: var(--white-40);
 }
+
+
+
+

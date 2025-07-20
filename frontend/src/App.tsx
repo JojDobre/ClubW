@@ -53,6 +53,7 @@ import './styles/pages/pageStyles.css';
 
 
 
+
 // PRIDANÉ - Pôvodné admin management komponenty
 const UserManagement = lazy(() => import('./components/UserManagement'));
 const CategoryManagement = lazy(() => import('./components/CategoryManagement'));
@@ -64,7 +65,6 @@ const LigaManagement = lazy(() => import('./components/LigaManagement'));
 const ZapasManagement = lazy(() => import('./components/ZapasManagement'));
 const KalendarManagement = lazy(() => import('./components/KalendarManagement'));
 const PageManagement = lazy(() => import('./components/PageManagement'));
-const GaleriaManagement = lazy(() => import('./components/GaleriaManagement'));
 const NewArticleManagement = lazy(() => import('./components/NewArticleManagement'));
 const EditArticleManagement = lazy(() => import('./components/EditArticleManagement'));
 const NewPageManagement = lazy(() => import('./components/NewPageManagement'));
@@ -140,7 +140,7 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
   const routeMapping: Record<string, string> = {
     'dashboard': '/dashboard',
     'articles': '/articles',
-    'categories': '/categories', 
+    'categories': '/article/categories', 
     'pages': '/pages',
     'galerie': '/galleries',
     'users': '/users',
@@ -222,7 +222,7 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
       case 'galerie':
         return (
           <Suspense fallback={<div style={{ padding: '32px', textAlign: 'center' }}>Načítavam...</div>}>
-            <GaleriaManagement />
+            <PageManagement />
           </Suspense>
         );
       case 'users':

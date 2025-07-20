@@ -14,7 +14,6 @@ const LigaManagement = lazy(() => import('./LigaManagement'));
 const ZapasManagement = lazy(() => import('./ZapasManagement'));
 const KalendarManagement = lazy(() => import('./KalendarManagement'));
 const PageManagement = lazy(() => import('./PageManagement')); 
-const GaleriaManagement = lazy(() => import('./GaleriaManagement'));
 
 
 interface User {
@@ -313,7 +312,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     { id: 'articles', name: 'Články', icon: '📄', component: ArticleManagement, roles: ['admin', 'redaktor'] },
     { id: 'categories', name: 'Kategórie', icon: '🏷', component: CategoryManagement, roles: ['admin'] },
     { id: 'pages', name: 'Stránky', icon: '📄', component: PageManagement, roles: ['admin', 'redaktor'] }, // NOVÉ
-    { id: 'galerie', name: 'Fotogalérie', icon: '📸', component: GaleriaManagement, roles: ['admin', 'redaktor'] },
 
     { id: 'users', name: 'Používatelia', icon: '👥', component: UserManagement, roles: ['admin'] },
     { id: 'teams', name: 'Tímy', icon: '⚽', component: TeamsManagement, roles: ['admin', 'trener'] },
