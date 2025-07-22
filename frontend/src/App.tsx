@@ -50,6 +50,9 @@ import './styles/components/ui/cards/quickAction.css';
 import './styles/components/managementPages.css';
 import './styles/pages/NewArticleManagement.css';
 import './styles/pages/pageStyles.css';
+import './styles/pages/pageStyles.css';
+import './styles/components/ui/table/galleryTable.css';
+
 
 
 
@@ -68,6 +71,8 @@ const PageManagement = lazy(() => import('./components/PageManagement'));
 const NewArticleManagement = lazy(() => import('./components/NewArticleManagement'));
 const EditArticleManagement = lazy(() => import('./components/EditArticleManagement'));
 const NewPageManagement = lazy(() => import('./components/NewPageManagement'));
+const GalleryManagement = lazy(() => import('./components/GalleryManagement'));
+
 
 
 
@@ -89,6 +94,8 @@ const Calendar = lazy(() => import('./pages/CalendarPage')); //nefunguje uplne
 const Galleries = lazy(() => import('./pages/Galleries'));
 const GalleryDetail = lazy(() => import('./pages/GalleryDetail'));
 const Stats = lazy(() => import('./pages/Stats'));
+const TestPage = lazy(() => import('./components/TestPage'));
+
 
 
 interface User {
@@ -150,7 +157,8 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
     'ligy': '/leagues',
     'zapasy': '/matches',
     'kalendar': '/calendar',
-    'statistiky': '/statistics'
+    'statistiky': '/statistics',
+    'gallery': '/gallery',
   };
 
   // Reverzné mapovanie pre získanie starého ID z cesty
@@ -219,10 +227,10 @@ const NewAdminDashboard: React.FC<{ user: User; onLogout: () => void }> = ({ use
             <PageManagement />
           </Suspense>
         );
-      case 'galerie':
+      case 'gallery':
         return (
           <Suspense fallback={<div style={{ padding: '32px', textAlign: 'center' }}>Načítavam...</div>}>
-            <PageManagement />
+            <GalleryManagement />
           </Suspense>
         );
       case 'users':
@@ -361,6 +369,7 @@ const AppContent: React.FC<{
   const isGalleriesPage = currentPath === '/galleries'; 
   const isGalleryDetailPage = currentPath.startsWith('/galleries/') && currentPath !== '/galleries';
   const isStatsPage = currentPath === '/stats';
+  const isTestPage = currentPath === '/testpage';
 
 
   const isArticleDetailPage = currentPath.startsWith('/clanek/');
@@ -678,6 +687,41 @@ if (isCalendarPage) {
     >
       <PublicLayout>
         <Calendar />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isTestPage) {
+  return (
+    <Suspense
+      fallback={
+        <PublicLayout>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+            background: '#f8fafc'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 15px'
+              }}></div>
+              <p style={{ color: '#64748b', fontWeight: '500' }}>Načítavam testpage</p>
+            </div>
+          </div>
+        </PublicLayout>
+      }
+    >
+      <PublicLayout>
+        <TestPage />
       </PublicLayout>
     </Suspense>
   );

@@ -332,7 +332,7 @@ const NewArticleManagement: React.FC = () => {
           : []
       };
       
-      console.log('📤 Odosielam článok:', articleData);
+      console.log('Odosielam článok:', articleData);
       
       const response = await fetch('http://localhost:3000/api/admin/articles', {
         method: 'POST',
@@ -344,7 +344,7 @@ const NewArticleManagement: React.FC = () => {
       });
       
       const data = await response.json();
-      console.log('📥 Response z backendu:', data);
+      console.log('Response z backendu:', data);
       
       if (response.ok && data.success) {
         alert(`Článok "${formData.nazov}" bol úspešne ${formData.status === 'published' ? 'publikovaný' : 'uložený ako koncept'}!`);
@@ -470,19 +470,11 @@ const NewArticleManagement: React.FC = () => {
     </svg>
   );
 
-  const ArticleIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V8L14 2Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M14 2V8H19" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
-
   // ===== RENDER =====
   if (loading) {
     return (
       <div className="management-loading">
-        📰 Načítavam formulár...
+        Načítavam formulár...
       </div>
     );
   }
@@ -492,16 +484,8 @@ const NewArticleManagement: React.FC = () => {
       {/* ===== HEADER SEKCIA ===== */}
       <div className="management-header">
         <div className="management-header-main">
-          <button 
-            className="back-button"
-            onClick={handleBack}
-            title="Späť na zoznam článkov"
-          >
-            <BackIcon />
-          </button>
           <div className="management-title-section">
             <h1 className="management-title">
-              <ArticleIcon />
               Nový článok
             </h1>
             <p className="management-subtitle">
@@ -522,7 +506,7 @@ const NewArticleManagement: React.FC = () => {
                 cursor: 'pointer'
               }}
             >
-              🧪 Test vyplniť
+              Test vyplniť
             </button>
           )}
         </div>
@@ -591,7 +575,7 @@ const NewArticleManagement: React.FC = () => {
 
             {/* Upload obrázka */}
               <div className="form-section">
-                <h3 className="form-section-title">Obrázok článku</h3>
+                <h3 className="form-section-title">Titulný obrázok článku</h3>
                 
                 <div className="image-upload-section">
                   {!imagePreview ? (
@@ -750,8 +734,7 @@ const NewArticleManagement: React.FC = () => {
               className="btn-secondary"
               onClick={handleCancel}
               disabled={isSubmitting}
-            >
-              Zrušiť
+            >Zrušiť
             </button>
             
             <button

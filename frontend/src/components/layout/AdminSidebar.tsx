@@ -299,8 +299,8 @@ const CalendarIcon = () => (
         <SidebarMenuItem 
           icon={<CoursesIcon />}
           text="Fotogaléria"
-          isActive={isActive('/galleries')}
-          onClick={() => navigate('/galleries')}
+          isActive={isActive('/gallery')}
+          onClick={() => navigate('/gallery')}
         />
       </SidebarSection>
 
