@@ -1123,3 +1123,130 @@
     transform: translateY(0);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ========================================
+   SORT BUTTON ACTIVE STATE
+======================================== */
+
+/* Aktívny sort button */
+.filter-action-item.active-sort {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.filter-action-item.active-sort:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+/* Sort indicator (malý bodík) */
+.sort-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.filter-action-item {
+  position: relative; /* Potrebné pre sort-indicator */
+}
+
+/* ========================================
+   DARK THEME SUPPORT
+======================================== */
+
+[data-theme="dark"] .filter-action-item.active-sort {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+[data-theme="dark"] .filter-action-item.active-sort:hover {
+  background: rgba(59, 130, 246, 0.25);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .sort-indicator svg circle {
+  fill: var(--color-primary);
+}
+
+/* ========================================
+   DARK BRIGHT THEME SUPPORT
+======================================== */
+
+[data-theme="dark-bright"] .filter-action-item.active-sort {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+[data-theme="dark-bright"] .filter-action-item.active-sort:hover {
+  background: rgba(59, 130, 246, 0.25);
+  color: var(--color-primary);
+}
+
+[data-theme="dark-bright"] .sort-indicator svg circle {
+  fill: var(--color-primary);
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 768px) {
+  .sort-indicator {
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+  }
+  
+  .sort-indicator svg {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sort-indicator {
+    top: 2px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+  }
+  
+  .sort-indicator svg {
+    width: 5px;
+    height: 5px;
+  }
+}

@@ -5,11 +5,15 @@ import React, { useState, useEffect } from 'react';
 import StatCard from './ui/cards/StatCard';
 import GalleryTable from './ui/table/GalleryTable';
 import GalleryCreateModal from './ui/table/GalleryCreateModal';
+import GalleryEditModal from './ui/table/GalleryEditModal';
+
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
 import '../styles/components/ui/table/galleryTable.css';
 import '../styles/components/ui/table/GalleryModal.css';
+import '../styles/components/ui/table/GalleryEditModal.css';
+
 
 // ===== INTERFACE DEFINITIONS =====
 interface Gallery {

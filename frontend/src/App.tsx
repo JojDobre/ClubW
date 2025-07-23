@@ -52,6 +52,7 @@ import './styles/pages/NewArticleManagement.css';
 import './styles/pages/pageStyles.css';
 import './styles/pages/pageStyles.css';
 import './styles/components/ui/table/galleryTable.css';
+import './styles/components/ui/table/sortPopup.css';
 
 
 
