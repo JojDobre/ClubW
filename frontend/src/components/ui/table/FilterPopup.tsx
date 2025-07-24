@@ -438,23 +438,30 @@ const FilterPopup: React.FC<FilterPopupProps> = ({
 
     return (
       <div className="filter-tab-content">
-        {filteredColumns.map((column) => (
-          <div 
-            key={column.id} 
-            className="filter-result-item"
-            onClick={() => handleColumnToggle(column.id)}
-          >
-            <span className="filter-result-text">{column.header}</span>
-            {localFilters.columnVisibility.find(col => col.columnId === column.id)?.visible && (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="check-icon">
-                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </div>
-        ))}
+        {filteredColumns.map((column) => {
+          // Táto logika má správne kontrolovať visibility
+          const isVisible = localFilters.columnVisibility.find(col => col.columnId === column.id)?.visible || false;
+          
+          return (
+            <div 
+              key={column.id} 
+              className="filter-result-item"
+              onClick={() => handleColumnToggle(column.id)}
+            >
+              <span className="filter-result-text">{column.header}</span>
+              {/* DÔLEŽITÉ: Kvačka sa zobrazí LEN ak je isVisible === true */}
+              {isVisible && (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="check-icon">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   };
+
 
   const renderStatusTab = () => {
     const statuses = getAvailableStatuses();

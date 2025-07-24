@@ -7,6 +7,7 @@ import AddUserModal, { UserFormData } from './AddUserModal';
 import FilterPopup, { ColumnFilterState, AdvancedFilters, StatusFilter, CategoryFilter, DateRangeFilter, UserFilter } from './FilterPopup';
 import ActionsPopup, { ActionItem } from './ActionsPopup';
 import SortPopup, { SortState } from './SortPopup';
+import AddPlayerModal, { PlayerFormData } from './AddPlayerModal';
 
 export interface TableColumn {
   id: string;
@@ -28,6 +29,8 @@ export interface TableProps {
   itemsPerPage?: number;
   className?: string;
   onAddUser?: (userData: UserFormData) => void;
+  onAddPlayer?: (playerData: PlayerFormData) => void;
+  teams?: any[];
 
   onAddArticle?: () => void;
   onAddCategory?: () => void;
@@ -51,6 +54,7 @@ export interface TableProps {
 
   enableAdvancedFilters?: boolean; 
   onFiltersChange?: (filters: AdvancedFilters) => void; 
+  columnVisibility?: ColumnFilterState[];
   filterCustomLabels?: {  
     categories?: string;
     status?: string;
@@ -78,6 +82,8 @@ const Table: React.FC<TableProps> = ({
   onAddCategory,
   onAddPage,
   onAddTeam,
+  onAddPlayer, // PRIDAJ
+  teams = [],
 
   serverSidePagination = false,
   paginationData,
@@ -95,6 +101,7 @@ const Table: React.FC<TableProps> = ({
 
   enableAdvancedFilters = false,
   onFiltersChange,
+  columnVisibility: externalColumnVisibility,
   filterCustomLabels,
 
 }) => {
@@ -123,7 +130,7 @@ const Table: React.FC<TableProps> = ({
   const [filterPopupPosition, setFilterPopupPosition] = useState({ top: 0, left: 0 });
   
   const [columnVisibility, setColumnVisibility] = useState<ColumnFilterState[]>(
-    columns.map(column => ({
+      externalColumnVisibility || columns.map(column => ({
       columnId: column.id,
       visible: true
     }))
@@ -351,8 +358,16 @@ const Table: React.FC<TableProps> = ({
     }
   };
 
+  const handleAddPlayer = (playerData: PlayerFormData) => {
+    if (onAddPlayer) {
+      onAddPlayer(playerData);
+    }
+    setIsAddModalOpen(false);
+  };
+
   const detectModalType = () => {
     if (onAddUser) return 'user';
+    if (onAddPlayer) return 'player';
     if (onAddCategory) return 'category';
     if (onAddTeam) return 'team';
     return null;
@@ -689,6 +704,9 @@ const Table: React.FC<TableProps> = ({
               } else if (onAddArticle) {
                 onAddArticle();
               }
+              else if (onAddPlayer) {
+                setIsAddModalOpen(true);
+              }
             }}
           >
             <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -956,6 +974,15 @@ const Table: React.FC<TableProps> = ({
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSave={handleAddUser}
+        />
+      )}
+
+      {detectModalType() === 'player' && (
+        <AddPlayerModal 
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={onAddPlayer!}
+          teams={teams}
         />
       )}
 

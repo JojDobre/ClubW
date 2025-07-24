@@ -93,6 +93,35 @@ export class Player extends Model<PlayerAttributes, PlayerCreationAttributes> im
     };
   }
 
+  // Statická metóda pre validáciu URL fotky (flexibilnejšia než Sequelize default)
+  public static isValidPhotoUrl(url: string): boolean {
+    if (!url || url.trim() === '') {
+      return true; // Prázdne URL je v poriadku
+    }
+
+    try {
+      // Ak začína s http:// alebo https://, je to absolútne URL
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        new URL(url); // Skúsi parsnúť ako URL - ak sa nepodarí, hodí error
+        return true;
+      }
+      
+      // Ak začína s /, je to relatívna cesta
+      if (url.startsWith('/')) {
+        return true;
+      }
+      
+      // Ak obsahuje uploads/, považujeme to za platné
+      if (url.includes('uploads/')) {
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // Statická metóda pre validáciu čísla dresu v tíme
   public static async validateJerseyNumber(cislo_dresu: number, tim_id: number, excludePlayerId?: number): Promise<boolean> {
     const whereCondition: any = {
@@ -193,8 +222,14 @@ Player.init(
       type: DataTypes.STRING(500),
       allowNull: true,
       validate: {
-        isUrl: true,
+        // UPRAVENÁ VALIDÁCIA - flexibilnejšia
+        customPhotoUrlValidation(value: string | null) {
+          if (value && !Player.isValidPhotoUrl(value)) {
+            throw new Error('Neplatná URL adresa fotky. Musí začínať s http://, https:// alebo obsahovať uploads/');
+          }
+        }
       },
+      comment: 'URL adresa fotky hráča'
     },
     tim_id: {
       type: DataTypes.INTEGER,

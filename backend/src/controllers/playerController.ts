@@ -57,6 +57,11 @@ const validatePlayerData = (data: any) => {
       errors.push('Výška musí byť 120-250 cm');
     }
   }
+
+  // PRIDAJ validáciu fotky:
+  if (data.fotka && typeof data.fotka === 'string' && data.fotka.length > 500) {
+    errors.push('URL fotky je príliš dlhé');
+  }
   
   return errors;
 };
@@ -194,7 +199,12 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
 // POST /api/players - Vytvorenie nového hráča
 export const createPlayer = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('POST /api/players - Received data:', req.body);
+    console.log('POST /api/players - Received data:', JSON.stringify(req.body, null, 2));
+
+    // PRIDAJ tento debug:
+    console.log('Fotka URL:', req.body.fotka);
+    console.log('Type fotky:', typeof req.body.fotka);
+
 
     // Validácia vstupných dát
     const validationErrors = validatePlayerData(req.body);

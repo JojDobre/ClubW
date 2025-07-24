@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
 import path from 'path';
+import fs from 'fs';
 
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
@@ -29,12 +30,35 @@ import kalendarRoutes from './routes/kalendar';
 import pagesRoutes, { adminPageRouter } from './routes/pages'; 
 import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
+import uploadRoutes from './routes/upload';
+import uploadsRoutes from './routes/uploads';
 
 // Načítanie environment premenných
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const createDefaultAvatar = () => {
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  const defaultAvatarPath = path.join(uploadsDir, 'default-avatar.svg');
+  if (!fs.existsSync(defaultAvatarPath)) {
+    const svgContent = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="95" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
+  <circle cx="100" cy="75" r="25" fill="#9ca3af"/>
+  <circle cx="100" cy="140" r="35" fill="#9ca3af"/>
+</svg>`;
+    fs.writeFileSync(defaultAvatarPath, svgContent, 'utf8');
+    console.log('✅ Default avatar vytvorený');
+  }
+};
+
+createDefaultAvatar();
+
 
 // Static serving pre upload súbory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -177,6 +201,9 @@ app.use('/api/admin/pages', adminPageRouter);
 app.use('/api/galleries', galleriesRoutes);
 app.use('/api/admin/galleries', adminGalleryImagesRouter);
 app.use('/api/admin/galleries', adminGalleryRouter);
+
+app.use('/api/upload', uploadRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 
 // ===== DEMO ENDPOINTS (môžeme odstrániť po úplnej implementácii) ===
