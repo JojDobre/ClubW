@@ -176,13 +176,31 @@ const Table: React.FC<TableProps> = ({
   const handleRowClick = (rowId: string, event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     if (
-      target.closest('.table-cell-checkbox') || 
+      target.closest('.table-cell-checkbox') ||
+      target.closest('.checkbox-cell') || 
       target.closest('.table-checkbox') ||
       target.closest('input[type="checkbox"]') ||
+
       target.closest('.table-cell-actions') ||
       target.closest('.table-action-button') ||
+      target.closest('.actions-popup') ||
+      target.closest('.actions-popup-item') ||
+
       target.tagName === 'INPUT' ||
-      target.tagName === 'BUTTON'
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SELECT' ||
+      target.tagName === 'TEXTAREA' ||
+
+      // Špecifické triedy pre akcie
+      target.classList.contains('table-action-button') ||
+      target.classList.contains('table-checkbox') ||
+      target.classList.contains('checkbox-cell') ||
+      
+      // Ak má element onclick handler (pravdepodobne je to interaktívny element)
+      target.onclick !== null ||
+      
+      // Ak má element cursor: pointer (pravdepodobne je to klikateľný element)
+      window.getComputedStyle(target).cursor === 'pointer' 
     ) {
       return;
     }
@@ -868,12 +886,14 @@ const Table: React.FC<TableProps> = ({
                   style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                 >
                   {showCheckboxes && (
-                    <td className="table-cell checkbox-cell">
+                    <td className="table-cell checkbox-cell" style={{ cursor: 'default' }}>
+                      
                       <input
                         type="checkbox"
                         checked={selectedRows.includes(row.id)}
                         onChange={() => handleSelectRow(row.id)}
                         className="table-checkbox"
+                        style={{ cursor: 'pointer' }}
                       />
                     </td>
                   )}

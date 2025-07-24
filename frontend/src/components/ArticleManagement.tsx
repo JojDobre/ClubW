@@ -1,10 +1,12 @@
 // frontend/src/components/ArticleManagement.tsx
+// Komponenta pre správu článkov s pokročilými filtrami
 
 import React, { useState, useEffect } from 'react';
 import StatCard from './ui/cards/StatCard';
 import Table from './ui/table/Table';
-import { useRouter } from '../context/RouterContext'; // PRIDANÉ
+import { useRouter } from '../context/RouterContext';
 import type { TableColumn, TableData, PaginationData } from './ui/table/Table';
+import type { AdvancedFilters } from './ui/table/FilterPopup';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
@@ -69,7 +71,6 @@ interface ArticleStats {
   publikovane_30dni: number;
   koncepty: number;
   zobrazenia_30dni: number;
-
   celkovo_zmena?: string;
   celkovo_zmena_typ?: 'positive' | 'negative' | 'neutral';
   publikovane_zmena?: string;
@@ -78,21 +79,12 @@ interface ArticleStats {
   koncepty_zmena_typ?: 'positive' | 'negative' | 'neutral';
   zobrazenia_zmena?: string;
   zobrazenia_zmena_typ?: 'positive' | 'negative' | 'neutral';
-
 }
 
 // ===== MAIN COMPONENT =====
 const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) => {
-  //Router hook pre navigáciu
+  // Router hook pre navigáciu
   const { navigate } = useRouter();
-
-  const [paginationData, setPaginationData] = useState<PaginationData>({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPrevPage: false
-  });
 
   // ===== STATE MANAGEMENT =====
   const [articles, setArticles] = useState<Article[]>([]);
@@ -100,15 +92,32 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   
-  // Filtre
+  // Základné filtre
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Advanced filtre state
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
+    columnVisibility: [],
+    statusFilters: [],
+    categoryFilters: [],
+    dateRangeFilter: null,
+    userFilters: []
+  });
 
   // Paginácia
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalArticles, setTotalArticles] = useState(0);
+  const [paginationData, setPaginationData] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
   
   // Štatistiky
   const [stats, setStats] = useState<ArticleStats>({
@@ -117,16 +126,27 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     koncepty: 0,
     zobrazenia_30dni: 0
   });
+
+  // ===== HELPER FUNCTIONS =====
+  const getStatusDisplay = (status: string) => {
+    const statusMap = {
+      published: 'Publikované',
+      draft: 'Koncept',
+      scheduled: 'Naplánované',
+      archived: 'Archivované'
+    };
+    return statusMap[status as keyof typeof statusMap] || 'Neznámy';
+  };
+
+  const getStatusForFilter = (status: string) => {
+    // Vracia originálny status pre filtrovanie
+    return status;
+  };
+
+  // ===== API FUNCTIONS =====
   
-
-  //SEARCH
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-
-
-  // ===== FUNKCIE PRE API =====
-  
-  // Načítanie článkov z API
-  const fetchArticles = async (page: number = 1) => {
+  // Načítanie článkov z API s advanced filtrami
+  const fetchArticles = async (page: number = 1, filters?: AdvancedFilters) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('clubw_token');
@@ -135,10 +155,58 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         limit: '15',
       });
 
-      // Pridanie filtrov ak sú nastavené
-      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm); // Zmeň searchTerm na debouncedSearchTerm
+      // Základné filtre
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
       if (filterStatus) params.append('status', filterStatus);
       if (filterCategory) params.append('category', filterCategory);
+
+      // Advanced filtre pre server-side filtrovanie
+      if (filters) {
+        // Status filtre
+        const enabledStatusFilters = filters.statusFilters.filter(f => f.enabled);
+        if (enabledStatusFilters.length > 0) {
+          enabledStatusFilters.forEach(filter => {
+            // Mapovanie slovenských názvov na anglické status hodnoty
+            const statusMap: { [key: string]: string } = {
+              'Publikované': 'published',
+              'Koncept': 'draft',
+              'Naplánované': 'scheduled',
+              'Archivované': 'archived'
+            };
+            const englishStatus = statusMap[filter.value] || filter.value;
+            params.append('status_filter[]', englishStatus);
+          });
+        }
+
+        // Category filtre
+        const enabledCategoryFilters = filters.categoryFilters.filter(f => f.enabled);
+        if (enabledCategoryFilters.length > 0) {
+          enabledCategoryFilters.forEach(filter => {
+            params.append('category_filter[]', filter.categoryId);
+          });
+        }
+
+        // Date range filter
+        if (filters.dateRangeFilter?.enabled) {
+          if (filters.dateRangeFilter.startDate) {
+            params.append('date_from', filters.dateRangeFilter.startDate);
+          }
+          if (filters.dateRangeFilter.endDate) {
+            params.append('date_to', filters.dateRangeFilter.endDate);
+          }
+          if (filters.dateRangeFilter.column) {
+            params.append('date_column', filters.dateRangeFilter.column);
+          }
+        }
+
+        // User filtre
+        const enabledUserFilters = filters.userFilters.filter(f => f.enabled);
+        if (enabledUserFilters.length > 0) {
+          enabledUserFilters.forEach(filter => {
+            params.append('author_filter[]', filter.userId);
+          });
+        }
+      }
 
       const response = await fetch(`http://localhost:3000/api/admin/articles?${params.toString()}`, {
         headers: {
@@ -149,6 +217,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       const data = await response.json();
       if (data.success) {
         setArticles(data.data.articles);
+        
         // Ak je dostupná paginácia, nastavíme ju
         if (data.data.pagination) {
           const pagination = data.data.pagination;
@@ -172,7 +241,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     } catch (err) {
       console.error('Chyba pri načítavaní článkov:', err);
       setError('Chyba spojenia so serverom');
-      // Fallback na mock dáta v prípade chyby
     } finally {
       setLoading(false);
     }
@@ -193,215 +261,140 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         setCategories(data.data.categories);
       } else {
         console.error('Chyba pri načítavaní kategórií:', data.message);
-        // Fallback na mock kategórie
       }
     } catch (err) {
       console.error('Chyba pri načítavaní kategórií:', err);
-      // Fallback na mock kategórie
     }
   };
 
   // Načítanie štatistík z API
   const fetchStats = async () => {
-  try {
-    const token = localStorage.getItem('clubw_token');
-    // Načítame všetky články bez limitu pre presné štatistiky
-    const response = await fetch('http://localhost:3000/api/admin/articles?limit=1000', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    try {
+      const token = localStorage.getItem('clubw_token');
+      const response = await fetch('http://localhost:3000/api/admin/articles?limit=1000', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-    const data = await response.json();
-    if (data.success) {
-      const allArticles = data.data.articles;
-      
-      // Aktuálne dátumy
-      const teraz = new Date();
-      const pred30Dni = new Date();
-      pred30Dni.setDate(pred30Dni.getDate() - 30);
-      const pred60Dni = new Date();
-      pred60Dni.setDate(pred60Dni.getDate() - 60);
-      const predchaddzujuciMesiac = new Date();
-      predchaddzujuciMesiac.setDate(predchaddzujuciMesiac.getDate() - 60);
+      const data = await response.json();
+      if (data.success) {
+        const allArticles = data.data.articles;
+        
+        // Aktuálne dátumy
+        const teraz = new Date();
+        const pred30Dni = new Date();
+        pred30Dni.setDate(pred30Dni.getDate() - 30);
+        const pred60Dni = new Date();
+        pred60Dni.setDate(pred60Dni.getDate() - 60);
 
-      // === AKTUÁLNE HODNOTY (posledných 30 dní) ===
-      const celkovo = allArticles.length;
-      
-      const publikovane_30dni = allArticles.filter((article: Article) => {
-        if (article.status !== 'published') return false;
-        const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
-        return publikovanyDatum >= pred30Dni;
-      }).length;
-      
-      const koncepty = allArticles.filter((article: Article) => article.status === 'draft').length;
-      
-      const zobrazenia_30dni = allArticles
-        .filter((article: Article) => {
+        // === AKTUÁLNE HODNOTY ===
+        const celkovo = allArticles.length;
+        
+        const publikovane_30dni = allArticles.filter((article: Article) => {
+          if (article.status !== 'published') return false;
           const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
           return publikovanyDatum >= pred30Dni;
-        })
-        .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
+        }).length;
+        
+        const koncepty = allArticles.filter((article: Article) => article.status === 'draft').length;
+        
+        const zobrazenia_30dni = allArticles
+          .filter((article: Article) => {
+            const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
+            return publikovanyDatum >= pred30Dni;
+          })
+          .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
 
-      // === PREDCHÁDZAJÚCE HODNOTY (30-60 dní dozadu) ===
-      const publikovane_predchadzajuce = allArticles.filter((article: Article) => {
-        if (article.status !== 'published') return false;
-        const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
-        return publikovanyDatum >= pred60Dni && publikovanyDatum < pred30Dni;
-      }).length;
-
-      const zobrazenia_predchadzajuce = allArticles
-        .filter((article: Article) => {
+        // === PREDCHÁDZAJÚCE HODNOTY ===
+        const publikovane_predchadzajuce = allArticles.filter((article: Article) => {
+          if (article.status !== 'published') return false;
           const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
           return publikovanyDatum >= pred60Dni && publikovanyDatum < pred30Dni;
-        })
-        .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
+        }).length;
 
-      // Koncepy pred mesiacom (pre porovnanie trendu)
-      const koncepty_predchadzajuce = allArticles.filter((article: Article) => {
-        const vytvoreny = new Date(article.vytvoreny);
-        return article.status === 'draft' && vytvoreny >= pred60Dni && vytvoreny < pred30Dni;
-      }).length;
+        const zobrazenia_predchadzajuce = allArticles
+          .filter((article: Article) => {
+            const publikovanyDatum = new Date(article.publikovany_datum || article.vytvoreny);
+            return publikovanyDatum >= pred60Dni && publikovanyDatum < pred30Dni;
+          })
+          .reduce((sum: number, article: Article) => sum + (article.views || 0), 0);
 
-      // === VÝPOČET ZMIEN ===
-      
-      // Funkcia na výpočet percentuálnej zmeny
-      const vypocitajZmenu = (aktualne: number, predchadzajuce: number) => {
-        if (predchadzajuce === 0) {
-          return aktualne > 0 ? { text: `+${aktualne}`, typ: 'positive' as const } : { text: '0', typ: 'neutral' as const };
-        }
-        const zmena = ((aktualne - predchadzajuce) / predchadzajuce) * 100;
-        const zaokruhlenaZmena = Math.round(zmena * 10) / 10; // Zaokrúhlenie na 1 desatinné miesto
+        const koncepty_predchadzajuce = allArticles.filter((article: Article) => {
+          const vytvoreny = new Date(article.vytvoreny);
+          return article.status === 'draft' && vytvoreny >= pred60Dni && vytvoreny < pred30Dni;
+        }).length;
+
+        // === VÝPOČET ZMIEN ===
+        const vypocitajZmenu = (aktualne: number, predchadzajuce: number) => {
+          if (predchadzajuce === 0) {
+            return aktualne > 0 ? { text: `+${aktualne}`, typ: 'positive' as const } : { text: '0', typ: 'neutral' as const };
+          }
+          const zmena = ((aktualne - predchadzajuce) / predchadzajuce) * 100;
+          const zaokruhlenaZmena = Math.round(zmena * 10) / 10;
+          
+          if (zaokruhlenaZmena > 0) {
+            return { text: `+${zaokruhlenaZmena}%`, typ: 'positive' as const };
+          } else if (zaokruhlenaZmena < 0) {
+            return { text: `${zaokruhlenaZmena}%`, typ: 'negative' as const };
+          } else {
+            return { text: '0%', typ: 'neutral' as const };
+          }
+        };
+
+        const vypocitajAbsolutnaZmenu = (aktualne: number, predchadzajuce: number) => {
+          const rozdiel = aktualne - predchadzajuce;
+          if (rozdiel > 0) {
+            return { text: `+${rozdiel} tento mesiac`, typ: 'positive' as const };
+          } else if (rozdiel < 0) {
+            return { text: `${rozdiel} tento mesiac`, typ: 'negative' as const };
+          } else {
+            return { text: 'Bez zmeny', typ: 'neutral' as const };
+          }
+        };
+
+        // Výpočet zmien
+        const publikovaneZmena = vypocitajAbsolutnaZmenu(publikovane_30dni, publikovane_predchadzajuce);
+        const konceptyZmena = vypocitajAbsolutnaZmenu(koncepty, koncepty_predchadzajuce);
+        const zobrazeniZmena = vypocitajZmenu(zobrazenia_30dni, zobrazenia_predchadzajuce);
         
-        if (zaokruhlenaZmena > 0) {
-          return { text: `+${zaokruhlenaZmena}%`, typ: 'positive' as const };
-        } else if (zaokruhlenaZmena < 0) {
-          return { text: `${zaokruhlenaZmena}%`, typ: 'negative' as const };
-        } else {
-          return { text: '0%', typ: 'neutral' as const };
-        }
-      };
+        const celkovo_minuly_mesiac = allArticles.filter((article: Article) => {
+          const vytvoreny = new Date(article.vytvoreny);
+          return vytvoreny < pred30Dni;
+        }).length;
+        const celkovoZmena = vypocitajAbsolutnaZmenu(celkovo, celkovo_minuly_mesiac);
 
-      // Funkcia na výpočet absolútnej zmeny
-      const vypocitajAbsolutnaZmenu = (aktualne: number, predchadzajuce: number) => {
-        const rozdiel = aktualne - predchadzajuce;
-        if (rozdiel > 0) {
-          return { text: `+${rozdiel} tento mesiac`, typ: 'positive' as const };
-        } else if (rozdiel < 0) {
-          return { text: `${rozdiel} tento mesiac`, typ: 'negative' as const };
-        } else {
-          return { text: 'Bez zmeny', typ: 'neutral' as const };
-        }
-      };
-
-      // Výpočet zmien
-      const publikovaneZmena = vypocitajAbsolutnaZmenu(publikovane_30dni, publikovane_predchadzajuce);
-      const konceptyZmena = vypocitajAbsolutnaZmenu(koncepty, koncepty_predchadzajuce);
-      const zobrazeniZmena = vypocitajZmenu(zobrazenia_30dni, zobrazenia_predchadzajuce);
-      
-      // Celkový počet článkov - porovnanie s minulým mesiacom
-      const celkovo_minuly_mesiac = allArticles.filter((article: Article) => {
-        const vytvoreny = new Date(article.vytvoreny);
-        return vytvoreny < pred30Dni;
-      }).length;
-      const celkovoZmena = vypocitajAbsolutnaZmenu(celkovo, celkovo_minuly_mesiac);
-
+        setStats({
+          celkovo,
+          publikovane_30dni,
+          koncepty,
+          zobrazenia_30dni,
+          celkovo_zmena: celkovoZmena.text,
+          celkovo_zmena_typ: celkovoZmena.typ,
+          publikovane_zmena: publikovaneZmena.text,
+          publikovane_zmena_typ: publikovaneZmena.typ,
+          koncepty_zmena: konceptyZmena.text,
+          koncepty_zmena_typ: konceptyZmena.typ,
+          zobrazenia_zmena: zobrazeniZmena.text,
+          zobrazenia_zmena_typ: zobrazeniZmena.typ,
+        });
+      }
+    } catch (err) {
+      console.error('Chyba pri načítavaní štatistík:', err);
       setStats({
-        celkovo,
-        publikovane_30dni,
-        koncepty,
-        zobrazenia_30dni,
-        
-        // Zmeny
-        celkovo_zmena: celkovoZmena.text,
-        celkovo_zmena_typ: celkovoZmena.typ,
-        publikovane_zmena: publikovaneZmena.text,
-        publikovane_zmena_typ: publikovaneZmena.typ,
-        koncepty_zmena: konceptyZmena.text,
-        koncepty_zmena_typ: konceptyZmena.typ,
-        zobrazenia_zmena: zobrazeniZmena.text,
-        zobrazenia_zmena_typ: zobrazeniZmena.typ,
-      });
-      
-      console.log('📊 Štatistiky vypočítané:', {
-        publikovane: { aktualne: publikovane_30dni, predchadzajuce: publikovane_predchadzajuce, zmena: publikovaneZmena },
-        zobrazenia: { aktualne: zobrazenia_30dni, predchadzajuce: zobrazenia_predchadzajuce, zmena: zobrazeniZmena }
+        celkovo: 0,
+        publikovane_30dni: 0,
+        koncepty: 0,
+        zobrazenia_30dni: 0
       });
     }
-  } catch (err) {
-    console.error('Chyba pri načítavaní štatistík:', err);
-    // Fallback hodnoty
-    setStats({
-      celkovo: 0,
-      publikovane_30dni: 0,
-      koncepty: 0,
-      zobrazenia_30dni: 0
-    });
-  }
-};
-
-
-  const handlePageChange = (page: number) => {
-    console.log('Zmena stránky na:', page);
-    fetchArticles(page);
-  };
-
-  // ===== USE EFFECTS =====
-  
-  // Debouncing pre search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300); // 300ms delay
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Načítanie dát pri spustení komponentu
-  useEffect(() => {
-    const initializeData = async () => {
-      setLoading(true);
-      
-      // Načítanie kategórií najprv
-      await fetchCategories();
-      
-      // Potom načítanie článkov a štatistík
-      await Promise.all([
-        fetchArticles(currentPage),
-        fetchStats()
-      ]);
-      
-      setLoading(false);
-    };
-    
-    initializeData();
-  }, []);
-
-  // Načítanie článkov pri zmene filtrov alebo stránky
-  useEffect(() => {
-    if (categories.length > 0 && (debouncedSearchTerm.length === 0 || debouncedSearchTerm.length > 2)) {
-      fetchArticles(currentPage);
-    }
-  }, [currentPage, debouncedSearchTerm, filterStatus, filterCategory]);
-
-  // ===== HELPER FUNCTIONS =====
-  const getStatusDisplay = (status: string) => {
-    // Table komponent automaticky robí value.toLowerCase().replace(' ', '-')
-    // Preto musíme vrátiť anglické názvy ktoré sa mapujú na existujúce CSS triedy
-    const statusMap = {
-      published: 'Publikované',      // -> .status-complete (zelená)
-      draft: 'Koncept',          // -> .status-pending (žltá)  
-      scheduled: 'Naplánované',  // -> .status-in-progress (fialová)
-      archived: 'Archivované'       // -> .status-rejected (červená)
-    };
-    return statusMap[status as keyof typeof statusMap] || 'Pending';
   };
 
   // ===== TABLE CONFIGURATION =====
   const tableColumns: TableColumn[] = [
     {
       id: 'nazov',
-      header: 'Názov článku',
+      header: 'Název článku',
       type: 'text',
       sortable: true,
       width: '35%'
@@ -428,9 +421,16 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
       width: '12%'
     },
     {
+      id: 'publikovany_datum',
+      header: 'Publikovany',
+      type: 'date',
+      sortable: true,
+      width: '12%'
+    },
+    {
       id: 'autor',
       header: 'Autor',
-      type: 'text',
+      type: 'user',
       sortable: true,
       width: '13%'
     },
@@ -450,136 +450,204 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     }
   ];
 
-  // Transformácia článkov pre tabuľku
+  // Transformácia článkov pre tabuľku s podporou advanced filtrov
   const tableData: TableData[] = articles.map(article => ({
     id: article.id.toString(),
     nazov: article.nazov,
     views: article.views.toLocaleString(),
-    status: getStatusDisplay(article.status), // Vracia anglické názvy pre CSS
-    muzstvo: 'A', // TODO: Pridať pole mužstvo do Article interface a API
+    status: getStatusDisplay(article.status),
     rubrika: article.kategoria.nazov || 'Bez kategórie',
     datum: new Date(article.vytvoreny).toLocaleDateString('sk-SK'),
-    autor: article.autor.meno || 'Neznámy autor' 
+    publikovany_datum: article.publikovany_datum 
+      ? new Date(article.publikovany_datum).toLocaleDateString('sk-SK')
+      : 'Nepublikované',
+    autor: {
+      id: article.autor_id,
+      name: article.autor.meno,
+      avatar: `/api/users/${article.autor_id}/avatar`
+    },
+    
+    // Štruktúrované dáta pre advanced filtre
+    kategoria: {
+      id: article.kategoria_id.toString(),
+      nazov: article.kategoria.nazov
+    },
+    autor_obj: {
+      id: article.autor_id.toString(),
+      meno: article.autor.meno,
+      name: article.autor.meno
+    },
+    
+    // ISO formátované dátumy pre date filter
+    vytvoreny: article.vytvoreny,
+    publikovany_datum_iso: article.publikovany_datum || article.vytvoreny,
+    
+    // Originálny status pre filtrovanie
+    status_original: article.status
   }));
 
   // ===== EVENT HANDLERS =====
+  
+  // Handler pre zmenu stránky
+  const handlePageChange = (page: number) => {
+    console.log('Zmena stránky na:', page);
+    fetchArticles(page, advancedFilters);
+  };
+
+  // Handler pre advanced filtre
+  const handleAdvancedFiltersChange = (filters: AdvancedFilters) => {
+    console.log('Advanced filters applied:', filters);
+    setAdvancedFilters(filters);
+  };
+
+  // Článok handlers
   const handleAddArticle = () => {
     navigate('/article/new');
   };
 
   const handleEditArticle = (articleId: string) => {
     console.log('Editovanie článku ID:', articleId);
-    // Navigácia na edit stránku článku
     navigate(`/articles/edit/${articleId}`);
   };
 
   const handleDeleteArticle = async (articleId: string) => {
-  // Potvrdenie pred vymazaním
-  if (window.confirm('Naozaj chcete vymazať tento článok?')) {
-    try {
-      await handleBulkDeleteArticles([articleId]);
-      console.log('Článok úspešne vymazaný');
-    } catch (error) {
-      console.error('Chyba pri mazaní článku:', error);
-      alert('Chyba pri mazaní článku');
+    if (window.confirm('Naozaj chcete vymazať tento článok?')) {
+      try {
+        await handleBulkDeleteArticles([articleId]);
+        console.log('Článok úspešne vymazaný');
+      } catch (error) {
+        console.error('Chyba pri mazaní článku:', error);
+        alert('Chyba pri mazaní článku');
+      }
     }
-  }
-};
-
-const handleDuplicateArticle = async (articleId: string) => {
-  try {
-    await handleBulkDuplicateArticles([articleId]);
-    console.log('Článok úspešne duplikovaný');
-  } catch (error) {
-    console.error('Chyba pri duplikovaní článku:', error);
-    alert('Chyba pri duplikovaní článku');
-  }
-};
-
-  const handlePreview = (articleId: number) => {
-    console.log('Náhľad článku:', articleId);
-    // TODO: Implementovať náhľad článku
   };
 
-  // Funkcia na bulk vymazanie článkov
-const handleBulkDeleteArticles = async (selectedIds: string[]) => {
-  try {
-    const token = localStorage.getItem('clubw_token');
-    
-    const response = await fetch('http://localhost:3000/api/admin/articles/bulk-delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ ids: selectedIds }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Chyba pri mazaní článkov');
+  const handleDuplicateArticle = async (articleId: string) => {
+    try {
+      await handleBulkDuplicateArticles([articleId]);
+      console.log('Článok úspešne duplikovaný');
+    } catch (error) {
+      console.error('Chyba pri duplikovaní článku:', error);
+      alert('Chyba pri duplikovaní článku');
     }
+  };
 
-    // Aktualizácia lokálnych dát - odstránenie vymazaných článkov
-    setArticles(prevArticles => 
-      prevArticles.filter(article => !selectedIds.includes(article.id.toString()))
-    );
+  // Bulk operations
+  const handleBulkDeleteArticles = async (selectedIds: string[]) => {
+    try {
+      const token = localStorage.getItem('clubw_token');
+      
+      const response = await fetch('http://localhost:3000/api/admin/articles/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
 
-    // Aktualizácia štatistík
-    await fetchStats();
+      const data = await response.json();
 
-    // Ak sa vymazali všetky články na aktuálnej stránke, prejdi na predchádzajúcu
-    const remainingArticles = articles.filter(article => !selectedIds.includes(article.id.toString()));
-    if (remainingArticles.length === 0 && currentPage > 1) {
-      handlePageChange(currentPage - 1);
-    } else {
-      // Inak refresh aktuálnu stránku
-      await fetchArticles(currentPage);
+      if (!response.ok) {
+        throw new Error(data.message || 'Chyba pri mazaní článkov');
+      }
+
+      // Aktualizácia lokálnych dát
+      setArticles(prevArticles => 
+        prevArticles.filter(article => !selectedIds.includes(article.id.toString()))
+      );
+
+      // Aktualizácia štatistík
+      await fetchStats();
+
+      // Ak sa vymazali všetky články na aktuálnej stránke, prejdi na predchádzajúcu
+      const remainingArticles = articles.filter(article => !selectedIds.includes(article.id.toString()));
+      if (remainingArticles.length === 0 && currentPage > 1) {
+        handlePageChange(currentPage - 1);
+      } else {
+        await fetchArticles(currentPage, advancedFilters);
+      }
+
+      console.log(`✅ ${data.message}`);
+      return data;
+      
+    } catch (error) {
+      console.error('❌ Chyba pri bulk delete článkov:', error);
+      throw error;
     }
+  };
 
-    console.log(`✅ ${data.message}`);
-    return data;
-    
-  } catch (error) {
-    console.error('❌ Chyba pri bulk delete článkov:', error);
-    throw error;
-  }
-};
+  const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
+    try {
+      const token = localStorage.getItem('clubw_token');
+      
+      const response = await fetch('http://localhost:3000/api/admin/articles/bulk-duplicate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
 
-// Funkcia na bulk duplikovanie článkov
-const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
-  try {
-    const token = localStorage.getItem('clubw_token');
-    
-    const response = await fetch('http://localhost:3000/api/admin/articles/bulk-duplicate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ ids: selectedIds }),
-    });
+      const data = await response.json();
 
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Chyba pri duplikovaní článkov');
+      }
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Chyba pri duplikovaní článkov');
+      console.log(`✅ ${data.message}`);
+      
+      // Refresh dát
+      await fetchArticles(currentPage, advancedFilters);
+      await fetchStats();
+      
+      return data;
+      
+    } catch (error) {
+      console.error('❌ Chyba pri bulk duplicate článkov:', error);
+      throw error;
     }
+  };
 
-    console.log(`✅ ${data.message}`);
+  // ===== USE EFFECTS =====
+  
+  // Debouncing pre search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Načítanie dát pri spustení komponentu
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      
+      // Načítanie kategórií najprv
+      await fetchCategories();
+      
+      // Potom načítanie článkov a štatistík
+      await Promise.all([
+        fetchArticles(currentPage),
+        fetchStats()
+      ]);
+      
+      setLoading(false);
+    };
     
-    // JEDNODUCHÉ RIEŠENIE: Refresh celú stránku
-    await fetchArticles(currentPage);
-    await fetchStats();
-    
-    return data;
-    
-  } catch (error) {
-    console.error('❌ Chyba pri bulk duplicate článkov:', error);
-    throw error;
-  }
-};
+    initializeData();
+  }, []);
+
+  // Načítanie článkov pri zmene debounced search term
+  useEffect(() => {
+    if (categories.length > 0 && (debouncedSearchTerm.length === 0 || debouncedSearchTerm.length > 2)) {
+      // ✅ OPRAVA: Vždy posielaj aktuálne advanced filtre
+      fetchArticles(currentPage, advancedFilters);
+    }
+  }, [currentPage, debouncedSearchTerm, filterStatus, filterCategory, advancedFilters]);
 
   // ===== ICONS =====
   const ArticleIcon = () => (
@@ -594,13 +662,6 @@ const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-    </svg>
-  );
-
-  const EditIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M11 4H4C3.44772 4 3 4.44772 3 5V19C3 19.5523 3.44772 20 4 20H18C18.5523 20 19 19.5523 19 19V12" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M18.5 2.5C18.8978 2.10218 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10218 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10218 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" strokeWidth="1.5"/>
     </svg>
   );
 
@@ -678,7 +739,6 @@ const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
 
       {/* ===== TABUĽKA S ČLÁNKAMI ===== */}
       <div className="management-content">
-        {/* Tabuľka */}
         <Table
           columns={tableColumns}
           data={tableData}
@@ -686,19 +746,25 @@ const handleBulkDuplicateArticles = async (selectedIds: string[]) => {
           itemsPerPage={15}
           onAddArticle={handleAddArticle}
           onDeleteSelected={handleBulkDeleteArticles}  
-
           onEditRow={handleEditArticle}        
           onDeleteRow={handleDeleteArticle}   
           onDuplicateRow={handleDuplicateArticle}
-          
           onSearchChange={(term) => setSearchTerm(term)}
           searchTerm={searchTerm}
-
           onDuplicateSelected={handleBulkDuplicateArticles}
-
           serverSidePagination={true}
           paginationData={paginationData}
           onPageChange={handlePageChange}
+          
+          // Advanced filters
+          enableAdvancedFilters={true}
+          onFiltersChange={handleAdvancedFiltersChange}
+          filterCustomLabels={{
+            categories: 'Rubrika',
+            users: 'Autori',
+            dates: 'Dátumy',
+            status: 'Status'
+          }}
         />
       </div>
     </div>

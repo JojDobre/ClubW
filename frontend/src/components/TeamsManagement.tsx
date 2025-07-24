@@ -9,6 +9,8 @@ import StatCard from './ui/cards/StatCard';
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
 import '../styles/components/managementPages.css';
+import ConfirmationModal from './ui/ConfirmModal';
+
 
 interface User {
   id: number;
@@ -49,6 +51,18 @@ const TeamForm: React.FC<TeamFormProps> = ({ team, onClose, onSave }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -400,6 +414,17 @@ const TeamsManagement: React.FC<TeamsManagementProps> = ({ currentUser }) => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [showDetail, setShowDetail] = useState(false);
 
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;  
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   // Formátovanie typu tímu
   const formatTeamType = (typ: string): string => {
@@ -575,18 +600,22 @@ const TeamsManagement: React.FC<TeamsManagementProps> = ({ currentUser }) => {
 
   // Vymazanie tímu
   const handleDeleteTeam = async (teamId: string) => {
-    const teamIdNumber = parseInt(teamId);
-    if (!window.confirm('Naozaj chcete vymazať tento tím?')) {
-      return;
-    }
-
-    try {
-      await teamsApi.deleteTeam(teamIdNumber);
-      await fetchTeams(); // Obnovenie zoznamu
-    } catch (err) {
-      console.error('Chyba pri mazaní tímu:', err);
-      setError(err instanceof Error ? err.message : 'Chyba pri mazaní tímu');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Potvrdiť vymazanie tímu',
+      message: 'Naozaj chcete vymazať tento tím? Táto akcia je nevratná!',
+      onConfirm: async () => {
+        try {
+          await teamsApi.deleteTeam(parseInt(teamId)); // Konverzia string na number
+          await fetchTeams(); // Obnovenie zoznamu
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+          console.error('Chyba pri mazaní tímu:', err);
+          setError(err instanceof Error ? err.message : 'Chyba pri mazaní tímu');
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   const handleRowClick = (teamId: string) => {
@@ -597,10 +626,6 @@ const TeamsManagement: React.FC<TeamsManagementProps> = ({ currentUser }) => {
   };
 
   const handleBulkDeleteTeams = async (selectedIds: string[]) => {
-    if (!window.confirm(`Naozaj chcete vymazať ${selectedIds.length} označených tímov?`)) {
-      return;
-    }
-
     try {
       for (const id of selectedIds) {
         await teamsApi.deleteTeam(parseInt(id));
@@ -730,6 +755,18 @@ const TeamsManagement: React.FC<TeamsManagementProps> = ({ currentUser }) => {
         />
       )}
 
+      {/* Potvrdzovacie okno */}
+      <ConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText="Vymazať"
+        cancelText="Zrušiť"
+      />
+      
+
       {/* CSS pre animácie */}
       <style>
         {`
@@ -755,42 +792,73 @@ const [showEditTeam, setShowEditTeam] = useState(false);
 const [editingPlayer, setEditingPlayer] = useState<any>(null);
 const [editingStaff, setEditingStaff] = useState<any>(null);
 
+const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
 const handleDeletePlayer = async (playerId: number) => {
-  if (!window.confirm('Naozaj chcete vymazať tohto hráča?')) return;
-  
-  try {
-    // Tu by bol API call na vymazanie hráča
-    // await playersApi.deletePlayer(playerId);
-    console.log('Vymazanie hráča:', playerId);
-    onUpdate(); // Obnovenie dát
-  } catch (err) {
-    console.error('Chyba pri mazaní hráča:', err);
-  }
+  setConfirmDialog({
+    isOpen: true,
+    title: 'Potvrdiť vymazanie hráča',
+    message: 'Naozaj chcete vymazať tohto hráča?',
+    onConfirm: async () => {
+      try {
+        // Tu by bol API call na vymazanie hráča
+        console.log('Vymazanie hráča:', playerId);
+        onUpdate(); // Obnovenie dát
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      } catch (err) {
+        console.error('Chyba pri mazaní hráča:', err);
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    }
+  });
 };
 
 const handleDeleteStaff = async (staffId: number) => {
-  if (!window.confirm('Naozaj chcete vymazať tohto člena realizačného tímu?')) return;
-  
-  try {
-    // Tu by bol API call na vymazanie staff
-    // await staffApi.deleteStaff(staffId);
-    console.log('Vymazanie staff:', staffId);
-    onUpdate(); // Obnovenie dát
-  } catch (err) {
-    console.error('Chyba pri mazaní člena realizačného tímu:', err);
-  }
+  setConfirmDialog({
+    isOpen: true,
+    title: 'Potvrdiť vymazanie člena realizačného tímu',
+    message: 'Naozaj chcete vymazať tohto člena realizačného tímu?',
+    onConfirm: async () => {
+      try {
+        // Tu by bol API call na vymazanie staff
+        console.log('Vymazanie staff:', staffId);
+        onUpdate(); // Obnovenie dát
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      } catch (err) {
+        console.error('Chyba pri mazaní člena realizačného tímu:', err);
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    }
+  });
 };
 
 const handleDeleteTeam = async () => {
-  if (!window.confirm('Naozaj chcete vymazať tento tím? Táto akcia je nevratná!')) return;
-  
-  try {
-    // Tu by bol API call na vymazanie tímu
-    console.log('Vymazanie tímu:', team.id);
-    onBack(); // Návrat na zoznam
-  } catch (err) {
-    console.error('Chyba pri mazaní tímu:', err);
-  }
+  setConfirmDialog({
+    isOpen: true,
+    title: 'Potvrdiť vymazanie tímu',
+    message: 'Naozaj chcete vymazať tento tím? Táto akcia je nevratná!',
+    onConfirm: async () => {
+      try {
+        // Tu by bol API call na vymazanie tímu
+        console.log('Vymazanie tímu:', team.id);
+        onBack(); // Návrat na zoznam
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      } catch (err) {
+        console.error('Chyba pri mazaní tímu:', err);
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    }
+  });
 };
 
   const formatDate = (dateString: string): string => {

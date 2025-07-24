@@ -127,11 +127,21 @@ const FilterPopup: React.FC<FilterPopupProps> = ({
       }
     });
 
+    // ✅ Ak nemáme dáta (server-side), pridaj všetky možné statusy
+    if (statusValues.size === 0) {
+      // Predvolené statusy pre články
+      statusValues.add('Publikované');
+      statusValues.add('Koncept'); 
+      statusValues.add('Naplánované');
+      statusValues.add('Archivované');
+    }
+
     return Array.from(statusValues).map(status => ({
       value: status,
       enabled: localFilters.statusFilters.find(f => f.value === status)?.enabled || false
     }));
   };
+
 
   const getAvailableCategories = (): CategoryFilter[] => {
     const categories = new Map<string, { id: string; name: string }>();
@@ -163,18 +173,27 @@ const FilterPopup: React.FC<FilterPopupProps> = ({
   };
 
   const getAvailableUsers = (): UserFilter[] => {
-    const users = new Set<{ id: string; name: string }>();
+    const users = new Map<string, { id: string; name: string }>();
     
     data.forEach(row => {
+      // Existujúca logika
       if (row.autor && typeof row.autor === 'object') {
-        users.add({
+        users.set(row.autor.id?.toString() || '', {
           id: row.autor.id?.toString() || '',
           name: row.autor.meno || row.autor.name || ''
         });
       }
+      
+      // ✅ PRIDAJ PODPORU PRE autor_obj
+      if (row.autor_obj && typeof row.autor_obj === 'object') {
+        users.set(row.autor_obj.id?.toString() || '', {
+          id: row.autor_obj.id?.toString() || '',
+          name: row.autor_obj.meno || row.autor_obj.name || ''
+        });
+      }
     });
 
-    return Array.from(users).filter(user => user.name).map(user => ({
+    return Array.from(users.values()).filter(user => user.name).map(user => ({
       userId: user.id,
       userName: user.name,
       enabled: localFilters.userFilters.find(f => f.userId === user.id)?.enabled || false
