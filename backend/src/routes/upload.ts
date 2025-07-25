@@ -41,26 +41,31 @@ router.post('/player-photo',
       
       try {
         if (fs.existsSync(req.file.path)) {
-          fs.renameSync(req.file.path, finalPath);
+          fs.renameSync(req.file.path, finalPath); // RENAME automaticky vymaže pôvodný súbor
+          console.log('✅ Súbor presunutý z:', req.file.path, 'do:', finalPath);
         } else {
           throw new Error('Dočasný súbor sa nenašiel');
         }
       } catch (moveError) {
-        console.error('Chyba pri presúvaní súboru:', moveError);
+        console.error('❌ Chyba pri presúvaní súboru:', moveError);
+        
+        // Vyčisti pôvodný súbor ak existuje
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        
         return res.status(500).json({
           success: false,
           message: 'Chyba pri ukladaní súboru'
         });
       }
 
-      // Vytvor URL cestu k obrázku (relatívna cesta pre DB)
+      // Vytvor URL cestu k obrázku (použij RELATÍVNU cestu pre DB)
       const relativePath = `/uploads/images/players/${tim_id}/${req.file.filename}`;
-      const fullUrl = `${req.protocol}://${req.get('host')}${relativePath}`;
 
       console.log('✅ Fotka hráča úspešne nahraná:');
-      console.log('   - Súbor:', finalPath);
-      console.log('   - URL:', fullUrl);
-      console.log('   - Relatívna cesta:', relativePath);
+      console.log('   - Finálny súbor:', finalPath);
+      console.log('   - Relatívna cesta pre DB:', relativePath);
 
       res.json({
         success: true,
@@ -68,21 +73,21 @@ router.post('/player-photo',
           filename: req.file.filename,
           originalName: req.file.originalname,
           size: req.file.size,
-          url: fullUrl,
+          url: relativePath, // VRÁŤ LEN RELATÍVNU CESTU
           relativePath: relativePath
         },
         message: 'Fotka hráča úspešne nahraná'
       });
 
     } catch (error) {
-      console.error('Chyba pri upload fotky hráča:', error);
+      console.error('❌ Chyba pri upload fotky hráča:', error);
       
       // Vymaž súbor v prípade chyby
       if (req.file && fs.existsSync(req.file.path)) {
         try {
           fs.unlinkSync(req.file.path);
         } catch (cleanupError) {
-          console.error('Chyba pri čistení súboru:', cleanupError);
+          console.error('⚠️ Chyba pri čistení súboru:', cleanupError);
         }
       }
       
