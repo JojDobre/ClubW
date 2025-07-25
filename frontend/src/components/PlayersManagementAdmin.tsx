@@ -1,10 +1,11 @@
 // frontend/src/components/PlayersManagementAdmin.tsx
 // Komponenta pre správu hráčov v admin dashboarde
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { playersApi, teamsApi, Player, Team } from '../services/teamsApi';
 import StatCard from './ui/cards/StatCard';
 import '../styles/components/managementPages.css';
+import '../styles/components/PlayerModal.css';
 
 
 import Table from './ui/table/Table';
@@ -35,9 +36,369 @@ interface PlayersManagementAdminProps {
   currentUser: User;
 }
 
+/////////////////////////////////////////////////
+// Komponenta pre dátumový vstup ///////////////
+/////////////////////////////////////////////////
+
+// DateInput komponent - krásny dátumový selektor
+interface DateInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const DateInput: React.FC<DateInputProps> = ({ value, onChange, placeholder }) => {
+  const [showPicker, setShowPicker] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [yearInput, setYearInput] = useState('');
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Formátovanie dátumu pre zobrazenie
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sk-SK', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
+  // Názvy mesiacov v slovenčine
+  const monthNames = [
+    'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+    'Júl', 'August', 'September', 'Október', 'November', 'December'
+  ];
+
+  // Názvy dní v slovenčine
+  const dayNames = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
+
+  // Generovanie rokov pre quick select
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear; year >= 1900; year--) {
+      years.push(year);
+    }
+    return years;
+  };
+
+  // Handler pre klik na rok
+  const handleYearClick = () => {
+    setShowYearPicker(true);
+    setYearInput(currentMonth.getFullYear().toString());
+  };
+
+  // Handler pre zmenu roku
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Povoliť iba čísla a maximálne 4 znaky
+    if (/^\d{0,4}$/.test(value)) {
+      setYearInput(value);
+    }
+  };
+
+  // Handler pre potvrdenie roku
+  const handleYearSubmit = () => {
+    const year = parseInt(yearInput);
+    if (year >= 1900 && year <= 2100) {
+      const newDate = new Date(currentMonth);
+      newDate.setFullYear(year);
+      setCurrentMonth(newDate);
+    }
+    setShowYearPicker(false);
+    setYearInput('');
+  };
+
+  // Handler pre stlačenie Enter v roku
+  const handleYearKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleYearSubmit();
+    } else if (e.key === 'Escape') {
+      setShowYearPicker(false);
+      setYearInput('');
+    }
+  };
+
+  // Handler pre výber roku zo selectu
+  const handleYearSelect = (year: number) => {
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(year);
+    setCurrentMonth(newDate);
+    setShowYearPicker(false);
+  };
+
+  // Získanie dní v mesiaci
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    // Správny výpočet pre pondelok ako prvý deň (0)
+    let startDay = firstDay.getDay();
+    // Nedeľa = 0, chceme ju ako 6 (posledný deň)
+    // Pondelok = 1, chceme ho ako 0 (prvý deň)
+    startDay = startDay === 0 ? 6 : startDay - 1;
+
+    const days = [];
+    
+    // Prázdne miesta na začiatku
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    
+    // Dni v mesiaci
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  // Handler pre klik na deň
+  const handleDayClick = (date: Date) => {
+    // Správne formátovanie dátumu do ISO formátu
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    onChange(dateStr);
+    setShowPicker(false);
+  };
+
+  // Handler pre zmenu mesiaca
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  // Handler pre klik na ikonu kalendára
+  const handleCalendarClick = () => {
+    setShowPicker(!showPicker);
+    if (value) {
+      setCurrentMonth(new Date(value));
+    }
+  };
+
+  // Zatvorenie pickera pri kliknutí mimo
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPicker]);
+
+  // Kontrola či je deň vybratý
+  const isSelectedDay = (date: Date) => {
+    if (!value) return false;
+    const selectedDate = new Date(value);
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  // Kontrola či je deň dnes
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  return (
+    <div className="date-input-container" ref={pickerRef}>
+      <div className="date-input-wrapper">
+        <input
+          type="text"
+          value={formatDisplayDate(value)}
+          readOnly
+          className="form-input date-display"
+          placeholder={placeholder}
+          onClick={handleCalendarClick}
+        />
+        <button
+          type="button"
+          onClick={handleCalendarClick}
+          className="date-calendar-icon"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Custom Calendar Picker */}
+      {showPicker && (
+        <div className="calendar-picker">
+          {/* Header kalendára */}
+          <div className="calendar-header">
+            <button
+              type="button"
+              onClick={() => handleMonthChange('prev')}
+              className="calendar-nav-button"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15,18 9,12 15,6"></polyline>
+              </svg>
+            </button>
+            
+            <div className="calendar-month-year">
+              <span className="calendar-month">{monthNames[currentMonth.getMonth()]} </span>
+              <button 
+                type="button"
+                onClick={handleYearClick}
+                className="calendar-year-button"
+              >
+                {currentMonth.getFullYear()}
+              </button>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => handleMonthChange('next')}
+              className="calendar-nav-button"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9,18 15,12 9,6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {/* Year Picker */}
+          {showYearPicker && (
+            <div className="year-picker">
+              <div className="year-picker-header">
+                <span>Vyberte rok:</span>
+                <button
+                  type="button"
+                  onClick={() => setShowYearPicker(false)}
+                  className="year-picker-close"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="year-input-section">
+                <input
+                  type="text"
+                  value={yearInput}
+                  onChange={handleYearChange}
+                  onKeyDown={handleYearKeyPress}
+                  placeholder="Zadajte rok (1900-2100)"
+                  className="year-input"
+                  autoFocus
+                  maxLength={4}
+                />
+                <button
+                  type="button"
+                  onClick={handleYearSubmit}
+                  className="year-submit-button"
+                  disabled={!yearInput || parseInt(yearInput) < 1900 || parseInt(yearInput) > 2100}
+                >
+                  ✓
+                </button>
+              </div>
+
+              <div className="year-quick-select">
+                <div className="year-quick-title">Rýchly výber:</div>
+                <div className="year-options">
+                  {generateYearOptions().slice(0, 8).map(year => (
+                    <button
+                      key={year}
+                      type="button"
+                      onClick={() => handleYearSelect(year)}
+                      className={`year-option ${year === currentMonth.getFullYear() ? 'active' : ''}`}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+                
+                {generateYearOptions().length > 8 && (
+                  <div className="year-scroll-hint">
+                    Posuňte sa pre ďalšie roky alebo zadajte rok priamo
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Dni v týždni */}
+          <div className="calendar-weekdays">
+            {dayNames.map(day => (
+              <div key={day} className="calendar-weekday">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Dni v mesiaci */}
+          <div className="calendar-days">
+            {getDaysInMonth(currentMonth).map((date, index) => (
+              <div key={index} className="calendar-day-cell">
+                {date && (
+                  <button
+                    type="button"
+                    onClick={() => handleDayClick(date)}
+                    className={`calendar-day ${isSelectedDay(date) ? 'selected' : ''} ${isToday(date) ? 'today' : ''}`}
+                  >
+                    {date.getDate()}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Footer s dnešným dátumom */}
+          <div className="calendar-footer">
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+                onChange(todayStr);
+                setShowPicker(false);
+              }}
+              className="calendar-today-button"
+            >
+              Dnes ({new Date().toLocaleDateString('sk-SK')})
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 
 
+
+
+/////////////////////////////////////////////
+// HLAVNÁ FUNKCIA PRE SPRÁVU HRÁČOV/////////
+///////////////////////////////////////////
 
 
 const PlayersManagementAdmin: React.FC<PlayersManagementAdminProps> = ({ currentUser }) => {
@@ -213,7 +574,10 @@ const PlayersManagementAdmin: React.FC<PlayersManagementAdminProps> = ({ current
     cislo: player.cislo_dresu?.toString() || '-',
     datum_narodenia: formatDate(player.datum_narodenia), // PRIDANÉ
     narodnost: player.narodnost || '-', // PRIDANÉ
-    info: `${player.vyska ? `📏 ${player.vyska} cm` : ''}${player.vyska && player.vaha ? '\n' : ''}${player.vaha ? `⚖️ ${player.vaha} kg` : ''}`.trim() || '-'
+    info: 
+    `${player.vyska ? `📏 ${player.vyska} cm` : ''}
+    ${player.vyska && player.vaha ? '\n' : ''}
+    ${player.vaha ? `⚖️ ${player.vaha} kg` : ''}`.trim() || '-'
   }));
 
   //state pre column visibility 
@@ -421,7 +785,7 @@ const PlayersManagementAdmin: React.FC<PlayersManagementAdminProps> = ({ current
 
 
 /////////////////////////////////////////////
-// HLAVNA FUNCCIA PRE FORMULÁR HÁRAČA
+// HLAVNA FUNCCIA PRE FORMULÁR HRAČA ////////
 /////////////////////////////////////////////
 
 const PlayerForm: React.FC<PlayerFormProps> = ({ player, teams, onClose, onSave }) => {
@@ -444,9 +808,10 @@ const PlayerForm: React.FC<PlayerFormProps> = ({ player, teams, onClose, onSave 
   const [imagePreview, setImagePreview] = useState<string>(player?.fotka || '');
 
   const positions = [
-    'brankár', 'obranca', 'stredopoliar', 'útočník', 'libero', 'stoper',
-    'wingback', 'defenzívny stredopoliar', 'ofenzívny stredopoliar', 'krídelník', 'druhý útočník'
+    'Brankár', 'Obranca', 'Stredopoliar', 'Útočník', 'Libero', 'Stoper',
+    'Wingback', 'Defenzívny stredopoliar', 'Ofenzívny stredopoliar', 'Krídelník', 'Druhý útočník'
   ];
+  
 
   const uploadPhoto = async (file: File, teamId: number): Promise<string> => {
     const formData = new FormData();
@@ -539,402 +904,231 @@ const PlayerForm: React.FC<PlayerFormProps> = ({ player, teams, onClose, onSave 
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        maxWidth: '600px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+    // Hlavný kontajner s CSS triedami namiesto inline štýlov
+    <div className="modal-overlay">
+      <div className="modal-content">
+        
+        {/* Header modalu */}
+        <div className="modal-header">
+          <h2 className="modal-title">
             {player ? 'Upraviť hráča' : 'Nový hráč'}
-          </h3>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
-          {error && (
-            <div style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '12px',
-              borderRadius: '6px',
-              marginBottom: '16px'
-            }}>
-              {error}
-            </div>
-          )}
-
-          {/* Fotka hráča */}
-<div style={{ marginTop: '16px' }}>
-  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-    Fotka hráča
-  </label>
-  
-  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-    {/* Preview fotky */}
-    <div style={{
-      width: '80px',
-      height: '80px',
-      border: '2px solid #d1d5db',
-      borderRadius: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      backgroundColor: '#f9fafb'
-    }}>
-      {imagePreview ? (
-        <img 
-          src={imagePreview} 
-          alt="Preview" 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover' 
-          }}
-        />
-      ) : (
-        <span style={{ fontSize: '24px', color: '#9ca3af' }}>👤</span>
-      )}
-    </div>
-    
-      {/* Upload button */}
-      <div style={{ flex: 1 }}>
-        <input
-          type="file"
-          id="player-photo"
-          accept="image/*"
-          onChange={handleImageUpload}
-          style={{ display: 'none' }}
-        />
-        <label 
-          htmlFor="player-photo"
-          style={{
-            display: 'inline-block',
-            padding: '8px 16px',
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: '#374151'
-          }}
-        >
-          📁 Vybrať fotku
-        </label>
-        
-        {selectedFile && (
-          <div style={{ 
-            marginTop: '4px', 
-            fontSize: '12px', 
-            color: '#6b7280' 
-          }}>
-            {selectedFile.name}
-          </div>
-        )}
-        
-        {imagePreview && (
+          </h2>
           <button
             type="button"
-            onClick={() => {
-              setImagePreview('');
-              setSelectedFile(null);
-              setFormData({ ...formData, fotka: '' });
-            }}
-            style={{
-              marginLeft: '8px',
-              padding: '4px 8px',
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
+            onClick={onClose}
+            className="modal-close-button"
+            disabled={loading}
           >
-            ✕ Odstrániť
+            ✕
           </button>
-        )}
-      </div>
-    </div>
-    
-    <div style={{ 
-      marginTop: '4px', 
-      fontSize: '12px', 
-      color: '#6b7280' 
-    }}>
-      Podporované formáty: JPG, PNG, WebP (max. 5MB)
-    </div>
-  </div>
+        </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Meno */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Meno *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.meno}
-                onChange={(e) => setFormData({ ...formData, meno: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Priezvisko */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Priezvisko *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.priezvisko}
-                onChange={(e) => setFormData({ ...formData, priezvisko: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Dátum narodenia */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Dátum narodenia *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.datum_narodenia}
-                onChange={(e) => setFormData({ ...formData, datum_narodenia: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Pozícia */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Pozícia *
-              </label>
-              <select
-                required
-                value={formData.pozicia}
-                onChange={(e) => setFormData({ ...formData, pozicia: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value="">Vyberte pozíciu</option>
-                {positions.map((position) => (
-                  <option key={position} value={position}>
-                    {position}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tím */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Tím *
-              </label>
-              <select
-                required
-                value={formData.tim_id}
-                onChange={(e) => setFormData({ ...formData, tim_id: Number(e.target.value) })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value={0}>Vyberte tím</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.nazov} {team.vekova_kategoria}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Číslo dresu */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Číslo dresu
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="99"
-                value={formData.cislo_dresu}
-                onChange={(e) => setFormData({ ...formData, cislo_dresu: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Národnosť */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Národnosť
-              </label>
-              <input
-                type="text"
-                value={formData.narodnost}
-                onChange={(e) => setFormData({ ...formData, narodnost: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Váha */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Váha (kg)
-              </label>
-              <input
-                type="number"
-                min="30"
-                max="200"
-                step="0.1"
-                value={formData.vaha}
-                onChange={(e) => setFormData({ ...formData, vaha: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Výška */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Výška (cm)
-              </label>
-              <input
-                type="number"
-                min="120"
-                max="250"
-                value={formData.vyska}
-                onChange={(e) => setFormData({ ...formData, vyska: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Poznámky */}
-          <div style={{ marginTop: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-              Poznámky
-            </label>
-            <textarea
-              rows={3}
-              value={formData.poznamky}
-              onChange={(e) => setFormData({ ...formData, poznamky: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                resize: 'vertical'
-              }}
-            />
-          </div>
-
-          {/* Tlačidlá */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '8px 16px',
-                background: '#f3f4f6',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
+        {/* Telo modalu */}
+        <div className="modal-body">
+          <form onSubmit={handleSubmit} className="add-user-form">
+            
+            {/* Chybová správa */}
+            {error && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#dc2626',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
                 fontSize: '14px'
-              }}
-            >
-              Zrušiť
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                padding: '8px 16px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                opacity: loading ? 0.5 : 1
-              }}
-            >
-              {loading ? 'Ukladám...' : (player ? 'Aktualizovať' : 'Pridať hráča')}
-            </button>
-          </div>
-        </form>
+              }}>
+                {error}
+              </div>
+            )}
+
+            {/* Upload fotky */}
+            <div className="avatar-upload-section">
+              <div className="avatar-upload">
+                <input
+                  type="file"
+                  id="player-photo-input"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="avatar-input"
+                />
+                <label htmlFor="player-photo-input" className="avatar-label">
+                  {imagePreview ? (
+                    <img 
+                      src={imagePreview} 
+                      alt="Náhľad fotky hráča" 
+                      className="avatar-preview"
+                    />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path 
+                          d="M16 16C19.3137 16 22 13.3137 22 10C22 6.68629 19.3137 4 16 4C12.6863 4 10 6.68629 10 10C10 13.3137 12.6863 16 16 16Z" 
+                          fill="currentColor"
+                        />
+                        <path 
+                          d="M16 18C10.477 18 6 22.477 6 28H26C26 22.477 21.523 18 16 18Z" 
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </label>
+              </div>
+            </div>
+
+            {/* Základné informácie - meno a priezvisko */}
+            <div className="form-row">
+              <div className="form-field">
+                <input
+                  type="text"
+                  required
+                  value={formData.meno}
+                  onChange={(e) => setFormData({ ...formData, meno: e.target.value })}
+                  className="form-input"
+                  placeholder="Meno *"
+                />
+              </div>
+              
+              <div className="form-field">
+                <input
+                  type="text"
+                  required
+                  value={formData.priezvisko}
+                  onChange={(e) => setFormData({ ...formData, priezvisko: e.target.value })}
+                  className="form-input"
+                  placeholder="Priezvisko *"
+                />
+              </div>
+            </div>
+
+            {/* Dátum narodenia a národnosť */}
+            <div className="form-row">
+              <div className="form-field">
+                <DateInput
+                  value={formData.datum_narodenia}
+                  onChange={(value) => setFormData({ ...formData, datum_narodenia: value })}
+                  placeholder="Dátum narodenia"
+                />
+              </div>
+              
+              <div className="form-field">
+                <input
+                  type="text"
+                  value={formData.narodnost}
+                  onChange={(e) => setFormData({ ...formData, narodnost: e.target.value })}
+                  className="form-input"
+                  placeholder="Národnosť"
+                />
+              </div>
+            </div>
+
+            {/* Pozícia a tím */}
+            <div className="form-row">
+              <div className="form-field">
+                <select
+                  required
+                  value={formData.pozicia}
+                  onChange={(e) => setFormData({ ...formData, pozicia: e.target.value })}
+                  className="form-input"
+                >
+                  <option value="">Pozícia</option>
+                  {positions.map((position) => (
+                    <option key={position} value={position}>
+                      {position}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-field">
+                <select
+                  required
+                  value={formData.tim_id}
+                  onChange={(e) => setFormData({ ...formData, tim_id: Number(e.target.value) })}
+                  className="form-input"
+                >
+                  <option value={0}>Tím *</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.nazov} {team.vekova_kategoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Číslo dresu, váha a výška */}
+            <div className="form-row">
+              <div className="form-field">
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  value={formData.cislo_dresu}
+                  onChange={(e) => setFormData({ ...formData, cislo_dresu: e.target.value })}
+                  className="form-input"
+                  placeholder="Číslo dresu (1-99)"
+                />
+              </div>
+              
+              <div className="form-field">
+                <input
+                  type="number"
+                  min="30"
+                  max="200"
+                  step="0.1"
+                  value={formData.vaha}
+                  onChange={(e) => setFormData({ ...formData, vaha: e.target.value })}
+                  className="form-input"
+                  placeholder="Váha v kg"
+                />
+              </div>
+              
+              <div className="form-field">
+                <input
+                  type="number"
+                  min="120"
+                  max="250"
+                  value={formData.vyska}
+                  onChange={(e) => setFormData({ ...formData, vyska: e.target.value })}
+                  className="form-input"
+                  placeholder="Výška v cm"
+                />
+              </div>
+            </div>
+
+            {/* Poznámky */}
+            <div className="form-field">
+              <textarea
+                rows={3}
+                value={formData.poznamky}
+                onChange={(e) => setFormData({ ...formData, poznamky: e.target.value })}
+                className="form-input"
+                placeholder="Voliteľné poznámky o hráčovi"
+              />
+            </div>
+
+            {/* Tlačidlá */}
+            <div className="form-actions">
+              <button
+                type="button"
+                onClick={onClose}
+                className="form-button cancel-button"
+                disabled={loading}
+              >
+                Zrušiť
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="form-button save-button"
+              >
+                {loading ? 'Ukladám...' : (player ? 'Aktualizovať' : 'Pridať hráča')}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

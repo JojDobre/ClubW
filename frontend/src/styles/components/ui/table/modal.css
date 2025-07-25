@@ -268,14 +268,6 @@
   background: var(--color-background);
 }
 
-[data-theme="dark-bright"] .form-input {
-  border: none;
-  font-size: 14px;
-  padding: 0px;
-  background: var(--color-background);
-  color: var(--color-text-primary);
-}
-
 [data-theme="dark"] .modal-overlay,
 [data-theme="dark-bright"] .modal-overlay {
   background: rgba(0, 0, 0, 0.7);
