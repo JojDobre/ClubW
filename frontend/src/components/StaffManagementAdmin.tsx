@@ -1,8 +1,13 @@
 // frontend/src/components/StaffManagementAdmin.tsx
 // Komponenta pre správu realizačného tímu v admin dashboarde
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { staffApi, teamsApi, Staff, Team } from '../services/teamsApi';
+import StatCard from './ui/cards/StatCard';
+import '../styles/components/managementPages.css';
+
+import Table from './ui/table/Table';
+import type { TableColumn, TableData } from './ui/table/Table';
 
 interface User {
   id: number;
@@ -20,6 +25,382 @@ interface StaffManagementAdminProps {
   currentUser: User;
 }
 
+// Komponenta pre formulár hráča
+interface StaffFormProps {
+  staff?: Staff | null;
+  teams: Team[];
+  onClose: () => void;
+  onSave: () => void;
+}
+
+interface StaffManagementAdminProps {
+  currentUser: User;
+}
+
+/////////////////////////////////////////////////
+// Komponenta pre dátumový vstup ///////////////
+/////////////////////////////////////////////////
+
+// DateInput komponent - krásny dátumový selektor
+interface DateInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const DateInput: React.FC<DateInputProps> = ({ value, onChange, placeholder }) => {
+  const [showPicker, setShowPicker] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [yearInput, setYearInput] = useState('');
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Formátovanie dátumu pre zobrazenie
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sk-SK', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
+  // Názvy mesiacov v slovenčine
+  const monthNames = [
+    'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+    'Júl', 'August', 'September', 'Október', 'November', 'December'
+  ];
+
+  // Názvy dní v slovenčine
+  const dayNames = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
+
+  // Generovanie rokov pre quick select
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear; year >= 1900; year--) {
+      years.push(year);
+    }
+    return years;
+  };
+
+  // Handler pre klik na rok
+  const handleYearClick = () => {
+    setShowYearPicker(true);
+    setYearInput(currentMonth.getFullYear().toString());
+  };
+
+  // Handler pre zmenu roku
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Povoliť iba čísla a maximálne 4 znaky
+    if (/^\d{0,4}$/.test(value)) {
+      setYearInput(value);
+    }
+  };
+
+  // Handler pre potvrdenie roku
+  const handleYearSubmit = () => {
+    const year = parseInt(yearInput);
+    if (year >= 1900 && year <= 2100) {
+      const newDate = new Date(currentMonth);
+      newDate.setFullYear(year);
+      setCurrentMonth(newDate);
+    }
+    setShowYearPicker(false);
+    setYearInput('');
+  };
+
+  // Handler pre stlačenie Enter v roku
+  const handleYearKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleYearSubmit();
+    } else if (e.key === 'Escape') {
+      setShowYearPicker(false);
+      setYearInput('');
+    }
+  };
+
+  // Handler pre výber roku zo selectu
+  const handleYearSelect = (year: number) => {
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(year);
+    setCurrentMonth(newDate);
+    setShowYearPicker(false);
+  };
+
+  // Získanie dní v mesiaci
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    // Správny výpočet pre pondelok ako prvý deň (0)
+    let startDay = firstDay.getDay();
+    // Nedeľa = 0, chceme ju ako 6 (posledný deň)
+    // Pondelok = 1, chceme ho ako 0 (prvý deň)
+    startDay = startDay === 0 ? 6 : startDay - 1;
+
+    const days = [];
+    
+    // Prázdne miesta na začiatku
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    
+    // Dni v mesiaci
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  // Handler pre klik na deň
+  const handleDayClick = (date: Date) => {
+    // Správne formátovanie dátumu do ISO formátu
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    onChange(dateStr);
+    setShowPicker(false);
+  };
+
+  // Handler pre zmenu mesiaca
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  // Handler pre klik na ikonu kalendára
+  const handleCalendarClick = () => {
+    setShowPicker(!showPicker);
+    if (value) {
+      setCurrentMonth(new Date(value));
+    }
+  };
+
+  // Zatvorenie pickera pri kliknutí mimo
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPicker]);
+
+  // Kontrola či je deň vybratý
+  const isSelectedDay = (date: Date) => {
+    if (!value) return false;
+    const selectedDate = new Date(value);
+    return date.toDateString() === selectedDate.toDateString();
+  };
+
+  // Kontrola či je deň dnes
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  return (
+    <div className="date-input-container" ref={pickerRef}>
+      <div className="date-input-wrapper">
+        <input
+          type="text"
+          value={formatDisplayDate(value)}
+          readOnly
+          className="form-input date-display"
+          placeholder={placeholder}
+          onClick={handleCalendarClick}
+        />
+        <button
+          type="button"
+          onClick={handleCalendarClick}
+          className="date-calendar-icon"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Custom Calendar Picker */}
+      {showPicker && (
+        <div className="calendar-picker">
+          {/* Header kalendára */}
+          <div className="calendar-header">
+            <button
+              type="button"
+              onClick={() => handleMonthChange('prev')}
+              className="calendar-nav-button"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15,18 9,12 15,6"></polyline>
+              </svg>
+            </button>
+            
+            <div className="calendar-month-year">
+              <span className="calendar-month">{monthNames[currentMonth.getMonth()]} </span>
+              <button 
+                type="button"
+                onClick={handleYearClick}
+                className="calendar-year-button"
+              >
+                {currentMonth.getFullYear()}
+              </button>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => handleMonthChange('next')}
+              className="calendar-nav-button"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9,18 15,12 9,6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {/* Year Picker */}
+          {showYearPicker && (
+            <div className="year-picker">
+              <div className="year-picker-header">
+                <span>Vyberte rok:</span>
+                <button
+                  type="button"
+                  onClick={() => setShowYearPicker(false)}
+                  className="year-picker-close"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="year-input-section">
+                <input
+                  type="text"
+                  value={yearInput}
+                  onChange={handleYearChange}
+                  onKeyDown={handleYearKeyPress}
+                  placeholder="Zadajte rok (1900-2100)"
+                  className="year-input"
+                  autoFocus
+                  maxLength={4}
+                />
+                <button
+                  type="button"
+                  onClick={handleYearSubmit}
+                  className="year-submit-button"
+                  disabled={!yearInput || parseInt(yearInput) < 1900 || parseInt(yearInput) > 2100}
+                >
+                  ✓
+                </button>
+              </div>
+
+              <div className="year-quick-select">
+                <div className="year-quick-title">Rýchly výber:</div>
+                <div className="year-options">
+                  {generateYearOptions().slice(0, 8).map(year => (
+                    <button
+                      key={year}
+                      type="button"
+                      onClick={() => handleYearSelect(year)}
+                      className={`year-option ${year === currentMonth.getFullYear() ? 'active' : ''}`}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+                
+                {generateYearOptions().length > 8 && (
+                  <div className="year-scroll-hint">
+                    Posuňte sa pre ďalšie roky alebo zadajte rok priamo
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Dni v týždni */}
+          <div className="calendar-weekdays">
+            {dayNames.map(day => (
+              <div key={day} className="calendar-weekday">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Dni v mesiaci */}
+          <div className="calendar-days">
+            {getDaysInMonth(currentMonth).map((date, index) => (
+              <div key={index} className="calendar-day-cell">
+                {date && (
+                  <button
+                    type="button"
+                    onClick={() => handleDayClick(date)}
+                    className={`calendar-day ${isSelectedDay(date) ? 'selected' : ''} ${isToday(date) ? 'today' : ''}`}
+                  >
+                    {date.getDate()}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Footer s dnešným dátumom */}
+          <div className="calendar-footer">
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+                onChange(todayStr);
+                setShowPicker(false);
+              }}
+              className="calendar-today-button"
+            >
+              Dnes ({new Date().toLocaleDateString('sk-SK')})
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
+
+
+
+////////////////////////////////////////////////////
+// Komponenta pre správu realizačného tímu  ////////
+////////////////////////////////////////////////////
 const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser }) => {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -31,6 +412,21 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
   const [showClubStaff, setShowClubStaff] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+
+  const [stats, setStats] = useState({
+    celkovo: 0,
+    aktivni: 0,
+    priemerny_vek: 0,
+    bez_timu: 0,
+    celkovo_zmena: '+5%',
+    celkovo_zmena_typ: 'positive' as 'positive' | 'negative' | 'neutral',
+    aktivni_zmena: '+2%', 
+    aktivni_zmena_typ: 'positive' as 'positive' | 'negative' | 'neutral',
+    vek_zmena: '-0.5',
+    vek_zmena_typ: 'positive' as 'positive' | 'negative' | 'neutral',
+    bez_timu_zmena: '0',
+    bez_timu_zmena_typ: 'neutral' as 'positive' | 'negative' | 'neutral'
+  });
 
   // Možné funkcie realizačného tímu
   const functions = [
@@ -50,6 +446,31 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
     'ostatné'
   ];
 
+  // Funkcia na výpočet štatistík
+  const calculateStats = (playersData: Staff[]) => {
+    const celkovo = playersData.length;
+    const aktivni = playersData.filter(p => p.aktivity).length;
+    const bez_timu = playersData.filter(p => !p.tim_id).length;
+    
+    // Výpočet priemerného veku
+    const aktualny_rok = new Date().getFullYear();
+    const vekove_data = playersData
+      .filter(p => p.datum_narodenia)
+      .map(p => aktualny_rok - new Date(p.datum_narodenia!).getFullYear());
+    
+    const priemerny_vek = vekove_data.length > 0 
+      ? Math.round(vekove_data.reduce((sum, vek) => sum + vek, 0) / vekove_data.length)
+      : 0;
+
+    setStats(prev => ({
+      ...prev,
+      celkovo,
+      aktivni,
+      priemerny_vek,
+      bez_timu
+    }));
+  };
+
   // Načítanie členov realizačného tímu
   const fetchStaff = async () => {
     setLoading(true);
@@ -64,9 +485,10 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
 
       if (response.success) {
         setStaff(response.data);
+        calculateStats(response.data); // PRIDAJ TENTO RIADOK
         setError('');
       } else {
-        setError('Chyba pri načítaní realizačného tímu');
+        setError('Chyba pri načítaní hráčov');
       }
     } catch (err) {
       console.error('Chyba pri načítaní realizačného tímu:', err);
@@ -112,69 +534,119 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
     }
   };
 
-  // Formátovanie dátumu
-  const formatDate = (dateString: string): string => {
+  // Pridaj definíciu stĺpcov pre tabuľku hneď za useState deklarácie
+  const tableColumns: TableColumn[] = [
+    { id: 'staff', header: 'Člen', type: 'user', sortable: true },
+    { id: 'funkcia', header: 'Funkcia', type: 'text', sortable: true },
+    { id: 'tim', header: 'Tím', type: 'text', sortable: true },
+    { id: 'kontakt', header: 'Kontakt', type: 'text', sortable: false },
+    { id: 'vek', header: 'Vek', type: 'text', sortable: true },
+    { id: 'kvalifikacia', header: 'Kvalifikácia', type: 'text', sortable: false },
+    { id: 'actions', header: 'Akcie', type: 'actions', width: '100px' }
+  ];
+
+  // Helper funkcia pre avatar URL
+  const getAvatarUrl = (fotka?: string) => {
+    if (fotka) {
+      return fotka.startsWith('http') ? fotka : `http://localhost:3000${fotka}`;
+    }
+    return '/default-avatar.png';
+  };
+
+  // Konverzia Staff dát pre tabuľku
+  const tableData: TableData[] = staff.map(member => ({
+    id: member.id.toString(),
+    staff: {
+      name: member.full_name,
+      avatar: getAvatarUrl(member.fotka),
+      subtitle: `${member.funkcia} • ${member.tim?.nazov || 'Celý klub'}`
+    },
+    funkcia: member.funkcia,
+    tim: member.tim ? `${member.tim.nazov} ${member.tim.vekova_kategoria || ''}`.trim() : 'Celý klub',
+    kontakt: member.ma_kontakt ? 
+      `${member.kontakt.email ? '📧 ' + member.kontakt.email : ''}${member.kontakt.email && member.kontakt.telefon ? '\n' : ''}${member.kontakt.telefon ? '📞 ' + member.kontakt.telefon : ''}`.trim() 
+      : '-',
+    vek: member.vek ? `${member.vek} rokov` : '-',
+    kvalifikacia: member.kvalifikacia || '-'
+  }));
+
+  // Helper funkcia pre formátovanie dátumu
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('sk-SK');
   };
 
+  // Handler funkcie pre tabuľku
+  const handleAddStaffFromTable = () => {
+    setShowAddForm(true);
+    setEditingStaff(null);
+  };
+
+  const handleEditStaff = (staffId: string) => {
+    const member = staff.find(s => s.id.toString() === staffId);
+    if (member) {
+      setEditingStaff(member);
+      setShowAddForm(true);
+    }
+  };
+
+  const handleDeleteStaffFromTable = (staffId: string) => {
+    handleDeleteStaff(Number(staffId));
+  };
+
+  const handleBulkDeleteStaff = (selectedIds: string[]) => {
+    if (!window.confirm(`Naozaj chcete vymazať ${selectedIds.length} označených členov realizačného tímu?`)) {
+      return;
+    }
+    
+    Promise.all(selectedIds.map(id => handleDeleteStaff(Number(id))))
+      .then(() => {
+        console.log('Bulk delete dokončené');
+      })
+      .catch(err => {
+        console.error('Chyba pri bulk delete:', err);
+        setError('Chyba pri mazaní členov realizačného tímu');
+      });
+  };
+
+  const handleBulkDuplicateStaff = (selectedIds: string[]) => {
+    // TODO: Implementovať duplikovanie členov realizačného tímu
+    console.log('Duplikovanie členov realizačného tímu:', selectedIds);
+  };
+
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="management-page">
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold', color: '#1e293b', marginBottom: '8px' }}>
+      <div className="management-header">
+        <h1 className="management-title">
           Správa realizačného tímu
         </h1>
-        <p style={{ margin: 0, color: '#64748b' }}>
-          Spravujte členov realizačného tímu klubu
-        </p>
       </div>
 
+      {/* ===== ŠTATISTICKÉ KARTY ===== */}
+      <div className="management-stats">
+        <StatCard
+          title="Celkový počet členov"
+          value={stats.celkovo}
+          icon={<span style={{ fontSize: '20px' }}>👥</span>}
+          variant="default"
+        />
+      
+        <StatCard
+          title="Počet členov bez priradeného tímu"
+          value={stats.bez_timu}
+          icon={<span style={{ fontSize: '20px' }}>❓</span>}
+          variant="accent"
+        />
+      </div>
+
+
       {/* Akcie a filtrovanie */}
-      <div style={{ 
-        background: 'white', 
-        padding: '20px', 
-        borderRadius: '8px', 
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '24px'
-      }}>
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setShowAddForm(true)}
-            style={{
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
-            + Pridať člena
-          </button>
-        </div>
+<div className="management-stats">
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          {/* Vyhľadávanie */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-              Vyhľadávanie
-            </label>
-            <input
-              type="text"
-              placeholder="Hľadať člena..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
+
+
 
           {/* Filter tímu */}
           <div>
@@ -228,29 +700,6 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
               ))}
             </select>
           </div>
-
-          {/* Checkbox pre klubových členov */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              id="clubStaff"
-              checked={showClubStaff}
-              onChange={(e) => {
-                setShowClubStaff(e.target.checked);
-                if (e.target.checked) {
-                  setSelectedTeam(0);
-                }
-              }}
-              style={{ width: '16px', height: '16px' }}
-            />
-            <label htmlFor="clubStaff" style={{ fontSize: '14px', fontWeight: '500' }}>
-              Len kluboví členovia
-            </label>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '16px', fontSize: '14px', color: '#6b7280' }}>
-          <strong>{staff.length}</strong> členov realizačného tímu
         </div>
       </div>
 
@@ -283,185 +732,28 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
         </div>
       )}
 
-      {/* Zoznam členov realizačného tímu */}
-      {!loading && (
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '8px', 
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden'
-        }}>
-          {staff.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f8fafc' }}>
-                  <tr>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Člen
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Funkcia
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Tím
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Kontakt
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Kvalifikácia
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#374151', textTransform: 'uppercase' }}>
-                      Akcie
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {staff.map((member, index) => (
-                    <tr 
-                      key={member.id} 
-                      style={{ 
-                        borderBottom: index < staff.length - 1 ? '1px solid #f1f5f9' : 'none'
-                      }}
-                    >
-                      <td style={{ padding: '16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{
-                            width: '40px',
-                            height: '40px',
-                            background: '#e5e7eb',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            {member.fotka ? (
-                              <img 
-                                src={member.fotka} 
-                                alt={member.full_name}
-                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <span style={{ fontSize: '20px' }}>👤</span>
-                            )}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: '500', color: '#1f2937' }}>
-                              {member.full_name}
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                              {member.vek && `${member.vek} rokov`}
-                              {member.datum_narodenia && ` • ${formatDate(member.datum_narodenia)}`}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '16px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          backgroundColor: '#d1fae5',
-                          color: '#065f46'
-                        }}>
-                          {member.funkcia}
-                        </span>
-                      </td>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
-                        {member.tim ? (
-                          <div>
-                            <div style={{ fontWeight: '500' }}>{member.tim.nazov}</div>
-                            <div style={{ fontSize: '12px', color: '#6b7280' }}>{member.tim.vekova_kategoria}</div>
-                          </div>
-                        ) : (
-                          <span style={{ 
-                            color: '#8b5cf6', 
-                            fontSize: '12px', 
-                            fontWeight: '500',
-                            backgroundColor: '#f3e8ff',
-                            padding: '2px 6px',
-                            borderRadius: '4px'
-                          }}>
-                            Celý klub
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '16px' }}>
-                        {member.ma_kontakt ? (
-                          <div style={{ fontSize: '14px' }}>
-                            {member.kontakt.email && (
-                              <div style={{ marginBottom: '4px' }}>
-                                📧 {member.kontakt.email}
-                              </div>
-                            )}
-                            {member.kontakt.telefon && (
-                              <div>
-                                📞 {member.kontakt.telefon}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span style={{ color: '#9ca3af', fontSize: '14px' }}>-</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#6b7280' }}>
-                        {member.kvalifikacia ? (
-                          <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {member.kvalifikacia}
-                          </div>
-                        ) : (
-                          <span style={{ color: '#9ca3af' }}>-</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                          <button
-                            onClick={() => {
-                              setEditingStaff(member);
-                              setShowAddForm(true);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#3b82f6',
-                              cursor: 'pointer',
-                              fontSize: '14px'
-                            }}
-                          >
-                            Upraviť
-                          </button>
-                          <button
-                            onClick={() => handleDeleteStaff(member.id)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              fontSize: '14px'
-                            }}
-                          >
-                            Vymazať
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>👥</div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#374151' }}>Žiadny realizačný tím</h3>
-              <p style={{ margin: 0, fontSize: '14px' }}>
-                {searchTerm || selectedTeam || selectedFunction || showClubStaff ? 'Pre zadané kritériá neboli nájdení žiadni členovia.' : 'Zatiaľ nie sú vytvorení žiadni členovia realizačného tímu.'}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* ===== TABUĽKA S REALIZAČNÝM TÍMOM ===== */}
+      <div className="management-content">
+        <Table
+          columns={tableColumns}
+          data={tableData}
+          showCheckboxes={true}
+          itemsPerPage={15}
+          onAddTeam={handleAddStaffFromTable} // Použije sa pre pridanie nového člena
+          teams={teams}
+          onDeleteSelected={handleBulkDeleteStaff}
+          onDuplicateSelected={handleBulkDuplicateStaff}
+          onEditRow={handleEditStaff}
+          onDeleteRow={handleDeleteStaffFromTable}
+          enableAdvancedFilters={true}
+          filterCustomLabels={{
+            categories: 'Funkcie',
+            status: 'Tím',
+            users: 'Členovia',
+            dates: 'Dátumy'
+          }}
+        />
+      </div>
 
       {/* Formulár pre pridanie/úpravu člena realizačného tímu */}
       {showAddForm && (
@@ -503,6 +795,9 @@ interface StaffFormProps {
   onSave: () => void;
 }
 
+//////////////////////////////////////////////////////////
+///// Komponenta pre formulár člena realizačného tímu ///
+/////////////////////////////////////////////////////////
 const StaffForm: React.FC<StaffFormProps> = ({ staff, teams, functions, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     meno: staff?.meno || '',
