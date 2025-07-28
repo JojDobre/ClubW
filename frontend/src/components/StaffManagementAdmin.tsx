@@ -8,6 +8,24 @@ import '../styles/components/managementPages.css';
 
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
+import '../styles/components/PlayerModal.css';
+
+// Helper funkcia pre výpočet veku z dátumu narodenia
+const calculateAge = (dateOfBirth?: string): number => {
+  if (!dateOfBirth) return 0;
+  
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
 
 interface User {
   id: number;
@@ -25,10 +43,11 @@ interface StaffManagementAdminProps {
   currentUser: User;
 }
 
-// Komponenta pre formulár hráča
+// Komponenta pre formulár staffa
 interface StaffFormProps {
   staff?: Staff | null;
   teams: Team[];
+  functions: string[];
   onClose: () => void;
   onSave: () => void;
 }
@@ -455,8 +474,8 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
     // Výpočet priemerného veku
     const aktualny_rok = new Date().getFullYear();
     const vekove_data = playersData
-      .filter(p => p.datum_narodenia)
-      .map(p => aktualny_rok - new Date(p.datum_narodenia!).getFullYear());
+      .filter(s => s.datum_narodenia)
+      .map(s => calculateAge(s.datum_narodenia));
     
     const priemerny_vek = vekove_data.length > 0 
       ? Math.round(vekove_data.reduce((sum, vek) => sum + vek, 0) / vekove_data.length)
@@ -545,13 +564,14 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
     { id: 'actions', header: 'Akcie', type: 'actions', width: '100px' }
   ];
 
-  // Helper funkcia pre avatar URL
-  const getAvatarUrl = (fotka?: string) => {
-    if (fotka) {
-      return fotka.startsWith('http') ? fotka : `http://localhost:3000${fotka}`;
-    }
-    return '/default-avatar.png';
+
+  const getAvatarUrl = (fotka?: string | null): string => {
+    if (!fotka) return '/uploads/default-avatar.svg';
+    if (fotka.startsWith('http://') || fotka.startsWith('https://')) return fotka;
+    if (fotka.startsWith('/')) return fotka;
+    return `/uploads/${fotka}`;
   };
+
 
   // Konverzia Staff dát pre tabuľku
   const tableData: TableData[] = staff.map(member => ({
@@ -566,7 +586,7 @@ const StaffManagementAdmin: React.FC<StaffManagementAdminProps> = ({ currentUser
     kontakt: member.ma_kontakt ? 
       `${member.kontakt.email ? '📧 ' + member.kontakt.email : ''}${member.kontakt.email && member.kontakt.telefon ? '\n' : ''}${member.kontakt.telefon ? '📞 ' + member.kontakt.telefon : ''}`.trim() 
       : '-',
-    vek: member.vek ? `${member.vek} rokov` : '-',
+    vek: member.datum_narodenia ? `${calculateAge(member.datum_narodenia)} r` : '-',
     kvalifikacia: member.kvalifikacia || '-'
   }));
 
@@ -807,12 +827,62 @@ const StaffForm: React.FC<StaffFormProps> = ({ staff, teams, functions, onClose,
     telefon: staff?.telefon || '',
     datum_narodenia: staff?.datum_narodenia ? staff.datum_narodenia.split('T')[0] : '',
     kvalifikacia: staff?.kvalifikacia || '',
-    tim_id: staff?.tim_id || null,
+    tim_id: staff?.tim_id || 0,
     poznamky: staff?.poznamky || '',
-    poradie: staff?.poradie || 0,
+    fotka: staff?.fotka || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // ✅ PRIDANÉ
+  const [imagePreview, setImagePreview] = useState<string>(staff?.fotka || ''); // ✅ PRIDANÉ
+
+  // ✅ PRIDANÉ - Upload photo funkcia (rovnaká ako v PlayerForm)
+  const uploadPhoto = async (file: File, teamId: number): Promise<string> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('tim_id', teamId.toString()); // Aj pre staff pošleme tim_id
+
+    const response = await fetch('http://localhost:3000/api/upload/staff-photo', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      return result.data.url;
+    } else {
+      throw new Error(result.message);
+    }
+  };
+
+  // ✅ PRIDANÉ - Handler pre upload fotky (rovnaký ako v PlayerForm)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      
+      // Vytvor preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      
+      // Nastav URL do formData (môže byť dočasné)
+      setFormData({ ...formData, fotka: previewUrl });
+    }
+  };
+
+  // ✅ PRIDANÉ - useEffect pre cleanup (rovnaký ako v PlayerForm)
+  useEffect(() => {
+    if (staff) {
+      setImagePreview(staff.fotka || '');
+    }
+    
+    // Cleanup pri unmount
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [staff]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -820,21 +890,34 @@ const StaffForm: React.FC<StaffFormProps> = ({ staff, teams, functions, onClose,
     setError('');
 
     try {
+      let photoUrl = formData.fotka;
+      
+      if (selectedFile) {
+        console.log('🔄 Uploadujem staff fotku:', selectedFile.name);
+        const teamIdForUpload = formData.tim_id || 1; // Default team ID
+        photoUrl = await uploadPhoto(selectedFile, teamIdForUpload);
+        console.log('✅ Staff fotka uploadnutá:', photoUrl);
+      }
+
       const staffData = {
         ...formData,
-        tim_id: formData.tim_id || undefined,
+        tim_id: Number(formData.tim_id) || undefined,
         email: formData.email || undefined,
         telefon: formData.telefon || undefined,
         datum_narodenia: formData.datum_narodenia || undefined,
         kvalifikacia: formData.kvalifikacia || undefined,
         poznamky: formData.poznamky || undefined,
-        poradie: Number(formData.poradie) || 0,
+        fotka: photoUrl || undefined, 
       };
 
+      console.log('Odosielajú sa tieto dáta na server:', staffData);
+
       if (staff) {
-        await staffApi.updateStaff(staff.id, staffData);
+        const response = await staffApi.updateStaff(staff.id, staffData);
+        console.log('✅ Člen realizačného tímu aktualizovaný:', response);
       } else {
-        await staffApi.createStaff(staffData as any);
+        const response = await staffApi.createStaff(staffData as any);
+        console.log('✅ Člen realizačného tímu vytvorený:', response);
       }
 
       onSave();
@@ -847,293 +930,209 @@ const StaffForm: React.FC<StaffFormProps> = ({ staff, teams, functions, onClose,
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        maxWidth: '600px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-            {staff ? 'Upraviť člena realizačného tímu' : 'Pridať nového člena realizačného tímu'}
-          </h3>
+    // ✅ AKTUALIZOVANÉ - použitie CSS tried namiesto inline štýlov
+    <div className="modal-overlay">
+      <div className="modal-content">
+        
+        {/* Header modalu */}
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {staff ? 'Upraviť člena realizačného tímu' : 'Nový člen realizačného tímu'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="modal-close-button"
+            disabled={loading}
+          >
+            ✕
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
-          {error && (
-            <div style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '12px',
-              borderRadius: '6px',
-              marginBottom: '16px'
-            }}>
-              {error}
-            </div>
-          )}
+        {/* Telo modalu */}
+        <div className="modal-body">
+          <form onSubmit={handleSubmit} className="add-user-form">
+            
+            {/* Chybová správa */}
+            {error && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#dc2626',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Meno */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Meno *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.meno}
-                onChange={(e) => setFormData({ ...formData, meno: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Priezvisko */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Priezvisko *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.priezvisko}
-                onChange={(e) => setFormData({ ...formData, priezvisko: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            {/* Funkcia */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Funkcia *
-              </label>
-              <select
-                required
-                value={formData.funkcia}
-                onChange={(e) => setFormData({ ...formData, funkcia: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value="">Vyberte funkciu</option>
-                {functions.map((func) => (
-                  <option key={func} value={func}>
-                    {func}
-                  </option>
-                ))}
-              </select>
+            {/* ✅ PRIDANÉ - Upload fotky (identický ako v PlayerForm) */}
+            <div className="avatar-upload-section">
+              <div className="avatar-upload">
+                <input
+                  type="file"
+                  id="staff-photo-input"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="avatar-input"
+                />
+                <label htmlFor="staff-photo-input" className="avatar-label">
+                  {imagePreview ? (
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="avatar-preview"
+                    />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path 
+                          d="M16 16C19.3137 16 22 13.3137 22 10C22 6.68629 19.3137 4 16 4C12.6863 4 10 6.68629 10 10C10 13.3137 12.6863 16 16 16Z" 
+                          fill="currentColor"
+                        />
+                        <path 
+                          d="M16 18C10.477 18 6 22.477 6 28H26C26 22.477 21.523 18 16 18Z" 
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </label>
+              </div>
             </div>
 
-            {/* Tím */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Tím
-              </label>
-              <select
-                value={formData.tim_id || ''}
-                onChange={(e) => setFormData({ ...formData, tim_id: e.target.value ? Number(e.target.value) : null })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value="">Celý klub (žiadny konkrétny tím)</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.nazov} {team.vekova_kategoria}
-                  </option>
-                ))}
-              </select>
+            {/* ✅ AKTUALIZOVANÉ - Meno a Priezvisko */}
+            <div className="form-row">
+              <div className="form-field">
+                <input
+                  type="text"
+                  required
+                  value={formData.meno}
+                  onChange={(e) => setFormData({ ...formData, meno: e.target.value })}
+                  className="form-input"
+                  placeholder="Meno *"
+                />
+              </div>
+              <div className="form-field">
+                <input
+                  type="text"
+                  required
+                  value={formData.priezvisko}
+                  onChange={(e) => setFormData({ ...formData, priezvisko: e.target.value })}
+                  className="form-input"
+                  placeholder="Priezvisko *"
+                />
+              </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
+            {/* ✅ AKTUALIZOVANÉ - Funkcia a Tím */}
+            <div className="form-row">
+              <div className="form-field">
+                <select
+                  required
+                  value={formData.funkcia}
+                  onChange={(e) => setFormData({ ...formData, funkcia: e.target.value })}
+                  className="form-input"
+                >
+                  <option value="">Pozícia *</option>
+                  {functions.map((funkcia) => (
+                    <option key={funkcia} value={funkcia}>
+                      {funkcia}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <select
+                  value={formData.tim_id}
+                  onChange={(e) => setFormData({ ...formData, tim_id: Number(e.target.value) })}
+                  className="form-input"
+                >
+                  <option value="0">Mužstvo</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.nazov} {team.vekova_kategoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Telefón */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Telefón
-              </label>
-              <input
-                type="tel"
-                value={formData.telefon}
-                onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
+            {/* ✅ AKTUALIZOVANÉ - Email a Telefón */}
+            <div className="form-row">
+              <div className="form-field">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="form-input"
+                  placeholder="Email (voliteľné)"
+                />
+              </div>
+              <div className="form-field">
+                <input
+                  type="tel"
+                  value={formData.telefon}
+                  onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
+                  className="form-input"
+                  placeholder="Telefón (voliteľné)"
+                />
+              </div>
             </div>
 
-            {/* Dátum narodenia */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Dátum narodenia
-              </label>
-              <input
-                type="date"
-                value={formData.datum_narodenia}
-                onChange={(e) => setFormData({ ...formData, datum_narodenia: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
+            {/* ✅ AKTUALIZOVANÉ - Dátum narodenia a Kvalifikácia */}
+            <div className="form-row">
+              <div className="form-field">
+                <DateInput
+                  value={formData.datum_narodenia}
+                  onChange={(value) => setFormData({ ...formData, datum_narodenia: value })}
+                  placeholder="Dátum narodenia"
+                />
+              </div>
+
+
+              <div className="form-field">
+                <input
+                  type="text"
+                  value={formData.kvalifikacia}
+                  onChange={(e) => setFormData({ ...formData, kvalifikacia: e.target.value })}
+                  className="form-input"
+                  placeholder="Kvalifikácia (napr. UEFA A)"
+                />
+              </div>
             </div>
 
-            {/* Poradie */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-                Poradie
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.poradie}
-                onChange={(e) => setFormData({ ...formData, poradie: Number(e.target.value) })}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Kvalifikácia */}
-          <div style={{ marginTop: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-              Kvalifikácia
-            </label>
-            <textarea
-              rows={2}
-              placeholder="napr. UEFA A licencia, Magister športového managementu"
-              value={formData.kvalifikacia}
-              onChange={(e) => setFormData({ ...formData, kvalifikacia: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                resize: 'vertical'
-              }}
-            />
-          </div>
-
-          {/* Poznámky */}
-          <div style={{ marginTop: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-              Poznámky
-            </label>
+            {/* ✅ AKTUALIZOVANÉ - Poznámky */}
             <textarea
               rows={3}
               value={formData.poznamky}
               onChange={(e) => setFormData({ ...formData, poznamky: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px',
-                resize: 'vertical'
-              }}
+              className="form-input"
+              placeholder="Poznámky, dodatočné informácie..."
             />
-          </div>
 
-          {/* Tlačidlá */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '8px 16px',
-                background: '#f3f4f6',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Zrušiť
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                padding: '8px 16px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                opacity: loading ? 0.5 : 1
-              }}
-            >
-              {loading ? 'Ukladám...' : (staff ? 'Aktualizovať' : 'Pridať člena')}
-            </button>
-          </div>
-        </form>
+            {/* ✅ AKTUALIZOVANÉ - Tlačidlá */}
+            <div className="form-actions">
+              <button 
+                type="button" 
+                onClick={onClose}
+                className="form-button cancel-button"
+                disabled={loading}
+              >
+                Zrušiť
+              </button>
+              <button 
+                type="submit"
+                className="form-button save-button"
+                disabled={loading}
+              >
+                {loading ? 'Ukladám...' : (staff ? 'Aktualizovať' : 'Pridať člena')}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

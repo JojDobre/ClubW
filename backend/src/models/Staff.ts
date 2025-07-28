@@ -112,6 +112,40 @@ export class Staff extends Model<StaffAttributes, StaffCreationAttributes> imple
     };
   }
 
+  // Statická metóda pre validáciu URL fotky (identická ako v Player modeli)
+  public static isValidPhotoUrl(url: string): boolean {
+    if (!url || url.trim() === '') {
+      return true; // Prázdne URL je v poriadku
+    }
+
+    try {
+      // Ak začína s http:// alebo https://, je to absolútne URL
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        new URL(url); // Skúsi parsovať ako URL - ak sa nepodarí, hodí error
+        return true;
+      }
+      
+      // Ak začína s /, je to relatívna cesta
+      if (url.startsWith('/')) {
+        return true;
+      }
+      
+      // Ak obsahuje uploads/, považujeme to za platné
+      if (url.includes('uploads/')) {
+        return true;
+      }
+      
+      // Ak začína s blob:, je to lokálny preview
+      if (url.startsWith('blob:')) {
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // Statická metóda pre získanie dostupných funkcií
   public static getAvailableFunctions(): string[] {
     return [
@@ -196,7 +230,11 @@ Staff.init(
       type: DataTypes.STRING(500),
       allowNull: true,
       validate: {
-        isUrl: true,
+        customPhotoUrlValidation(value: string | null) {
+          if (value && !Staff.isValidPhotoUrl(value)) {
+            throw new Error('Neplatná URL adresa fotky. Povolené sú relatívne cesty (/uploads/...) alebo absolútne URL (http://...).');
+          }
+        }
       },
     },
     tim_id: {

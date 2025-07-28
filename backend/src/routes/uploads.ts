@@ -1,3 +1,5 @@
+//uploads.ts
+// Umiestnenie: backend/src/routes/uploads.ts
 import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';

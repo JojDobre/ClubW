@@ -41,9 +41,67 @@ const createPlayerPhotoStorage = () => {
   });
 };
 
+const createStaffPhotoStorage = () => {
+  return multer.diskStorage({
+    destination: async (req, file, cb) => {
+      try {
+        // Vytvor základný priečinok pre staff fotky
+        const uploadPath = path.join(__dirname, '../../uploads/images/staff/temp');
+        
+        // Vytvor priečinok ak neexistuje
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        
+        cb(null, uploadPath);
+      } catch (error) {
+        cb(error as Error, '');
+      }
+    },
+    
+    filename: (req, file, cb) => {
+      try {
+        // Vytvor jedinečný názov súboru pre staff
+        const timestamp = Date.now();
+        const random = Math.round(Math.random() * 1E9);
+        const extension = path.extname(file.originalname).toLowerCase();
+        
+        // Používaj staff prefix namiesto player
+        const filename = `staff_${timestamp}_${random}${extension}`;
+        cb(null, filename);
+      } catch (error) {
+        cb(error as Error, '');
+      }
+    }
+  });
+};
+
 // Multer konfigurácia pre fotky hráčov
 export const uploadPlayerPhoto = multer({
   storage: createPlayerPhotoStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 1 // Len jeden súbor
+  },
+  fileFilter: (req, file, cb) => {
+    // Povoľ len obrázky
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/webp'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Nepovolený typ súboru. Povolené sú: JPEG, PNG, WebP'));
+    }
+  }
+});
+
+export const uploadStaffPhoto = multer({
+  storage: createStaffPhotoStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1 // Len jeden súbor
@@ -112,6 +170,55 @@ export const optimizePlayerPhoto = async (req: any, res: any, next: any) => {
     next();
   } catch (error) {
     console.error('Chyba pri optimalizácii obrázka:', error);
+    next(); // Pokračuj aj pri chybe optimalizácie
+  }
+};
+
+export const optimizeStaffPhoto = async (req: any, res: any, next: any) => {
+  if (!req.file) {
+    return next();
+  }
+
+  try {
+    const inputPath = req.file.path;
+    const filename = req.file.filename;
+    const outputPath = path.join(path.dirname(inputPath), `optimized_${filename}`);
+    
+    // Optimalizuj obrázok pomocou Sharp (rovnaké nastavenia ako pre players)
+    await sharp(inputPath)
+      .resize(400, 400, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .jpeg({ 
+        quality: 85,
+        progressive: true 
+      })
+      .toFile(outputPath);
+    
+    // Počkaj aby sa Sharp ukončil úplne
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      // Vymaž pôvodný súbor
+      fs.unlinkSync(inputPath);
+      
+      // Premenuj optimalizovaný súbor
+      fs.renameSync(outputPath, inputPath);
+    } catch (fileError) {
+      console.log('Chyba pri file operáciách, pokračujem bez optimalizácie:', fileError);
+      try {
+        if (fs.existsSync(outputPath)) {
+          fs.unlinkSync(outputPath);
+        }
+      } catch (e) {
+        // Ignoruj chybu
+      }
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Chyba pri optimalizácii staff obrázka:', error);
     next(); // Pokračuj aj pri chybe optimalizácie
   }
 };
