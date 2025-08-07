@@ -287,7 +287,7 @@ Zapas.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'teams',
+        model: 'timy',
         key: 'id',
       },
       validate: {
@@ -311,7 +311,7 @@ Zapas.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'teams',
+        model: 'timy',
         key: 'id',
       },
       validate: {
@@ -374,7 +374,7 @@ Zapas.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'articles',
+        model: 'clanky',
         key: 'id',
       },
     },

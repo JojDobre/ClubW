@@ -1,10 +1,10 @@
 // backend/src/models/Liga.ts
-// Model pre ligy - FÁZA 4
+// Rozšírený model pre ligy s podporou tabuliek a turnajov - FÁZA 4+
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-// Interface pre atribúty Ligy
+// Interface pre rozšírené atribúty Ligy
 interface LigaAttributes {
   id: number;
   nazov: string;
@@ -16,12 +16,40 @@ interface LigaAttributes {
   farba?: string | null;
   poradie: number;
   aktivity: boolean;
+  
+  // NOVÉ ROZŠÍRENIA PRE SÚŤAŽE
+  datum_start?: Date | null;              // Začiatok súťaže
+  datum_koniec?: Date | null;             // Koniec súťaže
+  format: 'tabulka' | 'turnaj' | 'kombinovany'; // Formát súťaže
+  pocet_timov?: number | null;            // Maximálny počet tímov
+  
+  // BODOVÝ SYSTÉM
+  body_za_vitazstvo: number;              // Defaultne 3
+  body_za_remizy: number;                 // Defaultne 1
+  body_za_prehru: number;                 // Defaultne 0
+  
+  // NASTAVENIA TABUĽKY
+  auto_update_tabulka: boolean;           // Automatická aktualizácia tabuľky
+  zobrazit_formu: boolean;                // Zobrazovať formu tímov
+  min_zapasov: number;                    // Minimálny počet zápasov pre zaradenie
+  
+  // TURNAJOVÉ NASTAVENIA
+  turnaj_typ?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff' | null;
+  turnaj_pocet_postupujucich?: number | null; // Koľko postupuje z skupiny
+  
+  // IMPORT/EXPORT
+  posledny_import?: Date | null;          // Kedy bola naposledy importovaná tabuľka
+  external_sync: boolean;                 // Synchronizácia s externým zdrojom
+  
   vytvoreny: Date;
   aktualizovany: Date;
 }
 
 // Interface pre vytvorenie novej Ligy (bez automatických polí)
-interface LigaCreationAttributes extends Optional<LigaAttributes, 'id' | 'popis' | 'external_widget_url' | 'logo' | 'farba' | 'poradie' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+interface LigaCreationAttributes extends Optional<LigaAttributes, 
+  'id' | 'popis' | 'external_widget_url' | 'logo' | 'farba' | 'poradie' | 'aktivity' |
+  'datum_start' | 'datum_koniec' | 'pocet_timov' | 'turnaj_typ' | 'turnaj_pocet_postupujucich' |
+  'posledny_import' | 'external_sync' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Trieda pre model Liga
 class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements LigaAttributes {
@@ -35,15 +63,30 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
   public farba!: string | null;
   public poradie!: number;
   public aktivity!: boolean;
+  
+  // Nové polia
+  public datum_start!: Date | null;
+  public datum_koniec!: Date | null;
+  public format!: 'tabulka' | 'turnaj' | 'kombinovany';
+  public pocet_timov!: number | null;
+  public body_za_vitazstvo!: number;
+  public body_za_remizy!: number;
+  public body_za_prehru!: number;
+  public auto_update_tabulka!: boolean;
+  public zobrazit_formu!: boolean;
+  public min_zapasov!: number;
+  public turnaj_typ!: 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff' | null;
+  public turnaj_pocet_postupujucich!: number | null;
+  public posledny_import!: Date | null;
+  public external_sync!: boolean;
   public vytvoreny!: Date;
   public aktualizovany!: Date;
 
-  // Helper method - vracia plný názov s sezónou
+  // Existujúce helper methods
   public getFullName(): string {
     return `${this.nazov} ${this.sezona}`;
   }
 
-  // Helper method - vracia typ čitateľne
   public getTypeName(): string {
     const types = {
       'sutaz': 'Súťaž',
@@ -53,12 +96,82 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
     return types[this.typ] || this.typ;
   }
 
-  // Helper method - kontroluje či má external widget
   public hasExternalWidget(): boolean {
     return !!(this.external_widget_url && this.external_widget_url.length > 0);
   }
 
-  // Helper method pre JSON response (bez citlivých dát)
+  // NOVÉ HELPER METHODS
+  
+  // Získanie názvu formátu
+  public getFormatName(): string {
+    const formats = {
+      'tabulka': 'Liga (tabuľka)',
+      'turnaj': 'Turnaj (vyraďovačka)',
+      'kombinovany': 'Kombinovaný (skupiny + playoff)'
+    };
+    return formats[this.format] || this.format;
+  }
+
+  // Získanie názvu turnajového typu
+  public getTurnajTypeName(): string {
+    if (!this.turnaj_typ) return 'N/A';
+    
+    const types = {
+      'single_elimination': 'Jednoduché vyraďovačka',
+      'double_elimination': 'Dvojitá vyraďovačka', 
+      'round_robin': 'Každý s každým',
+      'groups_playoff': 'Skupiny + Playoff'
+    };
+    return types[this.turnaj_typ] || this.turnaj_typ;
+  }
+
+  // Kontrola či je súťaž aktívna (podľa dátumu)
+  public isActiveByDate(): boolean {
+    const now = new Date();
+    
+    if (!this.datum_start && !this.datum_koniec) {
+      return this.aktivity; // Ak nie sú nastavené dátumy, spoliehame sa na aktivity flag
+    }
+    
+    if (this.datum_start && now < this.datum_start) {
+      return false; // Ešte nezačala
+    }
+    
+    if (this.datum_koniec && now > this.datum_koniec) {
+      return false; // Už skončila
+    }
+    
+    return this.aktivity;
+  }
+
+  // Získanie statusu súťaže
+  public getStatus(): 'upcoming' | 'active' | 'finished' | 'inactive' {
+    if (!this.aktivity) return 'inactive';
+    
+    const now = new Date();
+    
+    if (this.datum_start && now < this.datum_start) {
+      return 'upcoming';
+    }
+    
+    if (this.datum_koniec && now > this.datum_koniec) {
+      return 'finished';
+    }
+    
+    return 'active';
+  }
+
+  // Kontrola či má ligu nastavenú automatickú aktualizáciu tabuľky
+  public hasAutoUpdateEnabled(): boolean {
+    return this.auto_update_tabulka && this.format !== 'turnaj';
+  }
+
+  // Kontrola či má nastavený custom bodový systém
+  public hasCustomScoring(): boolean {
+    return this.body_za_vitazstvo !== 3 || this.body_za_remizy !== 1 || this.body_za_prehru !== 0;
+  }
+
+  // Helper method pre rozšírený JSON response
   public toSafeJSON() {
     return {
       id: this.id,
@@ -71,9 +184,34 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
       farba: this.farba,
       poradie: this.poradie,
       aktivity: this.aktivity,
+      
+      // Nové polia
+      datum_start: this.datum_start,
+      datum_koniec: this.datum_koniec,
+      format: this.format,
+      pocet_timov: this.pocet_timov,
+      body_za_vitazstvo: this.body_za_vitazstvo,
+      body_za_remizy: this.body_za_remizy,
+      body_za_prehru: this.body_za_prehru,
+      auto_update_tabulka: this.auto_update_tabulka,
+      zobrazit_formu: this.zobrazit_formu,
+      min_zapasov: this.min_zapasov,
+      turnaj_typ: this.turnaj_typ,
+      turnaj_pocet_postupujucich: this.turnaj_pocet_postupujucich,
+      posledny_import: this.posledny_import,
+      external_sync: this.external_sync,
+      
+      // Helper polia
       full_name: this.getFullName(),
       typ_name: this.getTypeName(),
+      format_name: this.getFormatName(),
+      turnaj_typ_name: this.getTurnajTypeName(),
       has_external_widget: this.hasExternalWidget(),
+      status: this.getStatus(),
+      is_active_by_date: this.isActiveByDate(),
+      has_auto_update: this.hasAutoUpdateEnabled(),
+      has_custom_scoring: this.hasCustomScoring(),
+      
       vytvoreny: this.vytvoreny,
       aktualizovany: this.aktualizovany,
     };
@@ -148,6 +286,117 @@ Liga.init(
       allowNull: false,
       defaultValue: true,
     },
+    
+    // NOVÉ POLIA PRE ROZŠÍRENÚ FUNKCIONALITU
+    datum_start: {
+      type: DataTypes.DATEONLY, // Len dátum bez času
+      allowNull: true,
+      validate: {
+        isDate: true,
+      },
+    },
+    datum_koniec: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      validate: {
+        isDate: true,
+        isAfterStart(value: string) {
+          // @ts-ignore - this context v Sequelize validácii
+          if (value && this.datum_start && new Date(value) <= new Date(this.datum_start)) {
+            throw new Error('Dátum ukončenia musí byť po dátume začiatku');  
+          }
+}
+      },
+    },
+        format: {
+      type: DataTypes.ENUM('tabulka', 'turnaj', 'kombinovany'),
+      allowNull: false,
+      defaultValue: 'tabulka',
+    },
+    pocet_timov: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 2,
+        max: 100,
+      },
+    },
+    
+    // BODOVÝ SYSTÉM
+    body_za_vitazstvo: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 3,
+      validate: {
+        min: 0,
+        max: 10,
+      },
+    },
+    body_za_remizy: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+      validate: {
+        min: 0,
+        max: 10,
+      },
+    },
+    body_za_prehru: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 10,
+      },
+    },
+    
+    // NASTAVENIA TABUĽKY
+    auto_update_tabulka: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    zobrazit_formu: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    min_zapasov: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 50,
+      },
+    },
+    
+    // TURNAJOVÉ NASTAVENIA
+    turnaj_typ: {
+      type: DataTypes.ENUM('single_elimination', 'double_elimination', 'round_robin', 'groups_playoff'),
+      allowNull: true,
+    },
+    turnaj_pocet_postupujucich: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 1,
+        max: 32,
+      },
+    },
+    
+    // IMPORT/EXPORT
+    posledny_import: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    external_sync: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    
     vytvoreny: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -179,6 +428,15 @@ Liga.init(
       {
         fields: ['poradie'],
       },
+      {
+        fields: ['format'],
+      },
+      {
+        fields: ['datum_start'],
+      },
+      {
+        fields: ['datum_koniec'],
+      },
     ],
     hooks: {
       // Hook pre automatické generovanie poradia
@@ -188,6 +446,25 @@ Liga.init(
             where: { aktivity: true }
           }) as number;
           liga.poradie = (maxPoradie || 0) + 1;
+        }
+      },
+      
+      // Validácia turnajových nastavení
+      beforeSave: async (liga: Liga) => {
+        // Ak je formát turnaj, turnaj_typ je povinný
+        if (liga.format === 'turnaj' && !liga.turnaj_typ) {
+          throw new Error('Pre turnajový formát je potrebné zvoliť typ turnaja');
+        }
+        
+        // Ak je kombinovaný formát, potrebujeme nastavenia
+        if (liga.format === 'kombinovany' && (!liga.turnaj_typ || !liga.turnaj_pocet_postupujucich)) {
+          throw new Error('Pre kombinovaný formát je potrebné nastaviť typ turnaja a počet postupujúcich');
+        }
+        
+        // Pre tabuľku nie je potrebný turnaj_typ
+        if (liga.format === 'tabulka') {
+          liga.turnaj_typ = null;
+          liga.turnaj_pocet_postupujucich = null;
         }
       },
     },

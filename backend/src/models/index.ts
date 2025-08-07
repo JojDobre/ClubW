@@ -9,6 +9,8 @@ import Team from './Team';
 import Player from './Player';
 import Staff from './Staff';
 import Liga from './Liga';
+import LigaTabulka from './LigaTabulka';      // NOVÝ
+import LigaTurnaj from './LigaTurnaj';        // NOVÝ
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
 import Page from './Page';
@@ -82,7 +84,7 @@ Staff.belongsTo(Team, {
   constraints: false,
 });
 
-// 4. LIGA vzťahy - FÁZA 4
+// 4. LIGA vzťahy - ROZŠÍRENÉ FÁZA 4+
 // Liga -> Zapasy (1:N) - liga má viacero zápasov
 Liga.hasMany(Zapas, {
   foreignKey: 'liga_id',
@@ -93,6 +95,82 @@ Liga.hasMany(Zapas, {
 Zapas.belongsTo(Liga, {
   foreignKey: 'liga_id',
   as: 'liga',
+});
+
+// Liga -> LigaTabulka (1:N) - liga má jednu tabuľku s viacerými tímami
+Liga.hasMany(LigaTabulka, {
+  foreignKey: 'liga_id',
+  as: 'tabulka',
+  onDelete: 'CASCADE', // Ak sa vymaže liga, vymaže sa aj tabuľka
+});
+
+LigaTabulka.belongsTo(Liga, {
+  foreignKey: 'liga_id',
+  as: 'liga',
+});
+
+// Liga -> LigaTurnaj (1:1) - liga môže mať jeden turnaj
+Liga.hasOne(LigaTurnaj, {
+  foreignKey: 'liga_id',
+  as: 'turnaj',
+  onDelete: 'CASCADE', // Ak sa vymaže liga, vymaže sa aj turnaj
+});
+
+LigaTurnaj.belongsTo(Liga, {
+  foreignKey: 'liga_id',
+  as: 'liga',
+});
+
+// 5. LIGA TABULKA vzťahy - NOVÉ
+// LigaTabulka -> Team (N:1) - každý záznam v tabuľke patrí k jednému tímu
+LigaTabulka.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
+  onDelete: 'CASCADE', // Ak sa vymaže tím, vymaže sa aj jeho záznam v tabuľke
+});
+
+Team.hasMany(LigaTabulka, {
+  foreignKey: 'tim_id',
+  as: 'liga_pozicie',
+  onDelete: 'CASCADE',
+});
+
+// 6. LIGA TURNAJ vzťahy - NOVÉ
+// Turnaj -> Team (víťazi)
+LigaTurnaj.belongsTo(Team, {
+  foreignKey: 'vitaz_id',
+  as: 'vitaz',
+  constraints: false,
+});
+
+LigaTurnaj.belongsTo(Team, {
+  foreignKey: 'druhy_id',
+  as: 'druhy',
+  constraints: false,
+});
+
+LigaTurnaj.belongsTo(Team, {
+  foreignKey: 'treti_id',
+  as: 'treti',
+  constraints: false,
+});
+
+Team.hasMany(LigaTurnaj, {
+  foreignKey: 'vitaz_id',
+  as: 'vyhrate_turnaje',
+  constraints: false,
+});
+
+Team.hasMany(LigaTurnaj, {
+  foreignKey: 'druhy_id',
+  as: 'druhe_miesta_turnaje',
+  constraints: false,
+});
+
+Team.hasMany(LigaTurnaj, {
+  foreignKey: 'treti_id',
+  as: 'tretie_miesta_turnaje',
+  constraints: false,
 });
 
 // 5. ZAPAS vzťahy - FÁZA 4
@@ -219,6 +297,8 @@ export {
   Player,
   Staff,
   Liga,
+  LigaTabulka,        
+  LigaTurnaj, 
   Zapas,
   ZapasStatistika,
   Page,
@@ -235,6 +315,8 @@ export default {
   Player,
   Staff,
   Liga,
+  LigaTabulka,        
+  LigaTurnaj,
   Zapas,
   ZapasStatistika,
   Page,
@@ -369,6 +451,37 @@ export const getMenuPages = async () => {
   });
 };
 
+export const getUserWithTeam = async (userId: number) => {
+  return await User.findByPk(userId, {
+    include: [{
+      model: Team,
+      as: 'tim',
+      attributes: ['id', 'nazov', 'vekova_kategoria']
+    }]
+  });
+};
+
+export const getTeamWithPlayers = async (teamId: number) => {
+  return await Team.findByPk(teamId, {
+    include: [
+      {
+        model: Player,
+        as: 'hraci',
+        where: { aktivity: true },
+        required: false,
+        order: [['cislo_dresu', 'ASC']]
+      },
+      {
+        model: Staff,
+        as: 'realizacny_tim',
+        where: { aktivity: true },
+        required: false,
+        order: [['pozicia', 'ASC']]
+      }
+    ]
+  });
+};
+
 export const getPageBySlug = async (slug: string) => {
   return await Page.findOne({
     where: { 
@@ -463,44 +576,40 @@ export const getPlayerStats = async (playerId: number) => {
 };
 
 export const getTopScorers = async (ligaId?: number, limit: number = 10) => {
-  const whereConditions: any = {
-    typ: 'gol',
-    aktivity: true
-  };
-
+  const whereCondition: any = { aktivity: true };
+  
   const includeConditions: any[] = [
     {
       model: Player,
       as: 'hrac',
-      attributes: ['id', 'meno', 'priezvisko', 'cislo_dresu']
-    },
-    {
-      model: Zapas,
-      as: 'zapas',
-      attributes: ['id'],
-      where: { aktivity: true }
+      attributes: ['id', 'meno', 'priezvisko', 'pozicia'],
+      include: [{
+        model: Team,
+        as: 'tim',
+        attributes: ['nazov', 'vekova_kategoria']
+      }]
     }
   ];
 
   if (ligaId) {
-    includeConditions[1].include = [
-      {
-        model: Liga,
-        as: 'liga',
-        where: { id: ligaId }
-      }
-    ];
+    includeConditions.push({
+      model: Zapas,
+      as: 'zapas',
+      where: { liga_id: ligaId },
+      attributes: []
+    });
   }
 
   return await ZapasStatistika.findAll({
-    where: whereConditions,
+    where: whereCondition,
     include: includeConditions,
     attributes: [
       'hrac_id',
-      [ZapasStatistika.sequelize?.fn('COUNT', '*') as any, 'goly_count']
+      [require('sequelize').fn('SUM', require('sequelize').col('goly')), 'total_goly'],
+      [require('sequelize').fn('COUNT', require('sequelize').col('ZapasStatistika.id')), 'pocet_zapasov']
     ],
-    group: ['hrac_id', 'hrac.id'],
-    order: [[ZapasStatistika.sequelize?.col('goly_count') as any, 'DESC']],
+    group: ['hrac_id'],
+    order: [[require('sequelize').literal('total_goly'), 'DESC']],
     limit
   });
 };
@@ -538,6 +647,291 @@ export const getMatchCalendar = async (rok: number, mesiac: number) => {
   });
 };
 
+// Získanie ligy s kompletnou tabuľkou
+export const getLeagueWithTable = async (ligaId: number) => {
+  return await Liga.findByPk(ligaId, {
+    include: [
+      {
+        model: LigaTabulka,
+        as: 'tabulka',
+        include: [
+          {
+            model: Team,
+            as: 'tim',
+            attributes: ['id', 'nazov', 'vekova_kategoria', 'logo', 'farba_prva']
+          }
+        ],
+        order: [['pozicia', 'ASC']]
+      },
+      {
+        model: LigaTurnaj,
+        as: 'turnaj',
+        required: false,
+        include: [
+          {
+            model: Team,
+            as: 'vitaz',
+            attributes: ['id', 'nazov', 'logo'],
+            required: false
+          },
+          {
+            model: Team, 
+            as: 'druhy',
+            attributes: ['id', 'nazov', 'logo'],
+            required: false
+          },
+          {
+            model: Team,
+            as: 'treti', 
+            attributes: ['id', 'nazov', 'logo'],
+            required: false
+          }
+        ]
+      }
+    ]
+  });
+};
+
+// Získanie tabuľky pre ligu s kompletními štatistikami
+export const getLeagueTable = async (ligaId: number, includeInactive: boolean = false) => {
+  const whereCondition: any = { liga_id: ligaId };
+  
+  return await LigaTabulka.findAll({
+    where: whereCondition,
+    include: [
+      {
+        model: Team,
+        as: 'tim',
+        attributes: ['id', 'nazov', 'vekova_kategoria', 'logo', 'farba_prva', 'aktivity'],
+        where: includeInactive ? {} : { aktivity: true },
+        required: !includeInactive
+      },
+      {
+        model: Liga,
+        as: 'liga',
+        attributes: ['nazov', 'sezona', 'body_za_vitazstvo', 'body_za_remizy', 'zobrazit_formu']
+      }
+    ],
+    order: [['pozicia', 'ASC']]
+  });
+};
+
+// Automatické prepočítanie tabuľky na základe zápasov
+export const recalculateLeagueTable = async (ligaId: number) => {
+  const liga = await Liga.findByPk(ligaId);
+  if (!liga) throw new Error('Liga nenájdená');
+  
+  if (!liga.auto_update_tabulka) {
+    throw new Error('Automatická aktualizácia tabuľky je vypnutá pre túto ligu');
+  }
+
+  // Zavolanie statickej metódy z LigaTabulka modelu
+  await LigaTabulka.recalculateTable(
+    ligaId, 
+    liga.body_za_vitazstvo, 
+    liga.body_za_remizy
+  );
+  
+  // Aktualizácia Liga modelu
+  await Liga.update(
+    { aktualizovany: new Date() },
+    { where: { id: ligaId } }
+  );
+
+  return await getLeagueTable(ligaId);
+};
+
+// Získanie turnaja pre ligu
+export const getLeagueTournament = async (ligaId: number) => {
+  return await LigaTurnaj.getForLeague(ligaId);
+};
+
+// Získanie štatistík ligy
+export const getLeagueStats = async (ligaId: number) => {
+  // Počet zápasov
+  const celkoveZapasy = await Zapas.count({
+    where: { liga_id: ligaId, aktivity: true }
+  });
+
+  const ukonceneZapasy = await Zapas.count({
+    where: { liga_id: ligaId, aktivity: true, status: 'ukonceny' }
+  });
+
+  const naplanovaneZapasy = await Zapas.count({
+    where: { liga_id: ligaId, aktivity: true, status: 'naplanovany' }
+  });
+
+  // Počet tímov v tabuľke
+  const pocetTimov = await LigaTabulka.count({
+    where: { liga_id: ligaId }
+  });
+
+  // Celkový počet gólov
+  const golyStats = await Zapas.findAll({
+    where: { 
+      liga_id: ligaId, 
+      aktivity: true, 
+      status: 'ukonceny',
+      goly_domaci: { [Op.ne]: null },
+      goly_hostia: { [Op.ne]: null }
+    },
+    attributes: [
+      [require('sequelize').fn('SUM', require('sequelize').col('goly_domaci')), 'celkove_goly_domaci'],
+      [require('sequelize').fn('SUM', require('sequelize').col('goly_hostia')), 'celkove_goly_hostia'],
+      [require('sequelize').fn('AVG', require('sequelize').col('goly_domaci')), 'priemer_goly_domaci'],
+      [require('sequelize').fn('AVG', require('sequelize').col('goly_hostia')), 'priemer_goly_hostia']
+    ],
+    raw: true
+  });
+
+  const celkoveGoly = (golyStats[0] as any)?.celkove_goly_domaci + (golyStats[0] as any)?.celkove_goly_hostia || 0;
+  const priemerGolovNaZapas = ukonceneZapasy > 0 ? (celkoveGoly / ukonceneZapasy).toFixed(2) : '0.00';
+
+  // Lídri tabuľky
+  const lidriTabulky = await LigaTabulka.findAll({
+    where: { liga_id: ligaId },
+    include: [
+      {
+        model: Team,
+        as: 'tim',
+        attributes: ['nazov', 'logo']
+      }
+    ],
+    order: [['pozicia', 'ASC']],
+    limit: 3
+  });
+
+  return {
+    celkove_zapasy: celkoveZapasy,
+    ukoncene_zapasy: ukonceneZapasy,
+    naplanovane_zapasy: naplanovaneZapasy,
+    pocet_timov: pocetTimov,
+    celkove_goly: celkoveGoly,
+    priemer_golov_na_zapas: priemerGolovNaZapas,
+    lidri_tabulky: lidriTabulky.map(t => ({
+      pozicia: t.pozicia,
+      tim_nazov: t.tim?.nazov || t.custom_tim_nazov,
+      body: t.body,
+      zapasy: t.zapasy,
+      logo: t.tim?.logo
+    }))
+  };
+};
+
+// Získanie kompletného prehľadu ligy (tabuľka + turnaj + štatistiky)
+export const getLeagueOverview = async (ligaId: number) => {
+  const [liga, tabulka, turnaj, stats] = await Promise.all([
+    Liga.findByPk(ligaId),
+    getLeagueTable(ligaId),
+    getLeagueTournament(ligaId),
+    getLeagueStats(ligaId)
+  ]);
+
+  if (!liga) throw new Error('Liga nenájdená');
+
+  return {
+    liga: liga.toSafeJSON(),
+    tabulka: tabulka?.map(t => t.toSafeJSON()) || [],
+    turnaj: turnaj?.toSafeJSON() || null,
+    statistiky: stats
+  };
+};
+
+// Import/Export funkcionalita
+export const exportLeagueTable = async (ligaId: number, format: 'json' | 'csv' = 'json') => {
+  const tabulka = await getLeagueTable(ligaId);
+  
+  if (format === 'csv') {
+    // CSV export
+    const headers = [
+      'Pozícia', 'Tím', 'Zápasy', 'Víťazstvá', 'Remízy', 'Prehry', 
+      'Góly za', 'Góly proti', 'Rozdiel', 'Body', 'Forma'
+    ].join(',');
+    
+    const rows = tabulka.map(t => [
+      t.pozicia,
+      `"${t.getTimNazov()}"`,
+      t.zapasy,
+      t.vitazstva,
+      t.remizy,
+      t.prehry,
+      t.goly_za,
+      t.goly_proti,
+      t.goly_rozdiel,
+      t.getSkutocneBody(),
+      `"${t.forma || ''}"`
+    ].join(','));
+
+    return [headers, ...rows].join('\n');
+  }
+
+  // JSON export
+  return JSON.stringify(tabulka.map(t => t.toSafeJSON()), null, 2);
+};
+
+export const importLeagueTable = async (ligaId: number, data: any[], format: 'json' | 'csv' = 'json') => {
+  const liga = await Liga.findByPk(ligaId);
+  if (!liga) throw new Error('Liga nenájdená');
+
+  // Validation
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('Neplatné dáta pre import');
+  }
+
+  // Backup existujúcej tabuľky
+  const existingTable = await LigaTabulka.findAll({
+    where: { liga_id: ligaId }
+  });
+
+  try {
+    // Vymazanie existujúcej tabuľky
+    await LigaTabulka.destroy({
+      where: { liga_id: ligaId }
+    });
+
+    // Import nových dát
+    const importData = data.map((item, index) => ({
+      liga_id: ligaId,
+      tim_id: item.tim_id,
+      custom_tim_nazov: item.custom_tim_nazov,
+      pozicia: item.pozicia || (index + 1),
+      body: item.body || 0,
+      zapasy: item.zapasy || 0,
+      vitazstva: item.vitazstva || 0,
+      remizy: item.remizy || 0,
+      prehry: item.prehry || 0,
+      goly_za: item.goly_za || 0,
+      goly_proti: item.goly_proti || 0,
+      goly_rozdiel: (item.goly_za || 0) - (item.goly_proti || 0),
+      forma: item.forma,
+      manualne_upravene: true,
+      poznamky: `Importované ${new Date().toISOString()}`
+    }));
+
+    await LigaTabulka.bulkCreate(importData);
+
+    // Aktualizácia ligy
+    await Liga.update(
+      { 
+        posledny_import: new Date(),
+        aktualizovany: new Date()
+      },
+      { where: { id: ligaId } }
+    );
+
+    return await getLeagueTable(ligaId);
+
+  } catch (error) {
+    // Rollback - obnovenie existujúcej tabuľky
+    await LigaTabulka.destroy({ where: { liga_id: ligaId } });
+    
+    if (existingTable.length > 0) {
+      await LigaTabulka.bulkCreate(existingTable.map(t => t.toJSON()));
+    }
+    
+    throw error;
+  }
+};
 
 // FÁZA 7 - Helper funkcie pre fotogalérie (NOVÉ)
 export const getGalleryWithImages = async (galeriaId: number) => {
