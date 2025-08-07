@@ -749,6 +749,9 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
     const { id } = req.params;
     const { tabulka_data } = req.body;
 
+    console.log('🔄 Aktualizácia tabuľky pre ligu ID:', id);
+    console.log('📊 Prijaté dáta:', tabulka_data);
+
     const validation = validateLigaId(id);
     if (!validation.valid) {
       res.status(400).json({
@@ -766,10 +769,17 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
       return;
     }
 
-    // Validácia a aktualizácia každého záznamu
-    const updatePromises = tabulka_data.map(async (item: any) => {
-      if (!item.id || !item.pozicia) {
-        throw new Error('Každý záznam musí mať ID a pozíciu');
+    // Rozdelenie na existujúce a nové záznamy
+    const existingRecords = tabulka_data.filter(item => item.id && !String(item.id).startsWith('temp-'));
+    const newRecords = tabulka_data.filter(item => !item.id || String(item.id).startsWith('temp-'));
+
+    console.log(`📝 Existujúce záznamy: ${existingRecords.length}`);
+    console.log(`🆕 Nové záznamy: ${newRecords.length}`);
+
+    // 1. AKTUALIZÁCIA EXISTUJÚCICH ZÁZNAMOV
+    const updatePromises = existingRecords.map(async (item: any) => {
+      if (!item.pozicia) {
+        throw new Error(`Existujúci záznam ID ${item.id} musí mať pozíciu`);
       }
 
       const updateData: any = {
@@ -794,24 +804,74 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
         updateData.goly_rozdiel = item.goly_za - item.goly_proti;
       }
 
+      console.log(`🔄 Aktualizujem záznam ID ${item.id}:`, updateData);
+
       return LigaTabulka.update(updateData, {
         where: { id: item.id, liga_id: validation.id }
       });
     });
 
-    await Promise.all(updatePromises);
+    // 2. VYTVORENIE NOVÝCH ZÁZNAMOV
+    const createPromises = newRecords.map(async (item: any) => {
+      // Validácia povinných polí pre nové záznamy
+      if (!item.pozicia) {
+        throw new Error('Nový záznam musí mať pozíciu');
+      }
+
+      if (!item.tim_id && !item.custom_tim_nazov) {
+        throw new Error('Nový záznam musí mať buď tim_id alebo custom_tim_nazov');
+      }
+
+      const createData: any = {
+        liga_id: validation.id,
+        pozicia: item.pozicia,
+        body: item.body || 0,
+        zapasy: item.zapasy || 0,
+        vitazstva: item.vitazstva || 0,
+        remizy: item.remizy || 0,
+        prehry: item.prehry || 0,
+        goly_za: item.goly_za || 0,
+        goly_proti: item.goly_proti || 0,
+        goly_rozdiel: (item.goly_za || 0) - (item.goly_proti || 0),
+        manualne_upravene: true
+      };
+
+      // Tím z databázy alebo custom názov
+      if (item.tim_id) {
+        createData.tim_id = item.tim_id;
+      } else {
+        createData.custom_tim_nazov = item.custom_tim_nazov;
+      }
+
+      // Voliteľné polia
+      if (item.penalizacne_body !== undefined) createData.penalizacne_body = item.penalizacne_body;
+      if (item.bonus_body !== undefined) createData.bonus_body = item.bonus_body;
+      if (item.poznamky !== undefined) createData.poznamky = item.poznamky;
+
+      console.log('🆕 Vytváram nový záznam:', createData);
+
+      return LigaTabulka.create(createData);
+    });
+
+    // Vykonanie všetkých operácií
+    console.log('⚡ Vykonávam všetky operácie...');
+    await Promise.all([...updatePromises, ...createPromises]);
 
     // Načítanie aktualizovanej tabuľky
+    console.log('📊 Načítavam aktualizovanú tabuľku...');
     const updatedTable = await getLeagueTable(validation.id!);
     
+    console.log(`✅ Tabuľka úspešne aktualizovaná: ${updatedTable.length} záznamov`);
+
     res.json({
       success: true,
       data: updatedTable.map(t => t.toSafeJSON()),
-      message: 'Tabuľka úspešne aktualizovaná'
+      count: updatedTable.length,
+      message: `Tabuľka úspešne aktualizovaná (${existingRecords.length} upravených, ${newRecords.length} nových)`
     });
 
   } catch (error) {
-    console.error('Chyba pri aktualizácii tabuľky:', error);
+    console.error('❌ Chyba pri aktualizácii tabuľky:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri aktualizácii tabuľky',

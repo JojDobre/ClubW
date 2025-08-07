@@ -1,5 +1,5 @@
 // frontend/src/components/LigaFormModal.tsx
-// Multi-step modal pre vytvorenie/editáciu ligy
+// Multi-step modal pre vytvorenie/editáciu ligy s opraveným ukladaním tabuľky
 
 import React, { useState, useEffect } from 'react';
 import { Liga, LigaCreateData, Team, ligaApi } from '../services/ligaApi';
@@ -20,27 +20,29 @@ interface LigaFormData extends LigaCreateData {
   // Rozšírené polia pre formulár
 }
 
+// Interface pre tabuľku tímov
+interface TableTeam {
+  id: string;
+  tim_id?: number;
+  custom_tim_nazov?: string;
+  pozicia: number;
+  body: number;
+  zapasy: number;
+  vitazstva: number;
+  remizy: number;
+  prehry: number;
+  goly_za: number;
+  goly_proti: number;
+}
+
 const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>('basic');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [teams, setTeams] = useState<Team[]>([]);
   
-  // State pre tabuľku tímov (len pri editácii)
-  const [tableTeams, setTableTeams] = useState<Array<{
-    id: string;
-    tim_id?: number;
-    custom_tim_nazov?: string;
-    pozicia: number;
-    body: number;
-    zapasy: number;
-    vitazstva: number;
-    remizy: number;
-    prehry: number;
-    goly_za: number;
-    goly_proti: number;
-  }>>([]);
-
+  // State pre tabuľku tímov
+  const [tableTeams, setTableTeams] = useState<TableTeam[]>([]);
   const [showAddTeamForm, setShowAddTeamForm] = useState(false);
   
   // Form data state
@@ -123,6 +125,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
               goly_proti: item.goly_proti || 0
             }));
             setTableTeams(tableData);
+            console.log('✅ Načítaná tabuľka:', tableData);
           } catch (tableErr) {
             console.log('Tabuľka zatiaľ neexistuje, vytvoríme prázdnu');
             setTableTeams([]);
@@ -242,10 +245,18 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
     }
   };
 
-  // Uloženie formulára
+  // OPRAVENÉ UKLADANIE - najprv liga, potom tabuľka
   const handleSubmit = async () => {
+    // DEBUG INFO
+    console.log('🐛 DEBUG: handleSubmit spustené');
+    console.log('🐛 Current step:', currentStep);
+    console.log('🐛 tableTeams.length:', tableTeams.length);
+    console.log('🐛 tableTeams data:', tableTeams);
+    console.log('🐛 formData.format:', formData.format);
+    
     const validation = validateCurrentStep();
     if (validation) {
+      console.log('🐛 Validácia zlyhala:', validation);
       setError(validation);
       return;
     }
@@ -254,7 +265,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
     setError('');
 
     try {
-      // Príprava dát pre API (odstránenie undefined hodnôt)
+      // 1. NAJPRV ULOŽÍME LIGU
       const apiData: LigaCreateData = {
         nazov: formData.nazov.trim(),
         sezona: formData.sezona.trim(),
@@ -278,107 +289,202 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
         tim_id: formData.tim_id || undefined
       };
 
-      console.log('Odosielajú sa dáta ligy:', apiData);
+      console.log('🔄 Ukladám ligu:', apiData);
 
+      let savedLiga: Liga;
       if (liga) {
-        await ligaApi.updateLeague(liga.id, apiData);
-        console.log('✅ Liga aktualizovaná');
+        const updateResponse = await ligaApi.updateLeague(liga.id, apiData);
+        savedLiga = updateResponse.data;
+        console.log('✅ Liga aktualizovaná:', savedLiga);
       } else {
-        await ligaApi.createLeague(apiData);
-        console.log('✅ Liga vytvorená');
+        const createResponse = await ligaApi.createLeague(apiData);
+        savedLiga = createResponse.data;
+        console.log('✅ Liga vytvorená:', savedLiga);
       }
 
+      // 2. AK MÁME TABUĽKU, ULOŽÍME JU OSOBNE
+      if (tableTeams.length > 0 && (savedLiga.format === 'tabulka' || savedLiga.format === 'kombinovany')) {
+        console.log('🔄 Ukladám tabuľku pre ligu ID:', savedLiga.id);
+        console.log('📊 Dáta tabuľky:', tableTeams);
+        
+        // DEBUG: Detailný výpis tableTeams
+        console.log('📤 DEBUG: tableTeams pred spracovaním:');
+        tableTeams.forEach((team, index) => {
+          console.log(`  ${index}: {`);
+          console.log(`    id: "${team.id}",`);
+          console.log(`    tim_id: ${team.tim_id},`);
+          console.log(`    custom_tim_nazov: "${team.custom_tim_nazov}",`);
+          console.log(`    pozicia: ${team.pozicia},`);
+          console.log(`    body: ${team.body}`);
+          console.log(`  }`);
+        });
+
+        // Príprava dát pre backend endpoint PUT /api/leagues/:id/table
+        const tableApiData = tableTeams.map(team => {
+          const isNewRecord = team.id.startsWith('temp-');
+          
+          if (isNewRecord) {
+            // Pre nové záznamy - nepošleme ID
+            const newRecord = {
+              tim_id: team.tim_id,
+              custom_tim_nazov: team.custom_tim_nazov,
+              pozicia: team.pozicia,
+              body: team.body,
+              zapasy: team.zapasy,
+              vitazstva: team.vitazstva,
+              remizy: team.remizy,
+              prehry: team.prehry,
+              goly_za: team.goly_za,
+              goly_proti: team.goly_proti
+            };
+            console.log(`📤 Nový záznam:`, newRecord);
+            return newRecord;
+          } else {
+            // Pre existujúce záznamy - pošleme ID
+            const existingRecord = {
+              id: parseInt(team.id),
+              tim_id: team.tim_id,
+              custom_tim_nazov: team.custom_tim_nazov,
+              pozicia: team.pozicia,
+              body: team.body,
+              zapasy: team.zapasy,
+              vitazstva: team.vitazstva,
+              remizy: team.remizy,
+              prehry: team.prehry,
+              goly_za: team.goly_za,
+              goly_proti: team.goly_proti
+            };
+            console.log(`📤 Existujúci záznam:`, existingRecord);
+            return existingRecord;
+          }
+        });
+
+        console.log('📤 Finálne API dáta:', tableApiData);
+
+        const tableResponse = await ligaApi.updateLeagueTable(savedLiga.id, tableApiData);
+        console.log('✅ Tabuľka úspešne uložená:', tableResponse);
+      } else {
+        console.log('🐛 NEUKLADÁME tabuľku lebo:');
+        console.log('🐛 - tableTeams.length:', tableTeams.length);
+        console.log('🐛 - format:', savedLiga.format);
+      }
+
+      // Úspech!
+      console.log('🎉 Liga s tabuľkou úspešne uložená!');
       onSave();
+
     } catch (err) {
-      console.error('Chyba pri ukladaní ligy:', err);
-      setError(err instanceof Error ? err.message : 'Chyba pri ukladaní ligy');
+      console.error('🐛 CHYBA v handleSubmit:', err);
+      console.error('❌ Chyba pri ukladaní:', err);
+      setError(err instanceof Error ? err.message : 'Neočakávaná chyba pri ukladaní');
     } finally {
       setLoading(false);
     }
   };
 
-  // Progress bar calculation
-  const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
+  // Funkcie pre správu tabuľky
+  const handleAddTeamToTable = (teamData: { tim_id?: number; custom_tim_nazov?: string }) => {
+    const newTeam: TableTeam = {
+      id: `temp-${Date.now()}`,
+      tim_id: teamData.tim_id,
+      custom_tim_nazov: teamData.custom_tim_nazov,
+      pozicia: tableTeams.length + 1,
+      body: 0,
+      zapasy: 0,
+      vitazstva: 0,
+      remizy: 0,
+      prehry: 0,
+      goly_za: 0,
+      goly_proti: 0
+    };
+
+    setTableTeams([...tableTeams, newTeam]);
+    setShowAddTeamForm(false);
+  };
+
+  const handleRemoveTeamFromTable = (teamId: string) => {
+    const filtered = tableTeams.filter(t => t.id !== teamId);
+    // Znovu číslovananie pozícií
+    const reordered = filtered.map((team, index) => ({
+      ...team,
+      pozicia: index + 1
+    }));
+    setTableTeams(reordered);
+  };
+
+  const handleUpdateTeamInTable = (teamId: string, field: keyof TableTeam, value: any) => {
+    setTableTeams(prev => prev.map(team => 
+      team.id === teamId 
+        ? { ...team, [field]: value }
+        : team
+    ));
+  };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '600px', width: '90vw' }}>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '16px',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        width: '100%',
+        maxWidth: '800px',
+        maxHeight: '90vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         
-        {/* Header s progress barom */}
-        <div className="modal-header">
-          <div style={{ flex: 1 }}>
-            <h2 className="modal-title">
-              {liga ? 'Upraviť ligu' : 'Nová liga'}
+        {/* Header s progress indikátorom */}
+        <div className="modal-header" style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid #e5e7eb',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600' }}>
+              {liga ? 'Upraviť ligu' : 'Vytvoriť novú ligu'}
             </h2>
             
-            {/* Progress bar */}
-            <div style={{ 
-              marginTop: '12px',
-              background: '#f1f5f9',
-              borderRadius: '8px',
-              height: '6px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div 
-                style={{
-                  background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
-                  height: '100%',
-                  borderRadius: '8px',
-                  width: `${progressPercentage}%`,
-                  transition: 'width 0.3s ease'
-                }}
-              />
-            </div>
-            
-            {/* Step indicators */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              marginTop: '8px',
-              fontSize: '11px',
-              color: '#64748b'
+            {/* Progress indikátor */}
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginTop: '12px'
             }}>
               {steps.map((step, index) => (
-                <div 
+                <div
                   key={step.key}
                   onClick={() => {
-                    // Povoliť prekliknutie len ak nie sme v loading stave
-                    if (!loading) {
-                      // Ak ideme na predchádzajúci krok alebo na už dokončený krok
-                      if (index <= currentStepIndex || index === currentStepIndex + 1) {
-                        // Pre ďalší krok validujeme aktuálny
-                        if (index === currentStepIndex + 1) {
-                          const validation = validateCurrentStep();
-                          if (validation) {
-                            setError(validation);
-                            return;
-                          }
-                          setError('');
-                        }
-                        setCurrentStep(step.key);
-                      }
+                    if (!loading && (index <= currentStepIndex || index === currentStepIndex + 1)) {
+                      setCurrentStep(step.key);
                     }
                   }}
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '4px',
-                    color: index <= currentStepIndex ? '#3b82f6' : '#64748b',
+                    fontSize: '13px',
+                    color: step.key === currentStep ? '#3b82f6' : '#64748b',
                     fontWeight: step.key === currentStep ? '600' : '400',
                     cursor: !loading && (index <= currentStepIndex || index === currentStepIndex + 1) ? 'pointer' : 'default',
                     padding: '4px 8px',
                     borderRadius: '4px',
                     transition: 'all 0.2s',
                     backgroundColor: step.key === currentStep ? '#eff6ff' : 'transparent'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading && (index <= currentStepIndex || index === currentStepIndex + 1)) {
-                      e.currentTarget.style.backgroundColor = step.key === currentStep ? '#eff6ff' : '#f8fafc';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = step.key === currentStep ? '#eff6ff' : 'transparent';
                   }}
                 >
                   <span>{step.icon}</span>
@@ -393,13 +499,27 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
             onClick={onClose}
             className="modal-close-button"
             disabled={loading}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              width: '32px',
+              height: '32px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
           >
             ✕
           </button>
         </div>
 
         {/* Telo modalu */}
-        <div className="modal-body">
+        <div className="modal-body" style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '24px'
+        }}>
           
           {/* Chybová správa */}
           {error && (
@@ -435,7 +555,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                     className="modal-input"
                     value={formData.nazov}
                     onChange={(e) => setFormData({ ...formData, nazov: e.target.value })}
-                    placeholder="napr. Fortuna Liga"
+                    placeholder="napr. 1. liga muži"
                     required
                   />
                 </div>
@@ -453,18 +573,15 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                     placeholder="napr. 2024/2025"
                     required
                   />
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    Použite formát: 2024/2025, 2024-25 alebo 2024
-                  </small>
                 </div>
 
-                {/* Typ ligy */}
+                {/* Typ súťaže */}
                 <div className="form-group">
                   <label className="modal-label">
                     Typ súťaže <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <select
-                    className="modal-select"
+                    className="modal-input"
                     value={formData.typ}
                     onChange={(e) => setFormData({ ...formData, typ: e.target.value as any })}
                     required
@@ -481,38 +598,38 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                     Formát súťaže <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <select
-                    className="modal-select"
+                    className="modal-input"
                     value={formData.format}
                     onChange={(e) => setFormData({ ...formData, format: e.target.value as any })}
                     required
                   >
                     <option value="tabulka">Liga (tabuľka)</option>
                     <option value="turnaj">Turnaj (vyraďovačka)</option>
-                    <option value="kombinovany">Kombinovaný (skupiny + playoff)</option>
+                    <option value="kombinovany">Kombinovaný (skupiny + vyraďovačka)</option>
                   </select>
                 </div>
 
                 {/* Popis */}
                 <div className="form-group">
-                  <label className="modal-label">Popis súťaže</label>
+                  <label className="modal-label">Popis</label>
                   <textarea
-                    className="modal-textarea"
-                    value={formData.popis}
+                    className="modal-input"
+                    value={formData.popis || ''}
                     onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-                    placeholder="Stručný popis súťaže..."
+                    placeholder="Krátky popis súťaže..."
                     rows={3}
                   />
                 </div>
               </div>
             )}
 
-            {/* KROK 2: Časové nastavenia & Tímy */}
+            {/* KROK 2: Nastavenia */}
             {currentStep === 'settings' && (
               <div>
                 <h3 style={{ marginBottom: '20px', color: '#1e293b', fontSize: '18px' }}>
-                  ⚙️ Časové nastavenia & Tímy
+                  ⚙️ Nastavenia súťaže
                 </h3>
-                
+
                 {/* Dátumy */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div className="form-group">
@@ -520,7 +637,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                     <input
                       type="date"
                       className="modal-input"
-                      value={formData.datum_start}
+                      value={formData.datum_start || ''}
                       onChange={(e) => setFormData({ ...formData, datum_start: e.target.value })}
                     />
                   </div>
@@ -530,7 +647,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                     <input
                       type="date"
                       className="modal-input"
-                      value={formData.datum_koniec}
+                      value={formData.datum_koniec || ''}
                       onChange={(e) => setFormData({ ...formData, datum_koniec: e.target.value })}
                     />
                   </div>
@@ -542,35 +659,48 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                   <input
                     type="number"
                     className="modal-input"
-                    value={formData.pocet_timov || 12}
-                    onChange={(e) => setFormData({ ...formData, pocet_timov: Number(e.target.value) || 12 })}
-                    min={2}
-                    max={100}
-                    placeholder="12"
+                    value={formData.pocet_timov || ''}
+                    onChange={(e) => setFormData({ ...formData, pocet_timov: parseInt(e.target.value) || undefined })}
+                    placeholder="napr. 12"
+                    min="2"
+                    max="100"
                   />
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    Maximálny počet tímov v súťaži (2-100)
-                  </small>
                 </div>
 
-                {/* Priradenie k tímu (pre filtrovanie) */}
+                {/* Checkboxy */}
                 <div className="form-group">
-                  <label className="modal-label">Priradenie k tímu</label>
-                  <select
-                    className="modal-select"
-                    value={formData.tim_id || ''}
-                    onChange={(e) => setFormData({ ...formData, tim_id: e.target.value ? Number(e.target.value) : undefined })}
-                  >
-                    <option value="">Všetky tímy</option>
-                    {teams.map(team => (
-                      <option key={team.id} value={team.id}>
-                        {team.nazov} ({team.vekova_kategoria})
-                      </option>
-                    ))}
-                  </select>
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    Voliteľne - pre filtrovanie súťaže podľa konkrétneho tímu
-                  </small>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.auto_update_tabulka}
+                      onChange={(e) => setFormData({ ...formData, auto_update_tabulka: e.target.checked })}
+                    />
+                    Automaticky aktualizovať tabuľku z výsledkov zápasov
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.zobrazit_formu}
+                      onChange={(e) => setFormData({ ...formData, zobrazit_formu: e.target.checked })}
+                    />
+                    Zobrazovať formu tímov (posledných 5 zápasov)
+                  </label>
+                </div>
+
+                {/* Minimálny počet zápasov */}
+                <div className="form-group">
+                  <label className="modal-label">Minimálny počet zápasov pre zaradenie do tabuľky</label>
+                  <input
+                    type="number"
+                    className="modal-input"
+                    value={formData.min_zapasov || 0}
+                    onChange={(e) => setFormData({ ...formData, min_zapasov: parseInt(e.target.value) || 0 })}
+                    min="0"
+                    max="50"
+                  />
                 </div>
               </div>
             )}
@@ -579,10 +709,9 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
             {currentStep === 'scoring' && (
               <div>
                 <h3 style={{ marginBottom: '20px', color: '#1e293b', fontSize: '18px' }}>
-                  🏆 Bodovanie a pravidlá
+                  🏆 Bodový systém
                 </h3>
-                
-                {/* Bodovací systém */}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                   <div className="form-group">
                     <label className="modal-label">Body za víťazstvo</label>
@@ -590,9 +719,9 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                       type="number"
                       className="modal-input"
                       value={formData.body_za_vitazstvo || 3}
-                      onChange={(e) => setFormData({ ...formData, body_za_vitazstvo: Number(e.target.value) || 3 })}
-                      min={0}
-                      max={10}
+                      onChange={(e) => setFormData({ ...formData, body_za_vitazstvo: parseInt(e.target.value) || 3 })}
+                      min="0"
+                      max="10"
                     />
                   </div>
 
@@ -602,9 +731,9 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                       type="number"
                       className="modal-input"
                       value={formData.body_za_remizy || 1}
-                      onChange={(e) => setFormData({ ...formData, body_za_remizy: Number(e.target.value) || 1 })}
-                      min={0}
-                      max={10}
+                      onChange={(e) => setFormData({ ...formData, body_za_remizy: parseInt(e.target.value) || 1 })}
+                      min="0"
+                      max="10"
                     />
                   </div>
 
@@ -614,92 +743,58 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                       type="number"
                       className="modal-input"
                       value={formData.body_za_prehru || 0}
-                      onChange={(e) => setFormData({ ...formData, body_za_prehru: Number(e.target.value) || 0 })}
-                      min={0}
-                      max={10}
+                      onChange={(e) => setFormData({ ...formData, body_za_prehru: parseInt(e.target.value) || 0 })}
+                      min="0"
+                      max="10"
                     />
                   </div>
                 </div>
 
-                {/* Nastavenia tabuľky */}
-                <div className="form-group">
-                  <div className="modal-checkbox">
-                    <input
-                      type="checkbox"
-                      id="auto-update"
-                      checked={formData.auto_update_tabulka}
-                      onChange={(e) => setFormData({ ...formData, auto_update_tabulka: e.target.checked })}
-                    />
-                    <div className="checkbox-custom"></div>
-                    <div className="checkbox-text">
-                      <span>Automatická aktualizácia tabuľky</span>
-                      <small>Tabuľka sa automaticky prepočíta po každom zápase</small>
-                    </div>
+                {/* Náhľad bodového systému */}
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginTop: '20px'
+                }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Náhľad:</h4>
+                  <div style={{ fontSize: '14px', color: '#64748b' }}>
+                    <div>✅ Víťazstvo: <strong>{formData.body_za_vitazstvo || 3} bodov</strong></div>
+                    <div>🤝 Remíza: <strong>{formData.body_za_remizy || 1} bod</strong></div>
+                    <div>❌ Prehra: <strong>{formData.body_za_prehru || 0} bodov</strong></div>
                   </div>
-                </div>
-
-                <div className="form-group">
-                  <div className="modal-checkbox">
-                    <input
-                      type="checkbox"
-                      id="show-form"
-                      checked={formData.zobrazit_formu}
-                      onChange={(e) => setFormData({ ...formData, zobrazit_formu: e.target.checked })}
-                    />
-                    <div className="checkbox-custom"></div>
-                    <div className="checkbox-text">
-                      <span>Zobraziť formu tímov</span>
-                      <small>Posledných 5 výsledkov tímov (W-D-L)</small>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Minimálny počet zápasov */}
-                <div className="form-group">
-                  <label className="modal-label">Minimálny počet zápasov</label>
-                  <input
-                    type="number"
-                    className="modal-input"
-                    value={formData.min_zapasov || 0}
-                    onChange={(e) => setFormData({ ...formData, min_zapasov: Number(e.target.value) || 0 })}
-                    min={0}
-                    max={50}
-                    placeholder="0"
-                  />
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    Minimálny počet zápasov pre oficiálne zaradenie do tabuľky
-                  </small>
                 </div>
               </div>
             )}
 
-            {/* KROK 4: Turnajové nastavenia */}
+            {/* KROK 4: Turnaj (len ak je potrebný) */}
             {currentStep === 'tournament' && (formData.format === 'turnaj' || formData.format === 'kombinovany') && (
               <div>
                 <h3 style={{ marginBottom: '20px', color: '#1e293b', fontSize: '18px' }}>
-                  🥇 Turnajové nastavenia
+                  🥇 Nastavenia turnaja
                 </h3>
-                
+
                 {/* Typ turnaja */}
                 <div className="form-group">
                   <label className="modal-label">
                     Typ turnaja <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <select
-                    className="modal-select"
+                    className="modal-input"
                     value={formData.turnaj_typ || ''}
                     onChange={(e) => setFormData({ ...formData, turnaj_typ: e.target.value as any })}
                     required
                   >
                     <option value="">Vyberte typ turnaja</option>
-                    <option value="single_elimination">Jednoduché vyraďovačka</option>
+                    <option value="single_elimination">Jednoduchá vyraďovačka</option>
                     <option value="double_elimination">Dvojitá vyraďovačka</option>
                     <option value="round_robin">Každý s každým</option>
-                    <option value="groups_playoff">Skupiny + Playoff</option>
+                    <option value="groups_playoff">Skupiny + play-off</option>
                   </select>
                 </div>
 
-                {/* Počet postupujúcich (pre kombinovaný formát) */}
+                {/* Počet postupujúcich (len pre kombinovaný) */}
                 {formData.format === 'kombinovany' && (
                   <div className="form-group">
                     <label className="modal-label">
@@ -709,367 +804,247 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                       type="number"
                       className="modal-input"
                       value={formData.turnaj_pocet_postupujucich || ''}
-                      onChange={(e) => setFormData({ ...formData, turnaj_pocet_postupujucich: Number(e.target.value) })}
-                      min={1}
-                      max={16}
-                      placeholder="2"
+                      onChange={(e) => setFormData({ ...formData, turnaj_pocet_postupujucich: parseInt(e.target.value) || undefined })}
+                      placeholder="napr. 2"
+                      min="1"
+                      max="16"
                       required
                     />
-                    <small style={{ color: '#64748b', fontSize: '12px' }}>
-                      Koľko tímov postupuje zo skupiny do playoff fázy
-                    </small>
                   </div>
                 )}
 
-                {/* Info o type turnaja */}
+                {/* Popis typov turnajov */}
                 <div style={{
                   background: '#f8fafc',
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
-                  padding: '12px',
-                  fontSize: '13px',
-                  color: '#475569'
+                  padding: '16px',
+                  marginTop: '20px'
                 }}>
-                  <strong>Typy turnajov:</strong>
-                  <ul style={{ margin: '8px 0', paddingLeft: '16px' }}>
-                    <li><strong>Jednoduché vyraďovačka:</strong> Klasický vyraďovací systém</li>
-                    <li><strong>Dvojitá vyraďovačka:</strong> Tím môže prehrať raz</li>
-                    <li><strong>Každý s každým:</strong> Všetci hrajú so všetkými</li>
-                    <li><strong>Skupiny + Playoff:</strong> Skupinová fáza + vyraďovačka</li>
-                  </ul>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Vysvetlenie typov:</h4>
+                  <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+                    <div><strong>Jednoduchá vyraďovačka:</strong> Jeden zápas = vyradenie</div>
+                    <div><strong>Dvojitá vyraďovačka:</strong> Musíte prehrať 2x, aby ste vypadli</div>
+                    <div><strong>Každý s každým:</strong> Všetci hrajú proti všetkým</div>
+                    <div><strong>Skupiny + play-off:</strong> Najprv skupiny, potom vyraďovačka</div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* KROK: Úprava tabuľky (len pri editácii tabulkových líg) */}
+            {/* KROK 5: Tabuľka (len pri editácii líg s tabuľkou) */}
             {currentStep === 'table' && liga && (formData.format === 'tabulka' || formData.format === 'kombinovany') && (
               <div>
                 <h3 style={{ marginBottom: '20px', color: '#1e293b', fontSize: '18px' }}>
                   📊 Úprava tabuľky
                 </h3>
-                
-                {/* Tlačidlo pridania nového tímu */}
-                <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+
+                {/* Tlačidlo pridania tímu */}
+                <div style={{ marginBottom: '20px' }}>
                   <button
                     type="button"
-                    onClick={() => setShowAddTeamForm(!showAddTeamForm)}
-                    className="btn-secondary"
-                    style={{ fontSize: '14px' }}
+                    onClick={() => setShowAddTeamForm(true)}
+                    className="btn-primary"
+                    style={{ marginRight: '12px' }}
                   >
-                    {showAddTeamForm ? '✕ Zrušiť' : '+ Pridať tím'}
+                    + Pridať tím
                   </button>
                   
                   {tableTeams.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Automatické zoradenie podľa bodov
-                        const sorted = [...tableTeams].sort((a, b) => {
-                          if (a.body !== b.body) return b.body - a.body;
-                          const aRozd = a.goly_za - a.goly_proti;
-                          const bRozd = b.goly_za - b.goly_proti;
-                          if (aRozd !== bRozd) return bRozd - aRozd;
-                          return b.goly_za - a.goly_za;
-                        });
-                        
-                        // Aktualizácia pozícií
-                        const updatedTeams = sorted.map((team, index) => ({
-                          ...team,
-                          pozicia: index + 1
-                        }));
-                        
-                        setTableTeams(updatedTeams);
-                      }}
-                      className="btn-secondary"
-                      style={{ fontSize: '14px' }}
-                    >
-                      🔄 Auto-zoradiť podľa bodov
-                    </button>
+                    <span style={{ fontSize: '14px', color: '#64748b' }}>
+                      Celkovo {tableTeams.length} tímov v tabuľke
+                    </span>
                   )}
                 </div>
 
-                {/* Formulár pre pridanie nového tímu */}
+                {/* Formulár pre pridanie tímu */}
                 {showAddTeamForm && (
                   <div style={{
                     background: '#f8fafc',
                     border: '1px solid #e2e8f0',
                     borderRadius: '8px',
                     padding: '16px',
-                    marginBottom: '16px'
+                    marginBottom: '20px'
                   }}>
-                    <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Pridať nový tím</h4>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Pridať tím do tabuľky</h4>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
                       <div>
-                        <label className="modal-label">Tím zo systému</label>
+                        <label style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Tím z databázy</label>
                         <select
-                          className="modal-select"
+                          className="modal-input"
                           onChange={(e) => {
                             if (e.target.value) {
-                              const selectedTeam = teams.find(t => t.id === Number(e.target.value));
+                              const selectedTeam = teams.find(t => t.id.toString() === e.target.value);
                               if (selectedTeam) {
-                                const newTeam = {
-                                  id: `new-${Date.now()}`,
-                                  tim_id: selectedTeam.id,
-                                  custom_tim_nazov: undefined,
-                                  pozicia: tableTeams.length + 1,
-                                  body: 0,
-                                  zapasy: 0,
-                                  vitazstva: 0,
-                                  remizy: 0,
-                                  prehry: 0,
-                                  goly_za: 0,
-                                  goly_proti: 0
-                                };
-                                setTableTeams([...tableTeams, newTeam]);
-                                setShowAddTeamForm(false);
-                                e.target.value = '';
+                                handleAddTeamToTable({ tim_id: selectedTeam.id });
                               }
                             }
                           }}
+                          defaultValue=""
                         >
-                          <option value="">Vyberte tím...</option>
-                          {teams.filter(team => 
-                            !tableTeams.some(tt => tt.tim_id === team.id)
-                          ).map(team => (
-                            <option key={team.id} value={team.id}>
-                              {team.nazov} ({team.vekova_kategoria})
-                            </option>
-                          ))}
+                          <option value="">Vyberte tím</option>
+                          {teams
+                            .filter(team => !tableTeams.some(tt => tt.tim_id === team.id))
+                            .map(team => (
+                              <option key={team.id} value={team.id}>
+                                {team.nazov} ({team.vekova_kategoria})
+                              </option>
+                            ))
+                          }
                         </select>
                       </div>
-                      
+
                       <div>
-                        <label className="modal-label">Alebo vlastný názov</label>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input
-                            type="text"
-                            className="modal-input"
-                            placeholder="Názov tímu..."
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                const customName = e.currentTarget.value.trim();
-                                const newTeam = {
-                                  id: `custom-${Date.now()}`,
-                                  tim_id: undefined,
-                                  custom_tim_nazov: customName,
-                                  pozicia: tableTeams.length + 1,
-                                  body: 0,
-                                  zapasy: 0,
-                                  vitazstva: 0,
-                                  remizy: 0,
-                                  prehry: 0,
-                                  goly_za: 0,
-                                  goly_proti: 0
-                                };
-                                setTableTeams([...tableTeams, newTeam]);
-                                setShowAddTeamForm(false);
-                                e.currentTarget.value = '';
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              const input = (e.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
-                              if (input?.value.trim()) {
-                                const customName = input.value.trim();
-                                const newTeam = {
-                                  id: `custom-${Date.now()}`,
-                                  tim_id: undefined,
-                                  custom_tim_nazov: customName,
-                                  pozicia: tableTeams.length + 1,
-                                  body: 0,
-                                  zapasy: 0,
-                                  vitazstva: 0,
-                                  remizy: 0,
-                                  prehry: 0,
-                                  goly_za: 0,
-                                  goly_proti: 0
-                                };
-                                setTableTeams([...tableTeams, newTeam]);
-                                setShowAddTeamForm(false);
-                                input.value = '';
-                              }
-                            }}
-                            className="btn-primary"
-                            style={{ fontSize: '14px', padding: '6px 12px' }}
-                          >
-                            +
-                          </button>
-                        </div>
+                        <label style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Alebo vlastný názov</label>
+                        <input
+                          type="text"
+                          className="modal-input"
+                          placeholder="napr. Hostujúci tím"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              handleAddTeamToTable({ custom_tim_nazov: e.currentTarget.value.trim() });
+                              e.currentTarget.value = '';
+                            }
+                          }}
+                        />
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowAddTeamForm(false)}
+                        style={{
+                          background: '#6b7280',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Zrušiť
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {/* Tabuľka tímov */}
-                <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                    <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
-                      <tr>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', width: '40px' }}>Pos.</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Tím</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '60px' }}>Body</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '50px' }}>Z</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '50px' }}>V</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '50px' }}>R</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '50px' }}>P</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '60px' }}>GZ</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '60px' }}>GP</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', width: '40px' }}>Akcie</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tableTeams
-                        .sort((a, b) => a.pozicia - b.pozicia)
-                        .map((team, index) => {
-                          const teamName = team.custom_tim_nazov || 
-                            teams.find(t => t.id === team.tim_id)?.nazov || 
-                            `Tím ${team.tim_id}`;
-                          
-                          return (
-                            <tr key={team.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.pozicia}
-                                  onChange={(e) => {
-                                    const newPos = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, pozicia: newPos } : t
-                                    ));
-                                  }}
-                                  style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="1"
-                                />
-                              </td>
-                              <td style={{ padding: '8px', fontWeight: '500' }}>{teamName}</td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.body}
-                                  onChange={(e) => {
-                                    const newBody = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, body: newBody } : t
-                                    ));
-                                  }}
-                                  style={{ width: '50px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.zapasy}
-                                  onChange={(e) => {
-                                    const newZapasy = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, zapasy: newZapasy } : t
-                                    ));
-                                  }}
-                                  style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.vitazstva}
-                                  onChange={(e) => {
-                                    const newV = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, vitazstva: newV } : t
-                                    ));
-                                  }}
-                                  style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.remizy}
-                                  onChange={(e) => {
-                                    const newR = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, remizy: newR } : t
-                                    ));
-                                  }}
-                                  style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.prehry}
-                                  onChange={(e) => {
-                                    const newP = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, prehry: newP } : t
-                                    ));
-                                  }}
-                                  style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.goly_za}
-                                  onChange={(e) => {
-                                    const newGZ = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, goly_za: newGZ } : t
-                                    ));
-                                  }}
-                                  style={{ width: '50px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                <input
-                                  type="number"
-                                  value={team.goly_proti}
-                                  onChange={(e) => {
-                                    const newGP = Number(e.target.value);
-                                    setTableTeams(teams => teams.map(t => 
-                                      t.id === team.id ? { ...t, goly_proti: newGP } : t
-                                    ));
-                                  }}
-                                  style={{ width: '50px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
-                                  min="0"
-                                />
-                              </td>
-                              <td style={{ padding: '8px', textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setTableTeams(teams => teams.filter(t => t.id !== team.id));
-                                  }}
-                                  style={{
-                                    background: '#ef4444',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    width: '24px',
-                                    height: '24px',
-                                    cursor: 'pointer',
-                                    fontSize: '12px'
-                                  }}
-                                  title="Odstrániť tím"
-                                >
-                                  ×
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                </div>
+                {tableTeams.length > 0 && (
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          <th style={{ padding: '12px 8px', textAlign: 'left', fontSize: '13px', fontWeight: '600' }}>Poz.</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'left', fontSize: '13px', fontWeight: '600' }}>Tím</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>Body</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>Z</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>V</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>R</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>P</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>GZ</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>GP</th>
+                          <th style={{ padding: '12px 8px', textAlign: 'center', fontSize: '13px', fontWeight: '600' }}>Akcie</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tableTeams.map((team, index) => (
+                          <tr key={team.id} style={{ borderBottom: index < tableTeams.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                            <td style={{ padding: '8px', textAlign: 'center', fontWeight: '600' }}>
+                              {team.pozicia}
+                            </td>
+                            <td style={{ padding: '8px' }}>
+                              {team.tim_id ? (
+                                teams.find(t => t.id === team.tim_id)?.nazov || 'Neznámy tím'
+                              ) : (
+                                team.custom_tim_nazov || 'Bez názvu'
+                              )}
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.body}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'body', parseInt(e.target.value) || 0)}
+                                style={{ width: '50px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.zapasy}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'zapasy', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.vitazstva}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'vitazstva', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.remizy}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'remizy', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.prehry}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'prehry', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.goly_za}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'goly_za', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '4px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                value={team.goly_proti}
+                                onChange={(e) => handleUpdateTeamInTable(team.id, 'goly_proti', parseInt(e.target.value) || 0)}
+                                style={{ width: '40px', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px' }}
+                                min="0"
+                              />
+                            </td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTeamFromTable(team.id)}
+                                style={{
+                                  background: '#ef4444',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '4px 8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                Odstrániť
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 {tableTeams.length === 0 && (
                   <div style={{
@@ -1088,7 +1063,7 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
               </div>
             )}
 
-            {/* KROK 5: Vzhľad */}
+            {/* KROK 6: Vzhľad */}
             {currentStep === 'appearance' && (
               <div>
                 <h3 style={{ marginBottom: '20px', color: '#1e293b', fontSize: '18px' }}>
@@ -1101,13 +1076,10 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                   <input
                     type="url"
                     className="modal-input"
-                    value={formData.logo}
+                    value={formData.logo || ''}
                     onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
                     placeholder="https://example.com/logo.png"
                   />
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    URL obrázka pre logo súťaže
-                  </small>
                 </div>
 
                 {/* Farba */}
@@ -1116,106 +1088,78 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <input
                       type="color"
-                      value={formData.farba}
+                      value={formData.farba || '#3b82f6'}
                       onChange={(e) => setFormData({ ...formData, farba: e.target.value })}
-                      style={{
-                        width: '50px',
-                        height: '40px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
+                      style={{ width: '50px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                     />
                     <input
                       type="text"
                       className="modal-input"
-                      value={formData.farba}
+                      value={formData.farba || '#3b82f6'}
                       onChange={(e) => setFormData({ ...formData, farba: e.target.value })}
                       placeholder="#3b82f6"
-                      pattern="^#[0-9A-F]{6}$"
                       style={{ flex: 1 }}
                     />
                   </div>
-                  <small style={{ color: '#64748b', fontSize: '12px' }}>
-                    Hex kód farby (napr. #FF6B35)
-                  </small>
                 </div>
 
-                {/* Prednastavené farby */}
+                {/* External sync */}
                 <div className="form-group">
-                  <label className="modal-label">Prednastavené farby</label>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(6, 1fr)', 
-                    gap: '8px',
-                    marginTop: '8px'
-                  }}>
-                    {[
-                      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-                      '#8b5cf6', '#06b6d4', '#f97316', '#84cc16',
-                      '#6366f1', '#ec4899', '#14b8a6', '#f87171'
-                    ].map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, farba: color })}
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          backgroundColor: color,
-                          border: formData.farba === color ? '3px solid #1e293b' : '2px solid #e5e7eb',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Externá synchronizácia */}
-                <div className="form-group">
-                  <div className="modal-checkbox">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
                     <input
                       type="checkbox"
-                      id="external-sync"
-                      checked={formData.external_sync}
+                      checked={formData.external_sync || false}
                       onChange={(e) => setFormData({ ...formData, external_sync: e.target.checked })}
                     />
-                    <div className="checkbox-custom"></div>
-                    <div className="checkbox-text">
-                      <span>Externá synchronizácia</span>
-                      <small>Údaje sa budú synchronizovať s externým zdrojom</small>
-                    </div>
-                  </div>
+                    Synchronizovať s externým zdrojom dát
+                  </label>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 26px' }}>
+                    Ak je zapnuté, tabuľka sa bude automaticky aktualizovať z externého zdroja
+                  </p>
                 </div>
 
-                {/* Shrnutie */}
+                {/* Náhľad */}
                 <div style={{
                   background: '#f8fafc',
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
-                  padding: '16px',
+                  padding: '20px',
                   marginTop: '20px'
                 }}>
-                  <h4 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '16px' }}>
-                    📝 Shrnutie ligy
-                  </h4>
-                  
-                  <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5' }}>
-                    <div><strong>Názov:</strong> {formData.nazov || 'Neuvedené'}</div>
-                    <div><strong>Sezóna:</strong> {formData.sezona || 'Neuvedené'}</div>
-                    <div><strong>Typ:</strong> {formData.typ === 'sutaz' ? 'Súťaž' : formData.typ === 'pohar' ? 'Pohár' : 'Priateľská'}</div>
-                    <div><strong>Formát:</strong> {formData.format === 'tabulka' ? 'Liga (tabuľka)' : formData.format === 'turnaj' ? 'Turnaj (vyraďovačka)' : 'Kombinovaný'}</div>
-                    <div><strong>Bodovanie:</strong> {formData.body_za_vitazstvo || 3}-{formData.body_za_remizy || 1}-{formData.body_za_prehru || 0}</div>
-                    {formData.pocet_timov && <div><strong>Počet tímov:</strong> {formData.pocet_timov}</div>}
-                    {(formData.datum_start || formData.datum_koniec) && (
-                      <div><strong>Obdobie:</strong> 
-                        {formData.datum_start && ` od ${new Date(formData.datum_start).toLocaleDateString('sk-SK')}`}
-                        {formData.datum_koniec && ` do ${new Date(formData.datum_koniec).toLocaleDateString('sk-SK')}`}
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '600' }}>Náhľad súťaže:</h4>
+                  <div style={{
+                    background: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    borderLeft: `4px solid ${formData.farba || '#3b82f6'}`
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                      {formData.logo && (
+                        <img 
+                          src={formData.logo} 
+                          alt="Logo" 
+                          style={{ width: '32px', height: '32px', borderRadius: '4px' }}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                      <div>
+                        <h5 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>{formData.nazov || 'Názov súťaže'}</h5>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>{formData.sezona || 'Sezóna'}</p>
                       </div>
-                    )}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>
+                      <div><strong>Typ:</strong> {formData.typ === 'sutaz' ? 'Súťaž' : formData.typ === 'pohar' ? 'Pohár' : 'Priateľská'}</div>
+                      <div><strong>Formát:</strong> {formData.format === 'tabulka' ? 'Liga (tabuľka)' : formData.format === 'turnaj' ? 'Turnaj (vyraďovačka)' : 'Kombinovaný'}</div>
+                      <div><strong>Bodovanie:</strong> {formData.body_za_vitazstvo || 3}-{formData.body_za_remizy || 1}-{formData.body_za_prehru || 0}</div>
+                      {formData.pocet_timov && <div><strong>Počet tímov:</strong> {formData.pocet_timov}</div>}
+                      {(formData.datum_start || formData.datum_koniec) && (
+                        <div><strong>Obdobie:</strong> 
+                          {formData.datum_start && ` od ${new Date(formData.datum_start).toLocaleDateString('sk-SK')}`}
+                          {formData.datum_koniec && ` do ${new Date(formData.datum_koniec).toLocaleDateString('sk-SK')}`}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1242,7 +1186,12 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
             className="btn-secondary"
             style={{
               opacity: isFirstStep ? 0.5 : 1,
-              cursor: isFirstStep ? 'not-allowed' : 'pointer'
+              cursor: isFirstStep ? 'not-allowed' : 'pointer',
+              background: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px'
             }}
           >
             ← Späť
@@ -1266,7 +1215,12 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
               className="btn-primary"
               style={{
                 opacity: loading ? 0.7 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                background: loading ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px'
               }}
             >
               {loading ? 'Ukladám...' : (liga ? 'Uložiť zmeny' : 'Vytvoriť ligu')}
@@ -1277,6 +1231,13 @@ const LigaFormModal: React.FC<LigaFormModalProps> = ({ liga, onClose, onSave }) 
               onClick={handleNext}
               disabled={loading}
               className="btn-primary"
+              style={{
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px'
+              }}
             >
               Ďalej →
             </button>

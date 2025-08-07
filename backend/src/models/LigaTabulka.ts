@@ -8,7 +8,7 @@ import sequelize from '../config/database';
 interface LigaTabulkaAttributes {
   id: number;
   liga_id: number;                  // FK na ligu
-  tim_id: number;                   // FK na tím (voliteľné - môže byť aj custom názov)
+  tim_id?: number | null;                  // FK na tím (voliteľné - môže byť aj custom názov)
   custom_tim_nazov?: string | null; // Pre tímy mimo systému
   
   // POZÍCIA A ZÁKLADNÉ ÚDAJE
@@ -69,7 +69,7 @@ interface LigaTabulkaCreationAttributes extends Optional<LigaTabulkaAttributes,
 class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttributes> implements LigaTabulkaAttributes {
   public id!: number;
   public liga_id!: number;
-  public tim_id!: number;
+  public tim_id!: number | null; 
   public custom_tim_nazov!: string | null;
   
   public pozicia!: number;
@@ -122,15 +122,36 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
     if (this.tim && this.tim.nazov) {
       return this.tim.nazov;
     }
-    return this.custom_tim_nazov || `Tím ${this.tim_id}`;
+    return this.custom_tim_nazov || 'Neznámy tím';
   }
 
   // Výpočet skutočných bodov (základné + bonus - penalizácie)
   public getSkutocneBody(): number {
-    let skutocne = this.body;
-    if (this.bonus_body) skutocne += this.bonus_body;
-    if (this.penalizacne_body) skutocne += this.penalizacne_body; // penalizacne_body sú záporné
-    return skutocne;
+    let body = this.body;
+    if (this.penalizacne_body) body += this.penalizacne_body; // penalizačné body sú záporné
+    if (this.bonus_body) body += this.bonus_body;
+    return Math.max(0, body); // Body nemôžu byť záporné
+  }
+
+  // Kontrola či je záznam manuálne upravený
+  public isManualnayUpravene(): boolean {
+    return this.manualne_upravene;
+  }
+
+  // Formátovanie formy pre zobrazenie
+  public getFormaDisplay(): string {
+    if (!this.forma) return 'N/A';
+    return this.forma
+      .split('')
+      .map(char => {
+        switch (char) {
+          case 'W': return '✅';
+          case 'L': return '❌';
+          case 'D': return '🤝';
+          default: return char;
+        }
+      })
+      .join(' ');
   }
 
   // Získanie priemeru gólov na zápas
@@ -146,8 +167,7 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
   // Získanie percentuálnej úspešnosti
   public getUspesnost(): number {
     if (this.zapasy === 0) return 0;
-    const mozneBody = this.zapasy * 3; // Maximum bodov (všetky víťazstvá)
-    return Number(((this.body / mozneBody) * 100).toFixed(1));
+    return Math.round((this.vitazstva / this.zapasy) * 100);
   }
 
   // Získanie formy ako array objektov
@@ -220,48 +240,57 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
       liga_id: this.liga_id,
       tim_id: this.tim_id,
       custom_tim_nazov: this.custom_tim_nazov,
+      tim_nazov: this.getTimNazov(),
+      
       pozicia: this.pozicia,
       body: this.body,
+      skutocne_body: this.getSkutocneBody(),
+      
       zapasy: this.zapasy,
       vitazstva: this.vitazstva,
       remizy: this.remizy,
       prehry: this.prehry,
+      uspesnost: this.getUspesnost(),
+      
       goly_za: this.goly_za,
       goly_proti: this.goly_proti,
       goly_rozdiel: this.goly_rozdiel,
+      
       domace_zapasy: this.domace_zapasy,
       domace_vitazstva: this.domace_vitazstva,
       domace_remizy: this.domace_remizy,
       domace_prehry: this.domace_prehry,
       domace_goly_za: this.domace_goly_za,
       domace_goly_proti: this.domace_goly_proti,
+      
       vonkajsie_zapasy: this.vonkajsie_zapasy,
       vonkajsie_vitazstva: this.vonkajsie_vitazstva,
       vonkajsie_remizy: this.vonkajsie_remizy,
       vonkajsie_prehry: this.vonkajsie_prehry,
       vonkajsie_goly_za: this.vonkajsie_goly_za,
       vonkajsie_goly_proti: this.vonkajsie_goly_proti,
+      
       forma: this.forma,
+      forma_display: this.getFormaDisplay(),
       serie_zapasov: this.serie_zapasov,
       penalizacne_body: this.penalizacne_body,
       bonus_body: this.bonus_body,
       posledny_zapas: this.posledny_zapas,
       manualne_upravene: this.manualne_upravene,
       poznamky: this.poznamky,
-      aktualizovany: this.aktualizovany,
-      vytvoreny: this.vytvoreny,
       
-      // Helper polia
-      tim_nazov: this.getTimNazov(),
-      skutocne_body: this.getSkutocneBody(),
-      priemer_golov: this.getPriemerGolovNaZapas(),
-      priemer_inkasovanych: this.getPriemerInkasovanychNaZapas(),
-      uspesnost: this.getUspesnost(),
-      forma_array: this.getFormaArray(),
-      je_v_dobrej_forme: this.jeVDobreJForme(),
-      trend: this.getTrend(),
-      domaca_bilancia: this.getDomacaBilancia(),
-      vonkajsia_bilancia: this.getVonkajsiaBilancia(),
+      vytvoreny: this.vytvoreny,
+      aktualizovany: this.aktualizovany,
+
+      // Ak je načítaný tím
+      tim: this.tim ? {
+        id: this.tim.id,
+        nazov: this.tim.nazov,
+        vekova_kategoria: this.tim.vekova_kategoria,
+        logo: this.tim.logo,
+        farba_prva: this.tim.farba_prva
+      } : null
+      
     };
   }
 
@@ -461,6 +490,32 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
     await LigaTabulka.bulkCreate(tabulkaData);
   }
 
+  // Vytvorenie počiatočnej tabuľky pre ligu s tímami
+  static async createInitialTable(ligaId: number, timy: number[]): Promise<void> {
+    const tabulkaData = timy.map((timId, index) => ({
+      liga_id: ligaId,
+      tim_id: timId,
+      pozicia: index + 1,
+      body: 0,
+      zapasy: 0,
+      vitazstva: 0,
+      remizy: 0,
+      prehry: 0,
+      goly_za: 0,
+      goly_proti: 0,
+      goly_rozdiel: 0,
+      manualne_upravene: false
+    }));
+
+    // Zoradenie podľa pozície
+    tabulkaData.forEach((item, index) => {
+      item.pozicia = index + 1;
+    });
+
+    // Vytvorenie záznamov v databáze
+    await LigaTabulka.bulkCreate(tabulkaData);
+  }
+
   // Získanie tabuľky pre ligu
   static async getTableForLeague(ligaId: number, includeTeams: boolean = true) {
     const includeOptions = [];
@@ -471,7 +526,7 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
         model: Team,
         as: 'tim',
         attributes: ['id', 'nazov', 'vekova_kategoria', 'logo', 'farba_prva'],
-        required: false
+        required: false  // DÔLEŽITÉ: LEFT JOIN aby zobrazilo aj custom tímy s tim_id = NULL
       });
     }
 
@@ -503,17 +558,28 @@ LigaTabulka.init(
     },
     tim_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,  // OPRAVENÉ: teraz môže byť NULL
       references: {
         model: 'timy',
         key: 'id',
       },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
+      validate: {
+        // Custom validácia: musí byť buď tim_id alebo custom_tim_nazov
+        customTimValidation(value: any) {
+          if (!value && !this.custom_tim_nazov) {
+            throw new Error('Musí byť zadaný buď tím z databázy alebo vlastný názov tímu');
+          }
+        }
+      }
     },
     custom_tim_nazov: {
       type: DataTypes.STRING(100),
       allowNull: true,
+      validate: {
+        len: [2, 100],
+      },
     },
     pozicia: {
       type: DataTypes.INTEGER,
@@ -585,7 +651,7 @@ LigaTabulka.init(
       defaultValue: 0,
     },
     
-    // DOMÁCE ŠTATISTIKY
+    // DETAILNÉ ŠTATISTIKY - DOMÁCE ZÁPASY
     domace_zapasy: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -635,7 +701,7 @@ LigaTabulka.init(
       },
     },
     
-    // VONKAJŠIE ŠTATISTIKY
+    // DETAILNÉ ŠTATISTIKY - VONKAJŠIE ZÁPASY
     vonkajsie_zapasy: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -737,64 +803,47 @@ LigaTabulka.init(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
-    },
+    }
   },
   {
     sequelize,
+    modelName: 'LigaTabulka',
     tableName: 'liga_tabulky',
-    timestamps: true,
-    createdAt: 'vytvoreny',
-    updatedAt: 'aktualizovany',
-    indexes: [
-      {
-        unique: true,
-        fields: ['liga_id', 'tim_id'], // Jeden tím môže byť v lige len raz
-      },
-      {
-        unique: true,
-        fields: ['liga_id', 'pozicia'], // Jedinečné pozície v rámci ligy
-      },
-      {
-        fields: ['liga_id'],
-      },
-      {
-        fields: ['tim_id'],
-      },
-      {
-        fields: ['pozicia'],
-      },
-      {
-        fields: ['body'],
-      },
-      {
-        fields: ['goly_rozdiel'],
-      },
-    ],
+    timestamps: false, // Používame vlastné polia vytvoreny/aktualizovany
     hooks: {
-      // Hook pre automatický výpočet gólovej bilancie
-      beforeSave: async (tabulka: LigaTabulka) => {
+      beforeUpdate: (tabulka: LigaTabulka) => {
+        tabulka.aktualizovany = new Date();
+        
+        // Automatický výpočet gólovej bilancie
         tabulka.goly_rozdiel = tabulka.goly_za - tabulka.goly_proti;
       },
-      
-      // Validácia konzistencie údajov
-      beforeCreate: async (tabulka: LigaTabulka) => {
-        // Kontrola či sa zápasy zhodujú
-        const celkoveZapasy = tabulka.zapasy;
-        const vypocitaneZapasy = tabulka.vitazstva + tabulka.remizy + tabulka.prehry;
+      beforeCreate: (tabulka: LigaTabulka) => {
+        const now = new Date();
+        tabulka.vytvoreny = now;
+        tabulka.aktualizovany = now;
         
-        if (celkoveZapasy !== vypocitaneZapasy) {
-          throw new Error('Nesúlad v počte zápasov: celkové zápasy sa musia rovnať súčtu víťazstiev, remíz a prehier');
-        }
-        
-        // Kontrola domácich a vonkajších zápasov
-        const domaceSpolu = (tabulka.domace_zapasy || 0);
-        const vonkajsieSpolu = (tabulka.vonkajsie_zapasy || 0);
-        
-        if (domaceSpolu + vonkajsieSpolu !== celkoveZapasy && (domaceSpolu > 0 || vonkajsieSpolu > 0)) {
-          throw new Error('Nesúlad v počte domácich a vonkajších zápasov');
-        }
+        // Automatický výpočet gólovej bilancie
+        tabulka.goly_rozdiel = tabulka.goly_za - tabulka.goly_proti;
       },
     },
+    indexes: [
+      // Index na ligu + pozíciu pre rýchle zoradenie
+      {
+        fields: ['liga_id', 'pozicia'],
+        unique: true,
+        name: 'liga_tabulky_liga_pozicia'
+      },
+      // Index na tím (môže byť null pre custom tímy)
+      {
+        fields: ['tim_id'],
+        name: 'liga_tabulky_tim_id'
+      },
+      // Index na body pre zoradenie
+      {
+        fields: ['liga_id', 'body', 'goly_rozdiel'],
+        name: 'liga_tabulky_ranking'
+      },
+    ],
   }
 );
 

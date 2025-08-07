@@ -703,13 +703,14 @@ export const getLeagueTable = async (ligaId: number, includeInactive: boolean = 
         model: Team,
         as: 'tim',
         attributes: ['id', 'nazov', 'vekova_kategoria', 'logo', 'farba_prva', 'aktivity'],
-        where: includeInactive ? {} : { aktivity: true },
-        required: !includeInactive
+        where: includeInactive ? undefined : { aktivity: true },
+        required: false, // OPRAVENÉ: LEFT JOIN namiesto INNER JOIN
       },
       {
         model: Liga,
         as: 'liga',
-        attributes: ['nazov', 'sezona', 'body_za_vitazstvo', 'body_za_remizy', 'zobrazit_formu']
+        attributes: ['id', 'nazov', 'sezona', 'body_za_vitazstvo', 'body_za_remizy', 'zobrazit_formu'],
+        required: false // Aj toto by malo byť false
       }
     ],
     order: [['pozicia', 'ASC']]
