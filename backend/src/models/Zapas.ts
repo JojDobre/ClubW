@@ -81,6 +81,28 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public clanok?: any;
   public fotogaleria?: any;
 
+  // Helper method - vracia slovenský názov statusu zápasu (chýbala, volali ju skripty)
+  public getStatusName(): string {
+    const statusNames: Record<string, string> = {
+      naplanovany: 'Naplánovaný',
+      prebieha: 'Prebieha',
+      ukonceny: 'Ukončený',
+      odlozeny: 'Odložený',
+      zruseny: 'Zrušený',
+    };
+    return statusNames[this.status] || this.status;
+  }
+
+  // Helper method - kontroluje, či je zápas ukončený (chýbala, volali ju skripty)
+  public isUkonceny(): boolean {
+    return this.status === 'ukonceny';
+  }
+
+  // Helper method - kontroluje, či je zápas v budúcnosti (naplánovaný a ešte nezačal)
+  public isBuduci(): boolean {
+    return this.status === 'naplanovany' && new Date(this.datum_cas) > new Date();
+  }
+
   // Helper method - vracia názov ligy (databáza alebo custom)
   public getLigaNazov(): string | null {
     if (this.liga?.nazov) {

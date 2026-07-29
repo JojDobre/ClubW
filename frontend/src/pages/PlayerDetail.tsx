@@ -2,6 +2,8 @@
 // Detail hráča s všetkými informáciami
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Player {
   id: number;
@@ -61,8 +63,8 @@ const PlayerDetail: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Volám API:', `http://localhost:3000/api/players/${id}?include_team=true`);
-      const response = await fetch(`http://localhost:3000/api/players/${id}?include_team=true`);
+      console.log('📡 Volám API:', apiUrl(`/players/${id}?include_team=true`));
+      const response = await fetch(apiUrl(`/players/${id}?include_team=true`));
       console.log('📡 Player response status:', response.status);
       
       if (!response.ok) {

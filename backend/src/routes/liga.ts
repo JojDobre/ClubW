@@ -26,6 +26,10 @@ import {
   exportLeagueTableEndpoint,
   importLeagueTableEndpoint
 } from '../controllers/ligaController';
+// Controller pre poradie strelcov ligy
+import { getTopScorers } from '../controllers/ZapasStatistikaController';
+// Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -45,6 +49,13 @@ const router = express.Router();
  * @access Public
  * @example GET /api/leagues?typ=sutaz&format=tabulka&include_stats=true&limit=20
  */
+/**
+ * @route GET /api/leagues/:id/top-scorers
+ * @desc Poradie najlepších strelcov (alebo asistentov) ligy
+ * @access Public
+ */
+router.get('/:id/top-scorers', getTopScorers);
+
 router.get('/', getLeagues);
 
 /**
@@ -86,9 +97,8 @@ router.get('/:id', getLeague);
  *   external_sync?: boolean (default: false)
  * }
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.post('/', createLeague);
+router.post('/', authenticateToken, requireEditor, createLeague);
 
 /**
  * @route PUT /api/leagues/:id  
@@ -96,18 +106,16 @@ router.post('/', createLeague);
  * @param id - ID ligy
  * @body Rovnaké polia ako pri POST, všetky voliteľné
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.put('/:id', updateLeague);
+router.put('/:id', authenticateToken, requireEditor, updateLeague);
 
 /**
  * @route DELETE /api/leagues/:id
  * @desc Soft delete ligy (označenie ako neaktívna)
  * @param id - ID ligy  
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.delete('/:id', deleteLeague);
+router.delete('/:id', authenticateToken, requireAdmin, deleteLeague);
 
 // ===== TABUĽKOVÉ ROUTES =====
 
@@ -127,9 +135,8 @@ router.get('/:id/table', getLeagueTableEndpoint);
  * @param id - ID ligy
  * @access Private (Admin)
  * @note Funguje len ak má liga zapnutú automatickú aktualizáciu
- * @todo Pridať autentifikačný middleware
  */
-router.post('/:id/table/recalculate', recalculateLeagueTableEndpoint);
+router.post('/:id/table/recalculate', authenticateToken, requireEditor, recalculateLeagueTableEndpoint);
 
 /**
  * @route PUT /api/leagues/:id/table
@@ -152,9 +159,8 @@ router.post('/:id/table/recalculate', recalculateLeagueTableEndpoint);
  *   }>
  * }
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.put('/:id/table', updateLeagueTableEndpoint);
+router.put('/:id/table', authenticateToken, requireEditor, updateLeagueTableEndpoint);
 
 // ===== TURNAJOVÉ ROUTES =====
 
@@ -198,7 +204,6 @@ router.get('/:id/overview', getLeagueOverviewEndpoint);
  * @access Private (Admin)
  * @returns File download
  * @example GET /api/leagues/1/export?format=csv
- * @todo Pridať autentifikačný middleware
  */
 router.get('/:id/export', exportLeagueTableEndpoint);
 
@@ -212,9 +217,8 @@ router.get('/:id/export', exportLeagueTableEndpoint);
  * }
  * @access Private (Admin)
  * @note Vymaže existujúcu tabuľku a nahradí ju importovanými dátami
- * @todo Pridať autentifikačný middleware
  */
-router.post('/:id/import', importLeagueTableEndpoint);
+router.post('/:id/import', authenticateToken, requireEditor, importLeagueTableEndpoint);
 
 // ===== POKROČILÉ ROUTES (pre budúce rozšírenia) =====
 

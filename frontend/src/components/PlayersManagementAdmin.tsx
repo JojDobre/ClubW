@@ -11,6 +11,8 @@ import '../styles/components/PlayerModal.css';
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
 import { useRouter } from '../context/RouterContext';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface User {
   id: number;
@@ -818,7 +820,7 @@ const PlayerForm: React.FC<PlayerFormProps> = ({ player, teams, onClose, onSave 
     formData.append('photo', file);
     formData.append('tim_id', teamId.toString());
 
-    const response = await fetch('http://localhost:3000/api/upload/player-photo', {
+    const response = await fetch(apiUrl('/upload/player-photo'), {
       method: 'POST',
       body: formData,
     });

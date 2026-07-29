@@ -53,6 +53,8 @@ import './styles/pages/pageStyles.css';
 import './styles/pages/pageStyles.css';
 import './styles/components/ui/table/galleryTable.css';
 import './styles/components/ui/table/sortPopup.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from './config/api';
 
 
 
@@ -1132,7 +1134,7 @@ const App: React.FC = () => {
       if (token && savedUser) {
         try {
           // Overenie tokenu na serveri
-          const response = await fetch('http://localhost:3000/api/auth/me', {
+          const response = await fetch(apiUrl('/auth/me'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },

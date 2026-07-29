@@ -2,6 +2,8 @@
 // Modal pre editovanie existujúcej galérie s podporou upload a správou obrázkov
 
 import React, { useState, useRef, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl, souborUrl } from '../../../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Team {
@@ -136,8 +138,8 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const slugTimeoutRef = useRef<NodeJS.Timeout>();
-  const nameValidationTimeoutRef = useRef<NodeJS.Timeout>();
+  const slugTimeoutRef = useRef<ReturnType<typeof setTimeout>>()  // browser-safe typ namiesto NodeJS.Timeout;
+  const nameValidationTimeoutRef = useRef<ReturnType<typeof setTimeout>>()  // browser-safe typ namiesto NodeJS.Timeout;
 
   // ===== LIFECYCLE HOOKS =====
   useEffect(() => {
@@ -228,7 +230,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
       setLoadingExistingImages(true);
       setError(null);
 
-      const response = await fetch(`http://localhost:3000/api/admin/galleries/${galleryId}/images`, {
+      const response = await fetch(apiUrl(`/admin/galleries/${galleryId}/images`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -298,7 +300,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
         exact: 'true'
       });
 
-      const response = await fetch(`http://localhost:3000/api/admin/galleries?${params}`, {
+      const response = await fetch(apiUrl(`/admin/galleries?${params}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -389,7 +391,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
           break;
       }
 
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
+      const response = await fetch(souborUrl(endpoint), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -538,7 +540,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
         aktivity: formData.aktivity
       };
 
-      const updateResponse = await fetch(`http://localhost:3000/api/admin/galleries/${gallery.id}`, {
+      const updateResponse = await fetch(apiUrl(`/admin/galleries/${gallery.id}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -559,7 +561,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
         for (const imageId of imagesToDelete) {
           try {
             const deleteResponse = await fetch(
-              `http://localhost:3000/api/admin/galleries/${gallery.id}/images/${imageId}`, 
+              apiUrl(`/admin/galleries/${gallery.id}/images/${imageId}`), 
               {
                 method: 'DELETE',
                 headers: {
@@ -588,7 +590,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
         });
 
         const uploadResponse = await fetch(
-          `http://localhost:3000/api/admin/galleries/${gallery.id}/images`, 
+          apiUrl(`/admin/galleries/${gallery.id}/images`), 
           {
             method: 'POST',
             headers: {
@@ -786,7 +788,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
               >
                 <div className="image-preview">
                   <img 
-                    src={`http://localhost:3000${image.nahladovy_maly || image.cesta_suboru}`}
+                    src={souborUrl(image.nahladovy_maly || image.cesta_suboru)}
                     alt={image.nazov || 'Obrázok galérie'}
                     className="existing-image"
                   />
@@ -901,7 +903,7 @@ const GalleryEditModal: React.FC<GalleryEditModalProps> = ({
               <div key={image.id} className="uploaded-item">
                 <div className="uploaded-preview">
                   <img 
-                    src={`http://localhost:3000${image.nahladovy_maly || image.cesta_suboru}`}
+                    src={souborUrl(image.nahladovy_maly || image.cesta_suboru)}
                     alt={image.nazov}
                     className="uploaded-image"
                   />

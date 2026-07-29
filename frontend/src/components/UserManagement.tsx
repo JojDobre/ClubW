@@ -2,6 +2,8 @@
 // Komponenta pre správu používateľov
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface User {
   id: number;
@@ -57,7 +59,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser }) => {
       if (filterActive) queryParams.append('active', filterActive);
 
       const response = await fetch(
-        `http://localhost:3000/api/users?${queryParams.toString()}`,
+        apiUrl(`/users?${queryParams.toString()}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -117,8 +119,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser }) => {
     try {
       const token = localStorage.getItem('clubw_token');
       const url = editingUser 
-        ? `http://localhost:3000/api/users/${editingUser.id}`
-        : 'http://localhost:3000/api/users';
+        ? apiUrl(`/users/${editingUser.id}`)
+        : apiUrl('/users');
       
       const method = editingUser ? 'PUT' : 'POST';
       const body = editingUser 
@@ -180,7 +182,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser }) => {
     try {
       const token = localStorage.getItem('clubw_token');
       const response = await fetch(
-        `http://localhost:3000/api/users/${userId}/toggle-status`,
+        apiUrl(`/users/${userId}/toggle-status`),
         {
           method: 'PATCH',
           headers: {
@@ -213,7 +215,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser }) => {
 
     try {
       const token = localStorage.getItem('clubw_token');
-      const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+      const response = await fetch(apiUrl(`/users/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

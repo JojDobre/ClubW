@@ -1,7 +1,7 @@
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { API_BASE_URL } from '../config/api';
 // frontend/src/services/ligaApi.ts
 // API služba pre správu líg - kompatibilná s backend controllerom
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
 
 // ===== INTERFACE PRE LIGY (podľa backend modelu) =====
 

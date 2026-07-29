@@ -10,6 +10,8 @@ import type { AdvancedFilters } from './ui/table/FilterPopup';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Article {
@@ -208,7 +210,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
         }
       }
 
-      const response = await fetch(`http://localhost:3000/api/admin/articles?${params.toString()}`, {
+      const response = await fetch(apiUrl(`/admin/articles?${params.toString()}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -250,7 +252,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('clubw_token');
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -271,7 +273,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('clubw_token');
-      const response = await fetch('http://localhost:3000/api/admin/articles?limit=1000', {
+      const response = await fetch(apiUrl('/admin/articles?limit=1000'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -537,7 +539,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     try {
       const token = localStorage.getItem('clubw_token');
       
-      const response = await fetch('http://localhost:3000/api/admin/articles/bulk-delete', {
+      const response = await fetch(apiUrl('/admin/articles/bulk-delete'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -581,7 +583,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
     try {
       const token = localStorage.getItem('clubw_token');
       
-      const response = await fetch('http://localhost:3000/api/admin/articles/bulk-duplicate', {
+      const response = await fetch(apiUrl('/admin/articles/bulk-duplicate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,8 @@
 // Fotogalérie - testovacia stránka pre API
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Gallery {
   id: number;
@@ -60,8 +62,8 @@ const Galleries: React.FC = () => {
       params.append('limit', '12');
 
       const url = params.toString() 
-        ? `http://localhost:3000/api/galleries?${params.toString()}`
-        : `http://localhost:3000/api/galleries?page=${page}&limit=12`;
+        ? apiUrl(`/galleries?${params.toString()}`)
+        : apiUrl(`/galleries?page=${page}&limit=12`);
 
       console.log('📡 Volám galleries API:', url);
       const response = await fetch(url);

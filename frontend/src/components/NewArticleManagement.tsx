@@ -7,6 +7,8 @@ import RichTextEditor from './RichTextEditor';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface ArticleFormData {
@@ -73,7 +75,7 @@ const NewArticleManagement: React.FC = () => {
   // Načítanie kategórií
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -215,7 +217,7 @@ const NewArticleManagement: React.FC = () => {
       const formData = new FormData();
       formData.append('image', selectedImage);
       
-      const response = await fetch('http://localhost:3000/api/admin/articles/upload-image', {
+      const response = await fetch(apiUrl('/admin/articles/upload-image'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`
@@ -334,7 +336,7 @@ const NewArticleManagement: React.FC = () => {
       
       console.log('Odosielam článok:', articleData);
       
-      const response = await fetch('http://localhost:3000/api/admin/articles', {
+      const response = await fetch(apiUrl('/admin/articles'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -493,7 +495,8 @@ const NewArticleManagement: React.FC = () => {
             </p>
           </div>
           {/* DEBUG: Test button */}
-          {process.env.NODE_ENV === 'development' && (
+          {/* Vite používa import.meta.env.DEV namiesto process.env.NODE_ENV */}
+          {import.meta.env.DEV && (
             <button 
               onClick={handleTestFill}
               style={{

@@ -1,7 +1,8 @@
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { API_BASE_URL } from '../config/api';
 // frontend/src/services/matchesApi.ts
 // API služba pre správu zápasov - FÁZA 4
 
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // ===== INTERFACES =====
 

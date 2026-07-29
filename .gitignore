@@ -72,7 +72,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public  # ODSTRANENE: ignorovalo frontend/public a index.html sa nikdy necommitol!
 
 # Vuepress build output
 .vuepress/dist
@@ -152,3 +152,6 @@ coverage/
 
 # Prettier cache
 .prettiercache
+
+# Vyrovnávacia pamäť stavu licencie - vzniká za behu, nepatrí do gitu
+.license-cache.json

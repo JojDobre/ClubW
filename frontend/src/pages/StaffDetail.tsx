@@ -2,6 +2,8 @@
 // Detail člena realizačného tímu
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Staff {
   id: number;
@@ -63,8 +65,8 @@ const StaffDetail: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Volám API:', `http://localhost:3000/api/staff/${id}?include_team=true`);
-      const response = await fetch(`http://localhost:3000/api/staff/${id}?include_team=true`);
+      console.log('📡 Volám API:', apiUrl(`/staff/${id}?include_team=true`));
+      const response = await fetch(apiUrl(`/staff/${id}?include_team=true`));
       console.log('📡 Staff response status:', response.status);
       
       if (!response.ok) {

@@ -7,6 +7,8 @@ import RichTextEditor from './RichTextEditor';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface ArticleFormData {
@@ -104,13 +106,13 @@ const EditArticleManagement: React.FC<EditArticleManagementProps> = ({ articleId
       
       // Paralelné načítanie článku a kategórií
       const [articleResponse, categoriesResponse] = await Promise.all([
-        fetch(`http://localhost:3000/api/admin/articles/${articleId}`, {
+        fetch(apiUrl(`/admin/articles/${articleId}`), {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3000/api/admin/categories', {
+        fetch(apiUrl('/admin/categories'), {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
             'Content-Type': 'application/json'
@@ -250,7 +252,7 @@ const EditArticleManagement: React.FC<EditArticleManagementProps> = ({ articleId
       const formData = new FormData();
       formData.append('image', selectedImage);
 
-      const response = await fetch('http://localhost:3000/api/admin/articles/upload-image', {
+      const response = await fetch(apiUrl('/admin/articles/upload-image'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -341,7 +343,7 @@ const EditArticleManagement: React.FC<EditArticleManagementProps> = ({ articleId
       
       console.log('Odosielam článok:', articleData);
       
-      const response = await fetch(`http://localhost:3000/api/admin/articles/${articleId}`, {
+      const response = await fetch(apiUrl(`/admin/articles/${articleId}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,

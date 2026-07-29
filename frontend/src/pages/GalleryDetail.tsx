@@ -2,6 +2,8 @@
 // Detail fotogalérie s obrázkami - testovacia stránka pre API
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface GalleryImage {
   id: number;
@@ -62,7 +64,7 @@ const GalleryDetail: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/galleries/${id}`);
+      const response = await fetch(apiUrl(`/galleries/${id}`));
       
       if (!response.ok) {
         throw new Error(response.status === 404 ? 'Galéria nenájdená' : `HTTP chyba: ${response.status}`);

@@ -2,6 +2,8 @@
 // Detail ligy s tabuľkou a štatistikami
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface League {
   id: number;
@@ -60,8 +62,8 @@ const LeagueDetail: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Volám API:', `http://localhost:3000/api/leagues/${id}`);
-      const response = await fetch(`http://localhost:3000/api/leagues/${id}`);
+      console.log('📡 Volám API:', apiUrl(`/leagues/${id}`));
+      const response = await fetch(apiUrl(`/leagues/${id}`));
       console.log('📡 League response status:', response.status);
       
       if (!response.ok) {

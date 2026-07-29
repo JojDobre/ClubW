@@ -13,6 +13,8 @@ import '../styles/components/managementPages.css';
 import '../styles/components/ui/table/galleryTable.css';
 import '../styles/components/ui/table/GalleryModal.css';
 import '../styles/components/ui/table/GalleryEditModal.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 
 // ===== INTERFACE DEFINITIONS =====
@@ -129,7 +131,7 @@ const GalleryManagement: React.FC = () => {
         ...(searchTerm && { search: searchTerm })
       });
 
-      const response = await fetch(`http://localhost:3000/api/admin/galleries?${params}`, {
+      const response = await fetch(apiUrl(`/admin/galleries?${params}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -233,7 +235,7 @@ const GalleryManagement: React.FC = () => {
     try {
       setIsDeleting(true);
 
-      const response = await fetch(`http://localhost:3000/api/admin/galleries/${galleryId}`, {
+      const response = await fetch(apiUrl(`/admin/galleries/${galleryId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -279,7 +281,7 @@ const GalleryManagement: React.FC = () => {
 
       // Vymazanie každej galérie postupne
       for (const id of selectedIds) {
-        const response = await fetch(`http://localhost:3000/api/admin/galleries/${id}`, {
+        const response = await fetch(apiUrl(`/admin/galleries/${id}`), {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,

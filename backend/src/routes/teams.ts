@@ -11,6 +11,8 @@ import {
   updateTeam,
   deleteTeam
 } from '../controllers/teamController';
+// Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -66,7 +68,7 @@ router.get('/:id/staff', getTeamStaff);
  * @access  Admin
  * @body    nazov, typ, vekova_kategoria, popis?, logo?, farba_prva?, farba_druha?, poradie?
  */
-router.post('/', createTeam);
+router.post('/', authenticateToken, requireEditor, createTeam);
 
 /**
  * @route   PUT /api/teams/:id
@@ -75,7 +77,7 @@ router.post('/', createTeam);
  * @param   id - ID tímu
  * @body    nazov?, typ?, vekova_kategoria?, popis?, logo?, farba_prva?, farba_druha?, poradie?
  */
-router.put('/:id', updateTeam);
+router.put('/:id', authenticateToken, requireEditor, updateTeam);
 
 /**
  * @route   DELETE /api/teams/:id
@@ -83,6 +85,6 @@ router.put('/:id', updateTeam);
  * @access  Admin
  * @param   id - ID tímu
  */
-router.delete('/:id', deleteTeam);
+router.delete('/:id', authenticateToken, requireAdmin, deleteTeam);
 
 export default router;

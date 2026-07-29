@@ -2,6 +2,8 @@
 // Modal pre vytváranie novej galérie s podporou upload fotiek a priradenia
 
 import React, { useState, useRef, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl, souborUrl } from '../../../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Team {
@@ -93,8 +95,8 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const slugTimeoutRef = useRef<NodeJS.Timeout>();
-  const nameValidationTimeoutRef = useRef<NodeJS.Timeout>();
+  const slugTimeoutRef = useRef<ReturnType<typeof setTimeout>>()  // browser-safe typ namiesto NodeJS.Timeout;
+  const nameValidationTimeoutRef = useRef<ReturnType<typeof setTimeout>>()  // browser-safe typ namiesto NodeJS.Timeout;
 
   // ===== LIFECYCLE HOOKS =====
   useEffect(() => {
@@ -197,7 +199,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
     try {
       setIsCheckingName(true);
       
-      const response = await fetch(`http://localhost:3000/api/admin/galleries`, {
+      const response = await fetch(apiUrl(`/admin/galleries`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -301,9 +303,9 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
           break;
       }
 
-      console.log(`🌐 Volám API: http://localhost:3000${endpoint}`);
+      console.log(`🌐 Volám API: ${apiUrl(endpoint)}`);
 
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
+      const response = await fetch(souborUrl(endpoint), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
           'Content-Type': 'application/json'
@@ -408,7 +410,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
 
       console.log('🖼️ Vytváram galériu:', payload);
 
-      const response = await fetch('http://localhost:3000/api/admin/galleries', {
+      const response = await fetch(apiUrl('/admin/galleries'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -428,7 +430,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
           
           console.log('🔄 Pokúšam sa s novým slug:', newSlug);
           
-          const retryResponse = await fetch('http://localhost:3000/api/admin/galleries', {
+          const retryResponse = await fetch(apiUrl('/admin/galleries'), {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`,
@@ -514,7 +516,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
         formDataUpload.append('images', file);
       });
 
-      const response = await fetch(`http://localhost:3000/api/admin/galleries/${galleryId}/images`, {
+      const response = await fetch(apiUrl(`/admin/galleries/${galleryId}/images`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('clubw_token')}`
@@ -902,7 +904,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
               <div key={image.id} className="uploaded-item">
                 <div className="uploaded-preview">
                   <img 
-                    src={`http://localhost:3000${image.nahladovy_maly || image.cesta_suboru}`}
+                    src={souborUrl(image.nahladovy_maly || image.cesta_suboru)}
                     alt={image.nazov}
                     className="uploaded-image"
                   />

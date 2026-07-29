@@ -3,6 +3,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+// Sanitizácia HTML obsahu stránky - ochrana pred stored XSS
+import { sanitizeHtml } from '../utils/sanitize';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Page {
   id: number;
@@ -43,7 +47,7 @@ const PageView: React.FC = () => {
         
         console.log('Fetching page with slug:', slug); // ✅ DEBUG
         
-        const response = await fetch(`http://localhost:3000/api/pages/${slug}`);
+        const response = await fetch(apiUrl(`/pages/${slug}`));
         const data = await response.json();
         
         console.log('API response:', data); // ✅ DEBUG
@@ -238,7 +242,7 @@ const PageView: React.FC = () => {
           lineHeight: '1.7',
           color: '#2d3748'
         }}
-        dangerouslySetInnerHTML={{ __html: page.obsah }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.obsah) }}
       />
 
       {/* Footer informácie */}

@@ -9,6 +9,8 @@ import '../styles/components/managementPages.css';
 import Table from './ui/table/Table';
 import type { TableColumn, TableData } from './ui/table/Table';
 import '../styles/components/PlayerModal.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // Helper funkcia pre výpočet veku z dátumu narodenia
 const calculateAge = (dateOfBirth?: string): number => {
@@ -842,7 +844,7 @@ const StaffForm: React.FC<StaffFormProps> = ({ staff, teams, functions, onClose,
     formData.append('photo', file);
     formData.append('tim_id', teamId.toString()); // Aj pre staff pošleme tim_id
 
-    const response = await fetch('http://localhost:3000/api/upload/staff-photo', {
+    const response = await fetch(apiUrl('/upload/staff-photo'), {
       method: 'POST',
       body: formData,
     });

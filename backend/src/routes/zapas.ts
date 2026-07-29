@@ -10,6 +10,10 @@ import {
   deleteMatch,
   updateMatchStatuses
 } from '../controllers/ZapasController';
+// Controller pre štatistiky zápasu (góly, asistencie, karty)
+import { getMatchStatistics, setMatchStatistics } from '../controllers/ZapasStatistikaController';
+// Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -44,9 +48,31 @@ router.get('/:id', getMatch);
  * @desc Vytvorenie nového zápasu
  * @body nazov, liga_id, datum_cas, domaci_tim_id, hostujuci_tim_id, kolo?, miesto?, status?, goly_domaci?, goly_hostia?, pocet_divakov?, poznamky?, video_url?, clanok_id?
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.post('/', createMatch);
+router.post('/', authenticateToken, requireEditor, createMatch);
+
+/**
+ * @route GET /api/matches/:id/statistics
+ * @desc Štatistiky zápasu - góly, asistencie, karty
+ * @access Public
+ */
+router.get('/:id/statistics', getMatchStatistics);
+
+/**
+ * @route PUT /api/matches/:id/statistics
+ * @desc Nastavenie štatistík zápasu (nahradí predchádzajúce)
+ * @access Private (Admin/Redaktor)
+ */
+router.put('/:id/statistics', authenticateToken, requireEditor, setMatchStatistics);
+
+/**
+ * @route PUT /api/matches/update-statuses
+ * @desc Automatická aktualizácia statusov všetkých zápasov
+ * @access Private (Admin/Redaktor)
+ * POZOR: musí byť definovaný PRED PUT /:id, inak Express namatchuje
+ * "update-statuses" ako :id a tento endpoint je nedosiahnuteľný
+ */
+router.put('/update-statuses', authenticateToken, requireEditor, updateMatchStatuses);
 
 /**
  * @route PUT /api/matches/:id  
@@ -54,24 +80,16 @@ router.post('/', createMatch);
  * @param id - ID zápasu
  * @body nazov?, liga_id?, datum_cas?, domaci_tim_id?, hostujuci_tim_id?, kolo?, miesto?, status?, goly_domaci?, goly_hostia?, pocet_divakov?, poznamky?, video_url?, clanok_id?
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.put('/:id', updateMatch);
+router.put('/:id', authenticateToken, requireEditor, updateMatch);
 
 /**
  * @route DELETE /api/matches/:id
  * @desc Soft delete zápasu (označenie ako neaktívny)
  * @param id - ID zápasu  
  * @access Private (Admin)
- * @todo Pridať autentifikačný middleware
  */
-router.delete('/:id', deleteMatch);
+router.delete('/:id', authenticateToken, requireAdmin, deleteMatch);
 
-/**
- * @route PUT /api/matches/update-statuses
- * @desc Automatická aktualizácia statusov všetkých zápasov
- * @access Private (Admin)
- */
-router.put('/update-statuses', updateMatchStatuses);
 
 export default router;

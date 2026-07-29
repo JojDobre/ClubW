@@ -2,6 +2,8 @@
 // Stránka so zoznamom zápasov
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Match {
   id: number;
@@ -48,8 +50,8 @@ const Matches: React.FC = () => {
       if (searchTerm.trim()) params.append('search', searchTerm.trim());
 
       const url = params.toString() 
-        ? `http://localhost:3000/api/matches?${params.toString()}`
-        : `http://localhost:3000/api/matches`;
+        ? apiUrl(`/matches?${params.toString()}`)
+        : apiUrl(`/matches`);
 
       console.log('📡 Volám matches API:', url);
       const response = await fetch(url);

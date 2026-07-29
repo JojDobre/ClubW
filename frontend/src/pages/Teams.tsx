@@ -2,6 +2,8 @@
 // Základná stránka so zoznamom tímov
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Team {
   id: number;
@@ -22,7 +24,7 @@ const Teams: React.FC = () => {
   const fetchTeams = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/teams?include_stats=true');
+      const response = await fetch(apiUrl('/teams?include_stats=true'));
       
       if (!response.ok) {
         throw new Error(`HTTP chyba: ${response.status}`);

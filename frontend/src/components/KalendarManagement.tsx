@@ -3,6 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { calendarApi, CalendarMatch, MonthCalendarData, WeekCalendarData, UpcomingMatchesData, CalendarFilters } from '../services/calendarApi';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface User {
   id: number;
@@ -331,8 +333,8 @@ const KalendarManagement: React.FC<KalendarManagementProps> = ({ user }) => {
   const loadInitialData = async () => {
     try {
       const [ligyResponse, timyResponse] = await Promise.all([
-        fetch('http://localhost:3000/api/leagues'),
-        fetch('http://localhost:3000/api/teams')
+        fetch(apiUrl('/leagues')),
+        fetch(apiUrl('/teams'))
       ]);
       
       if (ligyResponse.ok) {

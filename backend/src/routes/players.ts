@@ -9,6 +9,8 @@ import {
   updatePlayer,
   deletePlayer
 } from '../controllers/playerController';
+// Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -44,7 +46,7 @@ router.get('/:id', getPlayerById);
  * @access  Admin
  * @body    meno, priezvisko, datum_narodenia, pozicia, tim_id, cislo_dresu?, narodnost?, vaha?, vyska?, fotka?, poznamky?
  */
-router.post('/', createPlayer);
+router.post('/', authenticateToken, requireEditor, createPlayer);
 
 /**
  * @route   PUT /api/players/:id
@@ -53,7 +55,7 @@ router.post('/', createPlayer);
  * @param   id - ID hráča
  * @body    meno?, priezvisko?, datum_narodenia?, pozicia?, tim_id?, cislo_dresu?, narodnost?, vaha?, vyska?, fotka?, poznamky?
  */
-router.put('/:id', updatePlayer);
+router.put('/:id', authenticateToken, requireEditor, updatePlayer);
 
 /**
  * @route   DELETE /api/players/:id
@@ -61,6 +63,6 @@ router.put('/:id', updatePlayer);
  * @access  Admin
  * @param   id - ID hráča
  */
-router.delete('/:id', deletePlayer);
+router.delete('/:id', authenticateToken, requireAdmin, deletePlayer);
 
 export default router;

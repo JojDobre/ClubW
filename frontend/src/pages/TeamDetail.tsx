@@ -2,6 +2,8 @@
 // Detail tímu s hráčmi a realizačným tímom - OPRAVENÝ
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Team {
   id: number;
@@ -67,8 +69,8 @@ const TeamDetail: React.FC = () => {
       setError(null);
 
       // Načítanie základných informácií o tíme
-      console.log('📡 Volám API:', `http://localhost:3000/api/teams/${id}`);
-      const teamResponse = await fetch(`http://localhost:3000/api/teams/${id}`);
+      console.log('📡 Volám API:', apiUrl(`/teams/${id}`));
+      const teamResponse = await fetch(apiUrl(`/teams/${id}`));
       console.log('📡 Team response status:', teamResponse.status);
       
       if (!teamResponse.ok) {
@@ -86,8 +88,8 @@ const TeamDetail: React.FC = () => {
       }
 
       // Načítanie hráčov
-      console.log('📡 Volám players API:', `http://localhost:3000/api/teams/${id}/players`);
-      const playersResponse = await fetch(`http://localhost:3000/api/teams/${id}/players`);
+      console.log('📡 Volám players API:', apiUrl(`/teams/${id}/players`));
+      const playersResponse = await fetch(apiUrl(`/teams/${id}/players`));
       console.log('📡 Players response status:', playersResponse.status);
       
       if (playersResponse.ok) {
@@ -102,8 +104,8 @@ const TeamDetail: React.FC = () => {
       }
 
       // Načítanie realizačného tímu
-      console.log('📡 Volám staff API:', `http://localhost:3000/api/teams/${id}/staff`);
-      const staffResponse = await fetch(`http://localhost:3000/api/teams/${id}/staff`);
+      console.log('📡 Volám staff API:', apiUrl(`/teams/${id}/staff`));
+      const staffResponse = await fetch(apiUrl(`/teams/${id}/staff`));
       console.log('📡 Staff response status:', staffResponse.status);
       
       if (staffResponse.ok) {

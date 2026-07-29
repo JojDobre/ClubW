@@ -12,9 +12,13 @@ import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
 import path from 'path';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
+import sharp from 'sharp';
 
 // Import databázových funkcií
 import { testConnection, syncDatabase } from './config/database';
+// Kontrola licencie - blokuje zápisové operácie pri neplatnej licencii
+import { kontrolaLicencie, spustiKontroluLicencie, stavLicencie } from './middleware/licencia';
 
 // Import route handlerov
 import authRoutes from './routes/auth';
@@ -31,7 +35,6 @@ import pagesRoutes, { adminPageRouter } from './routes/pages';
 import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
-import uploadsRoutes from './routes/uploads';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -39,35 +42,59 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const createDefaultAvatar = () => {
+// Vytvorenie predvoleného avatara pri štarte servera.
+// POZOR: ukladáme ho ako PNG, nie SVG - SVG súbory sa z priečinka uploads
+// servujú len ako príloha (ochrana pred XSS), takže by sa nezobrazili.
+const createDefaultAvatar = async () => {
   const uploadsDir = path.join(process.cwd(), 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  
-  const defaultAvatarPath = path.join(uploadsDir, 'default-avatar.svg');
-  if (!fs.existsSync(defaultAvatarPath)) {
-    const svgContent = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  await fsPromises.mkdir(uploadsDir, { recursive: true });
+
+  const defaultAvatarPath = path.join(uploadsDir, 'default-avatar.png');
+
+  try {
+    await fsPromises.access(defaultAvatarPath);
+    // Súbor už existuje - nič nerobíme
+  } catch {
+    // Silueta osoby: sivé pozadie s kruhom (hlava) a polkruhom (ramená)
+    const svgPredloha = Buffer.from(`<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
   <circle cx="100" cy="100" r="95" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
   <circle cx="100" cy="75" r="25" fill="#9ca3af"/>
   <circle cx="100" cy="140" r="35" fill="#9ca3af"/>
-</svg>`;
-    fs.writeFileSync(defaultAvatarPath, svgContent, 'utf8');
-    console.log('✅ Default avatar vytvorený');
+</svg>`);
+
+    // SVG predlohu prevedieme cez sharp na bezpečný PNG rasterový obrázok
+    await sharp(svgPredloha).png().toFile(defaultAvatarPath);
+    console.log('✅ Default avatar (PNG) vytvorený');
   }
 };
 
-createDefaultAvatar();
-
-
-// Static serving pre upload súbory
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ===== MIDDLEWARE SETUP =====
 
-// Security middleware
+// Security middleware - MUSÍ byť pred static serving,
+// inak sa upload súbory servujú bez security hlavičiek
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Static serving pre upload súbory (až PO helmete)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  // Skryté súbory (.env a pod.) sa nikdy neservujú
+  dotfiles: 'deny',
+  // Zakážeme automatické doplnenie prípony - zabraňuje obídeniu kontrol
+  extensions: false,
+  index: false,
+  maxAge: '7d',
+  setHeaders: (res, filePath) => {
+    // SVG a HTML v uploads by sa mohli spustiť ako skript v kontexte našej domény.
+    // Vynútime stiahnutie namiesto zobrazenia (ochrana pred stored XSS).
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.svg' || ext === '.html' || ext === '.htm') {
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+    // Prehliadač nesmie hádať typ obsahu podľa obsahu súboru
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
 }));
 
 // Kompressia odpovedí
@@ -170,6 +197,15 @@ app.get('/api/status', (req, res) => {
 
 // Auth routes s rate limitom
 app.use('/api/auth/login', loginLimiter);
+// Kontrola licencie - musí byť pred API routes.
+// Čítanie necháva prejsť vždy, blokuje len zmeny obsahu.
+app.use(kontrolaLicencie);
+
+// Stav licencie pre admin rozhranie
+app.get('/api/license/status', (_req, res) => {
+  res.json({ success: true, data: stavLicencie() });
+});
+
 app.use('/api/auth', authRoutes);
 
 // User management routes
@@ -203,142 +239,64 @@ app.use('/api/admin/galleries', adminGalleryImagesRouter);
 app.use('/api/admin/galleries', adminGalleryRouter);
 
 app.use('/api/upload', uploadRoutes);
-app.use('/api/uploads', uploadsRoutes);
 
 
-// ===== DEMO ENDPOINTS (môžeme odstrániť po úplnej implementácii) ===
+// ===== ŠTATISTIKY =====
 
-// Redirect na nový kalendár API
-app.get('/api/calendar', (req, res) => {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-  
-  res.json({
-    success: true,
-    message: 'Kalendár API je dostupný na nových endpointoch',
-    endpoints: {
-      month: `/api/calendar/month/${currentYear}/${currentMonth}`,
-      week: `/api/calendar/week/${currentYear}/${currentMonth}/${currentDate.getDate()}`,
-      upcoming: '/api/calendar/upcoming'
-    },
-    examples: [
-      'GET /api/calendar/month/2024/8 - Mesačný kalendár',
-      'GET /api/calendar/week/2024/8/15 - Týždenný kalendár', 
-      'GET /api/calendar/upcoming?limit=5 - Nadchádzajúce zápasy',
-      'GET /api/calendar/month/2024/8?liga_id=1 - Filter podľa ligy'
-    ]
-  });
-});
-
-// Demo endpoint pre kalendár (FÁZA 4 - môže zostať ako ukážka)
-app.get('/api/calendar', async (req, res) => {
+// GET /api/stats - Reálne štatistiky z databázy
+// (nahrádza pôvodný demo endpoint, ktorý vracal natvrdo vymyslené čísla)
+app.get('/api/stats', async (req, res, next) => {
   try {
-    // Simulácia kalendárnych dát (v skutočnosti by sme načítali zo Zapas modelu)
-    const calendar = {
-      currentMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
-      events: [
-        {
-          date: '2024-08-15',
-          matches: [
-            { id: 1, time: '18:00', teams: 'A-tím vs B-tím', league: 'I. liga' },
-            { id: 2, time: '20:00', teams: 'C-tím vs D-tím', league: 'I. liga' }
-          ]
-        },
-        {
-          date: '2024-08-22',
-          matches: [
-            { id: 3, time: '18:30', teams: 'B-tím vs C-tím', league: 'Regionálna liga' }
-          ]
-        }
-      ],
-      totalMatches: 3,
-      upcomingMatches: 1
-    };
+    // Lazy import modelov - index.ts ich už načítal cez './models'
+    const { default: models } = await import('./models');
+    const { Article, User, Team, Player, Staff, Liga, Zapas } = models as any;
+
+    // Všetky počty naraz cez Promise.all - jediný roundtrip čas namiesto sekvenčného čakania
+    const [
+      totalArticles,
+      publishedArticles,
+      totalUsers,
+      totalTeams,
+      totalPlayers,
+      totalStaff,
+      totalLeagues,
+      totalMatches,
+      finishedMatches,
+      upcomingMatches,
+    ] = await Promise.all([
+      Article.count(),
+      Article.count({ where: { status: 'published' } }),
+      User.count({ where: { aktivity: true } }),
+      Team.count({ where: { aktivity: true } }),
+      Player.count({ where: { aktivity: true } }),
+      Staff.count({ where: { aktivity: true } }),
+      Liga.count({ where: { aktivity: true } }),
+      Zapas.count({ where: { aktivity: true } }),
+      Zapas.count({ where: { aktivity: true, status: 'ukonceny' } }),
+      Zapas.count({ where: { aktivity: true, status: 'naplanovany' } }),
+    ]);
 
     res.json({
       success: true,
-      data: calendar,
-      message: 'Demo kalendár načítaný (implementácia v príprave)'
+      data: {
+        totalArticles,
+        publishedArticles,
+        totalUsers,
+        totalTeams,
+        totalPlayers,
+        totalStaff,
+        totalLeagues,
+        totalMatches,
+        finishedMatches,
+        upcomingMatches,
+        lastUpdate: new Date().toISOString(),
+      },
+      message: 'Štatistiky načítané z databázy',
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Chyba pri načítaní kalendára',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
-    });
+    // Chybu delegujeme na globálny error handler
+    next(error);
   }
-});
-
-// Starý /calendar/upcoming endpoint (bez /api) - potrebné pre ZapasManagement
-app.get('/calendar/upcoming', async (req, res) => {
-  try {
-    // Import kalendár controller
-    const { getUpcomingMatches } = await import('./controllers/kalendarController');
-    
-    // Nastav legacy flag pre starý formát odpovede
-    req.query.format = 'legacy';
-    
-    // Presmeruj na kalendár controller
-    return getUpcomingMatches(req, res);
-  } catch (error) {
-    console.error('Chyba pri legacy upcoming endpoint:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Chyba servera',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
-    });
-  }
-});
-
-// Môžeš pridať aj pár ďalších legacy routes ak potrebuješ:
-app.get('/calendar/month/:rok/:mesiac', async (req, res) => {
-  try {
-    const { getMonthCalendar } = await import('./controllers/kalendarController');
-    return getMonthCalendar(req, res);
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.get('/calendar/week/:rok/:mesiac/:den', async (req, res) => {
-  try {
-    const { getWeekCalendar } = await import('./controllers/kalendarController');
-    return getWeekCalendar(req, res);
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// Demo endpoint pre štatistiky (rozšírený pre FÁZU 4)
-app.get('/api/stats', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      // Základné štatistiky
-      totalArticles: 42,
-      publishedArticles: 38,
-      totalViews: 15847,
-      totalUsers: 12,
-      
-      // FÁZA 3 štatistiky
-      totalTeams: 6,
-      totalPlayers: 87,
-      totalStaff: 18,
-      
-      // FÁZA 4 štatistiky
-      totalLeagues: 4,
-      totalMatches: 24,
-      finishedMatches: 18,
-      upcomingMatches: 6,
-      totalGoals: 67,
-      totalCards: 23,
-      
-      lastUpdate: new Date().toISOString()
-    },
-    message: 'Demo štatistiky pre všetky fázy'
-  });
 });
 
 
@@ -352,7 +310,16 @@ app.get('/api/stats', (req, res) => {
 
 // ===== ERROR HANDLING =====
 
-// 404 handler
+// 404 handler pre API routes - MUSÍ byť pred všeobecným '*' handlerom,
+// inak sa nikdy nevykoná (pôvodná chyba: bol registrovaný až za ním)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint ${req.originalUrl} nebol nájdený`,
+  });
+});
+
+// Všeobecný 404 handler pre všetky ostatné cesty
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -360,42 +327,19 @@ app.use('*', (req, res) => {
   });
 });
 
-// 404 handler pre API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `API endpoint ${req.path} nebol nájdený`,
-    availableEndpoints: [
-      '/api/auth/*',
-      '/api/users/*', 
-      '/api/categories/*',
-      '/api/articles/*',
-      '/api/teams/*',
-      '/api/players/*',
-      '/api/staff/*',
-      '/api/leagues/*',
-      '/api/matches/*',
-      '/api/calendar/*',
-      '/api/stats'
-    ]
-  });
-});
-
 // Global error handler
+// OPRAVA: špecifické kontroly chýb musia byť PRED všeobecnou odpoveďou.
+// Pôvodný kód najprv odoslal 500 a až potom kontroloval typy chýb,
+// čo spôsobovalo ERR_HTTP_HEADERS_SENT a klient nikdy nedostal validačné chyby.
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Global error handler:', err);
 
-  res.status(err.status || 500).json({
-    success: false,
-    message: process.env.NODE_ENV === 'development' 
-      ? err.message 
-      : 'Chyba servera',
-    error: process.env.NODE_ENV === 'development' 
-      ? err.stack 
-      : undefined
-  });
+  // Poistka: ak už bola odpoveď odoslaná, delegujeme na Express default handler
+  if (res.headersSent) {
+    return next(err);
+  }
 
-    // Sequelize validation errors
+  // Sequelize validačné chyby (napr. nesplnená podmienka v modeli)
   if (err.name === 'SequelizeValidationError') {
     return res.status(400).json({
       success: false,
@@ -403,45 +347,62 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       errors: err.errors.map((e: any) => ({
         field: e.path,
         message: e.message,
-        value: e.value
-      }))
+        value: e.value,
+      })),
     });
   }
 
-// Sequelize foreign key constraint errors
+  // Sequelize unique constraint (duplicitný záznam, napr. rovnaký email)
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    return res.status(409).json({
+      success: false,
+      message: 'Záznam s touto hodnotou už existuje',
+      field: err.errors?.[0]?.path || 'unknown',
+    });
+  }
+
+  // Sequelize foreign key chyby (referencia na neexistujúci záznam)
   if (err.name === 'SequelizeForeignKeyConstraintError') {
     return res.status(400).json({
       success: false,
       message: 'Neplatná referencia na súvisiaci záznam',
       table: err.table || 'unknown',
-      field: err.fields || 'unknown'
+      field: err.fields || 'unknown',
     });
   }
 
-  // JWT errors
+  // JWT chyby - neplatný token
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
-      message: 'Neplatný autentifikačný token'
+      message: 'Neplatný autentifikačný token',
     });
   }
 
+  // JWT chyby - expirovaný token
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({
       success: false,
-      message: 'Autentifikačný token vypršal'
+      message: 'Autentifikačný token vypršal',
     });
   }
 
-  // Všeobecná chyba
+  // Multer chyby pri uploade (prekročená veľkosť súboru a pod.)
+  if (err.name === 'MulterError') {
+    return res.status(400).json({
+      success: false,
+      message: `Chyba pri nahrávaní súboru: ${err.message}`,
+    });
+  }
+
+  // Všeobecná chyba - až ako POSLEDNÁ možnosť
   res.status(err.status || 500).json({
     success: false,
-    message: process.env.NODE_ENV === 'development' 
-      ? err.message 
+    message: process.env.NODE_ENV === 'development'
+      ? err.message
       : 'Interná chyba servera',
-    error: process.env.NODE_ENV === 'development' 
-      ? err.stack 
-      : undefined,
+    // Stack trace posielame len v developmente, v produkcii by prezrádzal interné detaily
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
 
@@ -450,6 +411,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 async function startServer() {
   try {
     console.log('🚀 Spúšťanie ClubW Backend servera...');
+
+    // Príprava priečinka uploads a predvoleného avatara
+    await createDefaultAvatar();
     
     // Testovanie pripojenia k databáze
     console.log('📊 Testovanie pripojenia k databáze...');
@@ -460,9 +424,18 @@ async function startServer() {
       process.exit(1);
     }
 
-    // Synchronizácia databázy
-    console.log('🔄 Synchronizácia databázy...');
-    await syncDatabase(false); // false = bez force, zachová existujúce dáta
+    // Príprava schémy databázy.
+    // V produkcii sa schéma vytvára a upravuje výhradne migráciami
+    // (npm run db:migrate), preto tu sync() nespúšťame.
+    if (process.env.NODE_ENV === 'production') {
+      console.log('ℹ️  Produkčný režim - schému spravujú migrácie (npm run db:migrate)');
+    } else {
+      console.log('🔄 Synchronizácia databázy (vývojový režim)...');
+      await syncDatabase(false); // false = bez force, zachová existujúce dáta
+    }
+
+    // Spustenie pravidelnej kontroly licencie (prvá prebehne hneď)
+    spustiKontroluLicencie();
 
     // Spustenie servera
     app.listen(PORT, () => {

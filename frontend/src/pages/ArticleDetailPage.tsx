@@ -2,6 +2,10 @@
 // Stránka pre zobrazenie detailu konkrétneho článku
 
 import React, { useState, useEffect } from 'react';
+// Sanitizácia HTML obsahu článku - ochrana pred stored XSS
+import { sanitizeHtml } from '../utils/sanitize';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // Interface pre článok z backend API
 interface Article {
@@ -66,7 +70,7 @@ const ArticleDetailPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/articles/${slug}`);
+      const response = await fetch(apiUrl(`/articles/${slug}`));
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -99,7 +103,7 @@ const ArticleDetailPage: React.FC = () => {
   // Načítanie podobných článkov
   const fetchRelatedArticles = async (categorySlug: string, currentArticleId: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/articles?category=${categorySlug}&limit=3`);
+      const response = await fetch(apiUrl(`/articles?category=${categorySlug}&limit=3`));
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -427,7 +431,7 @@ const ArticleDetailPage: React.FC = () => {
             lineHeight: '1.8',
             marginBottom: '40px'
           }}
-          dangerouslySetInnerHTML={{ __html: article.obsah }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.obsah) }}
         />
 
         {/* Tagy */}

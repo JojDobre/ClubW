@@ -6,6 +6,9 @@ import { Op } from 'sequelize';
 import Zapas from '../models/Zapas';
 import ZapasStatistika from '../models/ZapasStatistika';
 import Liga from '../models/Liga';
+import LigaTabulka from '../models/LigaTabulka';
+// Ukladanie štatistík zápasu (góly, asistencie, karty)
+import { overStatistiky, ulozStatistikyZapasu } from './ZapasStatistikaController';
 import Team from '../models/Team';
 import Player from '../models/Player';
 import Article from '../models/Article';
@@ -13,38 +16,51 @@ import Article from '../models/Article';
 // ===== HELPER FUNCTIONS =====
 
 // Jednoduchá validácia bez express-validator
-const validateZapasData = (data: any) => {
+/**
+ * Validácia údajov zápasu.
+ *
+ * @param data - údaje z tela požiadavky
+ * @param jeCiastocnaAktualizacia - pri true sa kontrolujú len polia, ktoré
+ *   klient poslal. Slúži pre PUT, kde je bežné poslať len zmenené hodnoty
+ *   (napríklad iba skóre). Pôvodne validácia vyžadovala vždy všetky povinné
+ *   polia, takže zmena samotného výsledku zápasu skončila chybou.
+ */
+const validateZapasData = (data: any, jeCiastocnaAktualizacia: boolean = false) => {
   const errors: string[] = [];
-  
-  console.log('=== VALIDATION DEBUG ===');
-  console.log('Input data:', JSON.stringify(data, null, 2));
-  
+
+  // Pomocník: pole treba kontrolovať, ak ide o vytváranie,
+  // alebo ak ho klient pri čiastočnej aktualizácii poslal
+  const kontrolovat = (nazovPola: string) =>
+    !jeCiastocnaAktualizacia || data[nazovPola] !== undefined;
+
   // 1. Dátum je povinný
-  if (!data.datum_cas || !Date.parse(data.datum_cas)) {
-    errors.push('Dátum a čas je povinný a musí byť platný');
+  if (kontrolovat('datum_cas')) {
+    if (!data.datum_cas || !Date.parse(data.datum_cas)) {
+      errors.push('Dátum a čas je povinný a musí byť platný');
+    }
   }
-  
+
   // 2. Liga JE povinná - buď ID alebo custom názov
   const hasLigaId = data.liga_id && !isNaN(Number(data.liga_id)) && Number(data.liga_id) > 0;
   const hasLigaNazov = data.liga_nazov && typeof data.liga_nazov === 'string' && data.liga_nazov.trim().length >= 2;
-  
-  if (!hasLigaId && !hasLigaNazov) {
+
+  if ((kontrolovat('liga_id') || kontrolovat('liga_nazov')) && !hasLigaId && !hasLigaNazov) {
     errors.push('Liga je povinná (buď vyberte zo zoznamu alebo zadajte vlastný názov)');
   }
-  
+
   // 3. Domáci tím - aspoň jeden spôsob musí byť zadaný
   const hasDomaciTimId = data.domaci_tim_id && !isNaN(Number(data.domaci_tim_id)) && Number(data.domaci_tim_id) > 0;
   const hasDomaciTimNazov = data.domaci_tim_nazov && typeof data.domaci_tim_nazov === 'string' && data.domaci_tim_nazov.trim().length >= 2;
-  
-  if (!hasDomaciTimId && !hasDomaciTimNazov) {
+
+  if ((kontrolovat('domaci_tim_id') || kontrolovat('domaci_tim_nazov')) && !hasDomaciTimId && !hasDomaciTimNazov) {
     errors.push('Domáci tím je povinný (buď vyberte zo zoznamu alebo zadajte vlastný názov)');
   }
-  
-  // 4. Hosťujúci tím - aspoň jeden spôsob musí byť zadaný  
+
+  // 4. Hosťujúci tím - aspoň jeden spôsob musí byť zadaný
   const hasHostujuciTimId = data.hostujuci_tim_id && !isNaN(Number(data.hostujuci_tim_id)) && Number(data.hostujuci_tim_id) > 0;
   const hasHostujuciTimNazov = data.hostujuci_tim_nazov && typeof data.hostujuci_tim_nazov === 'string' && data.hostujuci_tim_nazov.trim().length >= 2;
-  
-  if (!hasHostujuciTimId && !hasHostujuciTimNazov) {
+
+  if ((kontrolovat('hostujuci_tim_id') || kontrolovat('hostujuci_tim_nazov')) && !hasHostujuciTimId && !hasHostujuciTimNazov) {
     errors.push('Hosťujúci tím je povinný (buď vyberte zo zoznamu alebo zadajte vlastný názov)');
   }
   
@@ -302,6 +318,42 @@ export const getMatch = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Prepočíta ligovú tabuľku po zmene zápasu.
+ *
+ * PREČO: pôvodne sa tabuľka aktualizovala len po ručnom spustení prepočtu
+ * cez admin rozhranie. Admin zadal výsledok a na verejnom webe zostala
+ * stará tabuľka, kým si niekto nespomenul stlačiť "Prepočítať".
+ *
+ * Prepočet sa spúšťa len ak liga existuje a má zapnutú automatickú
+ * aktualizáciu (nastavenie auto_update_tabulka, turnajové formáty vylúčené).
+ *
+ * Prípadná chyba sa iba zaloguje - uloženie zápasu už prebehlo úspešne
+ * a nesmie zlyhať kvôli prepočtu tabuľky. Admin vie prepočet spustiť ručne.
+ *
+ * @param ligaId - ID ligy, do ktorej zápas patrí (môže byť null pri priateľských zápasoch)
+ */
+const prepocitajTabulkuAkTreba = async (ligaId: number | null | undefined): Promise<void> => {
+  if (!ligaId) return; // Zápas nepatrí do žiadnej ligy
+
+  try {
+    const liga = await Liga.findByPk(ligaId);
+    if (!liga || !liga.hasAutoUpdateEnabled()) {
+      return;
+    }
+
+    await LigaTabulka.recalculateTable(
+      ligaId,
+      liga.body_za_vitazstvo,
+      liga.body_za_remizy
+    );
+
+    console.log(`✅ Tabuľka ligy ${ligaId} prepočítaná po zmene zápasu`);
+  } catch (error) {
+    console.error(`⚠️ Nepodarilo sa prepočítať tabuľku ligy ${ligaId}:`, error);
+  }
+};
+
 // POST /api/matches - Vytvorenie nového zápasu
 export const createMatch = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -345,8 +397,13 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
       console.log('Using custom liga:', createData.liga_nazov);
     }
 
+    // Domáci tím meníme len ak ho klient poslal
+    const klientPoslalDomaci = req.body.domaci_tim_id !== undefined || req.body.domaci_tim_nazov !== undefined;
+
     // Domáci tím handling - KONTROLA LEN AK JE ZADANÉ DB ID
-    if (req.body.domaci_tim_id && req.body.domaci_tim_id > 0) {
+    if (!klientPoslalDomaci) {
+      // Klient domáci tím nespomenul - nemeníme ho
+    } else if (req.body.domaci_tim_id && req.body.domaci_tim_id > 0) {
       const domaciTim = await Team.findOne({
         where: { id: req.body.domaci_tim_id, aktivity: true }
       });
@@ -365,8 +422,13 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
       console.log('Using custom domaci tim:', createData.domaci_tim_nazov);
     }
 
+    // Hosťujúci tím meníme len ak ho klient poslal
+    const klientPoslalHostia = req.body.hostujuci_tim_id !== undefined || req.body.hostujuci_tim_nazov !== undefined;
+
     // Hosťujúci tím handling - KONTROLA LEN AK JE ZADANÉ DB ID
-    if (req.body.hostujuci_tim_id && req.body.hostujuci_tim_id > 0) {
+    if (!klientPoslalHostia) {
+      // Klient hosťujúci tím nespomenul - nemeníme ho
+    } else if (req.body.hostujuci_tim_id && req.body.hostujuci_tim_id > 0) {
       const hostujuciTim = await Team.findOne({
         where: { id: req.body.hostujuci_tim_id, aktivity: true }
       });
@@ -441,6 +503,21 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
       liga_nazov: createdZapas!.getLigaNazov()
     };
 
+    // Uloženie štatistík, ak ich klient poslal spolu so zápasom
+    if (req.body.statistiky !== undefined) {
+      const chybyStatistik = await overStatistiky(req.body.statistiky);
+      if (chybyStatistik.length === 0) {
+        await ulozStatistikyZapasu(newZapas.id, req.body.statistiky);
+      } else {
+        // Zápas je už vytvorený, preto chybu iba zalogujeme.
+        // Admin vie štatistiky doplniť cez PUT /api/matches/:id/statistics
+        console.warn('Štatistiky zápasu neboli uložené kvôli chybám:', chybyStatistik);
+      }
+    }
+
+    // Automatický prepočet tabuľky - nový zápas môže zmeniť poradie
+    await prepocitajTabulkuAkTreba(newZapas.liga_id);
+
     res.status(201).json({
       success: true,
       data: formattedMatch,
@@ -471,7 +548,8 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const errors = validateZapasData(req.body);
+    // Pri aktualizácii povolíme poslať len zmenené polia
+    const errors = validateZapasData(req.body, true);
     if (errors.length > 0) {
       res.status(400).json({
         success: false,
@@ -493,15 +571,35 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Príprava dát pre aktualizáciu
-    const updateData: any = {
-      nazov: req.body.nazov,
-      datum_cas: req.body.datum_cas,
-      status: req.body.status || 'naplanovany'
-    };
+    // Pôvodnú ligu si zapamätáme pred úpravou. Ak sa zápas presunie
+    // do inej ligy, treba prepočítať tabuľky oboch líg.
+    const povodnaLigaId = zapas.liga_id;
+
+    // Príprava dát pre aktualizáciu.
+    // OPRAVA: meníme len polia, ktoré klient naozaj poslal.
+    // Pôvodne sa nazov a datum_cas prepísali vždy (aj na undefined) a status
+    // sa pri chýbajúcej hodnote nastavil na 'naplanovany' - ukončený zápas
+    // tak pri úprave ticho stratil výsledok a vypadol z ligovej tabuľky.
+    const updateData: any = {};
+
+    if (req.body.nazov !== undefined) {
+      updateData.nazov = req.body.nazov;
+    }
+    if (req.body.datum_cas !== undefined) {
+      updateData.datum_cas = req.body.datum_cas;
+    }
+    if (req.body.status !== undefined) {
+      updateData.status = req.body.status;
+    }
+
+    // Ligu meníme len vtedy, keď klient poslal liga_id alebo liga_nazov.
+    // Inak zostáva pôvodná hodnota.
+    const klientPoslalLigu = req.body.liga_id !== undefined || req.body.liga_nazov !== undefined;
 
     // Liga handling - KONTROLA LEN AK JE ZADANÉ DB ID
-    if (req.body.liga_id && req.body.liga_id > 0) {
+    if (!klientPoslalLigu) {
+      // Klient ligu nespomenul - nemeníme ju
+    } else if (req.body.liga_id && req.body.liga_id > 0) {
       const liga = await Liga.findOne({
         where: { id: req.body.liga_id, aktivity: true }
       });
@@ -567,15 +665,20 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Voliteľné polia
-    updateData.kolo = req.body.kolo || null;
-    updateData.miesto = req.body.miesto || null;
-    updateData.goly_domaci = req.body.goly_domaci !== undefined ? req.body.goly_domaci : null;
-    updateData.goly_hostia = req.body.goly_hostia !== undefined ? req.body.goly_hostia : null;
-    updateData.pocet_divakov = req.body.pocet_divakov !== undefined ? req.body.pocet_divakov : null;
-    updateData.poznamky = req.body.poznamky || null;
-    updateData.video_url = req.body.video_url || null;
-    updateData.clanok_id = req.body.clanok_id || null;
-    updateData.fotogaleria_id = req.body.fotogaleria_id || null;
+    // Voliteľné polia - meníme len tie, ktoré klient poslal.
+    // Pôvodne sa všetky nastavovali na null, takže úprava samotného skóre
+    // vymazala kolo, miesto, poznámky aj odkaz na článok a fotogalériu.
+    // Prázdny reťazec berieme ako zámer pole vymazať (null).
+    const volitelnePolia = [
+      'kolo', 'miesto', 'goly_domaci', 'goly_hostia',
+      'pocet_divakov', 'poznamky', 'video_url', 'clanok_id', 'fotogaleria_id',
+    ];
+
+    for (const pole of volitelnePolia) {
+      if (req.body[pole] !== undefined) {
+        updateData[pole] = req.body[pole] === '' ? null : req.body[pole];
+      }
+    }
 
     console.log('Updating match with data:', updateData);
 
@@ -622,6 +725,23 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
       liga_nazov: updatedZapas!.getLigaNazov()
     };
 
+    // Aktualizácia štatistík, ak ich klient poslal
+    if (req.body.statistiky !== undefined) {
+      const chybyStatistik = await overStatistiky(req.body.statistiky);
+      if (chybyStatistik.length === 0) {
+        await ulozStatistikyZapasu(zapas.id, req.body.statistiky);
+      } else {
+        console.warn('Štatistiky zápasu neboli aktualizované kvôli chybám:', chybyStatistik);
+      }
+    }
+
+    // Automatický prepočet tabuľky po zmene výsledku alebo statusu.
+    // Prepočítavame aj pôvodnú ligu - zápas mohol byť presunutý inam.
+    await prepocitajTabulkuAkTreba(zapas.liga_id);
+    if (povodnaLigaId && povodnaLigaId !== zapas.liga_id) {
+      await prepocitajTabulkuAkTreba(povodnaLigaId);
+    }
+
     res.json({
       success: true,
       data: formattedMatch,
@@ -659,8 +779,14 @@ export const deleteMatch = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // Ligu si zapamätáme pred zmazaním, aby sme vedeli, ktorú tabuľku prepočítať
+    const ligaId = zapas.liga_id;
+
     // Soft delete - označenie ako neaktívny
     await zapas.update({ aktivity: false });
+
+    // Automatický prepočet tabuľky - zmazaný zápas sa už nesmie počítať
+    await prepocitajTabulkuAkTreba(ligaId);
 
     res.json({
       success: true,

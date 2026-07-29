@@ -9,6 +9,8 @@ import {
   updateStaff,
   deleteStaff
 } from '../controllers/staffController';
+// Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -58,7 +60,7 @@ router.get('/:id', getStaffById);
  *   "poradie": 1
  * }
  */
-router.post('/', createStaff);
+router.post('/', authenticateToken, requireEditor, createStaff);
 
 /**
  * @route   PUT /api/staff/:id
@@ -67,7 +69,7 @@ router.post('/', createStaff);
  * @param   id - ID člena realizačného tímu
  * @body    meno?, priezvisko?, funkcia?, email?, telefon?, datum_narodenia?, kvalifikacia?, fotka?, tim_id?, poznamky?, poradie?
  */
-router.put('/:id', updateStaff);
+router.put('/:id', authenticateToken, requireEditor, updateStaff);
 
 /**
  * @route   DELETE /api/staff/:id
@@ -75,6 +77,6 @@ router.put('/:id', updateStaff);
  * @access  Admin
  * @param   id - ID člena realizačného tímu
  */
-router.delete('/:id', deleteStaff);
+router.delete('/:id', authenticateToken, requireAdmin, deleteStaff);
 
 export default router;

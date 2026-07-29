@@ -2,6 +2,8 @@
 // Moderný prihlasovací formulár s profesionálnym dizajnom
 
 import React, { useState } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface LoginProps {
   onLoginSuccess: (userData: any) => void;
@@ -31,7 +33,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(apiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

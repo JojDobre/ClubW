@@ -2,6 +2,12 @@
 // Verejný layout pre zobrazovanie stránok s navigáciou
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
+// Link namiesto <a href> - bez neho každý klik znovu načíta celú aplikáciu
+import { Link } from 'react-router-dom';
+// Sledovanie šírky obrazovky tak, aby React reagoval na zmenu veľkosti okna
+import { useJeMobil } from '../hooks/useMediaQuery';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -16,6 +22,9 @@ interface MenuPage {
 }
 
 const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
+  // Reaguje na zmenu veľkosti okna (otočenie telefónu, zmena šírky)
+  const jeMobil = useJeMobil();
+
   const [menuPages, setMenuPages] = useState<MenuPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -24,7 +33,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   useEffect(() => {
     const fetchMenuPages = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/pages/menu');
+        const response = await fetch(apiUrl('/pages/menu'));
         const data = await response.json();
         
         if (data.success) {
@@ -63,7 +72,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
           }}>
             {/* Logo */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <a href="/" style={{
+              <Link to="/" style={{
                 textDecoration: 'none',
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
@@ -74,17 +83,17 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
               }}>
                 <span style={{ fontSize: '2rem' }}>🏆</span>
                 ClubW
-              </a>
+              </Link>
             </div>
 
             {/* Desktop Menu */}
             <div style={{
-              display: window.innerWidth > 768 ? 'flex' : 'none',
+              display: jeMobil ? 'none' : 'flex',
               alignItems: 'center',
               gap: '30px'
             }}>
               {/* Hlavné odkazy */}
-              <a href="/" style={{
+              <Link to="/" style={{
                 textDecoration: 'none',
                 color: '#4a5568',
                 fontWeight: '500',
@@ -93,9 +102,9 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 transition: 'all 0.2s'
               }}>
                 Domov
-              </a>
+              </Link>
               
-              <a href="/clanky" style={{
+              <Link to="/clanky" style={{
                 textDecoration: 'none',
                 color: '#4a5568',
                 fontWeight: '500',
@@ -104,7 +113,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 transition: 'all 0.2s'
               }}>
                 Články
-              </a>
+              </Link>
 
               {/* Dynamické menu stránky */}
               {!loading && menuPages.map((page) => (
@@ -125,7 +134,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
               ))}
 
               {/* Admin odkaz */}
-              <a href="/admin" style={{
+              <Link to="/admin" style={{
                 textDecoration: 'none',
                 color: '#3182ce',
                 fontWeight: '500',
@@ -135,14 +144,14 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 transition: 'all 0.2s'
               }}>
                 ⚙️ Admin
-              </a>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
-                display: window.innerWidth <= 768 ? 'block' : 'none',
+                display: jeMobil ? 'block' : 'none',
                 background: 'none',
                 border: 'none',
                 fontSize: '1.5rem',
@@ -157,7 +166,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div style={{
-              display: window.innerWidth <= 768 ? 'block' : 'none',
+              display: jeMobil ? 'block' : 'none',
               background: 'white',
               borderTop: '1px solid #e2e8f0',
               padding: '20px 0'
@@ -167,23 +176,23 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 flexDirection: 'column',
                 gap: '15px'
               }}>
-                <a href="/" style={{
+                <Link to="/" style={{
                   textDecoration: 'none',
                   color: '#4a5568',
                   fontWeight: '500',
                   padding: '10px 0'
                 }}>
                   🏠 Domov
-                </a>
+                </Link>
                 
-                <a href="/clanky" style={{
+                <Link to="/clanky" style={{
                   textDecoration: 'none',
                   color: '#4a5568',
                   fontWeight: '500',
                   padding: '10px 0'
                 }}>
                   📰 Články
-                </a>
+                </Link>
 
                 {/* Dynamické menu stránky */}
                 {!loading && menuPages.map((page) => (
@@ -201,14 +210,14 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                   </a>
                 ))}
 
-                <a href="/admin" style={{
+                <Link to="/admin" style={{
                   textDecoration: 'none',
                   color: '#3182ce',
                   fontWeight: '500',
                   padding: '10px 0'
                 }}>
                   ⚙️ Admin
-                </a>
+                </Link>
               </div>
             </div>
           )}
@@ -249,12 +258,12 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             <div>
               <h4 style={{ marginBottom: '15px', color: '#e2e8f0' }}>Rýchle odkazy</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <a href="/" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
+                <Link to="/" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
                   Domov
-                </a>
-                <a href="/clanky" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
+                </Link>
+                <Link to="/clanky" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
                   Články
-                </a>
+                </Link>
                 {menuPages.slice(0, 3).map((page) => (
                   <a 
                     key={page.id}

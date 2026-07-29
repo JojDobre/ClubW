@@ -2,6 +2,8 @@
 // Komponent pre zobrazenie galérií v grid formáte s filter menu - OPRAVENÝ
 
 import React, { useState, useRef, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { souborUrl } from '../../../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Gallery {
@@ -159,10 +161,10 @@ const GalleryTable: React.FC<GalleryTableProps> = ({
       }
       // Ak cesta začína s /, pridáme len backend URL
       if (gallery.nahladovy_obrazok.startsWith('/')) {
-        return `http://localhost:3000${gallery.nahladovy_obrazok}`;
+        return souborUrl(gallery.nahladovy_obrazok);
       }
       // Inak pridáme celú cestu
-      return `http://localhost:3000/${gallery.nahladovy_obrazok}`;
+      return souborUrl(gallery.nahladovy_obrazok);
     }
     
     // Fallback placeholder - použijeme jednoduchý SVG bez textu

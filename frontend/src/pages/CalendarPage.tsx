@@ -2,6 +2,8 @@
 // Kalendár zápasov - jednoduchá testovacia stránka pre API
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface CalendarMatch {
   id: number;
@@ -41,7 +43,7 @@ const Calendar: React.FC = () => {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
 
-      const response = await fetch(`http://localhost:3000/api/calendar/month/${year}/${month}`);
+      const response = await fetch(apiUrl(`/calendar/month/${year}/${month}`));
       
       if (!response.ok) {
         throw new Error(`HTTP chyba: ${response.status}`);
@@ -64,7 +66,7 @@ const Calendar: React.FC = () => {
   const fetchUpcomingMatches = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/calendar/upcoming?limit=10`);
+      const response = await fetch(apiUrl(`/calendar/upcoming?limit=10`));
       
       if (!response.ok) {
         throw new Error(`HTTP chyba: ${response.status}`);

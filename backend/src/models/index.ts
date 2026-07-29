@@ -575,44 +575,12 @@ export const getPlayerStats = async (playerId: number) => {
   });
 };
 
-export const getTopScorers = async (ligaId?: number, limit: number = 10) => {
-  const whereCondition: any = { aktivity: true };
-  
-  const includeConditions: any[] = [
-    {
-      model: Player,
-      as: 'hrac',
-      attributes: ['id', 'meno', 'priezvisko', 'pozicia'],
-      include: [{
-        model: Team,
-        as: 'tim',
-        attributes: ['nazov', 'vekova_kategoria']
-      }]
-    }
-  ];
-
-  if (ligaId) {
-    includeConditions.push({
-      model: Zapas,
-      as: 'zapas',
-      where: { liga_id: ligaId },
-      attributes: []
-    });
-  }
-
-  return await ZapasStatistika.findAll({
-    where: whereCondition,
-    include: includeConditions,
-    attributes: [
-      'hrac_id',
-      [require('sequelize').fn('SUM', require('sequelize').col('goly')), 'total_goly'],
-      [require('sequelize').fn('COUNT', require('sequelize').col('ZapasStatistika.id')), 'pocet_zapasov']
-    ],
-    group: ['hrac_id'],
-    order: [[require('sequelize').literal('total_goly'), 'DESC']],
-    limit
-  });
-};
+// POZNÁMKA: Pôvodná funkcia getTopScorers bola z tohto súboru odstránená.
+// Robila SUM nad stĺpcom "goly", ktorý v tabuľke zapas_statistiky neexistuje
+// (tabuľka má stĺpec "typ" s hodnotami gol/asistencia/karta), takže by pri
+// zavolaní skončila SQL chybou. Nikde nebola použitá.
+// Funkčná náhrada je v backend/src/controllers/ZapasStatistikaController.ts
+// a je napojená na endpoint GET /api/leagues/:id/top-scorers.
 
 // Funkcia pre získanie kalendára zápasov
 export const getMatchCalendar = async (rok: number, mesiac: number) => {
@@ -785,7 +753,18 @@ export const getLeagueStats = async (ligaId: number) => {
     raw: true
   });
 
-  const celkoveGoly = (golyStats[0] as any)?.celkove_goly_domaci + (golyStats[0] as any)?.celkove_goly_hostia || 0;
+  // POZOR: PostgreSQL driver vracia výsledky SUM a AVG ako reťazce.
+  // Bez prevodu na číslo by "12" + "8" dalo "128" namiesto 20,
+  // takže štatistika celkových gólov ukazovala nezmyselné hodnoty.
+  const naCislo = (hodnota: any): number => {
+    const cislo = Number(hodnota);
+    return Number.isFinite(cislo) ? cislo : 0;
+  };
+
+  const surovyRiadok = golyStats[0] as any;
+  const golyDomaci = naCislo(surovyRiadok?.celkove_goly_domaci);
+  const golyHostia = naCislo(surovyRiadok?.celkove_goly_hostia);
+  const celkoveGoly = golyDomaci + golyHostia;
   const priemerGolovNaZapas = ukonceneZapasy > 0 ? (celkoveGoly / ukonceneZapasy).toFixed(2) : '0.00';
 
   // Lídri tabuľky

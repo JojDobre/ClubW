@@ -8,6 +8,8 @@ import Article from '../models/Article';
 import Category from '../models/Category';
 import User from '../models/user';
 import fs from 'fs/promises';
+// Sanitizácia HTML obsahu pred uložením do DB - ochrana pred stored XSS
+import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
 import path from 'path';
 
 // Validácia pre vytvorenie/úpravu článku
@@ -418,8 +420,9 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     const newArticle = await Article.create({
       nazov: nazov.trim(),
       slug: generatedSlug, // EXPLICITNE nastavujeme slug
-      obsah,
-      excerpt: excerpt?.trim() || null,
+      // Obsah prechádza sanitizáciou - odstráni <script>, on* handlery a javascript: odkazy
+      obsah: sanitizeContent(obsah),
+      excerpt: excerpt ? sanitizePlainText(excerpt) : null,
       obrazok: obrazok || null,
       autor_id: req.userId!, // Z auth middleware
       kategoria_id,
@@ -491,6 +494,14 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
 
     const { id } = req.params;
     const updateData = { ...req.body };
+
+    // Sanitizácia HTML obsahu pri aktualizácii - rovnaká ochrana ako pri vytváraní
+    if (updateData.obsah !== undefined) {
+      updateData.obsah = sanitizeContent(updateData.obsah);
+    }
+    if (updateData.excerpt !== undefined && updateData.excerpt) {
+      updateData.excerpt = sanitizePlainText(updateData.excerpt);
+    }
 
     // Nájdenie článku
     const article = await Article.findByPk(id);

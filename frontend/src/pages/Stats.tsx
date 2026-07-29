@@ -2,6 +2,8 @@
 // Štatistiky klubu - testovacia stránka pre API
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface StatsData {
   // Základné štatistiky
@@ -44,7 +46,7 @@ const Stats: React.FC = () => {
       setError(null);
 
       console.log('📡 Volám stats API...');
-      const response = await fetch('http://localhost:3000/api/stats');
+      const response = await fetch(apiUrl('/stats'));
       console.log('📡 Stats response status:', response.status);
       
       if (!response.ok) {

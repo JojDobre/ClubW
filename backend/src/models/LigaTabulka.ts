@@ -297,14 +297,34 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
   // STATICKÉ METÓDY PRE PRÁCU S TABUĽKOU
   
   // Automatické prepočítanie tabuľky na základe zápasov
+  /**
+   * Prepočíta ligovú tabuľku zo všetkých ukončených zápasov.
+   *
+   * ČO SA ZMENILO OPROTI PÔVODNEJ VERZII:
+   * 1. Započítavajú sa aj zápasy s custom tímami (súperi zadaní ako text,
+   *    ktorí nie sú v databáze). Pôvodne sa takéto zápasy úplne preskočili
+   *    a custom tímy z tabuľky po prepočte zmizli.
+   * 2. Riadky označené ako manualne_upravene sa zachovajú - pôvodne ich
+   *    prepočet zmazal spolu so všetkými ručnými korekciami.
+   * 3. Tímy bez odohraného zápasu ostanú v tabuľke s nulami - pôvodne
+   *    zmizli tímy pridané cez createInitialTable.
+   * 4. Celý zápis prebieha v transakcii - pôvodne mohlo zlyhanie zápisu
+   *    nechať ligu s úplne prázdnou tabuľkou.
+   * 5. Do bodov sa započítavajú penalizačné a bonusové body.
+   *
+   * @param ligaId - ID ligy
+   * @param bodyZaVitazstvo - počet bodov za víťazstvo (predvolene 3)
+   * @param bodyZaRemizy - počet bodov za remízu (predvolene 1)
+   */
   static async recalculateTable(ligaId: number, bodyZaVitazstvo: number = 3, bodyZaRemizy: number = 1): Promise<void> {
     const { Op } = require('sequelize');
-    
-    // Importujeme modely (musíme to urobiť takto kvôli circular dependencies)
+    const sequelize = require('../config/database').default;
+
+    // Modely načítavame takto kvôli cyklickým závislostiam medzi súbormi
     const Zapas = require('./Zapas').default;
     const Team = require('./Team').default;
-    
-    // Načítame všetky zápasy pre túto ligu
+
+    // ===== KROK 1: Načítanie ukončených zápasov ligy =====
     const zapasy = await Zapas.findAll({
       where: {
         liga_id: ligaId,
@@ -319,175 +339,254 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
       ]
     });
 
-    // Získame všetky tímy ktoré hrali v tejto lige
-    const timyStats = new Map();
+    // ===== KROK 2: Načítanie existujúcich riadkov tabuľky =====
+    // Potrebujeme ich kvôli dvom veciam:
+    //  - manuálne upravené riadky sa nesmú prepísať
+    //  - tímy pridané cez createInitialTable musia ostať aj bez odohraného zápasu
+    const existujuceRiadky = await LigaTabulka.findAll({ where: { liga_id: ligaId } });
 
-    // Spracujeme každý zápas
+    // Kľúč riadku: buď "tim:5" (tím z databázy), alebo "custom:Názov tímu"
+    const vytvorKluc = (timId?: number | null, customNazov?: string | null): string | null => {
+      if (timId) return `tim:${timId}`;
+      if (customNazov && customNazov.trim()) return `custom:${customNazov.trim()}`;
+      return null;
+    };
+
+    // Riadky, ktoré admin ručne upravil - tie prepočet nechá tak, ako sú
+    const manualneRiadky = existujuceRiadky.filter((r: any) => r.manualne_upravene);
+    const manualneKluce = new Set(
+      manualneRiadky
+        .map((r: any) => vytvorKluc(r.tim_id, r.custom_tim_nazov))
+        .filter((k: string | null): k is string => k !== null)
+    );
+
+    // ===== KROK 3: Príprava prázdnych štatistík =====
+    const timyStats = new Map<string, any>();
+
+    const prazdneStatistiky = (timId: number | null, customNazov: string | null) => ({
+      tim_id: timId,
+      custom_tim_nazov: customNazov,
+      zapasy: 0, vitazstva: 0, remizy: 0, prehry: 0,
+      goly_za: 0, goly_proti: 0, body: 0,
+      domace_zapasy: 0, domace_vitazstva: 0, domace_remizy: 0, domace_prehry: 0,
+      domace_goly_za: 0, domace_goly_proti: 0,
+      vonkajsie_zapasy: 0, vonkajsie_vitazstva: 0, vonkajsie_remizy: 0, vonkajsie_prehry: 0,
+      vonkajsie_goly_za: 0, vonkajsie_goly_proti: 0,
+      penalizacne_body: 0, bonus_body: 0,
+      forma: '', serie_zapasov: 0, posledne_zapasy: [] as any[]
+    });
+
+    // Zabezpečí, že pre daný tím existuje záznam v mape
+    const zabezpecTim = (timId: number | null, customNazov: string | null): string | null => {
+      const kluc = vytvorKluc(timId, customNazov);
+      if (!kluc) return null;
+      // Manuálne upravené tímy sa neprepočítavajú - ich riadok pridáme
+      // nezmenený až na konci. Bez tejto kontroly by tím mal v tabuľke
+      // dva riadky: jeden manuálny a jeden vypočítaný.
+      if (manualneKluce.has(kluc)) return null;
+      if (!timyStats.has(kluc)) {
+        timyStats.set(kluc, prazdneStatistiky(timId, customNazov));
+      }
+      return kluc;
+    };
+
+    // Do tabuľky patria aj tímy, ktoré ešte neodohrali zápas
+    // (napríklad pridané cez createInitialTable na začiatku sezóny)
+    for (const riadok of existujuceRiadky) {
+      if (riadok.manualne_upravene) continue; // manuálne riešime osobitne
+      const kluc = zabezpecTim(riadok.tim_id, riadok.custom_tim_nazov);
+      if (kluc) {
+        // Prenesieme penalizácie a bonusy - tie prepočet zápasov nezistí
+        const stats = timyStats.get(kluc);
+        stats.penalizacne_body = riadok.penalizacne_body || 0;
+        stats.bonus_body = riadok.bonus_body || 0;
+      }
+    }
+
+    // ===== KROK 4: Spracovanie zápasov =====
     for (const zapas of zapasy) {
-      const domaciId = zapas.domaci_tim_id;
-      const hostujuciId = zapas.hostujuci_tim_id;
       const golyDomaci = zapas.goly_domaci;
       const golyHostia = zapas.goly_hostia;
 
-      // Inicializujeme štatistiky ak neexistujú
-      if (domaciId && !timyStats.has(domaciId)) {
-        timyStats.set(domaciId, {
-          tim_id: domaciId,
-          zapasy: 0, vitazstva: 0, remizy: 0, prehry: 0,
-          goly_za: 0, goly_proti: 0, body: 0,
-          domace_zapasy: 0, domace_vitazstva: 0, domace_remizy: 0, domace_prehry: 0,
-          domace_goly_za: 0, domace_goly_proti: 0,
-          vonkajsie_zapasy: 0, vonkajsie_vitazstva: 0, vonkajsie_remizy: 0, vonkajsie_prehry: 0,
-          vonkajsie_goly_za: 0, vonkajsie_goly_proti: 0,
-          forma: [], posledne_zapasy: []
-        });
-      }
+      // Tím môže byť z databázy (tim_id) alebo zadaný ako text (tim_nazov)
+      const klucDomaci = zabezpecTim(zapas.domaci_tim_id, zapas.domaci_tim_nazov);
+      const klucHostia = zabezpecTim(zapas.hostujuci_tim_id, zapas.hostujuci_tim_nazov);
 
-      if (hostujuciId && !timyStats.has(hostujuciId)) {
-        timyStats.set(hostujuciId, {
-          tim_id: hostujuciId,
-          zapasy: 0, vitazstva: 0, remizy: 0, prehry: 0,
-          goly_za: 0, goly_proti: 0, body: 0,
-          domace_zapasy: 0, domace_vitazstva: 0, domace_remizy: 0, domace_prehry: 0,
-          domace_goly_za: 0, domace_goly_proti: 0,
-          vonkajsie_zapasy: 0, vonkajsie_vitazstva: 0, vonkajsie_remizy: 0, vonkajsie_prehry: 0,
-          vonkajsie_goly_za: 0, vonkajsie_goly_proti: 0,
-          forma: [], posledne_zapasy: []
-        });
-      }
+      // Domáci tím
+      if (klucDomaci) {
+        const s = timyStats.get(klucDomaci);
+        s.zapasy++;
+        s.domace_zapasy++;
+        s.goly_za += golyDomaci;
+        s.goly_proti += golyHostia;
+        s.domace_goly_za += golyDomaci;
+        s.domace_goly_proti += golyHostia;
 
-      // Aktualizujeme štatistiky domáceho tímu
-      if (domaciId) {
-        const domaciStats = timyStats.get(domaciId);
-        domaciStats.zapasy++;
-        domaciStats.domace_zapasy++;
-        domaciStats.goly_za += golyDomaci;
-        domaciStats.goly_proti += golyHostia;
-        domaciStats.domace_goly_za += golyDomaci;
-        domaciStats.domace_goly_proti += golyHostia;
-        
-        domaciStats.posledne_zapasy.push({
+        s.posledne_zapasy.push({
           datum: zapas.datum_cas,
           vysledok: golyDomaci > golyHostia ? 'W' : golyDomaci === golyHostia ? 'D' : 'L'
         });
 
         if (golyDomaci > golyHostia) {
-          domaciStats.vitazstva++;
-          domaciStats.domace_vitazstva++;
-          domaciStats.body += bodyZaVitazstvo;
+          s.vitazstva++; s.domace_vitazstva++; s.body += bodyZaVitazstvo;
         } else if (golyDomaci === golyHostia) {
-          domaciStats.remizy++;
-          domaciStats.domace_remizy++;
-          domaciStats.body += bodyZaRemizy;
+          s.remizy++; s.domace_remizy++; s.body += bodyZaRemizy;
         } else {
-          domaciStats.prehry++;
-          domaciStats.domace_prehry++;
+          s.prehry++; s.domace_prehry++;
         }
       }
 
-      // Aktualizujeme štatistiky hosťujúceho tímu
-      if (hostujuciId) {
-        const hostujuciStats = timyStats.get(hostujuciId);
-        hostujuciStats.zapasy++;
-        hostujuciStats.vonkajsie_zapasy++;
-        hostujuciStats.goly_za += golyHostia;
-        hostujuciStats.goly_proti += golyDomaci;
-        hostujuciStats.vonkajsie_goly_za += golyHostia;
-        hostujuciStats.vonkajsie_goly_proti += golyDomaci;
-        
-        hostujuciStats.posledne_zapasy.push({
+      // Hosťujúci tím
+      if (klucHostia) {
+        const s = timyStats.get(klucHostia);
+        s.zapasy++;
+        s.vonkajsie_zapasy++;
+        s.goly_za += golyHostia;
+        s.goly_proti += golyDomaci;
+        s.vonkajsie_goly_za += golyHostia;
+        s.vonkajsie_goly_proti += golyDomaci;
+
+        s.posledne_zapasy.push({
           datum: zapas.datum_cas,
           vysledok: golyHostia > golyDomaci ? 'W' : golyHostia === golyDomaci ? 'D' : 'L'
         });
 
         if (golyHostia > golyDomaci) {
-          hostujuciStats.vitazstva++;
-          hostujuciStats.vonkajsie_vitazstva++;
-          hostujuciStats.body += bodyZaVitazstvo;
+          s.vitazstva++; s.vonkajsie_vitazstva++; s.body += bodyZaVitazstvo;
         } else if (golyHostia === golyDomaci) {
-          hostujuciStats.remizy++;
-          hostujuciStats.vonkajsie_remizy++;
-          hostujuciStats.body += bodyZaRemizy;
+          s.remizy++; s.vonkajsie_remizy++; s.body += bodyZaRemizy;
         } else {
-          hostujuciStats.prehry++;
-          hostujuciStats.vonkajsie_prehry++;
+          s.prehry++; s.vonkajsie_prehry++;
         }
       }
     }
 
-    // Vypočítame formu pre každý tím (posledných 5 zápasov)
-    for (const [timId, stats] of timyStats) {
-      // Zoradíme zápasy podľa dátumu
-      stats.posledne_zapasy.sort((a: any, b: any) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
-      
-      // Vezmeme posledných 5 zápasov
+    // ===== KROK 5: Výpočet formy a série =====
+    for (const stats of timyStats.values()) {
+      // Zoradenie od najnovšieho zápasu
+      stats.posledne_zapasy.sort(
+        (a: any, b: any) => new Date(b.datum).getTime() - new Date(a.datum).getTime()
+      );
+
       const poslednych5 = stats.posledne_zapasy.slice(0, 5);
       stats.forma = poslednych5.map((z: any) => z.vysledok).join('');
-      
-      // Výpočet série
+
+      // Séria: kladné číslo = víťazstvá po sebe, záporné = prehry po sebe
       let seria = 0;
-      for (const zapas of poslednych5) {
-        if (zapas.vysledok === 'W') {
+      for (const z of poslednych5) {
+        if (z.vysledok === 'W') {
           seria = seria <= 0 ? 1 : seria + 1;
-        } else if (zapas.vysledok === 'L') {
+        } else if (z.vysledok === 'L') {
           seria = seria >= 0 ? -1 : seria - 1;
         } else {
-          break; // Remíza prerušuje sériu
+          break; // Remíza sériu prerušuje
         }
       }
       stats.serie_zapasov = seria;
     }
 
-    // Vymazanie existujúcich záznamov pre túto ligu
-    await LigaTabulka.destroy({
-      where: { liga_id: ligaId }
+    // ===== KROK 6: Zostavenie riadkov tabuľky =====
+    const vypocitaneRiadky = Array.from(timyStats.values()).map((s: any) => {
+      // Konečné body zahŕňajú aj penalizácie (záporné) a bonusy
+      const celkoveBody = s.body + (s.bonus_body || 0) + (s.penalizacne_body || 0);
+      return {
+        liga_id: ligaId,
+        tim_id: s.tim_id,
+        custom_tim_nazov: s.custom_tim_nazov,
+        pozicia: 0, // Doplníme po zoradení
+        body: celkoveBody,
+        zapasy: s.zapasy,
+        vitazstva: s.vitazstva,
+        remizy: s.remizy,
+        prehry: s.prehry,
+        goly_za: s.goly_za,
+        goly_proti: s.goly_proti,
+        goly_rozdiel: s.goly_za - s.goly_proti,
+        domace_zapasy: s.domace_zapasy,
+        domace_vitazstva: s.domace_vitazstva,
+        domace_remizy: s.domace_remizy,
+        domace_prehry: s.domace_prehry,
+        domace_goly_za: s.domace_goly_za,
+        domace_goly_proti: s.domace_goly_proti,
+        vonkajsie_zapasy: s.vonkajsie_zapasy,
+        vonkajsie_vitazstva: s.vonkajsie_vitazstva,
+        vonkajsie_remizy: s.vonkajsie_remizy,
+        vonkajsie_prehry: s.vonkajsie_prehry,
+        vonkajsie_goly_za: s.vonkajsie_goly_za,
+        vonkajsie_goly_proti: s.vonkajsie_goly_proti,
+        penalizacne_body: s.penalizacne_body || 0,
+        bonus_body: s.bonus_body || 0,
+        forma: s.forma,
+        serie_zapasov: s.serie_zapasov,
+        manualne_upravene: false,
+        posledny_zapas: s.posledne_zapasy[0]?.datum || null
+      };
     });
 
-    // Vytvorenie nových záznamov
-    const tabulkaData = Array.from(timyStats.values()).map((stats: any, index) => ({
+    // K vypočítaným riadkom pridáme manuálne upravené (tie ostávajú nezmenené)
+    const manualneData = manualneRiadky.map((r: any) => ({
       liga_id: ligaId,
-      tim_id: stats.tim_id,
-      pozicia: index + 1, // Zatiaľ dočasné, zoradíme neskôr
-      body: stats.body,
-      zapasy: stats.zapasy,
-      vitazstva: stats.vitazstva,
-      remizy: stats.remizy,
-      prehry: stats.prehry,
-      goly_za: stats.goly_za,
-      goly_proti: stats.goly_proti,
-      goly_rozdiel: stats.goly_za - stats.goly_proti,
-      domace_zapasy: stats.domace_zapasy,
-      domace_vitazstva: stats.domace_vitazstva,
-      domace_remizy: stats.domace_remizy,
-      domace_prehry: stats.domace_prehry,
-      domace_goly_za: stats.domace_goly_za,
-      domace_goly_proti: stats.domace_goly_proti,
-      vonkajsie_zapasy: stats.vonkajsie_zapasy,
-      vonkajsie_vitazstva: stats.vonkajsie_vitazstva,
-      vonkajsie_remizy: stats.vonkajsie_remizy,
-      vonkajsie_prehry: stats.vonkajsie_prehry,
-      vonkajsie_goly_za: stats.vonkajsie_goly_za,
-      vonkajsie_goly_proti: stats.vonkajsie_goly_proti,
-      forma: stats.forma,
-      serie_zapasov: stats.serie_zapasov,
-      manualne_upravene: false,
-      posledny_zapas: stats.posledne_zapasy[0]?.datum || null
+      tim_id: r.tim_id,
+      custom_tim_nazov: r.custom_tim_nazov,
+      pozicia: 0,
+      body: r.body,
+      zapasy: r.zapasy,
+      vitazstva: r.vitazstva,
+      remizy: r.remizy,
+      prehry: r.prehry,
+      goly_za: r.goly_za,
+      goly_proti: r.goly_proti,
+      goly_rozdiel: r.goly_rozdiel,
+      domace_zapasy: r.domace_zapasy,
+      domace_vitazstva: r.domace_vitazstva,
+      domace_remizy: r.domace_remizy,
+      domace_prehry: r.domace_prehry,
+      domace_goly_za: r.domace_goly_za,
+      domace_goly_proti: r.domace_goly_proti,
+      vonkajsie_zapasy: r.vonkajsie_zapasy,
+      vonkajsie_vitazstva: r.vonkajsie_vitazstva,
+      vonkajsie_remizy: r.vonkajsie_remizy,
+      vonkajsie_prehry: r.vonkajsie_prehry,
+      vonkajsie_goly_za: r.vonkajsie_goly_za,
+      vonkajsie_goly_proti: r.vonkajsie_goly_proti,
+      penalizacne_body: r.penalizacne_body || 0,
+      bonus_body: r.bonus_body || 0,
+      forma: r.forma,
+      serie_zapasov: r.serie_zapasov,
+      manualne_upravene: true, // Príznak zostáva - riadok sa nemá prepočítavať
+      poznamky: r.poznamky,
+      posledny_zapas: r.posledny_zapas
     }));
 
-    // Zoradenie podľa bodov, gólovej bilancie, strelených gólov
-    tabulkaData.sort((a, b) => {
+    const tabulkaData = [...vypocitaneRiadky, ...manualneData];
+
+    // ===== KROK 7: Zoradenie a pridelenie pozícií =====
+    // Poradie: body → gólový rozdiel → strelené góly → počet víťazstiev
+    tabulkaData.sort((a: any, b: any) => {
       if (a.body !== b.body) return b.body - a.body;
       if (a.goly_rozdiel !== b.goly_rozdiel) return b.goly_rozdiel - a.goly_rozdiel;
-      return b.goly_za - a.goly_za;
+      if (a.goly_za !== b.goly_za) return b.goly_za - a.goly_za;
+      return b.vitazstva - a.vitazstva;
     });
 
-    // Nastavenie správnych pozícií
-    tabulkaData.forEach((item, index) => {
+    tabulkaData.forEach((item: any, index: number) => {
       item.pozicia = index + 1;
     });
 
-    // Vytvorenie záznamov v databáze
-    await LigaTabulka.bulkCreate(tabulkaData);
+    // ===== KROK 8: Zápis do databázy v transakcii =====
+    // Mazanie a vytváranie musia prebehnúť ako jeden celok. Ak by zlyhalo
+    // vytváranie, transakcia sa vráti späť a tabuľka ostane v pôvodnom stave
+    // namiesto toho, aby ostala prázdna.
+    await sequelize.transaction(async (t: any) => {
+      await LigaTabulka.destroy({
+        where: { liga_id: ligaId },
+        transaction: t
+      });
+
+      if (tabulkaData.length > 0) {
+        await LigaTabulka.bulkCreate(tabulkaData as any, { transaction: t });
+      }
+    });
   }
 
   // Vytvorenie počiatočnej tabuľky pre ligu s tímami

@@ -2,6 +2,8 @@
 // Detail zápasu s podrobnými informáciami, štatistikami a súvisiacimi článkami
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 interface Match {
   id: number;
@@ -90,8 +92,8 @@ const MatchDetail: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📡 Volám API:', `http://localhost:3000/api/matches/${id}`);
-      const response = await fetch(`http://localhost:3000/api/matches/${id}`);
+      console.log('📡 Volám API:', apiUrl(`/matches/${id}`));
+      const response = await fetch(apiUrl(`/matches/${id}`));
       console.log('📡 Match response status:', response.status);
       
       if (!response.ok) {

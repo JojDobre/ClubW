@@ -2,6 +2,8 @@
 // Responzívny admin dashboard s customizable widgets
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // Lazy loading komponentov
 const UserManagement = lazy(() => import('./UserManagement'));
@@ -348,32 +350,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       const token = localStorage.getItem('clubw_token');
       
       // Fetch stats
-      const statsResponse = await fetch('http://localhost:3000/api/stats', {
+      const statsResponse = await fetch(apiUrl('/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // Načítanie tímov
-      const teamsResponse = await fetch('http://localhost:3000/api/teams', {
+      const teamsResponse = await fetch(apiUrl('/teams'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // Načítanie hráčov
-      const playersResponse = await fetch('http://localhost:3000/api/players', {
+      const playersResponse = await fetch(apiUrl('/players'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // Načítanie realizačného tímu
-      const staffResponse = await fetch('http://localhost:3000/api/staff', {
+      const staffResponse = await fetch(apiUrl('/staff'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
       // OPRAVENÉ: Načítanie lig - správny endpoint
-      const ligyResponse = await fetch('http://localhost:3000/api/leagues', {
+      const ligyResponse = await fetch(apiUrl('/leagues'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       // Načítanie zápasov
-      const zapasyResponse = await fetch('http://localhost:3000/api/zapasy/stats', {
+      const zapasyResponse = await fetch(apiUrl('/zapasy/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -520,7 +522,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3000/api/auth/logout', {
+      await fetch(apiUrl('/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       });

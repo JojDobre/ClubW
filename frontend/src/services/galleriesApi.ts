@@ -1,7 +1,8 @@
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { API_BASE_URL } from '../config/api';
 // frontend/src/services/galleriesApi.ts
 // API service pre komunikáciu s backend Galleries API
 
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // ===== INTERFACE DEFINITIONS =====
 export interface Gallery {

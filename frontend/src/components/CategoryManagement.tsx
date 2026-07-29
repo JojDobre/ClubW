@@ -11,6 +11,8 @@ import EditCategoryModal from './ui/table/EditCategoryModal';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Category {
@@ -104,7 +106,7 @@ const CategoryManagement: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('clubw_token');
       
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -131,7 +133,7 @@ const CategoryManagement: React.FC = () => {
       const token = localStorage.getItem('clubw_token');
       
       // Načítame kategórie pre štatistiky
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -179,7 +181,7 @@ const CategoryManagement: React.FC = () => {
       try {
         const token = localStorage.getItem('clubw_token');
         
-        const response = await fetch('http://localhost:3000/api/admin/categories/bulk-delete', {
+        const response = await fetch(apiUrl('/admin/categories/bulk-delete'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -216,7 +218,7 @@ const CategoryManagement: React.FC = () => {
       try {
         const token = localStorage.getItem('clubw_token');
         
-        const response = await fetch('http://localhost:3000/api/admin/categories/bulk-duplicate', {
+        const response = await fetch(apiUrl('/admin/categories/bulk-duplicate'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -258,7 +260,7 @@ const CategoryManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('clubw_token');
       
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -303,7 +305,7 @@ const CategoryManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('clubw_token');
-      const response = await fetch(`http://localhost:3000/api/admin/categories/${editingCategory.id}`, {
+      const response = await fetch(apiUrl(`/admin/categories/${editingCategory.id}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -331,7 +333,7 @@ const CategoryManagement: React.FC = () => {
     if (window.confirm('Naozaj chcete vymazať túto kategóriu?')) {
       try {
         const token = localStorage.getItem('clubw_token');
-        const response = await fetch(`http://localhost:3000/api/admin/categories/${categoryId}`, {
+        const response = await fetch(apiUrl(`/admin/categories/${categoryId}`), {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -378,7 +380,7 @@ const CategoryManagement: React.FC = () => {
       const uniqueName = generateUniqueName(category.nazov);
       
       const token = localStorage.getItem('clubw_token');
-      const response = await fetch('http://localhost:3000/api/admin/categories', {
+      const response = await fetch(apiUrl('/admin/categories'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

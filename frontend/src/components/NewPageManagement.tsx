@@ -8,6 +8,8 @@ import RichTextEditor from './RichTextEditor';
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
 import '../styles/pages/NewArticleManagement.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface PageFormData {
@@ -93,7 +95,7 @@ const NewPageManagement: React.FC<NewPageManagementProps> = ({ pageId }) => {
       setLoading(true);
       setErrors({}); // Vyčistenie chýb
       
-      const response = await fetch(`http://localhost:3000/api/admin/pages/${id}`, {
+      const response = await fetch(apiUrl(`/admin/pages/${id}`), {
         headers: getAuthHeaders(),
         credentials: 'include',
       });
@@ -297,8 +299,8 @@ const NewPageManagement: React.FC<NewPageManagementProps> = ({ pageId }) => {
 
     try {
       const url = isEditMode 
-        ? `http://localhost:3000/api/admin/pages/${pageId}`
-        : 'http://localhost:3000/api/admin/pages';
+        ? apiUrl(`/admin/pages/${pageId}`)
+        : apiUrl('/admin/pages');
       
       const method = isEditMode ? 'PUT' : 'POST';
 

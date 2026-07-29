@@ -1,7 +1,8 @@
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { API_BASE_URL } from '../config/api';
 // frontend/src/services/teamsApi.ts
 // OPRAVENÉ API service pre komunikáciu s backend Teams API
 
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // OPRAVENÉ Interfaces pre Teams API
 export interface Team {

@@ -604,6 +604,10 @@ LigaTurnaj.init(
     updatedAt: 'aktualizovany',
     indexes: [
       {
+        // OPRAVA: explicitný názov - bez neho Sequelize vygeneroval
+        // rovnaký názov "liga_turnaje_liga_id" pre oba indexy na liga_id
+        // a druhý CREATE INDEX vždy zlyhal pri čerstvej inštalácii
+        name: 'liga_turnaje_liga_id_aktivny_unique',
         unique: true,
         fields: ['liga_id'], // Jedna liga môže mať len jeden aktívny turnaj
         where: {

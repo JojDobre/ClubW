@@ -9,6 +9,8 @@ import type { TableColumn, TableData, PaginationData } from './ui/table/Table';
 
 // Import CSS štýlov
 import '../styles/components/managementPages.css';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // ===== INTERFACE DEFINITIONS =====
 interface Page {
@@ -136,7 +138,7 @@ const PageManagement: React.FC = () => {
       setError('');
 
       // API volanie na admin endpoint pre všetky stránky
-      const response = await fetch('http://localhost:3000/api/admin/pages?limit=1000', {
+      const response = await fetch(apiUrl('/admin/pages?limit=1000'), {
         headers: getAuthHeaders(),
         credentials: 'include',
       });
@@ -239,7 +241,7 @@ const PageManagement: React.FC = () => {
 
       const uniqueName = generateUniqueName(originalPage.nazov);
       
-      const response = await fetch('http://localhost:3000/api/admin/pages', {
+      const response = await fetch(apiUrl('/admin/pages'), {
         method: 'POST',
         headers: getAuthHeaders(),
         credentials: 'include',
@@ -281,7 +283,7 @@ const PageManagement: React.FC = () => {
     try {
       console.log('🗑️ Mazanie stránky s ID:', id);
       
-      const response = await fetch(`http://localhost:3000/api/admin/pages/${id}`, {
+      const response = await fetch(apiUrl(`/admin/pages/${id}`), {
         method: 'DELETE',
         headers: getAuthHeaders(),
         credentials: 'include',
@@ -315,7 +317,7 @@ const PageManagement: React.FC = () => {
     try {
       console.log('🗑️ Hromadné mazanie stránok:', selectedIds);
       
-      const response = await fetch('http://localhost:3000/api/admin/pages/bulk-delete', {
+      const response = await fetch(apiUrl('/admin/pages/bulk-delete'), {
         method: 'POST',
         headers: getAuthHeaders(),
         credentials: 'include',
@@ -346,7 +348,7 @@ const PageManagement: React.FC = () => {
     try {
       console.log('📋 Hromadné duplikovanie stránok:', selectedIds);
       
-      const response = await fetch('http://localhost:3000/api/admin/pages/bulk-duplicate', {
+      const response = await fetch(apiUrl('/admin/pages/bulk-duplicate'), {
         method: 'POST',
         headers: getAuthHeaders(),
         credentials: 'include',

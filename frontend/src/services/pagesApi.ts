@@ -1,7 +1,8 @@
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { API_BASE_URL } from '../config/api';
 // frontend/src/services/pagesApi.ts
 // API služba pre správu stránok (FÁZA 5)
 
-const API_BASE_URL = 'http://localhost:3000/api';
 
 // ===== INTERFACES =====
 

@@ -7,6 +7,8 @@ import Page from '../models/Page';
 import { getPublishedPages, getMenuPages, getPageBySlug, getAllPagesForAdmin } from '../models';
 import { authenticateToken, requireAdmin, requireEditor } from '../middleware/auth';
 import { Op } from 'sequelize';
+// Sanitizácia HTML obsahu stránok pred uložením do DB
+import { sanitizeContent } from '../utils/sanitize';
 
 const router: Router = Router();
 
@@ -370,7 +372,7 @@ adminPageRouter.post('/', [
 
     const newPage = await Page.create({
       nazov,
-      obsah,
+      obsah: sanitizeContent(obsah), // sanitizácia proti XSS
       slug: finalSlug,
       v_menu,
       poradie_menu: finalPoradieMenu,
@@ -479,7 +481,7 @@ adminPageRouter.put('/:id', [
     // Aktualizácia
     await page.update({
       nazov,
-      obsah,
+      obsah: sanitizeContent(obsah), // sanitizácia proti XSS
       slug: finalSlug,
       v_menu: v_menu !== undefined ? v_menu : page.v_menu,
       poradie_menu: poradie_menu !== undefined ? poradie_menu : page.poradie_menu,

@@ -2,6 +2,8 @@
 // Stránka pre zobrazenie všetkých článkov v grid formáte
 
 import React, { useState, useEffect } from 'react';
+// Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
+import { apiUrl } from '../config/api';
 
 // Interface pre článok z backend API
 interface Article {
@@ -79,7 +81,7 @@ const ArticlesPage: React.FC = () => {
         params.append('featured', 'true');
       }
 
-      const response = await fetch(`http://localhost:3000/api/articles?${params.toString()}`);
+      const response = await fetch(apiUrl(`/articles?${params.toString()}`));
       
       if (!response.ok) {
         throw new Error(`HTTP chyba: ${response.status}`);
