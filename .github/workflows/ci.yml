@@ -1,0 +1,118 @@
+# Umiestnenie: .github/workflows/ci.yml
+# Automatická kontrola pri každom commite a pull requeste.
+#
+# PREČO: projekt mal 0 testov a žiadnu automatickú kontrolu. Chyby ako
+# nefunkčný build alebo duplicitný názov indexu sa dali odhaliť až pri
+# nasadení. Tento workflow spustí kompiláciu, testy aj migrácie skôr,
+# než sa zmeny dostanú do hlavnej vetvy.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      # Skutočná databáza - migrácie a integračné testy proti nej bežia
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: clubw_test
+        ports:
+          - 5432:5432
+        # Práca sa začne až vtedy, keď je databáza pripravená
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: clubw_test
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+      JWT_SECRET: ci_only_secret_nie_je_produkcny
+      LICENSE_CHECK_DISABLED: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Inštalácia závislostí
+        run: npm ci
+
+      - name: Kontrola typov
+        run: npm run build --workspace=backend
+
+      - name: Migrácie na čistej databáze
+        working-directory: backend
+        run: npx sequelize-cli db:migrate
+
+      - name: Rollback a opätovné spustenie migrácií
+        # Overí, že sa každá migrácia dá vrátiť späť. Bez tejto kontroly
+        # by sa chyba v down() zistila až vtedy, keď treba niečo vrátiť.
+        working-directory: backend
+        run: |
+          npx sequelize-cli db:migrate:undo:all
+          npx sequelize-cli db:migrate
+
+      - name: Testy
+        working-directory: backend
+        run: npm test
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Inštalácia závislostí
+        run: npm ci
+
+      - name: Kontrola typov
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Produkčný build
+        working-directory: frontend
+        run: npx vite build
+
+  license-server:
+    name: Licenčný server
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Inštalácia závislostí
+        run: npm ci
+
+      - name: Kontrola typov
+        run: npm run build --workspace=license-server

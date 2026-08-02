@@ -1,0 +1,183 @@
+/* Umiestnenie: frontend/src/pages/admin/Nastavenia.css */
+
+.cw-nastavenia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.cw-nastavenia__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4);
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--sp-3));
+  z-index: 30;
+  flex-wrap: wrap;
+}
+
+.cw-nastavenia__info {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.cw-nastavenia__errors {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 26%, transparent);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-sm);
+}
+
+.cw-nastavenia__errors ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: var(--danger);
+}
+
+.cw-nastavenia__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.cw-nastavenia__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.cw-nastavenia__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.cw-nastavenia .cw-card__body > .cw-field:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== Výber farieb ===== */
+.cw-nastavenia__farby {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.cw-nastavenia__farba {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cw-nastavenia__farba-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cw-nastavenia__farba-riadok {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.cw-nastavenia__farba-vyber {
+  width: 52px;
+  height: var(--control-h);
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cw-nastavenia__farba-kod {
+  /* Kód farby píšeme veľkými písmenami a jednotnou šírkou znakov */
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  text-transform: uppercase;
+  max-width: 120px;
+}
+
+.cw-nastavenia__farba-popis {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* ===== Ukážka farieb ===== */
+.cw-nastavenia__ukazka {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
+}
+
+.cw-nastavenia__ukazka-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
+}
+
+.cw-nastavenia__ukazka-plocha {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cw-nastavenia__ukazka-hlavicka {
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-md);
+}
+
+.cw-nastavenia__ukazka-telo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--card2);
+  flex-wrap: wrap;
+}
+
+.cw-nastavenia__ukazka-stitok {
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+}
+
+.cw-nastavenia__ukazka-tlacidlo {
+  border: 0;
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .cw-nastavenia__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cw-nastavenia__row {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-nastavenia__bar {
+    position: static;
+  }
+}

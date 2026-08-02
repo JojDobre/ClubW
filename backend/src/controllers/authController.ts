@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/user';
+// Vytvorenie dlhodobého obnovovacieho tokenu pri prihlásení
+import { vytvorObnovovaciToken } from './hesloController';
 
 // Generovanie JWT tokenu
 const generateToken = (user: User): string => {
@@ -30,9 +32,12 @@ export const validateLogin = [
     .isEmail()
     .withMessage('Neplatný email formát')
     .normalizeEmail(),
+  // Pri prihlásení silu hesla nekontrolujeme - existujúci používateľ
+  // môže mať staršie heslo. Overujeme len, že pole nie je prázdne.
   body('heslo')
-    .isLength({ min: 6 })
-    .withMessage('Heslo musí mať aspoň 6 znakov'),
+    .isString()
+    .notEmpty()
+    .withMessage('Heslo je povinné'),
 ];
 
 // POST /api/auth/login - Prihlásenie používateľa
@@ -91,20 +96,39 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // 6. Generovanie JWT tokenu
     const token = generateToken(user);
 
-    // 7. Nastavenie cookie (voliteľné)
-    res.cookie('token', token, {
+    // 7. Dlhodobý obnovovací token uložený v databáze.
+    // Vďaka nemu používateľ neprestane byť prihlásený po 24 hodinách
+    // a relácia sa dá kedykoľvek zrušiť (odhlásenie, zmena hesla).
+    const obnovovaciToken = await vytvorObnovovaciToken(user, req);
+
+    // 8. Nastavenie cookies.
+    // httpOnly znamená, že sa k nim nedostane JavaScript v prehliadači,
+    // takže prípadné XSS nevie token ukradnúť.
+    const vProdukcii = process.env.NODE_ENV === 'production';
+
+    res.cookie('clubw_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: vProdukcii,
       maxAge: 24 * 60 * 60 * 1000, // 24 hodín
       sameSite: 'lax',
     });
 
-    // 8. Úspešná odpoveď
+    res.cookie('clubw_refresh', obnovovaciToken, {
+      httpOnly: true,
+      secure: vProdukcii,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dní
+      sameSite: 'lax',
+      // Obnovovací token posielame len na endpointy autentifikácie
+      path: '/api/auth',
+    });
+
+    // 9. Úspešná odpoveď
     res.json({
       success: true,
       message: 'Úspešne prihlásený',
       data: {
         token,
+        refreshToken: obnovovaciToken,
         user: user.toSafeJSON(),
       },
     });

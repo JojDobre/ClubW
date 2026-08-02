@@ -1,11 +1,44 @@
 #!/bin/bash
-# Kompletný setup script pre ClubW projekt
-# Spustenie: bash setup-clubw.sh
+# Kompletný setup script pre ClubW projekt - PRVOTNÁ inštalácia od nuly
+# Spustenie: bash born.sh
+#
+# ⚠️  VAROVANIE
+# Tento skript vytvára projekt od začiatku a PREPÍŠE 26 existujúcich súborov
+# pôvodnými verziami. Na už rozbehnutom projekte by tým zmazal všetky opravy
+# a úpravy. Je určený výhradne na založenie novej inštalácie.
 
 set -e
 
+# Poistka proti nechcenému spusteniu v existujúcom projekte
+if [ -d "backend/src" ] || [ -d "frontend/src" ]; then
+  echo "⛔ V tomto priečinku už existuje rozbehnutý projekt ClubW."
+  echo "   Spustenie born.sh by prepísalo backend/src a frontend/src"
+  echo "   pôvodnými verziami a prišli by ste o všetky zmeny."
+  echo ""
+  echo "   Ak naozaj chcete začať odznova, spustite:"
+  echo "     CLUBW_FORCE_SETUP=1 bash born.sh"
+  echo ""
+  if [ "$CLUBW_FORCE_SETUP" != "1" ]; then
+    exit 1
+  fi
+  echo "⚠️  CLUBW_FORCE_SETUP=1 — pokračujem a prepisujem existujúce súbory."
+  echo ""
+fi
+
 echo "🚀 ClubW - Kompletná inštalácia od začiatku"
 echo "=========================================="
+
+# Generovanie náhodných tajných kľúčov pre .env súbory.
+# Pôvodne sa do .env zapisovali pevné reťazce ako
+# 'license_dev_jwt_secret_key_123456789', ktoré boli rovnaké
+# pre každú inštaláciu a viditeľné v repozitári.
+if command -v openssl &> /dev/null; then
+  BACKEND_JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+  LICENSE_JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+else
+  BACKEND_JWT_SECRET=$(head -c 48 /dev/urandom | base64 | tr -d '\n')
+  LICENSE_JWT_SECRET=$(head -c 48 /dev/urandom | base64 | tr -d '\n')
+fi
 
 # Kontrola predpokladov
 if ! command -v node &> /dev/null; then
@@ -341,10 +374,10 @@ JWT_SECRET=your_jwt_secret_key_change_in_production
 BCRYPT_ROUNDS=10
 EOF
 
-cat > license-server/.env << 'EOF'
+cat > license-server/.env << EOF
 NODE_ENV=development
 PORT=3001
-JWT_SECRET=license_dev_jwt_secret_key_123456789
+JWT_SECRET=${LICENSE_JWT_SECRET}
 BCRYPT_ROUNDS=10
 EOF
 
@@ -494,13 +527,24 @@ LICENSE_SERVER_URL=http://localhost:3001
 JWT_SECRET=your_backend_jwt_secret_change_in_production
 EOF
 
-cat > backend/.env << 'EOF'
+cat > backend/.env << EOF
 NODE_ENV=development
 PORT=3000
 CLIENT_NAME=Demo FC
 LICENSE_KEY=DEMO-123456789ABCDEF
 LICENSE_SERVER_URL=http://localhost:3001
-JWT_SECRET=backend_dev_jwt_secret_key_123456789
+
+# Databaza - zodpoveda sluzbe client-db v docker-compose.dev.yml
+DB_HOST=localhost
+DB_PORT=5435
+DB_NAME=clubw_client_dev
+DB_USER=client_dev
+DB_PASSWORD=client_dev_password
+
+# Nahodne vygenerovany kluc - jedinecny pre kazdu instalaciu
+JWT_SECRET=${BACKEND_JWT_SECRET}
+
+CORS_ORIGIN=http://localhost:3002
 EOF
 
 # 6. FRONTEND

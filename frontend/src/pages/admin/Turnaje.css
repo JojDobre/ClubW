@@ -1,0 +1,110 @@
+/* Umiestnenie: frontend/src/pages/admin/Turnaje.css */
+
+.cw-tur__mriezka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.cw-tur__karta {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.cw-tur__hlava {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cw-tur__nazvy {
+  min-width: 0;
+}
+
+.cw-tur__nazov {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.cw-tur__liga {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ===== Číselné údaje ===== */
+.cw-tur__udaje {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-tur__udaj {
+  text-align: center;
+  min-width: 0;
+}
+
+.cw-tur__udaj-cislo {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  /* Dátum je dlhší než číslo, nesmie pretiecť */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-tur__udaj-popis {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cw-tur__format {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.cw-tur__format svg {
+  flex-shrink: 0;
+}
+
+.cw-tur__akcie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cw-tur__prazdne {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.cw-tur__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 560px) {
+  .cw-tur__row {
+    grid-template-columns: 1fr;
+  }
+}

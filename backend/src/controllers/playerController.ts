@@ -6,6 +6,8 @@ import Player from '../models/Player';
 import Team from '../models/Team';
 import fs from 'fs';
 import path from 'path';
+// Filtrovanie osobných údajov maloletých pre verejné rozhranie
+import { filtrujZoznamHracov, filtrujJednehoHraca } from '../utils/gdprFilter';
 
 // ===== HELPER FUNCTIONS =====
 
@@ -130,6 +132,10 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
       result = players.map((player: any) => player.toSafeJSON());
     }
 
+    // Pri maloletých hráčoch odstránime údaje, na ktoré chýba súhlas
+    // zákonného zástupcu (fotka, plné meno, presný dátum narodenia)
+    result = await filtrujZoznamHracov(result);
+
     res.json({
       success: true,
       data: result,
@@ -182,9 +188,12 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
       playerData.tim = team ? team.toSafeJSON() : null;
     }
 
+    // Rovnaké filtrovanie ako pri výpise
+    const verejneUdaje = await filtrujJednehoHraca(playerData);
+
     res.json({
       success: true,
-      data: playerData,
+      data: verejneUdaje,
       message: 'Hráč úspešne načítaný'
     });
 

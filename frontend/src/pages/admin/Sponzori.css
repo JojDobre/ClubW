@@ -1,0 +1,134 @@
+/* Umiestnenie: frontend/src/pages/admin/Sponzori.css */
+
+.cw-spon__skupina {
+  margin-bottom: 22px;
+}
+
+.cw-spon__skupina-hlava {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cw-spon__pocet {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cw-spon__mriezka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.cw-spon__karta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 13px 14px;
+}
+
+.cw-spon__karta:hover {
+  border-color: var(--pri);
+}
+
+/* Neaktívny sponzor je stlmený — na webe sa nezobrazuje */
+.cw-spon__karta.is-neaktivny {
+  opacity: 0.6;
+}
+
+.cw-spon__logo {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cw-spon__logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cw-spon__znak {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.cw-spon__telo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-spon__nazov {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-spon__web {
+  font-size: 12px;
+  color: var(--pri);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-spon__akcie {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cw-spon__akcie button {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 7px;
+  display: flex;
+}
+
+.cw-spon__akcie button:hover {
+  background: var(--card2);
+  color: var(--text);
+}
+
+.cw-spon__akcie button.is-danger:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.cw-spon__prazdne {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.cw-spon__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 560px) {
+  .cw-spon__row {
+    grid-template-columns: 1fr;
+  }
+}

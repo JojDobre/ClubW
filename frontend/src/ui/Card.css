@@ -1,0 +1,121 @@
+/* Umiestnenie: frontend/src/ui/Card.css */
+
+.cw-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.cw-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-card__titles {
+  min-width: 0;
+}
+
+.cw-card__title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.cw-card__subtitle {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.cw-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.cw-card__body {
+  padding: var(--sp-5);
+}
+
+/* ===== Karta so štatistikou =====
+   Rozloženie podľa návrhu: ikona v boxe vľavo hore, zmena vpravo hore,
+   veľké číslo pod tým, popis úplne dole. */
+
+.cw-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 17px;
+}
+
+.cw-stat--clickable {
+  cursor: pointer;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+}
+
+.cw-stat--clickable:hover {
+  border-color: var(--pri);
+  transform: translateY(-1px);
+}
+
+.cw-stat__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* Ikona v zaoblenom boxe s jemným pozadím primárnej farby */
+.cw-stat__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--pri-softer);
+  color: var(--pri);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cw-stat__delta {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+
+.cw-stat__delta.is-up {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.cw-stat__delta.is-down {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.cw-stat__value {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--text);
+  margin-top: 12px;
+}
+
+.cw-stat__label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-stat__skeleton {
+  height: 30px;
+  width: 60%;
+  margin-top: 12px;
+}

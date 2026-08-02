@@ -1,0 +1,163 @@
+/* Umiestnenie: frontend/src/pages/Prihlasenie.css */
+
+.cw-login {
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg);
+}
+
+.cw-login__panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+}
+
+.cw-login__box {
+  width: 100%;
+  max-width: 380px;
+  animation: cw-in 0.4s ease;
+}
+
+.cw-login__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-8);
+}
+
+.cw-login__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-lg);
+  background: var(--pri);
+  color: var(--on-pri);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cw-login__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cw-login__brand-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  color: var(--text);
+}
+
+.cw-login__brand-sub {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.cw-login__title {
+  font-size: var(--fs-2xl);
+  margin-bottom: 6px;
+}
+
+.cw-login__lead {
+  font-size: var(--fs-base);
+  color: var(--muted);
+  margin-bottom: var(--sp-6);
+}
+
+.cw-login__error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
+  color: var(--danger);
+  border-radius: var(--r-md);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: var(--sp-4);
+}
+
+.cw-login__forgot {
+  display: block;
+  text-align: center;
+  margin-top: var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cw-login__forgot:hover {
+  color: var(--pri);
+  opacity: 1;
+}
+
+/* ===== Ozdobná polovica ===== */
+.cw-login__aside {
+  flex: 1;
+  background: var(--pri);
+  color: var(--on-pri);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Jemný prechod, aby plocha nepôsobila ploche */
+  background-image: radial-gradient(
+    circle at 30% 20%,
+    color-mix(in srgb, #fff 12%, transparent),
+    transparent 60%
+  );
+}
+
+.cw-login__aside-inner {
+  text-align: center;
+  padding: var(--sp-8);
+}
+
+.cw-login__aside-mark {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto var(--sp-5);
+  border-radius: 28px;
+  border: 3px solid color-mix(in srgb, var(--on-pri) 35%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 42px;
+}
+
+.cw-login__aside-name {
+  font-family: var(--font-head);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.cw-login__aside-slogan {
+  font-size: var(--fs-md);
+  opacity: 0.85;
+  margin-top: var(--sp-2);
+}
+
+.cw-login__aside-year {
+  font-size: var(--fs-sm);
+  opacity: 0.6;
+  margin-top: var(--sp-4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .cw-login__aside {
+    display: none;
+  }
+}

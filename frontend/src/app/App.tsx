@@ -1,0 +1,148 @@
+// Umiestnenie: frontend/src/app/App.tsx
+// Koreň novej administrácie: poskytovatelia kontextu a routovanie.
+//
+// POZNÁMKA K SÚBEŽNEJ PREVÁDZKE: pôvodná administrácia zatiaľ zostáva
+// funkčná na svojich cestách. Nová beží pod /admin a preberá obrazovky
+// postupne, aby klub nezostal bez použiteľného rozhrania.
+
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+import { AuthProvider } from './AuthContext';
+import { RezimProvider } from './RezimContext';
+import { NastaveniaProvider } from '../context/NastaveniaContext';
+import { ToastProvider } from '../ui';
+import ChranenaCesta from './ChranenaCesta';
+
+import AppShell from '../layout/AppShell';
+import Prihlasenie from '../pages/Prihlasenie';
+import Prehlad from '../pages/admin/Prehlad';
+import Clanky from '../pages/admin/Clanky';
+import ClanokEditor from '../pages/admin/ClanokEditor';
+import Zapasy from '../pages/admin/Zapasy';
+import ZapasEditor from '../pages/admin/ZapasEditor';
+import ZapasLive from '../pages/admin/ZapasLive';
+import Hraci from '../pages/admin/Hraci';
+import Timy from '../pages/admin/Timy';
+import Kalendar from '../pages/admin/Kalendar';
+import Pouzivatelia from '../pages/admin/Pouzivatelia';
+import Nastavenia from '../pages/admin/Nastavenia';
+import Licencia from '../pages/admin/Licencia';
+import Sezony from '../pages/admin/Sezony';
+import OchranaUdajov from '../pages/admin/OchranaUdajov';
+import Kategorie from '../pages/admin/Kategorie';
+import Stranky from '../pages/admin/Stranky';
+import Galerie from '../pages/admin/Galerie';
+import RealizacnyTim from '../pages/admin/RealizacnyTim';
+import Ligy from '../pages/admin/Ligy';
+// Sekcia KLUB
+import Sponzori from '../pages/admin/Sponzori';
+import Dokumenty from '../pages/admin/Dokumenty';
+import Ankety from '../pages/admin/Ankety';
+import Fanusikovia from '../pages/admin/Fanusikovia';
+// Doplnky sekcie OBSAH a ŠPORT
+import Komentare from '../pages/admin/Komentare';
+import Videa from '../pages/admin/Videa';
+import Turnaje from '../pages/admin/Turnaje';
+
+import '../design/global.css';
+import './App.css';
+
+export const App: React.FC = () => (
+  <RezimProvider>
+    <NastaveniaProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Verejné cesty */}
+              <Route path="/prihlasenie" element={<Prihlasenie />} />
+
+              {/* Administrácia */}
+              <Route
+                path="/admin"
+                element={
+                  <ChranenaCesta>
+                    <AppShell />
+                  </ChranenaCesta>
+                }
+              >
+                {/* Obrazovky pribudnú v ďalších fázach. Dovtedy sa
+                    zobrazuje rozpracovaný stav, aby navigácia fungovala. */}
+                <Route index element={<Prehlad />} />
+                <Route path="clanky" element={<Clanky />} />
+                {/* Nový článok musí byť pred :id, inak by sa "novy"
+                    vyhodnotilo ako identifikátor článku */}
+                <Route path="clanky/novy" element={<ClanokEditor />} />
+                <Route path="clanky/:id" element={<ClanokEditor />} />
+                <Route path="kategorie" element={<Kategorie />} />
+                <Route path="stranky" element={<Stranky />} />
+                <Route path="galerie" element={<Galerie />} />
+                <Route path="komentare" element={<Komentare />} />
+                <Route path="videa" element={<Videa />} />
+                <Route path="timy" element={<Timy />} />
+                <Route path="hraci" element={<Hraci />} />
+                <Route path="realizacny-tim" element={<RealizacnyTim />} />
+                <Route path="ligy" element={<Ligy />} />
+                <Route path="turnaje" element={<Turnaje />} />
+                <Route path="zapasy" element={<Zapasy />} />
+                {/* "novy" musí byť pred :id, inak by sa vyhodnotilo ako identifikátor */}
+                <Route path="zapasy/novy" element={<ZapasEditor />} />
+                <Route path="zapasy/:id" element={<ZapasEditor />} />
+                <Route path="zapasy/:id/live" element={<ZapasLive />} />
+                <Route path="kalendar" element={<Kalendar />} />
+                <Route path="sezony" element={<Sezony />} />
+
+                {/* Sekcia KLUB */}
+                <Route path="sponzori" element={<Sponzori />} />
+                <Route path="dokumenty" element={<Dokumenty />} />
+                <Route path="ankety" element={<Ankety />} />
+                <Route path="fanusikovia" element={<Fanusikovia />} />
+                <Route path="profil" element={<Navigate to="/admin/pouzivatelia" replace />} />
+
+                {/* Cesty len pre administrátora */}
+                <Route
+                  path="pouzivatelia"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <Pouzivatelia />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="ochrana-udajov"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <OchranaUdajov />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="nastavenia"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <Nastavenia />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="licencia"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <Licencia />
+                    </ChranenaCesta>
+                  }
+                />
+              </Route>
+
+              {/* Neznáma cesta vedie do administrácie */}
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </NastaveniaProvider>
+  </RezimProvider>
+);
+
+export default App;

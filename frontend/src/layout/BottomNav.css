@@ -1,0 +1,50 @@
+/* Umiestnenie: frontend/src/layout/BottomNav.css */
+
+.cw-bottomnav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  z-index: var(--z-topbar);
+  /* Odsadenie pre gestá na telefónoch bez tlačidiel */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.cw-bottomnav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+}
+
+.cw-bottomnav__item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.cw-bottomnav__item.is-active {
+  color: var(--pri);
+  font-weight: 700;
+}
+
+@media (max-width: 960px) {
+  .cw-bottomnav {
+    display: flex;
+  }
+}

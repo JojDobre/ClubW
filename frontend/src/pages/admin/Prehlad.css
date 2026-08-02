@@ -1,0 +1,462 @@
+/* Umiestnenie: frontend/src/pages/admin/Prehlad.css
+   Rozloženie zodpovedá návrhu administrácie. */
+
+.cw-dash {
+  animation: cw-in 0.3s ease;
+}
+
+/* ===== 1. Pozdrav ===== */
+.cw-dash__hlava {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.cw-dash__pozdrav {
+  font-size: 24px;
+  color: var(--text);
+}
+
+.cw-dash__lead {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* Tlačidlo živého zápasu je zámerne červené — odlišuje sa od bežných akcií */
+.cw-dash__live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 10px;
+  background: #e23744;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cw-dash__live:hover {
+  filter: brightness(0.94);
+}
+
+.cw-dash__live-bod {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  animation: cw-pulse 1.2s infinite;
+}
+
+/* ===== 2. Štatistiky ===== */
+.cw-dash__staty {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+/* ===== Spoločná mriežka 1.4fr / 1fr ===== */
+.cw-dash__mriezka {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+/* ===== 3a. Karta najbližšieho zápasu ===== */
+.cw-dash__zapas {
+  /* Prechod z primárnej farby klubu do tmavej — funguje pri akejkoľvek farbe */
+  background: linear-gradient(150deg, var(--pri), color-mix(in srgb, var(--pri) 45%, #000));
+  border-radius: 16px;
+  padding: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  min-height: 210px;
+}
+
+/* Dekoratívny kruh v pravom hornom rohu */
+.cw-dash__zapas-kruh {
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cw-dash__zapas-obsah {
+  position: relative;
+}
+
+.cw-dash__zapas-hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cw-dash__zapas-stitok {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.cw-dash__zapas-liga {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.cw-dash__zapas-timy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin: 20px 0;
+}
+
+.cw-dash__zapas-tim {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-dash__zapas-znak {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.cw-dash__zapas-nazov {
+  font-weight: 700;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-dash__zapas-cas {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cw-dash__zapas-hodina {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 22px;
+  white-space: nowrap;
+}
+
+.cw-dash__zapas-datum {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.cw-dash__zapas-akcie {
+  display: flex;
+  gap: 9px;
+}
+
+.cw-dash__zapas-btn {
+  flex: 1;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--pri);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.cw-dash__zapas-btn:hover {
+  opacity: 0.92;
+}
+
+.cw-dash__zapas-btn--obrys {
+  flex: none;
+  padding: 11px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.cw-dash__zapas-btn--obrys:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.cw-dash__zapas-prazdne,
+.cw-dash__zapas-nacitava {
+  margin: 24px 0;
+  text-align: center;
+}
+
+.cw-dash__zapas-prazdne p {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-bottom: 14px;
+}
+
+.cw-dash__zapas-prazdne .cw-dash__zapas-btn {
+  flex: none;
+  padding: 10px 18px;
+}
+
+/* ===== 3b. Graf ===== */
+.cw-dash__graf {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.cw-dash__graf-hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.cw-dash__graf-nadpis {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.cw-dash__graf-popis {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cw-dash__graf-zmena {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.cw-dash__graf-cislo {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--text);
+}
+
+.cw-dash__graf-svg {
+  width: 100%;
+  height: 92px;
+  margin-top: 6px;
+  display: block;
+}
+
+/* ===== 4. Panely ===== */
+.cw-dash__panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cw-dash__panel--odsadeny {
+  padding: 16px;
+}
+
+.cw-dash__panel-hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-dash__panel-nadpis {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.cw-dash__panel-odkaz {
+  background: transparent;
+  border: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--pri);
+  cursor: pointer;
+  padding: 0;
+}
+
+.cw-dash__panel-odkaz:hover {
+  opacity: 0.8;
+}
+
+/* ===== Článok v zozname ===== */
+.cw-dash__clanok {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 12px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.cw-dash__clanok:last-child {
+  border-bottom: 0;
+}
+
+.cw-dash__clanok:hover {
+  background: var(--card2);
+}
+
+/* Náhľad obrázka článku */
+.cw-dash__clanok-nahlad {
+  width: 46px;
+  height: 40px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.cw-dash__clanok-nahlad img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cw-dash__clanok-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-dash__clanok-nazov {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-dash__clanok-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cw-dash__prazdne {
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.cw-dash__prazdne p {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+/* ===== Rýchle akcie ===== */
+.cw-dash__akcie-nadpis {
+  margin-bottom: 12px;
+}
+
+.cw-dash__akcie {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cw-dash__akcia {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card2);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cw-dash__akcia:hover {
+  border-color: var(--pri);
+}
+
+.cw-dash__akcia-ikona {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--pri-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pri);
+}
+
+.cw-dash__akcia-popis {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ===== Mobil ===== */
+@media (max-width: 1000px) {
+  .cw-dash__mriezka {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .cw-dash__staty {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cw-dash__zapas-timy {
+    gap: 12px;
+  }
+
+  .cw-dash__zapas-znak {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+
+  .cw-dash__zapas-hodina {
+    font-size: 18px;
+  }
+}

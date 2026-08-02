@@ -1,0 +1,186 @@
+/* Umiestnenie: frontend/src/pages/admin/Kalendar.css */
+
+.cw-kalendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.cw-kalendar__ovladanie {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* ===== Mriežka ===== */
+.cw-kalendar__mriezka {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cw-kalendar__hlavicka {
+  background: var(--card2);
+  padding: var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.cw-kalendar__bunka {
+  background: var(--card);
+  min-height: 92px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cw-kalendar__bunka--prazdna {
+  background: var(--card2);
+  opacity: 0.5;
+}
+
+.cw-kalendar__bunka.is-dnes {
+  /* Dnešný deň zvýrazníme vnútorným rámom, nie pozadím —
+     zápasy v bunke tak zostanú dobre čitateľné */
+  box-shadow: inset 0 0 0 2px var(--pri);
+}
+
+.cw-kalendar__den {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cw-kalendar__bunka.is-dnes .cw-kalendar__den {
+  color: var(--pri);
+}
+
+/* ===== Zápas v bunke ===== */
+.cw-kalendar__zapas {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  text-align: left;
+  background: var(--pri-softer);
+  border: 0;
+  border-left: 3px solid var(--pri);
+  border-radius: 4px;
+  padding: 3px 5px;
+  cursor: pointer;
+  font-size: 10.5px;
+  color: var(--text);
+  overflow: hidden;
+}
+
+.cw-kalendar__zapas:hover {
+  background: var(--pri-soft);
+}
+
+.cw-kalendar__zapas.is-ukonceny {
+  border-left-color: var(--success);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.cw-kalendar__zapas.is-prebieha {
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.cw-kalendar__zapas.is-zruseny,
+.cw-kalendar__zapas.is-odlozeny {
+  border-left-color: var(--muted);
+  background: var(--card2);
+  /* Zrušený zápas prečiarkneme — na prvý pohľad viditeľné */
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.cw-kalendar__zapas-cas {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cw-kalendar__zapas-tim {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Zoznam pod kalendárom ===== */
+.cw-kalendar__zoznam {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-kalendar__polozka {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-5);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+
+.cw-kalendar__polozka:hover {
+  background: var(--card2);
+}
+
+.cw-kalendar__polozka-datum {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cw-kalendar__polozka-tim {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-kalendar__prazdne {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+}
+
+@media (max-width: 760px) {
+  .cw-kalendar__bunka {
+    min-height: 64px;
+    padding: 4px;
+  }
+
+  /* Na telefóne sa názov tímu nezmestí, ostane len čas */
+  .cw-kalendar__zapas-tim {
+    display: none;
+  }
+
+  .cw-kalendar__polozka {
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2);
+  }
+
+  .cw-kalendar__polozka-datum {
+    grid-column: 1 / -1;
+  }
+}

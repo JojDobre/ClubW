@@ -1,0 +1,48 @@
+/* Umiestnenie: frontend/src/pages/admin/Kategorie.css */
+
+.cw-kat__nazov {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* Farebný bod ukazuje farbu kategórie na verejnom webe */
+.cw-kat__bod {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cw-kat__text {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-kat__slug {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  background: var(--card2);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.cw-kat__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.cw-kat__farba {
+  width: 100%;
+  height: var(--control-h);
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  cursor: pointer;
+}

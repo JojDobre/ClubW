@@ -1,0 +1,95 @@
+/* Umiestnenie: frontend/src/ui/Modal.css */
+
+.cw-modal-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 11, 16, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  animation: cw-fade 0.18s ease;
+}
+
+.cw-modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Okno nikdy nepresiahne výšku obrazovky — obsah sa posúva */
+  max-height: calc(100vh - var(--sp-8));
+  animation: cw-in 0.22s ease;
+}
+
+.cw-modal--sm {
+  max-width: 420px;
+}
+.cw-modal--md {
+  max-width: 620px;
+}
+.cw-modal--lg {
+  max-width: 900px;
+}
+
+.cw-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cw-modal__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.cw-modal__subtitle {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.cw-modal__close {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.cw-modal__close:hover {
+  background: var(--card2);
+  color: var(--text);
+}
+
+.cw-modal__body {
+  padding: var(--sp-5);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cw-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cw-confirm__msg {
+  font-size: var(--fs-base);
+  color: var(--muted);
+  line-height: 1.6;
+}

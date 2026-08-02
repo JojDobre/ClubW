@@ -1,0 +1,195 @@
+/* Umiestnenie: frontend/src/pages/admin/Ligy.css */
+
+.cw-ligy__vyber {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.cw-ligy__vyber .cw-field {
+  margin-bottom: 0;
+  min-width: 260px;
+  flex: 1;
+  max-width: 420px;
+}
+
+.cw-ligy__akcie {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* ===== Údaje o súťaži ===== */
+.cw-ligy__info {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.cw-ligy__pravidla {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* ===== Tabuľka ===== */
+.cw-ligy__wrap {
+  overflow-x: auto;
+}
+
+.cw-ligy__tabulka {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.cw-ligy__tabulka th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.cw-ligy__tabulka td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.cw-ligy__tabulka tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.cw-ligy__tabulka tbody tr:hover {
+  background: var(--card2);
+}
+
+/* Prvé tri miesta zvýrazníme ľavým pruhom */
+.cw-ligy__tabulka tbody tr:nth-child(1) .cw-ligy__poz {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.cw-ligy__tabulka tbody tr:nth-child(2) .cw-ligy__poz,
+.cw-ligy__tabulka tbody tr:nth-child(3) .cw-ligy__poz {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.cw-ligy__poz {
+  width: 46px;
+  text-align: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cw-ligy__cislo {
+  text-align: center;
+  width: 54px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cw-ligy__body {
+  text-align: center;
+  width: 70px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Penalizačné body pri celkovom počte */
+.cw-ligy__penal {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.cw-ligy__tim {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cw-ligy__logo,
+.cw-ligy__znak {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.cw-ligy__znak {
+  background: var(--pri-softer);
+  color: var(--pri);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+}
+
+.cw-ligy__nazov {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Forma ===== */
+.cw-ligy__forma {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.cw-ligy__vysledok {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.cw-ligy__vysledok.is-W {
+  background: var(--success);
+}
+
+.cw-ligy__vysledok.is-D {
+  background: var(--muted);
+}
+
+.cw-ligy__vysledok.is-L {
+  background: var(--danger);
+}
+
+@media (max-width: 760px) {
+  /* Na telefóne skryjeme doplnkové stĺpce — základ tabuľky
+     (poradie, tím, zápasy, body) zostane čitateľný */
+  .cw-ligy__skryt {
+    display: none;
+  }
+
+  .cw-ligy__vyber .cw-field {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}

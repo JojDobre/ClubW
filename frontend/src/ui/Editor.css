@@ -1,0 +1,95 @@
+/* Umiestnenie: frontend/src/ui/Editor.css */
+
+.cw-editor-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* ===== Panel nástrojov ===== */
+.cw-editor-box__panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card2);
+}
+
+.cw-editor-box__nastroj {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.cw-editor-box__nastroj:hover {
+  background: var(--border);
+}
+
+/* ===== Plocha na písanie ===== */
+.cw-editor-box__plocha {
+  padding: 18px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+  outline: none;
+}
+
+/* Zástupný text, kým je plocha prázdna */
+.cw-editor-box__plocha:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.cw-editor-box__plocha p {
+  margin: 0 0 12px;
+}
+
+.cw-editor-box__plocha p:last-child {
+  margin-bottom: 0;
+}
+
+.cw-editor-box__plocha h2 {
+  font-size: 19px;
+  margin: 18px 0 10px;
+}
+
+.cw-editor-box__plocha h3 {
+  font-size: 16px;
+  margin: 16px 0 8px;
+}
+
+.cw-editor-box__plocha ul,
+.cw-editor-box__plocha ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.cw-editor-box__plocha blockquote {
+  margin: 0 0 12px;
+  padding: 8px 0 8px 14px;
+  border-left: 3px solid var(--pri);
+  color: var(--muted);
+  font-style: italic;
+}
+
+.cw-editor-box__plocha a {
+  color: var(--pri);
+  text-decoration: underline;
+}
+
+.cw-editor-box__plocha img {
+  max-width: 100%;
+  border-radius: var(--r-md);
+}

@@ -1,0 +1,184 @@
+/* Umiestnenie: frontend/src/pages/admin/Sezony.css */
+
+.cw-sezony {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ===== Zoznam sezón ===== */
+.cw-sezony__zoznam {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-sezony__polozka {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-sezony__polozka:last-child {
+  border-bottom: 0;
+}
+
+.cw-sezony__polozka.is-aktualna {
+  background: var(--pri-softer);
+}
+
+.cw-sezony__hlavne {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.cw-sezony__nazov {
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.cw-sezony__stitky {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.cw-sezony__obdobie {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cw-sezony__akcie {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ===== Výber sezóny a tímu ===== */
+.cw-sezony__vyber {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.cw-sezony__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+/* ===== Upozornenie o uzavretej sezóne ===== */
+.cw-sezony__uzavreta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 26%, transparent);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.cw-sezony__uzavreta svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warning);
+}
+
+/* ===== Súpiska ===== */
+.cw-sezony__supiska {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-sezony__hrac {
+  display: grid;
+  grid-template-columns: 44px 1fr 110px 32px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-base);
+}
+
+.cw-sezony__hrac:hover {
+  background: var(--card2);
+}
+
+.cw-sezony__cislo {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  color: var(--pri);
+  text-align: center;
+}
+
+.cw-sezony__hrac-meno {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.cw-sezony__pozicia {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cw-sezony__odobrat {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  display: flex;
+}
+
+.cw-sezony__odobrat:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.cw-sezony__prazdne {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: center;
+  padding: var(--sp-5) 0;
+}
+
+@media (max-width: 760px) {
+  .cw-sezony__polozka {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+
+  .cw-sezony__akcie {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cw-sezony__vyber,
+  .cw-sezony__row {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-sezony__hrac {
+    grid-template-columns: 40px 1fr 32px;
+  }
+
+  .cw-sezony__pozicia {
+    display: none;
+  }
+}

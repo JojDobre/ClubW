@@ -1,0 +1,141 @@
+/* Umiestnenie: frontend/src/pages/admin/Licencia.css */
+
+.cw-licencia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ===== Hlavný stav ===== */
+.cw-licencia__hlava {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.cw-licencia__znak {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cw-licencia__znak.is-success {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.cw-licencia__znak.is-warning {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.cw-licencia__znak.is-danger {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+.cw-licencia__znak.is-neutral {
+  background: var(--card2);
+  color: var(--muted);
+}
+
+.cw-licencia__text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.cw-licencia__stav {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.cw-licencia__popis {
+  font-size: var(--fs-base);
+  color: var(--muted);
+}
+
+/* ===== Upozornenia ===== */
+.cw-licencia__upozornenie {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  background: var(--pri-softer);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.cw-licencia__upozornenie svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cw-licencia__upozornenie.is-warning {
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+}
+
+.cw-licencia__upozornenie.is-danger {
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
+}
+
+/* ===== Karty s údajmi ===== */
+.cw-licencia__karty {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4);
+}
+
+/* Dátum a čas sú dlhšie než číslo — zmenšíme písmo, aby sa zmestili */
+.cw-licencia__karty .cw-stat__value {
+  font-size: var(--fs-lg);
+}
+
+/* ===== Funkcie ===== */
+.cw-licencia__funkcie {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-2);
+}
+
+.cw-licencia__funkcia {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--card2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.cw-licencia__funkcia svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.cw-licencia__prazdne,
+.cw-licencia__poznamka {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.cw-licencia__poznamka {
+  text-align: center;
+}

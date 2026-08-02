@@ -1,0 +1,29 @@
+/* Umiestnenie: frontend/src/ui/PageHeader.css */
+
+.cw-pagehead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.cw-pagehead__title {
+  /* 22px podľa návrhu (dashboard má 24px, rieši ho vlastná trieda) */
+  font-size: 22px;
+  color: var(--text);
+}
+
+.cw-pagehead__sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.cw-pagehead__actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}

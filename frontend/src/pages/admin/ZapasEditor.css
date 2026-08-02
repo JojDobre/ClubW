@@ -1,0 +1,188 @@
+/* Umiestnenie: frontend/src/pages/admin/ZapasEditor.css
+   Rozloženie podľa návrhu — lišta so Späť a nadpisom, mriežka 1fr / 330 px. */
+
+.cw-zed {
+  animation: cw-in 0.3s ease;
+}
+
+.cw-zed__nadpis {
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* ===== Mriežka ===== */
+.cw-zed__grid {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 16px;
+  align-items: start;
+}
+
+.cw-zed__hlavne,
+.cw-zed__bok {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ===== Panel ===== */
+.cw-zed__panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.cw-zed__panel-nadpis {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.cw-zed__panel-popis {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: -10px 0 14px;
+  line-height: 1.5;
+}
+
+.cw-zed__panel > .cw-field:last-child,
+.cw-zed__panel > .cw-switch:last-child {
+  margin-bottom: 0;
+}
+
+/* Dvojica polí vedľa seba */
+.cw-zed__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cw-zed__row:empty {
+  display: none;
+}
+
+/* ===== Skóre ===== */
+.cw-zed__skore {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.cw-zed__dvojbodka {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--muted);
+  /* Zarovnanie na úroveň vstupných polí, nie menoviek */
+  padding-top: 28px;
+}
+
+/* ===== Pridanie udalosti ===== */
+.cw-zed__udalost-form {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 90px auto;
+  gap: 12px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.cw-zed__udalost-form .cw-field {
+  margin-bottom: 0;
+}
+
+/* ===== Zoznam udalostí ===== */
+.cw-zed__udalosti {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-zed__udalost {
+  display: grid;
+  grid-template-columns: 44px 24px 110px 1fr 30px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.cw-zed__udalost:hover {
+  background: var(--card2);
+}
+
+.cw-zed__minuta {
+  font-family: var(--font-head);
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+}
+
+.cw-zed__symbol {
+  text-align: center;
+}
+
+.cw-zed__typ {
+  color: var(--muted);
+}
+
+.cw-zed__hrac {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-zed__odobrat {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 5px;
+  display: flex;
+}
+
+.cw-zed__odobrat:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.cw-zed__prazdne {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ===== Mobil ===== */
+@media (max-width: 1000px) {
+  .cw-zed__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .cw-zed__row,
+  .cw-zed__udalost-form {
+    grid-template-columns: 1fr;
+  }
+
+  /* Na úzkej obrazovke vynecháme popis typu, symbol stačí */
+  .cw-zed__udalost {
+    grid-template-columns: 40px 24px 1fr 30px;
+  }
+
+  .cw-zed__typ {
+    display: none;
+  }
+}

@@ -1,0 +1,374 @@
+/* Umiestnenie: frontend/src/ui/DataTable.css */
+
+.cw-dt {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+/* ===== Panel nástrojov ===== */
+.cw-dt__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* Polia v paneli nemajú spodný odstup ako v bežnom formulári */
+.cw-dt__toolbar .cw-field {
+  margin-bottom: 0;
+}
+
+.cw-dt__search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.cw-dt__filter {
+  min-width: 150px;
+}
+
+/* ===== Hromadné akcie ===== */
+.cw-dt__bulk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--pri-softer);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.cw-dt__bulk-count {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--pri);
+}
+
+.cw-dt__bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* ===== Načítavanie ===== */
+.cw-dt__loading {
+  padding: var(--sp-4);
+}
+
+.cw-dt__loading-row {
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-dt__loading-row:last-child {
+  border-bottom: 0;
+}
+
+/* ===== Tabuľka ===== */
+.cw-dt__wrap {
+  overflow-x: auto;
+}
+
+.cw-dt__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.cw-dt__table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.cw-dt__th--sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.cw-dt__th--sortable:hover {
+  color: var(--text);
+}
+
+.cw-dt__th-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cw-dt__sort {
+  /* Šípka je viditeľná až po zoradení, aby hlavička nebola preplnená */
+  opacity: 0;
+  font-size: 11px;
+  transition: opacity var(--t-fast);
+}
+
+.cw-dt__th--sortable:hover .cw-dt__sort {
+  opacity: 0.45;
+}
+
+.cw-dt__sort.is-active {
+  opacity: 1;
+  color: var(--pri);
+}
+
+.cw-dt__table td {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.cw-dt__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.cw-dt__table tbody tr:hover {
+  background: var(--card2);
+}
+
+.cw-dt__table tbody tr.is-selected {
+  background: var(--pri-softer);
+}
+
+.cw-dt__table tbody tr.is-clickable {
+  cursor: pointer;
+}
+
+/* ===== Stĺpec s políčkami ===== */
+.cw-dt__check-col {
+  width: 44px;
+  padding-right: 0 !important;
+}
+
+.cw-dt__check-col input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pri);
+}
+
+/* ===== Akcie v riadku ===== */
+.cw-dt__actions-col {
+  width: 52px;
+  text-align: right;
+}
+
+.cw-dt__row-actions {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cw-dt__more {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: var(--r-sm);
+  display: flex;
+}
+
+.cw-dt__more:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.cw-dt__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+  z-index: var(--z-dropdown);
+  animation: cw-slide-down 0.14s ease;
+}
+
+.cw-dt__menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 8px var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.cw-dt__menu-item:hover {
+  background: var(--card2);
+}
+
+.cw-dt__menu-item.is-danger {
+  color: var(--danger);
+}
+
+.cw-dt__menu-item.is-danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+/* ===== Stránkovanie ===== */
+.cw-dt__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.cw-dt__pager-info {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.cw-dt__pager-btns {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cw-dt__pager-page {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text);
+  min-width: 52px;
+  text-align: center;
+}
+
+/* ===== Karty pre mobil ===== */
+.cw-dt__cards {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  /* Vodorovné posúvanie stĺpcov je na telefóne nepoužiteľné,
+     preto sa tabuľka mení na zvislé karty */
+  .cw-dt__wrap {
+    display: none;
+  }
+
+  .cw-dt__cards {
+    display: block;
+  }
+
+  .cw-dt__card {
+    padding: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .cw-dt__card:last-child {
+    border-bottom: 0;
+  }
+
+  .cw-dt__card.is-selected {
+    background: var(--pri-softer);
+  }
+
+  .cw-dt__card-check {
+    position: absolute;
+    top: var(--sp-4);
+    right: var(--sp-4);
+  }
+
+  .cw-dt__card-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--pri);
+  }
+
+  .cw-dt__card-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 3px 0;
+  }
+
+  .cw-dt__card-title {
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--text);
+    /* Miesto pre políčko výberu v pravom hornom rohu */
+    padding-right: 28px;
+    margin-bottom: 4px;
+  }
+
+  .cw-dt__card-label {
+    font-size: var(--fs-xs);
+    color: var(--muted);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .cw-dt__card-value {
+    font-size: var(--fs-sm);
+    color: var(--text);
+    text-align: right;
+  }
+
+  .cw-dt__card-actions {
+    display: flex;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+    flex-wrap: wrap;
+  }
+
+  .cw-dt__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cw-dt__search,
+  .cw-dt__filter {
+    max-width: none;
+  }
+
+  .cw-dt__pager {
+    justify-content: center;
+  }
+}
+
+/* ===== Doplnky pre konkrétne obrazovky ===== */
+
+/* Názov článku s prípadným štítkom „odporúčaný" */
+.cw-clanky__nazov {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cw-clanky__nazov-text {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

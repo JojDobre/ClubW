@@ -7,7 +7,14 @@
     <!-- Responzívny viewport pre mobilné zariadenia -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="ClubW - Platforma pre správu športových klubov" />
+    <!-- Fonty administrácie podľa návrhu: Manrope pre text, Space Grotesk pre nadpisy -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <title>ClubW</title>
+    <!-- Farby klubu z databázy. Načítajú sa spolu so stránkou, takže web
+         nikdy nebliknime v predvolených farbách. Vite presmeruje /api na backend. -->
+    <link rel="stylesheet" href="/api/settings.css">
   </head>
   <body>
     <!-- Root element, do ktorého React renderuje celú aplikáciu -->

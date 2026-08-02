@@ -19,8 +19,20 @@ import sharp from 'sharp';
 import { testConnection, syncDatabase } from './config/database';
 // Kontrola licencie - blokuje zápisové operácie pri neplatnej licencii
 import { kontrolaLicencie, spustiKontroluLicencie, stavLicencie } from './middleware/licencia';
+// Upratovanie vypršaných tokenov
+import { uprataStareTokeny } from './controllers/hesloController';
 
 // Import route handlerov
+// Nastavenia klubu (white-label identita a farby)
+import nastaveniaRoutes from './routes/nastavenia';
+// Sezóny a súpisky hráčov
+import sezonyRoutes from './routes/sezony';
+// GDPR - súhlasy, export údajov, anonymizácia, audit
+import gdprRoutes from './routes/gdpr';
+// Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
+import klubRoutes from './routes/klub';
+// Komentáre, videá a turnaje
+import obsahDoplnkyRoutes from './routes/obsah-doplnky';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import categoryRoutes, { adminCategoryRouter } from './routes/categories';
@@ -205,6 +217,20 @@ app.use(kontrolaLicencie);
 app.get('/api/license/status', (_req, res) => {
   res.json({ success: true, data: stavLicencie() });
 });
+
+// Nastavenia klubu - musia byť dostupné aj bez prihlásenia,
+// verejný web z nich berie farby a názov
+app.use('/api', nastaveniaRoutes);
+
+// Sezóny a súpisky - čítanie je verejné (archív, súpisky tímov)
+app.use('/api', sezonyRoutes);
+
+// GDPR - všetky endpointy sú chránené, pracujú s osobnými údajmi
+app.use('/api', gdprRoutes);
+
+// Sekcia KLUB — čítanie je verejné (sponzori a dokumenty na webe)
+app.use('/api', klubRoutes);
+app.use('/api', obsahDoplnkyRoutes);
 
 app.use('/api/auth', authRoutes);
 
@@ -436,6 +462,12 @@ async function startServer() {
 
     // Spustenie pravidelnej kontroly licencie (prvá prebehne hneď)
     spustiKontroluLicencie();
+
+    // Upratovanie vypršaných tokenov - hneď po štarte a potom raz denne.
+    // Bez toho by tabuľky tokenov postupne narastali o nepotrebné záznamy.
+    void uprataStareTokeny();
+    const upratovanie = setInterval(() => void uprataStareTokeny(), 24 * 60 * 60 * 1000);
+    upratovanie.unref(); // časovač nebráni ukončeniu procesu
 
     // Spustenie servera
     app.listen(PORT, () => {

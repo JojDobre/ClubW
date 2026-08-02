@@ -13,6 +13,25 @@ import LigaTabulka from './LigaTabulka';      // NOVÝ
 import LigaTurnaj from './LigaTurnaj';        // NOVÝ
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
+// Tokeny pre obnovu relácie a obnovu zabudnutého hesla
+import RefreshToken from './RefreshToken';
+import ResetHeslaToken from './ResetHeslaToken';
+// Nastavenia klubu - white-label identita a farby
+import NastaveniaKlubu from './NastaveniaKlubu';
+// Sezóny a súpisky hráčov po sezónach
+import Sezona from './Sezona';
+import SupiskaSezony from './SupiskaSezony';
+// GDPR - súhlasy so spracovaním údajov a auditný záznam
+import Suhlas from './Suhlas';
+import AuditLog from './AuditLog';
+// Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
+import Sponzor from './Sponzor';
+import Dokument from './Dokument';
+import Anketa from './Anketa';
+import Fanusik from './Fanusik';
+// Komentáre a videá
+import Komentar from './Komentar';
+import Video from './Video';
 import Page from './Page';
 import Galeria from './Galeria';              // NOVÉ - FÁZA 7
 import GaleriaObrazok from './GaleriaObrazok'; // NOVÉ - FÁZA 7
@@ -307,8 +326,64 @@ export {
 };
 
 // Export default objekt pre jednoduchší import
+// Článok -> Komentár (1:N)
+Article.hasMany(Komentar, { foreignKey: 'clanok_id', as: 'komentare', onDelete: 'CASCADE' });
+Komentar.belongsTo(Article, { foreignKey: 'clanok_id', as: 'clanok' });
+
+// Odpovede na komentár — komentár môže mať nadradený komentár
+Komentar.hasMany(Komentar, { foreignKey: 'rodic_id', as: 'odpovede', onDelete: 'CASCADE' });
+Komentar.belongsTo(Komentar, { foreignKey: 'rodic_id', as: 'rodic' });
+
+// Zápas -> Video (1:N) — zostrih patrí ku konkrétnemu zápasu
+Zapas.hasMany(Video, { foreignKey: 'zapas_id', as: 'videa' });
+Video.belongsTo(Zapas, { foreignKey: 'zapas_id', as: 'zapas' });
+
+// Hráč -> Súhlas (1:N) - na každý druh spracovania jeden záznam
+Player.hasMany(Suhlas, { foreignKey: 'hrac_id', as: 'suhlasy', onDelete: 'CASCADE' });
+Suhlas.belongsTo(Player, { foreignKey: 'hrac_id', as: 'hrac' });
+
+// Používateľ -> AuditLog (1:N). Po zmazaní účtu záznamy zostávajú,
+// inak by sa dala história zahladiť zmazaním vlastného účtu.
+User.hasMany(AuditLog, { foreignKey: 'pouzivatel_id', as: 'audit_zaznamy' });
+AuditLog.belongsTo(User, { foreignKey: 'pouzivatel_id', as: 'pouzivatel' });
+
+// Sezóna -> Liga (1:N) - každá liga patrí do konkrétnej sezóny
+Sezona.hasMany(Liga, { foreignKey: 'sezona_id', as: 'ligy' });
+Liga.belongsTo(Sezona, { foreignKey: 'sezona_id', as: 'sezona_entita' });
+
+// Súpiska prepája sezónu, tím a hráča
+Sezona.hasMany(SupiskaSezony, { foreignKey: 'sezona_id', as: 'supisky' });
+SupiskaSezony.belongsTo(Sezona, { foreignKey: 'sezona_id', as: 'sezona' });
+
+Team.hasMany(SupiskaSezony, { foreignKey: 'tim_id', as: 'supisky', onDelete: 'CASCADE' });
+SupiskaSezony.belongsTo(Team, { foreignKey: 'tim_id', as: 'tim' });
+
+Player.hasMany(SupiskaSezony, { foreignKey: 'hrac_id', as: 'supisky', onDelete: 'CASCADE' });
+SupiskaSezony.belongsTo(Player, { foreignKey: 'hrac_id', as: 'hrac' });
+
+// User -> RefreshToken (1:N) - používateľ môže byť prihlásený na viacerých zariadeniach
+User.hasMany(RefreshToken, { foreignKey: 'pouzivatel_id', as: 'obnovovacie_tokeny', onDelete: 'CASCADE' });
+RefreshToken.belongsTo(User, { foreignKey: 'pouzivatel_id', as: 'pouzivatel' });
+
+// User -> ResetHeslaToken (1:N)
+User.hasMany(ResetHeslaToken, { foreignKey: 'pouzivatel_id', as: 'reset_tokeny', onDelete: 'CASCADE' });
+ResetHeslaToken.belongsTo(User, { foreignKey: 'pouzivatel_id', as: 'pouzivatel' });
+
 export default {
   User,
+  RefreshToken,
+  ResetHeslaToken,
+  NastaveniaKlubu,
+  Sezona,
+  SupiskaSezony,
+  Suhlas,
+  AuditLog,
+  Sponzor,
+  Dokument,
+  Anketa,
+  Fanusik,
+  Komentar,
+  Video,
   Category,
   Article,
   Team,

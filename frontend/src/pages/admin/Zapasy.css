@@ -1,0 +1,32 @@
+/* Umiestnenie: frontend/src/pages/admin/Zapasy.css */
+
+.cw-zapasy__datum {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cw-zapasy__tim {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cw-zapasy__tim-nazov {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-zapasy__vs {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.cw-zapasy__skore {
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}

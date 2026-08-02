@@ -2,15 +2,22 @@
 // Opravený script na spustenie migrácie pre opravu LigaTabulka.tim_id
 
 const { Pool } = require('pg');
-require('dotenv').config();
+
+// Konfigurácia sa načítava z jediného zdroja pravdy - rovnakého, aký používa
+// aplikácia. Pôvodne mal tento skript vlastné predvolené hodnoty
+// (football_club@5432, používateľ postgres/password), takže migrácie
+// upravovali úplne inú databázu, než na akú sa pripájala aplikácia.
+const dbConfig = require('./config/database');
 
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'football_club',
-  password: process.env.DB_PASSWORD || 'password',
-  port: process.env.DB_PORT || 5432,
+  user: dbConfig.username,
+  host: dbConfig.host,
+  database: dbConfig.database,
+  password: dbConfig.password,
+  port: dbConfig.port,
 });
+
+console.log(`📦 Databáza: ${dbConfig.database}@${dbConfig.host}:${dbConfig.port}`);
 
 async function runMigration() {
   const client = await pool.connect();

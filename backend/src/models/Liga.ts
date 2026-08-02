@@ -9,6 +9,9 @@ interface LigaAttributes {
   id: number;
   nazov: string;
   sezona: string;
+  // Väzba na entitu sezóny. Textové pole sezona zostáva kvôli
+  // spätnej kompatibilite existujúceho kódu.
+  sezona_id?: number | null;
   typ: 'sutaz' | 'pohar' | 'priatelska';
   popis?: string | null;
   external_widget_url?: string | null;
@@ -56,6 +59,7 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
   public id!: number;
   public nazov!: string;
   public sezona!: string;
+  public sezona_id!: number | null;
   public typ!: 'sutaz' | 'pohar' | 'priatelska';
   public popis!: string | null;
   public external_widget_url!: string | null;
@@ -242,6 +246,13 @@ Liga.init(
         len: [4, 20], // napr. "2024/2025" alebo "2024"
         is: /^[0-9/\-\s]+$/, // Len čísla, lomky, pomlčky a medzery
       },
+    },
+    sezona_id: {
+      // Odkaz na tabuľku sezón. Nullable kvôli existujúcim záznamom,
+      // migrácia ho pri všetkých ligách naplní.
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'sezony', key: 'id' },
     },
     typ: {
       type: DataTypes.ENUM('sutaz', 'pohar', 'priatelska'),

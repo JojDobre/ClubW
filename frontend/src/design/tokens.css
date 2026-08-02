@@ -1,0 +1,115 @@
+/* Umiestnenie: frontend/src/design/tokens.css
+ *
+ * Dizajnové tokeny administrácie.
+ *
+ * Hodnoty pochádzajú z návrhu (Claude Design). Sú tu na jednom mieste,
+ * aby sa dali meniť bez zásahu do komponentov — pôvodná administrácia
+ * mala farby a rozostupy roztrúsené v inline štýloch stoviek súborov.
+ *
+ * NAPOJENIE NA NASTAVENIA KLUBU: primárnu farbu neurčuje tento súbor.
+ * Backend ju servuje ako --club-primary cez /api/settings.css, ktorý sa
+ * načíta skôr (odkaz je v index.html). Tu ju len prevezmeme, takže
+ * prebrandovanie klubu prefarbí aj administráciu.
+ */
+
+:root {
+  /* ===== Značka ===== */
+  /* Ak by nastavenia klubu neboli dostupné, použije sa záložná hodnota */
+  --pri: var(--club-primary, #1b5e20);
+  --accent: var(--club-accent, #ffc107);
+
+  /* Jemné odtiene primárnej farby pre pozadia zvýraznených prvkov.
+     color-mix ich dopočíta z akejkoľvek farby, netreba ich zadávať. */
+  --pri-soft: color-mix(in srgb, var(--pri) 13%, transparent);
+  --pri-softer: color-mix(in srgb, var(--pri) 7%, transparent);
+  --pri-strong: color-mix(in srgb, var(--pri) 84%, #000);
+  --on-pri: var(--club-primary-contrast, #ffffff);
+
+  /* ===== Stavové farby ===== */
+  --success: #2ea043;
+  --warning: #d29922;
+  --danger: #e5484d;
+  --info: #3b82f6;
+  --live: #e5484d;
+
+  /* ===== Typografia ===== */
+  --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-head: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
+
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-base: 14px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+
+  /* ===== Rozostupy ===== */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* ===== Zaoblenie ===== */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 999px;
+
+  /* ===== Rozmery ovládacích prvkov ===== */
+  --control-h: 38px;
+  --control-h-sm: 32px;
+  --topbar-h: 64px;
+  --sidebar-w: 256px;
+  --sidebar-w-collapsed: 72px;
+  --rightbar-w: 288px;
+
+  /* ===== Tiene ===== */
+  --shadow-sm: 0 1px 2px rgba(15, 20, 30, 0.06);
+  --shadow-md: 0 4px 14px rgba(15, 20, 30, 0.08);
+  --shadow-lg: 0 18px 40px rgba(15, 20, 30, 0.16);
+
+  /* ===== Vrstvenie ===== */
+  --z-sidebar: 60;
+  --z-scrim: 55;
+  --z-topbar: 40;
+  --z-dropdown: 70;
+  --z-modal: 80;
+  --z-toast: 90;
+
+  /* ===== Prechody ===== */
+  --t-fast: 0.12s ease;
+  --t-base: 0.2s ease;
+}
+
+/* ===== Svetlý režim (predvolený) ===== */
+:root,
+[data-theme='light'] {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --card2: #f7f8fa;
+  --text: #15181d;
+  --muted: #6b7280;
+  --border: #e7e9ee;
+  /* Bočný panel má vlastnú tmavú paletu v oboch režimoch */
+  --sb: #14161b;
+  --sbt: #9aa1ad;
+  color-scheme: light;
+}
+
+/* ===== Tmavý režim ===== */
+[data-theme='dark'] {
+  --bg: #0e1015;
+  --card: #181b21;
+  --card2: #1e222a;
+  --text: #e7e9ee;
+  --muted: #9aa1ad;
+  --border: #282d36;
+  --sb: #0c0e12;
+  --sbt: #8b93a1;
+  color-scheme: dark;
+}

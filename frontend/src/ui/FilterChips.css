@@ -1,0 +1,50 @@
+/* Umiestnenie: frontend/src/ui/FilterChips.css */
+
+.cw-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.cw-chips__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+}
+
+.cw-chips__chip:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.cw-chips__chip.is-active {
+  background: var(--pri);
+  border-color: var(--pri);
+  color: var(--on-pri);
+}
+
+/* Počet záznamov v zvolenom filtri má priehľadné pozadie,
+   aby zostal čitateľný na farebnom podklade */
+.cw-chips__pocet {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--card2);
+  color: var(--muted);
+}
+
+.cw-chips__chip.is-active .cw-chips__pocet {
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+}

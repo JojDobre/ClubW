@@ -1,0 +1,224 @@
+/* Umiestnenie: frontend/src/pages/admin/OchranaUdajov.css */
+
+.cw-gdpr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.cw-gdpr__karty {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4);
+}
+
+/* ===== Vybraný hráč ===== */
+.cw-gdpr__hrac {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0 var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.cw-gdpr__hrac-meno {
+  font-family: var(--font-head);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+/* ===== Zoznam súhlasov ===== */
+.cw-gdpr__suhlasy {
+  list-style: none;
+  margin: 0 0 var(--sp-5);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-gdpr__suhlas {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+}
+
+.cw-gdpr__suhlas:hover {
+  background: var(--card2);
+}
+
+.cw-gdpr__suhlas-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cw-gdpr__suhlas-nazov {
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.cw-gdpr__suhlas-popis {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* Kto a kedy súhlas udelil — dôkaz pre prípad kontroly */
+.cw-gdpr__suhlas-udelil {
+  font-size: var(--fs-xs);
+  color: var(--pri);
+  margin-top: 2px;
+}
+
+/* ===== Práva dotknutej osoby ===== */
+.cw-gdpr__prava {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
+}
+
+.cw-gdpr__pravo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--card2);
+  flex-wrap: wrap;
+}
+
+.cw-gdpr__pravo strong {
+  font-size: var(--fs-base);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.cw-gdpr__pravo p {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 520px;
+}
+
+.cw-gdpr__vysvetlenie {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: var(--sp-4);
+}
+
+/* ===== Retencia ===== */
+.cw-gdpr__retencia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-2);
+}
+
+.cw-gdpr__retencia-hrac {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cw-gdpr__retencia-hrac:hover {
+  border-color: var(--pri);
+  color: var(--pri);
+}
+
+/* ===== Auditný záznam ===== */
+.cw-gdpr__audit {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-gdpr__audit-zaznam {
+  display: grid;
+  grid-template-columns: 150px 130px 1fr 190px;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.cw-gdpr__audit-zaznam:last-child {
+  border-bottom: 0;
+}
+
+.cw-gdpr__audit-cas,
+.cw-gdpr__audit-kto {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-gdpr__audit-kto {
+  text-align: right;
+}
+
+.cw-gdpr__audit-popis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-gdpr__prazdne {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+}
+
+@media (max-width: 900px) {
+  .cw-gdpr__audit-zaznam {
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-2);
+  }
+
+  .cw-gdpr__audit-cas {
+    grid-column: 1 / -1;
+  }
+
+  .cw-gdpr__audit-popis {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+
+  .cw-gdpr__audit-kto {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .cw-gdpr__suhlas {
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+}

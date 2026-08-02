@@ -1,0 +1,236 @@
+/* Umiestnenie: frontend/src/pages/admin/ZapasLive.css */
+
+.cw-live {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ===== Lišta ===== */
+.cw-live__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cw-live__bar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cw-live__obnova {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ===== Skóre ===== */
+.cw-live__skore {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-6) var(--sp-5);
+}
+
+.cw-live__tim {
+  text-align: center;
+  min-width: 0;
+}
+
+.cw-live__tim-nazov {
+  font-family: var(--font-head);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  margin-bottom: var(--sp-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-live__ovladanie {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+/* Tlačidlá sú veľké zámerne — ovládajú sa prstom na štadióne */
+.cw-live__ovladanie button {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cw-live__ovladanie button:hover {
+  background: var(--pri);
+  color: var(--on-pri);
+  border-color: var(--pri);
+}
+
+.cw-live__ovladanie button:active {
+  transform: scale(0.94);
+}
+
+.cw-live__goly {
+  font-family: var(--font-head);
+  /* 60 px podľa návrhu — skóre musí byť čitateľné z diaľky */
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 60px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cw-live__stred {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cw-live__liga {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ===== Zápis udalosti ===== */
+.cw-live__form {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 90px auto;
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+.cw-live__form .cw-field {
+  margin-bottom: 0;
+}
+
+/* ===== Časová os ===== */
+.cw-live__os {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cw-live__udalost {
+  display: grid;
+  grid-template-columns: 52px 28px 1fr 32px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-live__udalost:last-child {
+  border-bottom: 0;
+}
+
+.cw-live__udalost:hover {
+  background: var(--card2);
+}
+
+.cw-live__minuta {
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--pri);
+  text-align: right;
+}
+
+.cw-live__symbol {
+  text-align: center;
+  font-size: var(--fs-md);
+}
+
+.cw-live__popis {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cw-live__popis strong {
+  font-size: var(--fs-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-live__typ {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cw-live__odobrat {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  display: flex;
+}
+
+.cw-live__odobrat:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.cw-live__odobrat:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cw-live__prazdne {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+}
+
+@media (max-width: 760px) {
+  .cw-live__skore {
+    /* Na telefóne dávame tímy pod seba — skóre zostane čitateľné */
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .cw-live__stred {
+    order: -1;
+  }
+
+  .cw-live__goly {
+    font-size: 46px;
+  }
+
+  .cw-live__form {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-live__udalost {
+    padding: var(--sp-3) var(--sp-4);
+  }
+}
+
+/* Nadpis obrazovky v lište */
+.cw-live__nadpis {
+  font-size: 18px;
+  color: var(--text);
+}

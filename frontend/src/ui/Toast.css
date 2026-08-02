@@ -1,0 +1,80 @@
+/* Umiestnenie: frontend/src/ui/Toast.css */
+
+.cw-toasts {
+  position: fixed;
+  bottom: var(--sp-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: center;
+  /* Kontajner nesmie brániť kliknutiu na obsah pod ním */
+  pointer-events: none;
+}
+
+.cw-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text);
+  max-width: min(90vw, 460px);
+  animation: cw-toast-in 0.25s ease;
+  pointer-events: auto;
+}
+
+.cw-toast__icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cw-toast--success .cw-toast__icon {
+  background: var(--success);
+}
+.cw-toast--error .cw-toast__icon {
+  background: var(--danger);
+}
+.cw-toast--warning .cw-toast__icon {
+  background: var(--warning);
+}
+.cw-toast--info .cw-toast__icon {
+  background: var(--info);
+}
+
+/* Ľavý farebný pruh podľa typu hlásenia */
+.cw-toast--success {
+  border-left: 3px solid var(--success);
+}
+.cw-toast--error {
+  border-left: 3px solid var(--danger);
+}
+.cw-toast--warning {
+  border-left: 3px solid var(--warning);
+}
+.cw-toast--info {
+  border-left: 3px solid var(--info);
+}
+
+@media (max-width: 640px) {
+  .cw-toasts {
+    /* Nad mobilnou spodnou navigáciou */
+    bottom: 88px;
+    width: calc(100% - var(--sp-8));
+  }
+}

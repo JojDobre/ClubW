@@ -1,0 +1,179 @@
+/* Umiestnenie: frontend/src/ui/Field.css */
+
+.cw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--sp-4);
+}
+
+.cw-field__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cw-field__required {
+  color: var(--danger);
+}
+
+.cw-field__error {
+  font-size: var(--fs-xs);
+  color: var(--danger);
+}
+
+.cw-field__hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* ===== Vstupné pole ===== */
+.cw-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cw-input,
+.cw-select,
+.cw-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  color: var(--text);
+  font-size: var(--fs-base);
+  padding: 0 var(--sp-3);
+  height: var(--control-h);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.cw-textarea {
+  height: auto;
+  padding: var(--sp-3);
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 90px;
+}
+
+.cw-input:focus,
+.cw-select:focus,
+.cw-textarea:focus {
+  outline: none;
+  border-color: var(--pri);
+  /* Jemný prstenec namiesto výrazného obrysu */
+  box-shadow: 0 0 0 3px var(--pri-softer);
+}
+
+.cw-input::placeholder,
+.cw-textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.cw-input:disabled,
+.cw-select:disabled,
+.cw-textarea:disabled {
+  background: var(--card2);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.cw-input--error {
+  border-color: var(--danger);
+}
+
+.cw-input--error:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
+/* Pole s ikonou vľavo */
+.cw-input-wrap--icon .cw-input {
+  padding-left: 36px;
+}
+
+.cw-input__icon {
+  position: absolute;
+  left: var(--sp-3);
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ===== Výberový zoznam ===== */
+.cw-select {
+  cursor: pointer;
+  /* Vlastná šípka — natívna sa medzi prehliadačmi líši */
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--sp-3) center;
+  padding-right: 34px;
+}
+
+/* ===== Prepínač ===== */
+.cw-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.cw-switch--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cw-switch__track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--r-full);
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background var(--t-base);
+}
+
+.cw-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-base);
+}
+
+.cw-switch input:checked + .cw-switch__track {
+  background: var(--pri);
+}
+
+.cw-switch input:checked + .cw-switch__track .cw-switch__thumb {
+  transform: translateX(18px);
+}
+
+.cw-switch input:focus-visible + .cw-switch__track {
+  outline: 2px solid var(--pri);
+  outline-offset: 2px;
+}
+
+.cw-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-switch__label {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cw-switch__desc {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}

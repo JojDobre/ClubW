@@ -1,0 +1,30 @@
+/* Umiestnenie: frontend/src/layout/AppShell.css */
+
+.cw-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.cw-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* Bez tohto by široká tabuľka roztiahla celé rozloženie */
+  min-width: 0;
+}
+
+.cw-shell__content {
+  flex: 1;
+  padding: var(--sp-5);
+  max-width: 1400px;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .cw-shell__content {
+    padding: var(--sp-4);
+    /* Priestor pre spodnú navigáciu */
+    padding-bottom: 78px;
+  }
+}

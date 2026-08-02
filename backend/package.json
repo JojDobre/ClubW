@@ -16,7 +16,13 @@
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:migrate:status": "sequelize-cli db:migrate:status",
     "db:seed": "sequelize-cli db:seed:all",
-    "db:migrate:new": "sequelize-cli migration:generate --name"
+    "db:migrate:new": "sequelize-cli migration:generate --name",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage",
+    "vytvor-spravcu": "tsx scripts/vytvor-spravcu.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -49,10 +55,13 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^1.4.13",
     "@types/node": "^20.10.0",
+    "@types/supertest": "^7.2.1",
     "nodemon": "^3.0.0",
     "sequelize-cli": "^6.6.5",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.0",
     "tsx": "^4.20.2",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.9"
   }
 }

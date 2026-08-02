@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 import { body, validationResult, query } from 'express-validator';
 import { Op } from 'sequelize';
 import User from '../models/user';
+// Kontrola sily hesla - nahrádza pôvodnú podmienku "aspoň 6 znakov"
+import { overSiluHesla } from '../utils/heslo';
 
 // Validácia pre vytvorenie používateľa
 export const validateCreateUser = [
@@ -16,9 +18,15 @@ export const validateCreateUser = [
     .isEmail()
     .withMessage('Neplatný email formát')
     .normalizeEmail(),
-  body('heslo')
-    .isLength({ min: 6 })
-    .withMessage('Heslo musí mať aspoň 6 znakov'),
+  // Silu hesla overuje overSiluHesla() - kontroluje dĺžku, bežné slová
+  // aj to, či heslo neobsahuje meno alebo e-mail používateľa
+  body('heslo').custom((hodnota, { req }) => {
+    const chyby = overSiluHesla(hodnota, { meno: req.body?.meno, email: req.body?.email });
+    if (chyby.length > 0) {
+      throw new Error(chyby.join(' '));
+    }
+    return true;
+  }),
   body('rola')
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])
     .withMessage('Neplatná rola'),
@@ -42,8 +50,13 @@ export const validateUpdateUser = [
     .normalizeEmail(),
   body('heslo')
     .optional()
-    .isLength({ min: 6 })
-    .withMessage('Heslo musí mať aspoň 6 znakov'),
+    .custom((hodnota, { req }) => {
+      const chyby = overSiluHesla(hodnota, { meno: req.body?.meno, email: req.body?.email });
+      if (chyby.length > 0) {
+        throw new Error(chyby.join(' '));
+      }
+      return true;
+    }),
   body('rola')
     .optional()
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])

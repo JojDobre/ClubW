@@ -1,0 +1,98 @@
+/* Umiestnenie: frontend/src/ui/Button.css */
+
+.cw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast), border-color var(--t-fast),
+    opacity var(--t-fast), transform var(--t-fast);
+}
+
+.cw-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.cw-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===== Veľkosti ===== */
+.cw-btn--md {
+  height: var(--control-h);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-base);
+}
+
+.cw-btn--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.cw-btn--full {
+  width: 100%;
+}
+
+/* ===== Varianty ===== */
+.cw-btn--primary {
+  background: var(--pri);
+  color: var(--on-pri);
+}
+
+.cw-btn--primary:hover:not(:disabled) {
+  background: var(--pri-strong);
+}
+
+.cw-btn--secondary {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.cw-btn--secondary:hover:not(:disabled) {
+  background: var(--card2);
+}
+
+.cw-btn--ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.cw-btn--ghost:hover:not(:disabled) {
+  background: var(--card2);
+  color: var(--text);
+}
+
+.cw-btn--danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.cw-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+/* ===== Ikona a načítavanie ===== */
+.cw-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cw-btn__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  /* Priehľadná horná hrana vytvorí dojem otáčania */
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: cw-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}

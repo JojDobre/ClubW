@@ -1,4 +1,13 @@
 /* globals.css - Updated with new typography system */
+
+/* POZOR: pravidlá @import musia byť podľa CSS špecifikácie PRED všetkými
+   ostatnými pravidlami. Pôvodne boli až za blokmi @font-face - Create React
+   App to cez postcss-import toleroval, Vite však špecifikáciu dodržiava
+   a súbory sa vôbec nenačítali (odtiaľ chýbajúce farby a rozbitý vzhľad). */
+@import './variables.css';
+@import './themes/light.css';
+@import './themes/dark.css';
+
 /* SF Pro Display - Pre veľké texty (20px+) */
 
 @font-face {
@@ -294,11 +303,6 @@
   font-style: italic;
   font-display: swap;
 }
-
-
-@import './variables.css';
-@import './themes/light.css';
-@import './themes/dark.css';
 
 * {
   box-sizing: border-box;

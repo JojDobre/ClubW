@@ -1,7 +1,7 @@
 // backend/src/models/LigaTabulka.ts
 // Model pre tabuľky súťaží s poradím tímov - NOVÝ
 
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../config/database';
 
 // Interface pre atribúty LigaTabulka
@@ -317,12 +317,13 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
    * @param bodyZaRemizy - počet bodov za remízu (predvolene 1)
    */
   static async recalculateTable(ligaId: number, bodyZaVitazstvo: number = 3, bodyZaRemizy: number = 1): Promise<void> {
-    const { Op } = require('sequelize');
-    const sequelize = require('../config/database').default;
-
-    // Modely načítavame takto kvôli cyklickým závislostiam medzi súbormi
-    const Zapas = require('./Zapas').default;
-    const Team = require('./Team').default;
+    // Inštanciu aj modely berieme z registra Sequelize.
+    // Priamy import Zapas a Team by vytvoril cyklickú závislosť medzi
+    // súbormi; pôvodné riešenie cez require() zase nefungovalo
+    // v testovacom prostredí, ktoré pracuje s modulmi ESM.
+    const sequelize = LigaTabulka.sequelize!;
+    const Zapas = sequelize.models.Zapas as any;
+    const Team = sequelize.models.Team as any;
 
     // ===== KROK 1: Načítanie ukončených zápasov ligy =====
     const zapasy = await Zapas.findAll({

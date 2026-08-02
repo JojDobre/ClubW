@@ -2,6 +2,8 @@
 // Hlavná aplikácia s prihlasovaním a admin rozhraním - UPRAVENÉ pre nový layout
 
 import React, { useState, useEffect, Suspense, lazy } from 'react';
+// Nastavenia klubu (názov, farby, kontakty) pre celú aplikáciu
+import { NastaveniaProvider } from './context/NastaveniaContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import PublicLayout from './components/PublicLayout';
 import PageView from './components/PageView';
@@ -1215,7 +1217,8 @@ const App: React.FC = () => {
 
   // ✅ PÔVODNÝ: Hlavný return s Router wrapper
   return (
-    <Router>
+    <NastaveniaProvider>
+      <Router>
       <div style={{
         minHeight: '100vh',
         background: '#f8fafc',
@@ -1234,7 +1237,8 @@ const App: React.FC = () => {
           }
         `}</style>
       </div>
-    </Router>
+      </Router>
+    </NastaveniaProvider>
   );
 }
 
