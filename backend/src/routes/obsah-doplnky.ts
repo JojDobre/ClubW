@@ -8,6 +8,12 @@ import Video from '../models/Video';
 import LigaTurnaj from '../models/LigaTurnaj';
 import Liga from '../models/Liga';
 import Article from '../models/Article';
+import {
+  getPavuk,
+  generujPavuka,
+  ulozPavuka,
+  zapisVysledok,
+} from '../controllers/turnajController';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 
@@ -347,5 +353,23 @@ router.delete('/tournaments/:id', authenticateToken, requireAdmin, async (req: R
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
+
+// ===== PAVÚK TURNAJA =====
+//
+// Pole pavuk_struktura na modeli existovalo, ale bol to len textový
+// JSON blob bez obsluhy - nedal sa vygenerovať pavúk, zapísať výsledok
+// ani posunúť tím do ďalšieho kola.
+
+/** @route GET /api/tournaments/:id/bracket */
+router.get('/tournaments/:id/bracket', getPavuk);
+
+/** @route POST /api/tournaments/:id/bracket/generate - telo: { timy: [...] } */
+router.post('/tournaments/:id/bracket/generate', authenticateToken, requireEditor, generujPavuka);
+
+/** @route PUT /api/tournaments/:id/bracket - ručná úprava celého pavúka */
+router.put('/tournaments/:id/bracket', authenticateToken, requireEditor, ulozPavuka);
+
+/** @route PATCH /api/tournaments/:id/bracket/match/:kod - výsledok a postup */
+router.patch('/tournaments/:id/bracket/match/:kod', authenticateToken, requireEditor, zapisVysledok);
 
 export default router;
