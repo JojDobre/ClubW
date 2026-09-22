@@ -2,6 +2,7 @@
 // Rozšírený controller pre správu líg s tabuľkami a turnajmi - FÁZA 4+
 
 import { Request, Response } from 'express';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import Liga from '../models/Liga';
@@ -103,10 +104,14 @@ const validateLigaData = (data: any) => {
     }
   }
   
+  // Logo býva nahraté do uploads, nie externá adresa. Pôvodná kontrola
+  // prijímala len https://..., takže logo z media knižnice sa nedalo
+  // uložiť vôbec.
   if (data.logo && typeof data.logo === 'string') {
-    const urlPattern = /^https?:\/\/.+/;
-    if (!urlPattern.test(data.logo)) {
-      errors.push('Logo musí byť platná URL');
+    try {
+      overObrazkovySubor(data.logo);
+    } catch (chyba) {
+      errors.push((chyba as Error).message);
     }
   }
   

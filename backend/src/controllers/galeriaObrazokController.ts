@@ -4,6 +4,7 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { Galeria, GaleriaObrazok } from '../models';
+import Media from '../models/Media';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
@@ -12,128 +13,115 @@ import sharp from 'sharp';
 // ===== MULTER CONFIGURATION =====
 
 // Konfigurácia úložiska súborov
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    try {
-      const galeriaId = req.params.id;
-      
-      // Získame galériu z databázy pre názov
-      const galeria = await Galeria.findByPk(galeriaId);
-      if (!galeria) {
-        return cb(new Error('Galéria nenájdená'), '');
-      }
+// ===== BEZPECNE NAHRAVANIE =====
+//
+// Subor ide najprv do PAMATE a na disk sa zapise az po overeni obsahu.
+//
+// Povodna verzia pouzivala diskStorage: neovereny subor sa rovno zapisal
+// na disk, typ sa veril podla hlavicky "mimetype" od klienta (ktoru sa da
+// lubovolne podvrhnut) a pripona sa preberala z povodneho nazvu. Do
+// priecinka uploads sa tak dal ulozit subor s lubovolnou priponou.
+// Fotky hracov aj media kniznica uz robia to iste bezpecne - tu to bolo
+// jedine miesto, kde to este platilo.
 
-      // Vytvoríme bezpečný názov adresára zo slug galérie
-      const safeDirName = galeria.slug || `galeria-${galeriaId}`;
-      
-      // Vytvorenie adresárovej štruktúry: uploads/galerie/nazov-galerie/
-      const uploadPath = path.join(process.cwd(), 'uploads', 'galerie', safeDirName);
-      
-      await fs.mkdir(uploadPath, { recursive: true });
-      cb(null, uploadPath);
-    } catch (error) {
-      console.error('Chyba pri vytváraní upload adresára:', error);
-      cb(error as Error, '');
-    }
-  },
-  filename: (req, file, cb) => {
-    // Generovanie unikátneho názvu súboru
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `img-${uniqueSuffix}${ext}`);
-  }
-});
-
-// Filtrovanie súborov - len obrázky
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = [
-    'image/jpeg',
-    'image/jpg', 
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/bmp'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error(`Nepodporovaný typ súboru: ${file.mimetype}. Povolené sú: JPEG, PNG, GIF, WebP, BMP`));
-  }
-};
-
-// Multer middleware
 export const uploadImages = multer({
-  storage,
-  fileFilter,
+  storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // Max 10MB na súbor
-    files: 20 // Max 20 súborov naraz
-  }
-}).array('images', 20); // Pole obrázkov s max 20 súbormi
+    fileSize: 10 * 1024 * 1024, // Max 10MB na subor
+    files: 20,
+  },
+}).array('images', 20);
 
 // ===== HELPER FUNCTIONS =====
 
-// Generovanie náhľadových obrázkov
-const generateThumbnails = async (imagePath: string): Promise<{ small: string; medium: string }> => {
-  const dir = path.dirname(imagePath);
-  const ext = path.extname(imagePath);
-  const basename = path.basename(imagePath, ext);
-  
-  const smallPath = path.join(dir, `${basename}_thumb_150${ext}`);
-  const mediumPath = path.join(dir, `${basename}_thumb_400${ext}`);
-  
-  try {
-    // Malý náhľad 150x150
-    await sharp(imagePath)
-      .resize(150, 150, { 
-        fit: 'cover', 
-        position: 'center' 
-      })
-      .jpeg({ quality: 80 })
-      .toFile(smallPath);
-    
-    // Stredný náhľad 400x400
-    await sharp(imagePath)
-      .resize(400, 400, { 
-        fit: 'inside', 
-        withoutEnlargement: true 
-      })
-      .jpeg({ quality: 85 })
-      .toFile(mediumPath);
-    
-    // Relatívne cesty pre databázu
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    const relativeSmall = path.relative(uploadsDir, smallPath).replace(/\\/g, '/');
-    const relativeMedium = path.relative(uploadsDir, mediumPath).replace(/\\/g, '/');
-    
-    return {
-      small: `/${relativeSmall}`,
-      medium: `/${relativeMedium}`
-    };
-  } catch (error) {
-    console.error('Chyba pri generovaní náhľadov:', error);
-    return { small: '', medium: '' };
+/**
+ * Uloží obrázok galérie aj s náhľadmi.
+ *
+ * Postup je rovnaký ako v media knižnici: obsah sa overí cez sharp
+ * (nie podľa hlavičky od klienta), obrázok sa pre-enkóduje, čím sa
+ * odstránia vložené skripty aj EXIF, a príponu určujeme my.
+ *
+ * Cesta je /uploads/galerie/<rok>/<slug-galérie>/ podľa požiadavky.
+ *
+ * @param buffer - obsah nahratého súboru
+ * @param povodnyNazov - názov súboru u používateľa
+ * @param slugGalerie - slug galérie, tvorí priečinok
+ * @returns cesty a rozmery pre zápis do databázy
+ */
+const ulozObrazokGalerie = async (
+  buffer: Buffer,
+  povodnyNazov: string,
+  slugGalerie: string
+): Promise<{
+  cesta: string;
+  nahladMaly: string;
+  nahladStredny: string;
+  sirka: number | null;
+  vyska: number | null;
+  velkost: number;
+}> => {
+  // Overenie podľa skutočného obsahu - neplatný obrázok tu vyhodí chybu
+  const metadata = await sharp(buffer).metadata();
+  const POVOLENE = ['jpeg', 'png', 'webp', 'gif'];
+
+  if (!metadata.format || !POVOLENE.includes(metadata.format)) {
+    throw new Error('Súbor nie je podporovaný obrázok (JPEG, PNG, WebP, GIF)');
   }
+
+  if ((metadata.width || 0) > 10000 || (metadata.height || 0) > 10000) {
+    throw new Error('Obrázok je príliš veľký (maximum 10000×10000 bodov)');
+  }
+
+  const rok = String(new Date().getFullYear());
+  const bezpecnySlug = (slugGalerie || 'galeria').replace(/[^a-z0-9-]/gi, '').slice(0, 80) || 'galeria';
+  const priecinok = path.join(process.cwd(), 'uploads', 'galerie', rok, bezpecnySlug);
+
+  await fs.mkdir(priecinok, { recursive: true });
+
+  // Poistka proti path traversal - výsledok musí ležať v uploads
+  const koren = path.resolve(process.cwd(), 'uploads');
+  if (!path.resolve(priecinok).startsWith(koren + path.sep)) {
+    throw new Error('Neplatná cieľová cesta súboru');
+  }
+
+  const zaklad = path
+    .basename(povodnyNazov, path.extname(povodnyNazov))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'obrazok';
+
+  const odlisovac = `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+  const nazovSuboru = `${zaklad}-${odlisovac}.jpg`;
+
+  const hlavny = path.join(priecinok, nazovSuboru);
+  const maly = path.join(priecinok, `${zaklad}-${odlisovac}_thumb_150.jpg`);
+  const stredny = path.join(priecinok, `${zaklad}-${odlisovac}_thumb_400.jpg`);
+
+  // Pre-enkódovanie hlavného obrázka
+  const vystup = await sharp(buffer).rotate().jpeg({ quality: 88 }).toBuffer();
+  await fs.writeFile(hlavny, vystup);
+
+  await sharp(buffer).rotate().resize(150, 150, { fit: 'cover', position: 'center' })
+    .jpeg({ quality: 80 }).toFile(maly);
+  await sharp(buffer).rotate().resize(400, 400, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 85 }).toFile(stredny);
+
+  const finalne = await sharp(vystup).metadata();
+  const naWeb = (p: string) => '/' + path.relative(path.join(process.cwd(), 'uploads'), p).replace(/\\/g, '/');
+
+  return {
+    cesta: `/uploads${naWeb(hlavny)}`,
+    nahladMaly: `/uploads${naWeb(maly)}`,
+    nahladStredny: `/uploads${naWeb(stredny)}`,
+    sirka: finalne.width ?? null,
+    vyska: finalne.height ?? null,
+    velkost: vystup.length,
+  };
 };
 
-// Získanie rozmerov obrázka
-const getImageDimensions = async (imagePath: string): Promise<{ width: number; height: number }> => {
-  try {
-    const metadata = await sharp(imagePath).metadata();
-    return {
-      width: metadata.width || 0,
-      height: metadata.height || 0
-    };
-  } catch (error) {
-    console.error('Chyba pri získavaní rozmerov obrázka:', error);
-    return { width: 0, height: 0 };
-  }
-};
-
-// ===== API ENDPOINTS =====
-
-// POST /api/admin/galleries/:id/images - Upload obrázkov do galérie
 export const uploadGalleryImages = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -180,36 +168,36 @@ export const uploadGalleryImages = async (req: Request, res: Response) => {
       
       try {
         console.log(`📸 Spracovávam obrázok ${i + 1}/${files.length}: ${file.originalname}`);
-        
-        // Získanie rozmerov
-        const dimensions = await getImageDimensions(file.path);
-        
-        // Generovanie náhľadov
-        const thumbnails = await generateThumbnails(file.path);
-        
-        // Relatívna cesta k hlavnému súboru
-        const uploadsDir = path.join(process.cwd(), 'uploads');
-        const relativePath = path.relative(uploadsDir, file.path).replace(/\\/g, '/');
-        
-        // Automatické určenie, či je to náhľadový obrázok (prvý obrázok ak ešte neexistuje žiadny)
-        const isFirstImage = existingCount === 0 && i === 0;
-        
-        // Vytvorenie záznamu v databáze
+
+        // Uloženie aj s náhľadmi; obsah sa overí vnútri
+        const ulozeny = await ulozObrazokGalerie(file.buffer, file.originalname, galeria.slug);
+
+        // Prvý obrázok galérie sa automaticky stane titulným.
+        // Požiadavka hovorí „titulný obrázok (dá sa aj automaticky
+        // z galérie)" - dovtedy sa musel označiť ručne.
+        const jePrvy = existingCount === 0 && i === 0;
+
         const obrazok = await GaleriaObrazok.create({
           galeria_id: galeriaId,
           nazov: null, // Názov sa môže pridať neskôr
           popis: null,
-          cesta_suboru: `/${relativePath}`,
+          cesta_suboru: ulozeny.cesta,
           originalny_nazov: file.originalname,
-          velkost_suboru: file.size,
-          mime_typ: file.mimetype,
-          sirka: dimensions.width,
-          vyska: dimensions.height,
-          nahladovy_maly: thumbnails.small,
-          nahladovy_stredny: thumbnails.medium,
+          velkost_suboru: ulozeny.velkost,
+          mime_typ: 'image/jpeg',
+          sirka: ulozeny.sirka,
+          vyska: ulozeny.vyska,
+          nahladovy_maly: ulozeny.nahladMaly,
+          nahladovy_stredny: ulozeny.nahladStredny,
           poradie: existingCount + i + 1,
-          je_nahladovy: isFirstImage
+          je_nahladovy: jePrvy
         });
+
+        // Titulný obrázok galérie držíme aj na galérii, aby sa nemusel
+        // dohľadávať pri každom výpise
+        if (jePrvy) {
+          await galeria.update({ nahladovy_obrazok: ulozeny.nahladStredny });
+        }
 
         uploadedImages.push(obrazok.toJSON());
         console.log(`✅ Obrázok ${i + 1} úspešne spracovaný (ID: ${obrazok.id})`);
@@ -221,12 +209,8 @@ export const uploadGalleryImages = async (req: Request, res: Response) => {
           error: error.message
         });
         
-        // Pokus o vymazanie súboru pri chybe
-        try {
-          await fs.unlink(file.path);
-        } catch (unlinkError) {
-          console.error('Chyba pri mazaní súboru:', unlinkError);
-        }
+        // Súbor sa na disk nikdy nedostal (spracúva sa z pamäte),
+        // takže tu nie je čo upratovať.
       }
     }
 
@@ -470,4 +454,155 @@ export default {
   getGalleryImages,
   updateGalleryImage,
   deleteGalleryImage
+};
+
+/**
+ * POST /api/admin/galleries/:id/images/from-media
+ *
+ * Pridá do galérie obrázok, ktorý je UŽ nahratý v media knižnici.
+ *
+ * PREČO: požiadavka hovorí „možnosť použiť obrázok aj z galérie".
+ * Doteraz sa obrázok do galérie dal dostať len novým nahratím, takže
+ * ten istý súbor skončil na disku viackrát. Tu sa len založí záznam,
+ * ktorý ukazuje na existujúci súbor.
+ *
+ * Telo: { "media_ids": [3, 7] }
+ */
+export const pridajZKniznice = async (req: Request, res: Response) => {
+  try {
+    const galeriaId = parseInt(req.params.id, 10);
+    if (isNaN(galeriaId)) {
+      return res.status(400).json({ success: false, message: 'Neplatné ID galérie' });
+    }
+
+    const galeria = await Galeria.findByPk(galeriaId);
+    if (!galeria || !galeria.aktivity) {
+      return res.status(404).json({ success: false, message: 'Galéria nenájdená' });
+    }
+
+    const ids: number[] = Array.isArray(req.body.media_ids)
+      ? req.body.media_ids.map(Number).filter((n: number) => Number.isInteger(n) && n > 0)
+      : [];
+
+    if (ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Uveďte media_ids - pole ID súborov z knižnice',
+      });
+    }
+
+    const subory = await Media.findAll({ where: { id: ids, aktivity: true, typ: 'obrazok' } });
+
+    if (subory.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Žiadny zo zadaných súborov nie je obrázok v knižnici',
+      });
+    }
+
+    const existujucich = await GaleriaObrazok.count({
+      where: { galeria_id: galeriaId, aktivity: true },
+    });
+
+    const pridane: any[] = [];
+    let poradie = existujucich;
+
+    for (const subor of subory) {
+      // Ten istý súbor nepridávame do galérie dvakrát
+      const uzTam = await GaleriaObrazok.findOne({
+        where: { galeria_id: galeriaId, cesta_suboru: subor.cesta, aktivity: true },
+      });
+      if (uzTam) continue;
+
+      poradie++;
+      const jePrvy = existujucich === 0 && pridane.length === 0;
+
+      const obrazok = await GaleriaObrazok.create({
+        galeria_id: galeriaId,
+        nazov: subor.nazov,
+        popis: subor.popis,
+        cesta_suboru: subor.cesta,
+        originalny_nazov: subor.originalny_nazov,
+        velkost_suboru: Number(subor.velkost),
+        mime_typ: subor.mime_typ,
+        sirka: subor.sirka,
+        vyska: subor.vyska,
+        // Súbor z knižnice nemá vlastné náhľady - použijeme originál
+        nahladovy_maly: subor.cesta,
+        nahladovy_stredny: subor.cesta,
+        poradie,
+        je_nahladovy: jePrvy,
+      });
+
+      if (jePrvy) {
+        await galeria.update({ nahladovy_obrazok: subor.cesta });
+      }
+
+      pridane.push(obrazok.toJSON());
+    }
+
+    // Počet obrázkov galérie držíme aktuálny
+    const novyPocet = await GaleriaObrazok.count({
+      where: { galeria_id: galeriaId, aktivity: true },
+    });
+    await galeria.update({ pocet_obrazkov: novyPocet });
+
+    res.status(201).json({
+      success: true,
+      data: pridane,
+      message: pridane.length
+        ? `Do galérie pridaných ${pridane.length} obrázkov z knižnice`
+        : 'Všetky zvolené obrázky už v galérii sú',
+    });
+  } catch (error: any) {
+    console.error('Chyba pri pridávaní obrázkov z knižnice:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri pridávaní obrázkov' });
+  }
+};
+
+/**
+ * PATCH /api/admin/galleries/:galleryId/images/:imageId/cover
+ *
+ * Označí obrázok ako titulný. Doterajší titulný stratí príznak, takže
+ * galéria má vždy práve jeden.
+ */
+export const nastavTitulnyObrazok = async (req: Request, res: Response) => {
+  try {
+    const galeriaId = parseInt(req.params.galleryId, 10);
+    const obrazokId = parseInt(req.params.imageId, 10);
+
+    if (isNaN(galeriaId) || isNaN(obrazokId)) {
+      return res.status(400).json({ success: false, message: 'Neplatné ID' });
+    }
+
+    const galeria = await Galeria.findByPk(galeriaId);
+    if (!galeria || !galeria.aktivity) {
+      return res.status(404).json({ success: false, message: 'Galéria nenájdená' });
+    }
+
+    const obrazok = await GaleriaObrazok.findOne({
+      where: { id: obrazokId, galeria_id: galeriaId, aktivity: true },
+    });
+    if (!obrazok) {
+      return res.status(404).json({ success: false, message: 'Obrázok v tejto galérii nenájdený' });
+    }
+
+    await GaleriaObrazok.update(
+      { je_nahladovy: false },
+      { where: { galeria_id: galeriaId, je_nahladovy: true } }
+    );
+    await obrazok.update({ je_nahladovy: true });
+    await galeria.update({
+      nahladovy_obrazok: obrazok.nahladovy_stredny || obrazok.cesta_suboru,
+    });
+
+    res.json({
+      success: true,
+      data: obrazok.toJSON(),
+      message: 'Titulný obrázok galérie bol nastavený',
+    });
+  } catch (error) {
+    console.error('Chyba pri nastavovaní titulného obrázka:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
 };

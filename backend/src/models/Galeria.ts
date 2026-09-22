@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Forward declarations pre TypeScript associations
 class Team extends Model {}
@@ -164,7 +165,9 @@ Galeria.init(
       type: DataTypes.STRING(500),
       allowNull: true,
       validate: {
-        isUrl: false, // Môže byť relatívna cesta
+        // isUrl: false validátor NEVYPNE - Sequelize ho aj tak spustí.
+        // Tento prijíma nahratý súbor aj externú adresu.
+        jePlatnyObrazok: overObrazkovySubor,
       },
     },
     aktivity: {

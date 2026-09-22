@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Interface pre rozšírené atribúty Ligy
 interface LigaAttributes {
@@ -274,7 +275,8 @@ Liga.init(
       type: DataTypes.STRING(255),
       allowNull: true,
       validate: {
-        isUrl: true,
+        // Logo býva nahraté do uploads, nie externá adresa
+        jePlatnyObrazok: overObrazkovySubor,
       },
     },
     farba: {

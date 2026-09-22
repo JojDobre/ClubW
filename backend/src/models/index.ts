@@ -32,6 +32,7 @@ import AuditLog from './AuditLog';
 // Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
 import Sponzor from './Sponzor';
 import Dokument from './Dokument';
+import DokumentKategoria from './DokumentKategoria';
 import Anketa from './Anketa';
 import Fanusik from './Fanusik';
 // Komentáre a videá
@@ -127,6 +128,19 @@ KalendarUdalost.belongsTo(Team, {
 Media.belongsTo(User, {
   foreignKey: 'autor_id',
   as: 'autor',
+  constraints: false,
+});
+
+// Dokument -> DokumentKategoria (N:1)
+Dokument.belongsTo(DokumentKategoria, {
+  foreignKey: 'kategoria_id',
+  as: 'kategoria_obj',
+  constraints: false,
+});
+
+DokumentKategoria.hasMany(Dokument, {
+  foreignKey: 'kategoria_id',
+  as: 'dokumenty',
   constraints: false,
 });
 
@@ -482,6 +496,7 @@ export default {
   AuditLog,
   Sponzor,
   Dokument,
+  DokumentKategoria,
   Anketa,
   Fanusik,
   Komentar,

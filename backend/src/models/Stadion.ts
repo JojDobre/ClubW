@@ -7,6 +7,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 interface StadionAttributes {
   id: number;
@@ -82,6 +83,9 @@ Stadion.init(
     fotka: {
       type: DataTypes.STRING(500),
       allowNull: true,
+      validate: {
+        jePlatnyObrazok: overObrazkovySubor,
+      },
     },
     kapacita: {
       type: DataTypes.INTEGER,

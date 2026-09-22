@@ -2,6 +2,7 @@
 // OPRAVENÝ Controller pre REST API tímov - BEZ express-validator
 
 import { Request, Response } from 'express';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 import Team from '../models/Team';
 import Stadion from '../models/Stadion';
 import Sezona from '../models/Sezona';
@@ -26,10 +27,14 @@ const validateTeamData = (data: any) => {
     errors.push('Veková kategória je povinná');
   }
   
+  // Logo býva nahraté do uploads, nie externá adresa. Pôvodná kontrola
+  // prijímala len https://..., takže logo z media knižnice sa nedalo
+  // uložiť vôbec.
   if (data.logo && typeof data.logo === 'string') {
-    const urlPattern = /^https?:\/\/.+/;
-    if (!urlPattern.test(data.logo)) {
-      errors.push('Logo musí byť platná URL');
+    try {
+      overObrazkovySubor(data.logo);
+    } catch (chyba) {
+      errors.push((chyba as Error).message);
     }
   }
   

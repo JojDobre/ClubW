@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Interface pre atribúty Zápasu
 interface ZapasAttributes {
@@ -340,6 +341,9 @@ Zapas.init(
     supier_logo: {
       type: DataTypes.STRING(500),
       allowNull: true,
+      validate: {
+        jePlatnyObrazok: overObrazkovySubor,
+      },
     },
     // Domáci tím handling - buď ID alebo custom názov
     domaci_tim_id: {
