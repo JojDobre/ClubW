@@ -50,6 +50,7 @@ import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
 import stadionRoutes from './routes/stadiony';
 import { spustiPlanovacClankov } from './services/planovacClankov';
+import { spustiPlanovacZapasov } from './services/planovacZapasov';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -481,6 +482,10 @@ async function startServer() {
     // Zverejňovanie naplánovaných článkov - bez neho zostane článok
     // v stave "scheduled" navždy, aj keď jeho čas vydania dávno prešiel
     spustiPlanovacClankov();
+
+    // Prepínanie stavu zápasov na odohratý - logika existovala, ale
+    // nikto ju nevolal, takže sa stav menil len ručne
+    spustiPlanovacZapasov();
 
     // Spustenie servera
     app.listen(PORT, () => {

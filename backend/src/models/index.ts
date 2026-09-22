@@ -13,6 +13,8 @@ import LigaTabulka from './LigaTabulka';      // NOVÝ
 import LigaTurnaj from './LigaTurnaj';        // NOVÝ
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
+import ZapasZostava from './ZapasZostava';
+import ZapasUdalost from './ZapasUdalost';
 // Tokeny pre obnovu relácie a obnovu zabudnutého hesla
 import RefreshToken from './RefreshToken';
 import ResetHeslaToken from './ResetHeslaToken';
@@ -282,6 +284,50 @@ ZapasStatistika.belongsTo(Player, {
   as: 'hrac',
 });
 
+// Zapas -> Stadion (miesto konania)
+Zapas.belongsTo(Stadion, {
+  foreignKey: 'stadion_id',
+  as: 'stadion',
+  constraints: false,
+});
+
+// Zapas -> ZapasZostava (1:N) - zostava a lavička oboch tímov
+Zapas.hasMany(ZapasZostava, {
+  foreignKey: 'zapas_id',
+  as: 'zostava',
+  onDelete: 'CASCADE',
+});
+
+ZapasZostava.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+});
+
+ZapasZostava.belongsTo(Player, {
+  foreignKey: 'hrac_id',
+  as: 'hrac',
+  constraints: false,
+});
+
+// Zapas -> ZapasUdalost (1:N) - voľný textový priebeh zápasu
+Zapas.hasMany(ZapasUdalost, {
+  foreignKey: 'zapas_id',
+  as: 'udalosti',
+  onDelete: 'CASCADE',
+});
+
+ZapasUdalost.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+});
+
+// ZapasStatistika -> Player (striedaný hráč pri striedaní)
+ZapasStatistika.belongsTo(Player, {
+  foreignKey: 'striedany_hrac_id',
+  as: 'striedany_hrac',
+  constraints: false,
+});
+
 // 7. FOTOGALÉRIA vzťahy - FÁZA 7 (NOVÉ)
 // Galeria -> GaleriaObrazok (1:N) - galéria má viacero obrázkov
 Galeria.hasMany(GaleriaObrazok, {
@@ -349,6 +395,8 @@ export {
   LigaTurnaj, 
   Zapas,
   ZapasStatistika,
+  ZapasZostava,
+  ZapasUdalost,
   Page,
   Galeria,          
   GaleriaObrazok,   
@@ -424,6 +472,8 @@ export default {
   LigaTurnaj,
   Zapas,
   ZapasStatistika,
+  ZapasZostava,
+  ZapasUdalost,
   Page,
   Galeria,           
   GaleriaObrazok,

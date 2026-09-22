@@ -13,6 +13,12 @@ import {
 // Controller pre štatistiky zápasu (góly, asistencie, karty)
 import { getMatchStatistics, setMatchStatistics } from '../controllers/ZapasStatistikaController';
 // Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
+import {
+  getZostava,
+  setZostava,
+  getUdalosti,
+  setUdalosti,
+} from '../controllers/zapasZostavaController';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
@@ -81,6 +87,20 @@ router.put('/update-statuses', authenticateToken, requireEditor, updateMatchStat
  * @body nazov?, liga_id?, datum_cas?, domaci_tim_id?, hostujuci_tim_id?, kolo?, miesto?, status?, goly_domaci?, goly_hostia?, pocet_divakov?, poznamky?, video_url?, clanok_id?
  * @access Private (Admin)
  */
+// ===== ZOSTAVA A PRIEBEH ZÁPASU =====
+
+/** @route GET /api/matches/:id/lineup - základná zostava a lavička */
+router.get('/:id/lineup', getZostava);
+
+/** @route PUT /api/matches/:id/lineup - nahradí celú zostavu */
+router.put('/:id/lineup', authenticateToken, requireEditor, setZostava);
+
+/** @route GET /api/matches/:id/events - voľný priebeh zápasu */
+router.get('/:id/events', getUdalosti);
+
+/** @route PUT /api/matches/:id/events - nahradí celý priebeh */
+router.put('/:id/events', authenticateToken, requireEditor, setUdalosti);
+
 router.put('/:id', authenticateToken, requireEditor, updateMatch);
 
 /**

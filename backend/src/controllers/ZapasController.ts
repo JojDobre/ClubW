@@ -10,6 +10,7 @@ import LigaTabulka from '../models/LigaTabulka';
 // Ukladanie štatistík zápasu (góly, asistencie, karty)
 import { overStatistiky, ulozStatistikyZapasu } from './ZapasStatistikaController';
 import Team from '../models/Team';
+import Stadion from '../models/Stadion';
 import Player from '../models/Player';
 import Article from '../models/Article';
 
@@ -354,6 +355,75 @@ const prepocitajTabulkuAkTreba = async (ligaId: number | null | undefined): Prom
   }
 };
 
+
+/** Povolené hodnoty miesta konania zápasu. */
+const TYPY_ZAPASU = ['doma', 'vonku', 'neutralne'];
+
+/**
+ * Doplní miesto konania a štadión podľa toho, kde sa zápas hrá.
+ *
+ * Pri DOMÁCOM zápase sa oboje preberie z domáceho štadióna nášho tímu -
+ * presne to žiadala požiadavka „domáci zápas sa bude hrať na domácom
+ * štadióne". Používateľ tak nemusí písať to isté miesto ku každému
+ * zápasu; keď ho aj tak zadá ručne, jeho hodnota má prednosť.
+ *
+ * Pri zápase VONKU a na NEUTRÁLNEJ pôde sa miesto nedopĺňa - tam ho
+ * zadáva používateľ, lebo štadión súpera v našej databáze nie je.
+ *
+ * @param udaje - dáta zápasu, upravujú sa na mieste
+ */
+const doplnMiestoKonania = async (udaje: any): Promise<void> => {
+  if (udaje.typ_zapasu !== 'doma') return;
+  if (!udaje.domaci_tim_id) return;
+
+  const tim = await Team.findByPk(udaje.domaci_tim_id);
+  if (!tim || !(tim as any).stadion_id) return;
+
+  if (!udaje.stadion_id) {
+    udaje.stadion_id = (tim as any).stadion_id;
+  }
+
+  // Ručne zadané miesto neprepisujeme
+  if (!udaje.miesto) {
+    const stadion = await Stadion.findByPk(udaje.stadion_id);
+    if (stadion) {
+      udaje.miesto = stadion.nazov;
+    }
+  }
+};
+
+/**
+ * Prevezme voliteľné polia zápasu z tela požiadavky.
+ *
+ * @param telo - req.body
+ * @param ciel - objekt, do ktorého sa polia zapíšu
+ * @param lenPoslane - pri úprave berieme len to, čo klient naozaj poslal
+ */
+const prevezmiVolitelnePolia = (telo: any, ciel: any, lenPoslane: boolean): string | null => {
+  const poslane = (pole: string) => Object.prototype.hasOwnProperty.call(telo, pole);
+
+  if (poslane('typ_zapasu')) {
+    if (!TYPY_ZAPASU.includes(telo.typ_zapasu)) {
+      return `Typ zápasu musí byť jeden z: ${TYPY_ZAPASU.join(', ')}`;
+    }
+    ciel.typ_zapasu = telo.typ_zapasu;
+  } else if (!lenPoslane) {
+    ciel.typ_zapasu = 'doma';
+  }
+
+  if (poslane('rozhodca')) {
+    ciel.rozhodca = telo.rozhodca ? String(telo.rozhodca).trim() : null;
+  }
+  if (poslane('supier_logo')) {
+    ciel.supier_logo = telo.supier_logo || null;
+  }
+  if (poslane('stadion_id')) {
+    ciel.stadion_id = telo.stadion_id || null;
+  }
+
+  return null;
+};
+
 // POST /api/matches - Vytvorenie nového zápasu
 export const createMatch = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -457,6 +527,26 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
     if (req.body.video_url) createData.video_url = req.body.video_url;
     if (req.body.clanok_id) createData.clanok_id = req.body.clanok_id;
     if (req.body.fotogaleria_id) createData.fotogaleria_id = req.body.fotogaleria_id;
+
+    const chybaPoli = prevezmiVolitelnePolia(req.body, createData, false);
+    if (chybaPoli) {
+      res.status(400).json({ success: false, message: chybaPoli });
+      return;
+    }
+
+    if (createData.stadion_id) {
+      const stadion = await Stadion.findByPk(createData.stadion_id);
+      if (!stadion) {
+        res.status(400).json({
+          success: false,
+          message: `Štadión s ID ${createData.stadion_id} neexistuje`,
+        });
+        return;
+      }
+    }
+
+    // Pri domácom zápase doplníme miesto zo štadióna nášho tímu
+    await doplnMiestoKonania(createData);
 
     console.log('Creating match with data:', createData);
 
@@ -678,6 +768,37 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
       if (req.body[pole] !== undefined) {
         updateData[pole] = req.body[pole] === '' ? null : req.body[pole];
       }
+    }
+
+    const chybaPoli = prevezmiVolitelnePolia(req.body, updateData, true);
+    if (chybaPoli) {
+      res.status(400).json({ success: false, message: chybaPoli });
+      return;
+    }
+
+    if (updateData.stadion_id) {
+      const stadion = await Stadion.findByPk(updateData.stadion_id);
+      if (!stadion) {
+        res.status(400).json({
+          success: false,
+          message: `Štadión s ID ${updateData.stadion_id} neexistuje`,
+        });
+        return;
+      }
+    }
+
+    // Keď sa zápas prepne na domáci (alebo sa zmení domáci tím),
+    // doplníme miesto zo štadióna. Rozhoduje sa podľa VÝSLEDNÉHO stavu
+    // zápasu, teda podľa doterajších hodnôt prekrytých tými novými.
+    const vyslednyStav: any = { ...zapas.toJSON(), ...updateData };
+    await doplnMiestoKonania(vyslednyStav);
+
+    // Späť do zápisu berieme len to, čo doplnenie naozaj zmenilo
+    if (vyslednyStav.stadion_id !== (zapas as any).stadion_id) {
+      updateData.stadion_id = vyslednyStav.stadion_id;
+    }
+    if (vyslednyStav.miesto !== zapas.miesto) {
+      updateData.miesto = vyslednyStav.miesto;
     }
 
     console.log('Updating match with data:', updateData);
