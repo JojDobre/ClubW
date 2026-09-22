@@ -23,6 +23,7 @@ import NastaveniaKlubu from './NastaveniaKlubu';
 // Sezóny a súpisky hráčov po sezónach
 import Sezona from './Sezona';
 import Stadion from './Stadion';
+import KalendarUdalost from './KalendarUdalost';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -106,6 +107,19 @@ Article.belongsTo(Team, {
 Team.hasMany(Article, {
   foreignKey: 'tim_id',
   as: 'clanky',
+});
+
+// Team -> KalendarUdalost (1:N) - tréningy a akcie tímu.
+// Kalendár z tímu berie aj farbu, pod ktorou udalosť zobrazuje.
+Team.hasMany(KalendarUdalost, {
+  foreignKey: 'tim_id',
+  as: 'udalosti',
+  onDelete: 'CASCADE',
+});
+
+KalendarUdalost.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
 });
 
 // 3. TEAM vzťahy
@@ -453,6 +467,7 @@ export default {
   NastaveniaKlubu,
   Sezona,
   Stadion,
+  KalendarUdalost,
   SupiskaSezony,
   Suhlas,
   AuditLog,

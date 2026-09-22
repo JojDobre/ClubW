@@ -7,6 +7,14 @@ import {
   getWeekCalendar,
   getUpcomingMatches
 } from '../controllers/kalendarController';
+import {
+  getUdalosti,
+  getUdalost,
+  createUdalost,
+  updateUdalost,
+  deleteUdalost,
+} from '../controllers/kalendarUdalostController';
+import { authenticateToken, requireEditor } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -49,5 +57,30 @@ router.get('/week/:rok/:mesiac/:den', getWeekCalendar);
  * @example GET /api/calendar/upcoming?tim_id=1&limit=3
  */
 router.get('/upcoming', getUpcomingMatches);
+
+// ===== VLASTNÉ UDALOSTI (tréningy, sústredenia, klubové akcie) =====
+//
+// Doteraz kalendár vedel len čítať zápasy. Vlastnú udalosť sa nedalo
+// vytvoriť vôbec.
+
+/**
+ * @route GET /api/calendar/events
+ * @desc Výskyty udalostí v rozsahu. ?od=&do= (bez nich aktuálny mesiac),
+ *       ?tim_id= obmedzí na jeden tím. Opakovanie je už rozvinuté.
+ * @access Public - tréningy patria na klubový web
+ */
+router.get('/events', getUdalosti);
+
+/** @route GET /api/calendar/events/:id - jedna udalosť aj s pravidlom */
+router.get('/events/:id', getUdalost);
+
+/** @route POST /api/calendar/events */
+router.post('/events', authenticateToken, requireEditor, createUdalost);
+
+/** @route PUT /api/calendar/events/:id - zmena platí pre celý rad */
+router.put('/events/:id', authenticateToken, requireEditor, updateUdalost);
+
+/** @route DELETE /api/calendar/events/:id - zruší celý rad */
+router.delete('/events/:id', authenticateToken, requireEditor, deleteUdalost);
 
 export default router;
