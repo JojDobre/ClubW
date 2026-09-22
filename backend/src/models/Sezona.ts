@@ -25,6 +25,9 @@ interface SezonaAttributes {
   aktualna: boolean;
   // Uzavretá sezóna sa už needituje, slúži len na čítanie v archíve
   uzavreta: boolean;
+  // Archivácia - false znamená "neukazuj, ale dáta a história zostávajú".
+  // Rovnaký význam má "aktivity" pri tímoch, hráčoch, realizačnom tíme a ligách.
+  aktivity: boolean;
   poznamka: string | null;
   vytvorena: Date;
   aktualizovana: Date;
@@ -33,7 +36,7 @@ interface SezonaAttributes {
 interface SezonaCreationAttributes
   extends Optional<
     SezonaAttributes,
-    'id' | 'zaciatok' | 'koniec' | 'aktualna' | 'uzavreta' | 'poznamka' | 'vytvorena' | 'aktualizovana'
+    'id' | 'zaciatok' | 'koniec' | 'aktualna' | 'uzavreta' | 'aktivity' | 'poznamka' | 'vytvorena' | 'aktualizovana'
   > {}
 
 class Sezona
@@ -46,6 +49,7 @@ class Sezona
   public koniec!: Date | null;
   public aktualna!: boolean;
   public uzavreta!: boolean;
+  public aktivity!: boolean;
   public poznamka!: string | null;
   public readonly vytvorena!: Date;
   public readonly aktualizovana!: Date;
@@ -148,6 +152,11 @@ Sezona.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    aktivity: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     poznamka: {
       type: DataTypes.TEXT,

@@ -4,8 +4,6 @@
 import { Request, Response } from 'express';
 import Player from '../models/Player';
 import Team from '../models/Team';
-import fs from 'fs';
-import path from 'path';
 // Filtrovanie osobných údajov maloletých pre verejné rozhranie
 import { filtrujZoznamHracov, filtrujJednehoHraca } from '../utils/gdprFilter';
 
@@ -393,54 +391,14 @@ export const deletePlayer = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Helper funkcia na vymazanie prázdneho priečinka
-    const removeEmptyDirectory = (dirPath: string) => {
-      try {
-        const files = fs.readdirSync(dirPath);
-        if (files.length === 0) {
-          fs.rmdirSync(dirPath);
-          console.log('🗂️ Prázdny priečinok vymazaný:', dirPath);
-        }
-      } catch (error) {
-        console.log('⚠️ Nemôžem vymazať priečinok:', dirPath);
-      }
-    };
-
-    // NOVÉ: Vymaž fotku zo súborového systému
-    if ((player as any).fotka) {
-      try {
-        const fotkaPath = (player as any).fotka;
-        console.log('🗑️ Mažem fotku hráča:', fotkaPath);
-        
-        // Ak je to relatívna cesta, vytvor absolútnu cestu
-        let absolutePath = '';
-        if (fotkaPath.startsWith('/uploads/')) {
-          absolutePath = path.join(__dirname, '../../', fotkaPath);
-        } else if (fotkaPath.startsWith('uploads/')) {
-          absolutePath = path.join(__dirname, '../../', fotkaPath);
-        } else if (fotkaPath.includes('uploads/images/players/')) {
-          // Pre URL ako http://localhost:3000/uploads/images/players/14/file.png
-          const relativePart = fotkaPath.split('uploads/images/players/')[1];
-          absolutePath = path.join(__dirname, '../../uploads/images/players/', relativePart);
-        }
-        
-        console.log('📂 Absolútna cesta k fotke:', absolutePath);
-        
-        if (absolutePath && fs.existsSync(absolutePath)) {
-          fs.unlinkSync(absolutePath);
-          console.log('✅ Fotka hráča vymazaná:', absolutePath);
-          
-          // Skús vymazať prázdny priečinok tímu
-          const teamDir = path.dirname(absolutePath);
-          removeEmptyDirectory(teamDir);
-        } else {
-          console.log('⚠️ Fotka sa nenašla alebo už bola vymazaná:', absolutePath);
-        }
-      } catch (fileError) {
-        console.error('❌ Chyba pri mazaní fotky:', fileError);
-        // Pokračuj aj pri chybe mazania fotky - nechaj aspoň vymazať hráča z DB
-      }
-    }
+    // Fotka hráča sa ZÁMERNE NEMAŽE.
+    //
+    // Toto je mäkké odstránenie - hráč putuje do archívu a dá sa odtiaľ
+    // obnoviť (POST /api/admin/archive/hraci/:id/restore). Pôvodná verzia
+    // tu fotku fyzicky mazala z disku, takže archivácia síce zachovala
+    // záznam a štatistiky, ale obnovený hráč zostal bez fotky - a vrátiť
+    // sa už nedala. Súbor preto necháme na mieste; upratať ho patrí
+    // k trvalému zmazaniu z archívu, nie k archivácii.
 
     // Soft delete
     await player.update({ aktivity: false });

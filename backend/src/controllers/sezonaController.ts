@@ -15,7 +15,11 @@ import { sanitizePlainText } from '../utils/sanitize';
  */
 export const getSezony = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const sezony = await Sezona.findAll({ order: [['nazov', 'DESC']] });
+    // Archivované sezóny sem nepatria - tie má na starosti /api/admin/archive
+    const sezony = await Sezona.findAll({
+      where: { aktivity: true },
+      order: [['nazov', 'DESC']],
+    });
     res.json({ success: true, data: sezony, pocet: sezony.length });
   } catch (error) {
     console.error('Chyba pri načítaní sezón:', error);
@@ -169,7 +173,16 @@ export const nastavAktualnuSezonu = async (req: Request, res: Response): Promise
 
 /**
  * DELETE /api/admin/seasons/:id
- * Zmazanie sezóny. Podarí sa len vtedy, keď na ňu nič neodkazuje.
+ * Archivácia sezóny.
+ *
+ * Pôvodne tu bolo trvalé zmazanie (sezona.destroy()). Sezóna bola jediná
+ * entita z archívu, ktorá sa mazala natvrdo, takže sa nedala obnoviť
+ * a miznula aj z prehľadu archívu. Teraz sa, rovnako ako tímy, hráči,
+ * realizačný tím a ligy, len označí ako neaktívna a vráti sa cez
+ * POST /api/admin/archive/sezony/:id/restore.
+ *
+ * Kontroly nižšie zostávajú: sezónu, na ktorú niečo odkazuje, ani
+ * aktuálnu sezónu nemá zmysel schovať pred používateľom.
  */
 export const deleteSezona = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -202,10 +215,13 @@ export const deleteSezona = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    await sezona.destroy();
-    res.json({ success: true, message: 'Sezóna bola zmazaná' });
+    await sezona.update({ aktivity: false });
+    res.json({
+      success: true,
+      message: `Sezóna ${sezona.nazov} bola presunutá do archívu`,
+    });
   } catch (error) {
-    console.error('Chyba pri mazaní sezóny:', error);
+    console.error('Chyba pri archivácii sezóny:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 };
