@@ -90,6 +90,11 @@ module.exports = konfiguracia;
 // Formát, ktorý očakáva sequelize-cli (config/config.js).
 // Všetky tri prostredia čítajú z rovnakých premenných prostredia,
 // líšia sa len súborom .env, ktorý sa načíta.
+//
+// Názov databázy sa berie z DB_NAME tak, ako je - bez prípon. Predtým si
+// prostredie "test" pridávalo _test, lenže aplikácia (src/config/database.ts)
+// číta základný export bez prípony. Migrácie tak pod NODE_ENV=test mierili
+// do inej databázy než samotná aplikácia a testy.
 module.exports.development = konfiguracia;
-module.exports.test = { ...konfiguracia, database: `${konfiguracia.database}_test` };
+module.exports.test = konfiguracia;
 module.exports.production = konfiguracia;

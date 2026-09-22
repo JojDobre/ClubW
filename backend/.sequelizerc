@@ -1,0 +1,19 @@
+// Umiestnenie: backend/.sequelizerc
+//
+// Hovorí sequelize-cli, kde má hľadať konfiguráciu a migrácie.
+//
+// PREČO VZNIKOL: bez tohto súboru hľadá sequelize-cli predvolený
+// config/config.json, ktorý v projekte nie je - konfigurácia je
+// v config/database.js (jediný zdroj pravdy pre pripojenie k databáze).
+// Príkazy ako "npm run db:migrate" preto padali na hláške
+//   Cannot find ".../backend/config/config.json"
+// a museli sa spúšťať ručne s --config config/database.js. Rovnako
+// padal aj migračný krok v CI.
+
+const path = require('path');
+
+module.exports = {
+  config: path.resolve(__dirname, 'config', 'database.js'),
+  'migrations-path': path.resolve(__dirname, 'migrations'),
+  'models-path': path.resolve(__dirname, 'src', 'models'),
+};

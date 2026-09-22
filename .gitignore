@@ -141,8 +141,10 @@ local/
 # package-lock.json
 # yarn.lock
 
-# Sequelize migration state
-.sequelizerc
+# .sequelizerc zámerne NIE JE ignorovaný: hovorí sequelize-cli, kde je
+# konfigurácia (config/database.js) a migrácie. Bez neho hľadá predvolený
+# config/config.json a príkazy ako "npm run db:migrate" padnú - aj lokálne,
+# aj v CI. Nie je to stav migrácií ani tajomstvo, patrí do repozitára.
 
 # Jest coverage
 coverage/
