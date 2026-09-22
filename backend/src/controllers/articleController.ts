@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import Article from '../models/Article';
 import Category from '../models/Category';
 import User from '../models/user';
+import Team from '../models/Team';
 import fs from 'fs/promises';
 // Sanitizácia HTML obsahu pred uložením do DB - ochrana pred stored XSS
 import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
@@ -29,6 +30,10 @@ export const validateArticle = [
   body('kategoria_id')
     .isInt({ min: 1 })
     .withMessage('Kategória je povinná'),
+  body('tim_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Tím musí byť platné ID'),
   body('status')
     .isIn(['draft', 'published', 'scheduled', 'archived'])
     .withMessage('Neplatný status článku'),
@@ -80,6 +85,10 @@ export const validateArticleUpdate = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Kategória musí byť platné ID'),
+  body('tim_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Tím musí byť platné ID'),
   body('status')
     .optional()
     .isIn(['draft', 'published', 'scheduled', 'archived'])
@@ -434,7 +443,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     }
 
     const {
-      nazov, obsah, excerpt, obrazok, kategoria_id,
+      nazov, obsah, excerpt, obrazok, kategoria_id, tim_id,
       status, publikovany_datum, meta_title, meta_description,
       tags, featured, komentare_povolene, slug
     } = req.body;
@@ -449,6 +458,18 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         message: 'Kategória neexistuje',
       });
       return;
+    }
+
+    // Tím je voliteľný, ale keď príde, musí existovať
+    if (tim_id) {
+      const tim = await Team.findByPk(tim_id);
+      if (!tim) {
+        res.status(400).json({
+          success: false,
+          message: `Tím s ID ${tim_id} neexistuje`,
+        });
+        return;
+      }
     }
 
     // KĽÚČOVÁ OPRAVA: Vygenerujeme slug EXPLICITNE pred vytvorením
@@ -478,6 +499,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       obrazok: obrazok || null,
       autor_id: req.userId!, // Z auth middleware
       kategoria_id,
+      tim_id: tim_id || null,
       status,
       publikovany_datum: publikovany_datum ? new Date(publikovany_datum) : null,
       meta_title: meta_title?.trim() || null,
@@ -581,6 +603,18 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         res.status(400).json({
           success: false,
           message: 'Kategória neexistuje',
+        });
+        return;
+      }
+    }
+
+    // Tím je voliteľný, ale keď príde, musí existovať
+    if (updateData.tim_id) {
+      const tim = await Team.findByPk(updateData.tim_id);
+      if (!tim) {
+        res.status(400).json({
+          success: false,
+          message: `Tím s ID ${updateData.tim_id} neexistuje`,
         });
         return;
       }
@@ -740,6 +774,81 @@ export const uploadArticleImage = async (req: Request, res: Response): Promise<v
   }
 };
 
+
+/**
+ * GET /api/admin/articles/:id/preview
+ *
+ * Náhľad článku v tvare, v akom ho vykresľuje verejný web - ale BEZ
+ * ohľadu na stav. Koncept aj naplánovaný článok sa tak dajú pozrieť
+ * skôr, než ich niekto zverejní.
+ *
+ * PREČO SAMOSTATNÝ ENDPOINT: verejný detail (GET /api/articles/:slug)
+ * zámerne vracia len publikované články, takže koncept cezeň pozrieť
+ * nejde. Admin detail zasa vracia iný tvar (toAdminJSON), na ktorom
+ * verejná šablóna nebeží. Tento endpoint dáva verejný tvar pod
+ * prihlásením, takže frontend môže na náhľad použiť rovnakú šablónu
+ * ako na ostrý článok.
+ *
+ * Pohľad sa NEPOČÍTA do zobrazení - náhľad nie je návšteva.
+ */
+export const previewArticle = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const article = await Article.findByPk(id, {
+      include: [
+        { model: User, as: 'autor', attributes: ['id', 'meno', 'email'] },
+        { model: Category, as: 'kategoria', attributes: ['id', 'nazov', 'slug', 'farba'] },
+      ],
+    });
+
+    if (!article) {
+      res.status(404).json({
+        success: false,
+        message: 'Článok nebol nájdený',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        article: {
+          id: article.id,
+          nazov: article.nazov,
+          slug: article.slug,
+          obsah: article.obsah,
+          excerpt: article.excerpt,
+          obrazok: article.obrazok,
+          publikovany_datum: article.publikovany_datum,
+          views: article.views,
+          autor: (article as any).autor,
+          kategoria: (article as any).kategoria,
+          tim_id: article.tim_id,
+          tags: article.getTagsArray(),
+          featured: article.featured,
+          komentare_povolene: article.komentare_povolene,
+          meta_title: article.meta_title,
+          meta_description: article.meta_description,
+          vytvoreny: article.vytvoreny,
+        },
+        // Frontend podľa toho môže zobraziť pruh "toto je náhľad,
+        // článok ešte nie je zverejnený"
+        nahlad: {
+          status: article.status,
+          publikovany: article.status === 'published',
+          planovane_na: article.status === 'scheduled' ? article.publikovany_datum : null,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Chyba pri náhľade článku:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri načítaní náhľadu',
+    });
+  }
+};
 
 // POST /api/admin/articles/bulk-delete - Bulk vymazanie článkov
 export const bulkDeleteArticles = async (req: Request, res: Response): Promise<void> => {

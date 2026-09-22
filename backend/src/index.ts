@@ -48,6 +48,7 @@ import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
+import { spustiPlanovacClankov } from './services/planovacClankov';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -472,6 +473,10 @@ async function startServer() {
     void uprataStareTokeny();
     const upratovanie = setInterval(() => void uprataStareTokeny(), 24 * 60 * 60 * 1000);
     upratovanie.unref(); // časovač nebráni ukončeniu procesu
+
+    // Zverejňovanie naplánovaných článkov - bez neho zostane článok
+    // v stave "scheduled" navždy, aj keď jeho čas vydania dávno prešiel
+    spustiPlanovacClankov();
 
     // Spustenie servera
     app.listen(PORT, () => {

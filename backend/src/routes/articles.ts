@@ -13,6 +13,7 @@ import {
   getAdminArticleById,
   createArticle,
   updateArticle,
+  previewArticle,
   deleteArticle,
   bulkDeleteArticles,    
   bulkDuplicateArticles,
@@ -85,6 +86,9 @@ adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticle
 
 // DELETE /api/admin/articles/:id - Vymazanie článku
 adminArticleRouter.delete('/:id', authenticateToken, requireEditor, deleteArticle);
+
+// Náhľad článku vo verejnom tvare, aj keď ešte nie je zverejnený
+adminArticleRouter.get('/:id/preview', authenticateToken, requireEditor, previewArticle);
 
 adminArticleRouter.post('/upload-image', authenticateToken, requireEditor, upload.single('image'), uploadArticleImage);
 

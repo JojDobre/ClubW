@@ -77,6 +77,17 @@ Article.belongsTo(Category, {
   as: 'kategoria',
 });
 
+// Article -> Team (N:1) - voliteľná väzba, článok sa nemusí týkať tímu
+Article.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
+});
+
+Team.hasMany(Article, {
+  foreignKey: 'tim_id',
+  as: 'clanky',
+});
+
 // 3. TEAM vzťahy
 // Team -> Players (1:N) - tím má viacero hráčov
 Team.hasMany(Player, {
