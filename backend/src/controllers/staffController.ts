@@ -3,6 +3,7 @@
 
 import { Request, Response } from 'express';
 import Staff from '../models/Staff';
+import Sezona from '../models/Sezona';
 import Team from '../models/Team';
 
 // ===== HELPER FUNCTIONS =====
@@ -199,6 +200,30 @@ export const getStaffById = async (req: Request, res: Response): Promise<void> =
 
 // ===== ADMIN API ENDPOINTS =====
 
+
+/**
+ * Overí dátumy členstva a existenciu sezóny.
+ *
+ * @returns text chyby, alebo null keď je všetko v poriadku
+ */
+const overClenstvoStaff = async (udaje: any): Promise<string | null> => {
+  const od = udaje.datum_pripojenia ? new Date(udaje.datum_pripojenia) : null;
+  const do_ = udaje.datum_odpojenia ? new Date(udaje.datum_odpojenia) : null;
+
+  if (od && isNaN(od.getTime())) return 'Dátum pripojenia do klubu je neplatný';
+  if (do_ && isNaN(do_.getTime())) return 'Dátum odpojenia z klubu je neplatný';
+  if (od && do_ && do_ < od) {
+    return 'Dátum odpojenia nemôže byť skôr než dátum pripojenia do klubu';
+  }
+
+  if (udaje.sezona_id) {
+    const sezona = await Sezona.findOne({ where: { id: udaje.sezona_id, aktivity: true } });
+    if (!sezona) return `Sezóna s ID ${udaje.sezona_id} neexistuje`;
+  }
+
+  return null;
+};
+
 // POST /api/staff - Vytvorenie nového člena realizačného tímu
 export const createStaff = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -247,6 +272,12 @@ export const createStaff = async (req: Request, res: Response): Promise<void> =>
       }
     }
 
+    const chybaClenstva = await overClenstvoStaff(staffData);
+    if (chybaClenstva) {
+      res.status(400).json({ success: false, message: chybaClenstva });
+      return;
+    }
+
     // Vytvorenie člena realizačného tímu
     const newStaff = await Staff.create({
       meno: staffData.meno,
@@ -258,6 +289,10 @@ export const createStaff = async (req: Request, res: Response): Promise<void> =>
       kvalifikacia: staffData.kvalifikacia || null,
       fotka: staffData.fotka || null,
       tim_id: staffData.tim_id || null,
+      narodnost: staffData.narodnost || null,
+      sezona_id: staffData.sezona_id || null,
+      datum_pripojenia: staffData.datum_pripojenia || null,
+      datum_odpojenia: staffData.datum_odpojenia || null,
       poznamky: staffData.poznamky || null,
       poradie: staffData.poradie || 0
     });
@@ -298,6 +333,13 @@ export const updateStaff = async (req: Request, res: Response): Promise<void> =>
 
     // Pre UPDATE validujeme len polia, ktoré sa posielajú
     const updateData = req.body;
+
+    const chybaClenstva = await overClenstvoStaff(updateData);
+    if (chybaClenstva) {
+      res.status(400).json({ success: false, message: chybaClenstva });
+      return;
+    }
+
     const validationErrors: string[] = [];
     
     if (updateData.meno !== undefined && (!updateData.meno || typeof updateData.meno !== 'string' || updateData.meno.length < 2 || updateData.meno.length > 50)) {
