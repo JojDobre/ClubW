@@ -29,6 +29,25 @@ const tabulkaExistuje = async (queryInterface, tabulka) => {
   return riadky[0] && riadky[0].existuje !== null;
 };
 
+/**
+ * Doplní chýbajúci DEFAULT na časové stĺpce.
+ *
+ * PREČO: tabuľku mohol vytvoriť aj sequelize.sync() z modelu (vo vývoji
+ * bežal pri každom štarte servera). Sync vyrobí "vytvorena TIMESTAMP NOT NULL"
+ * BEZ databázového DEFAULT-u, lebo DataTypes.NOW dopĺňa Sequelize v JS.
+ * Vloženie čistým SQL potom spadne na "null value in column violates
+ * not-null constraint".
+ */
+const dopravDefaultCasov = async (queryInterface, tabulka, stlpce) => {
+  for (const stlpec of stlpce) {
+    if (await stlpecExistuje(queryInterface, tabulka, stlpec)) {
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "${tabulka}" ALTER COLUMN "${stlpec}" SET DEFAULT CURRENT_TIMESTAMP`
+      );
+    }
+  }
+};
+
 module.exports = {
   async up(queryInterface) {
     // ===== 1. Rozšírené nastavenia klubu =====
@@ -79,9 +98,13 @@ module.exports = {
 
       // Prevod existujúceho menu zo stránok, aby web po nasadení
       // nezostal bez navigácie
+      await dopravDefaultCasov(queryInterface, 'menu_polozky', ['vytvorena', 'aktualizovana']);
+
       await queryInterface.sequelize.query(`
-        INSERT INTO "menu_polozky" ("nazov", "typ", "stranka_id", "poradie")
-        SELECT "nazov", 'stranka', "id", "poradie_menu"
+        INSERT INTO "menu_polozky"
+          ("nazov", "typ", "stranka_id", "poradie", "vytvorena", "aktualizovana")
+        SELECT "nazov", 'stranka', "id", "poradie_menu",
+               CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM "pages"
          WHERE "v_menu" = true
       `);

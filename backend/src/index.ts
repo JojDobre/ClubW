@@ -9,7 +9,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
+import models from './models'; // DÔLEŽITÉ - načíta aj vzťahy medzi modelmi
 import sequelize from './config/database';
 import path from 'path';
 import fs from 'fs';
@@ -359,8 +359,7 @@ app.use('/api/admin/logs', logRoutes);
 // (nahrádza pôvodný demo endpoint, ktorý vracal natvrdo vymyslené čísla)
 app.get('/api/stats', async (req, res, next) => {
   try {
-    // Lazy import modelov - index.ts ich už načítal cez './models'
-    const { default: models } = await import('./models');
+    // Modely sú načítané hore pri štarte, netreba ich doťahovať znova
     const { Article, User, Team, Player, Staff, Liga, Zapas } = models as any;
 
     // Všetky počty naraz cez Promise.all - jediný roundtrip čas namiesto sekvenčného čakania
@@ -537,13 +536,22 @@ async function startServer() {
     }
 
     // Príprava schémy databázy.
-    // V produkcii sa schéma vytvára a upravuje výhradne migráciami
-    // (npm run db:migrate), preto tu sync() nespúšťame.
-    if (process.env.NODE_ENV === 'production') {
-      console.log('ℹ️  Produkčný režim - schému spravujú migrácie (npm run db:migrate)');
-    } else {
-      console.log('🔄 Synchronizácia databázy (vývojový režim)...');
+    //
+    // Schému spravujú VÝHRADNE migrácie (npm run db:migrate), a to aj vo
+    // vývoji. Predtým tu vo vývoji bežal sync() pri každom štarte a ticho
+    // si dorobil chýbajúce tabuľky z modelov. Tie potom vyzerali inak než
+    // tie z migrácií (Sequelize napríklad nedáva DEFAULT na časové stĺpce,
+    // dopĺňa ich v JS) a následná migrácia buď padla, alebo tabuľku
+    // preskočila a nechala schému rozídenú s históriou migrácií.
+    //
+    // Kto sync naozaj chce (rýchle skúšanie na zahodenej databáze),
+    // zapne si ho premennou DB_SYNC=true.
+    if (process.env.DB_SYNC === 'true' && process.env.NODE_ENV !== 'production') {
+      console.log('🔄 Synchronizácia databázy (DB_SYNC=true)...');
+      console.log('⚠️  Pozor: schému má spravovať npm run db:migrate.');
       await syncDatabase(false); // false = bez force, zachová existujúce dáta
+    } else {
+      console.log('ℹ️  Schému spravujú migrácie (npm run db:migrate)');
     }
 
     // Spustenie pravidelnej kontroly licencie (prvá prebehne hneď)

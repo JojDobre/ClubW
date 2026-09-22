@@ -25,6 +25,25 @@ const tabulkaExistuje = async (queryInterface, tabulka) => {
   return riadky[0] && riadky[0].existuje !== null;
 };
 
+/**
+ * Doplní chýbajúci DEFAULT na časové stĺpce.
+ *
+ * PREČO: tabuľku mohol vytvoriť aj sequelize.sync() z modelu (vo vývoji
+ * bežal pri každom štarte servera). Sync vyrobí "vytvorena TIMESTAMP NOT NULL"
+ * BEZ databázového DEFAULT-u, lebo DataTypes.NOW dopĺňa Sequelize v JS.
+ * Vloženie čistým SQL potom spadne na "null value in column violates
+ * not-null constraint".
+ */
+const dopravDefaultCasov = async (queryInterface, tabulka, stlpce) => {
+  for (const stlpec of stlpce) {
+    if (await stlpecExistuje(queryInterface, tabulka, stlpec)) {
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "${tabulka}" ALTER COLUMN "${stlpec}" SET DEFAULT CURRENT_TIMESTAMP`
+      );
+    }
+  }
+};
+
 module.exports = {
   async up(queryInterface) {
     if (!(await tabulkaExistuje(queryInterface, 'dokument_kategorie'))) {
@@ -52,9 +71,11 @@ module.exports = {
 
       // Z doterajších textových hodnôt vyrobíme kategórie a prepojíme ich.
       // Bez tohto kroku by sa po nasadení stratilo rozdelenie dokumentov.
+      await dopravDefaultCasov(queryInterface, 'dokument_kategorie', ['vytvorena', 'aktualizovana']);
+
       await queryInterface.sequelize.query(`
-        INSERT INTO "dokument_kategorie" ("nazov")
-        SELECT DISTINCT TRIM("kategoria")
+        INSERT INTO "dokument_kategorie" ("nazov", "vytvorena", "aktualizovana")
+        SELECT DISTINCT TRIM("kategoria"), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM "dokumenty"
          WHERE "kategoria" IS NOT NULL AND TRIM("kategoria") <> ''
         ON CONFLICT ("nazov") DO NOTHING

@@ -74,6 +74,26 @@ const stlpecExistuje = async (queryInterface, tabulka, stlpec) => {
   return riadky.length > 0;
 };
 
+/**
+ * Doplní chýbajúci DEFAULT na časové stĺpce.
+ *
+ * PREČO: tabuľku mohol vytvoriť aj sequelize.sync() z modelu (vo vývoji
+ * bežal pri každom štarte servera). Sync vyrobí "vytvorena TIMESTAMP NOT NULL"
+ * BEZ databázového DEFAULT-u, lebo DataTypes.NOW dopĺňa Sequelize v JS.
+ * Vloženie čistým SQL potom spadne na "null value in column violates
+ * not-null constraint". Tabuľka má vyzerať rovnako bez ohľadu na to,
+ * či ju vyrobila migrácia alebo sync.
+ */
+const dopravDefaultCasov = async (queryInterface, tabulka, stlpce) => {
+  for (const stlpec of stlpce) {
+    if (await stlpecExistuje(queryInterface, tabulka, stlpec)) {
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "${tabulka}" ALTER COLUMN "${stlpec}" SET DEFAULT CURRENT_TIMESTAMP`
+      );
+    }
+  }
+};
+
 module.exports = {
   async up(queryInterface) {
     // ===== 1. Tabuľka rolí =====
@@ -94,6 +114,8 @@ module.exports = {
       `);
     }
 
+    await dopravDefaultCasov(queryInterface, 'roly', ['vytvorena', 'aktualizovana']);
+
     // ===== 2. Štyri systémové role podľa doterajšieho enumu =====
     const predvolene = [
       { kod: 'admin', nazov: 'Správca', popis: 'Plný prístup ku všetkému', poradie: 1, prava: vsetkyModuly(true, true, true) },
@@ -104,8 +126,11 @@ module.exports = {
 
     for (const rola of predvolene) {
       await queryInterface.sequelize.query(
-        `INSERT INTO "roly" ("nazov", "kod", "popis", "opravnenia", "je_systemova", "poradie")
-         VALUES (:nazov, :kod, :popis, CAST(:prava AS jsonb), true, :poradie)
+        `INSERT INTO "roly"
+           ("nazov", "kod", "popis", "opravnenia", "je_systemova", "poradie",
+            "vytvorena", "aktualizovana")
+         VALUES (:nazov, :kod, :popis, CAST(:prava AS jsonb), true, :poradie,
+                 CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          ON CONFLICT ("kod") DO NOTHING`,
         {
           replacements: {
