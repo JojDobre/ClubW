@@ -137,7 +137,6 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: result,
-      count: result.length,
       message: `Nájdených ${result.length} hráčov`
     });
 
@@ -146,7 +145,7 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráčov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -200,7 +199,7 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -326,7 +325,7 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -410,7 +409,7 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -467,7 +466,7 @@ export const deletePlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

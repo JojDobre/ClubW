@@ -166,9 +166,15 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
    * Skráti obsah pre excerpt
    */
   public getExcerpt(length: number = 150): string {
+    // Niektoré výbery si obsah zámerne neťahajú (zoznamy stránok), tak radšej
+    // vrátime prázdny text, než aby celý endpoint spadol.
+    if (!this.obsah) {
+      return '';
+    }
+
     // Odstráni HTML tagy
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
-    
+
     if (plainText.length <= length) {
       return plainText;
     }
@@ -180,6 +186,10 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
    * Spočíta slová v obsahu
    */
   public getWordCount(): number {
+    if (!this.obsah) {
+      return 0;
+    }
+
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
     return plainText.trim().split(/\s+/).filter(word => word.length > 0).length;
   }

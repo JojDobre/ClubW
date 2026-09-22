@@ -47,7 +47,6 @@ export const getRoly = async (_req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: sPoctom,
-      pocet: sPoctom.length,
       // Administrácia z toho vykreslí stĺpce zaškrtávacej tabuľky
       moduly: MODULY,
     });
@@ -251,7 +250,7 @@ export const deleteRola = async (req: Request, res: Response): Promise<void> => 
         message:
           `Rolu ${rola.nazov} má priradených ${pocet} používateľov. ` +
           'Najprv im nastavte inú rolu.',
-        data: { pocet_pouzivatelov: pocet },
+        data: pocet,
       });
       return;
     }

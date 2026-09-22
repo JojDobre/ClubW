@@ -29,7 +29,7 @@ export const getSezony = async (_req: Request, res: Response): Promise<void> => 
       where: { aktivity: true },
       order: [['nazov', 'DESC']],
     });
-    res.json({ success: true, data: sezony.map(soStavom), pocet: sezony.length });
+    res.json({ success: true, data: sezony.map(soStavom) });
   } catch (error) {
     console.error('Chyba pri načítaní sezón:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri načítaní sezón' });
@@ -287,7 +287,7 @@ export const getSupiska = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: supiska,
-      meta: { tim_id: timId, sezona: sezona?.nazov ?? null, pocet: supiska.length },
+      meta: { tim_id: timId, sezona: sezona?.nazov ?? null },
     });
   } catch (error) {
     console.error('Chyba pri načítaní súpisky:', error);
@@ -319,7 +319,7 @@ export const getHistoriaHraca = async (req: Request, res: Response): Promise<voi
       order: [[{ model: Sezona, as: 'sezona' }, 'nazov', 'DESC']],
     });
 
-    res.json({ success: true, data: zaznamy, pocet: zaznamy.length });
+    res.json({ success: true, data: zaznamy });
   } catch (error) {
     console.error('Chyba pri načítaní histórie hráča:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });

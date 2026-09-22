@@ -79,7 +79,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
 
       const zaznamy = await model.findAll({ where: kde, order: zoradenie, limit });
 
-      res.json({ success: true, data: zaznamy, pocet: zaznamy.length });
+      res.json({ success: true, data: zaznamy });
     } catch (chyba) {
       console.error(`Chyba pri načítaní (${nazov}):`, chyba);
       res.status(500).json({ success: false, message: `Chyba pri načítaní: ${nazov}` });

@@ -255,7 +255,6 @@ export const getMatchStatistics = async (req: Request, res: Response): Promise<v
         zapas_id: zapasId,
         vsetky: statistiky,
         podla_typu: podlaTypu,
-        pocet: statistiky.length,
       },
     });
   } catch (error) {

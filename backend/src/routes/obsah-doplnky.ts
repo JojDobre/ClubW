@@ -53,7 +53,6 @@ router.get('/comments', authenticateToken, requireEditor, async (req: Request, r
     res.json({
       success: true,
       data: komentare,
-      pocet: komentare.length,
       // Pri agregácii vracia PostgreSQL počty ako reťazce
       pocty_stavov: Object.fromEntries(
         (pocty as any[]).map((p) => [p.stav, Number(p.pocet)])
@@ -138,7 +137,7 @@ router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
-      data: { id: komentar.id },
+      data: komentar.id,
       message: 'Ďakujeme. Komentár sa zobrazí po schválení.',
     });
   } catch (chyba: any) {
@@ -234,7 +233,7 @@ router.get('/videos', async (req: Request, res: Response) => {
       nahlad_url: v.nahladovyObrazok(),
     }));
 
-    res.json({ success: true, data: sNahladmi, pocet: videa.length });
+    res.json({ success: true, data: sNahladmi });
   } catch (chyba) {
     console.error('Chyba pri načítaní videí:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
@@ -355,7 +354,7 @@ router.get('/tournaments', async (_req: Request, res: Response) => {
       limit: 200,
     });
 
-    res.json({ success: true, data: turnaje, pocet: turnaje.length });
+    res.json({ success: true, data: turnaje });
   } catch (chyba) {
     console.error('Chyba pri načítaní turnajov:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });

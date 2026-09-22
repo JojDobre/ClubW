@@ -116,7 +116,6 @@ export const getTeams = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: result,
-      count: result.length,
       message: `Nájdených ${result.length} tímov`
     });
 
@@ -125,7 +124,7 @@ export const getTeams = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tímov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -188,7 +187,7 @@ export const getTeamById = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -243,7 +242,6 @@ export const getTeamPlayers = async (req: Request, res: Response): Promise<void>
         tim: team.toSafeJSON(),
         hraci: players.map((player: any) => player.toSafeJSON())
       },
-      count: players.length,
       message: `Nájdených ${players.length} hráčov pre tím ${team.getFullName()}`
     });
 
@@ -252,7 +250,7 @@ export const getTeamPlayers = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráčov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -307,7 +305,6 @@ export const getTeamStaff = async (req: Request, res: Response): Promise<void> =
         tim: team.toSafeJSON(),
         realizacny_tim: staff.map((member: any) => member.toSafeJSON())
       },
-      count: staff.length,
       message: `Nájdených ${staff.length} členov realizačného tímu pre tím ${team.getFullName()}`
     });
 
@@ -316,7 +313,7 @@ export const getTeamStaff = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -413,7 +410,7 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -469,7 +466,7 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -537,7 +534,7 @@ export const deleteTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

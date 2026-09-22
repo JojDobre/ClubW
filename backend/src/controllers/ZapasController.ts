@@ -13,6 +13,7 @@ import Team from '../models/Team';
 import Stadion from '../models/Stadion';
 import Player from '../models/Player';
 import Article from '../models/Article';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // ===== HELPER FUNCTIONS =====
 
@@ -218,10 +219,7 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: result,
-      count: result.length,
-      total: count,
-      page: pageNum,
-      totalPages: Math.ceil(count / limitNum),
+      pagination: zostavStrankovanie(count, limitNum, offset),
       message: `Nájdených ${result.length} zápasov`
     });
 
@@ -230,7 +228,7 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní zápasov',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -314,7 +312,7 @@ export const getMatch = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní detailu zápasu',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -619,7 +617,7 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní zápasu',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -874,7 +872,7 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii zápasu',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -919,7 +917,7 @@ export const deleteMatch = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní zápasu',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -973,7 +971,7 @@ export const updateMatchStatuses = async (req: Request, res: Response): Promise<
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii statusov',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

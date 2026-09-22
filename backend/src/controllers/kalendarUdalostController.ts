@@ -193,7 +193,6 @@ export const getUdalosti = async (req: Request, res: Response): Promise<void> =>
     res.json({
       success: true,
       data: vyskyty,
-      pocet: vyskyty.length,
       rozsah: { od, do: doKedy },
       message: `Nájdených ${vyskyty.length} výskytov udalostí`,
     });

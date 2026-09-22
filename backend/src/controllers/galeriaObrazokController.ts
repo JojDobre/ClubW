@@ -9,6 +9,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import sharp from 'sharp';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // ===== MULTER CONFIGURATION =====
 
@@ -246,7 +247,7 @@ export const uploadGalleryImages = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri upload obrázkov',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -298,16 +299,9 @@ export const getGalleryImages = async (req: Request, res: Response) => {
           nazov: galeria.nazov,
           pocet_obrazkov: galeria.pocet_obrazkov
         },
-        obrazky: obrazky.map(o => o.toJSON()),
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: count,
-          pages: Math.ceil(count / limitNum),
-          hasNext: offset + limitNum < count,
-          hasPrev: pageNum > 1
-        }
+        obrazky: obrazky.map(o => o.toJSON())
       },
+      pagination: zostavStrankovanie(count, limitNum, offset),
       message: `Načítaných ${obrazky.length} obrázkov`
     });
 
@@ -316,7 +310,7 @@ export const getGalleryImages = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní obrázkov',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -371,7 +365,7 @@ export const updateGalleryImage = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: { obrazok: obrazok.toJSON() },
+      data: obrazok.toJSON(),
       message: 'Obrázok úspešne aktualizovaný'
     });
 
@@ -380,7 +374,7 @@ export const updateGalleryImage = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii obrázka',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -443,7 +437,7 @@ export const deleteGalleryImage = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vymazávaní obrázka',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

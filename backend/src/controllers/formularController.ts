@@ -11,6 +11,7 @@ import { Op } from 'sequelize';
 import Formular from '../models/Formular';
 import FormularOdpoved from '../models/FormularOdpoved';
 import { sanitizePlainText } from '../utils/sanitize';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 const overId = (id: string): number | null => {
   const cislo = Number(id);
@@ -46,7 +47,7 @@ export const getFormulare = async (_req: Request, res: Response): Promise<void> 
       }))
     );
 
-    res.json({ success: true, data: sPoctami, pocet: sPoctami.length });
+    res.json({ success: true, data: sPoctami });
   } catch (error) {
     console.error('Chyba pri načítaní formulárov:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri načítaní formulárov' });
@@ -269,8 +270,7 @@ export const getOdpovede = async (req: Request, res: Response): Promise<void> =>
       success: true,
       data: rows.map((o) => o.toSafeJSON()),
       formular: { id: formular.id, nazov: formular.nazov, polia: formular.polia },
-      pocet: rows.length,
-      celkom: count,
+      pagination: zostavStrankovanie(count, limit, offset),
       pocet_neprecitanych: await FormularOdpoved.count({
         where: { formular_id: id, precitane: false },
       }),
@@ -422,7 +422,7 @@ export const odosliFormular = async (req: Request, res: Response): Promise<void>
 
     res.status(201).json({
       success: true,
-      data: { id: odpoved.id },
+      data: odpoved.id,
       message: formular.sprava_po_odoslani || 'Ďakujeme, formulár bol odoslaný.',
     });
   } catch (error) {
@@ -442,7 +442,7 @@ export const getPocetNeprecitanych = async (_req: Request, res: Response): Promi
       include: [{ model: Formular, as: 'formular', where: { aktivity: true }, required: true }],
     });
 
-    res.json({ success: true, data: { pocet_neprecitanych: pocet } });
+    res.json({ success: true, data: pocet });
   } catch (error) {
     console.error('Chyba pri počítaní neprečítaných odpovedí:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });

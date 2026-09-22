@@ -43,7 +43,7 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
 
     res.json({
       success: true,
-      data: { categories },
+      data: categories,
     });
   } catch (error) {
     console.error('Chyba pri získavaní kategórií:', error);
@@ -96,7 +96,7 @@ export const getAdminCategories = async (req: Request, res: Response): Promise<v
 
     res.json({
       success: true,
-      data: { categories: categoriesWithCounts },
+      data: categoriesWithCounts,
     });
   } catch (error) {
     console.error('Chyba pri získavaní admin kategórií:', error);
@@ -127,7 +127,7 @@ export const getCategoryBySlug = async (req: Request, res: Response): Promise<vo
 
     res.json({
       success: true,
-      data: { category },
+      data: category,
     });
   } catch (error) {
     console.error('Chyba pri získavaní kategórie:', error);
@@ -155,7 +155,7 @@ export const getAdminCategoryById = async (req: Request, res: Response): Promise
 
     res.json({
       success: true,
-      data: { category: category.toSafeJSON() },
+      data: category.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri získavaní kategórie:', error);
@@ -224,7 +224,7 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
     res.status(201).json({
       success: true,
       message: 'Kategória úspešne vytvorená',
-      data: { category: newCategory.toSafeJSON() },
+      data: newCategory.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri vytváraní kategórie:', error);
@@ -299,7 +299,7 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
     res.json({
       success: true,
       message: 'Kategória úspešne aktualizovaná',
-      data: { category: category.toSafeJSON() },
+      data: category.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri aktualizácii kategórie:', error);
@@ -375,7 +375,7 @@ export const toggleCategoryStatus = async (req: Request, res: Response): Promise
     res.json({
       success: true,
       message: `Kategória ${category.aktivity ? 'aktivovaná' : 'deaktivovaná'}`,
-      data: { category: category.toSafeJSON() },
+      data: category.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri prepínaní stavu kategórie:', error);
@@ -471,9 +471,7 @@ export const bulkDeleteCategories = async (req: Request, res: Response): Promise
       res.status(400).json({
         success: false,
         message: 'Niektoré kategórie obsahujú články a nemožno ich vymazať',
-        data: {
-          categoriesWithArticles
-        }
+        data: categoriesWithArticles
       });
       return;
     }

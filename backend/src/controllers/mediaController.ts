@@ -16,6 +16,7 @@ import Galeria from '../models/Galeria';
 import User from '../models/user';
 import { ulozMedium, zmazMedium } from '../utils/mediaUlozisko';
 import { sanitizePlainText } from '../utils/sanitize';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 /** Maximálna veľkosť jedného súboru. */
 const MAX_VELKOST = 10 * 1024 * 1024; // 10 MB
@@ -101,9 +102,7 @@ export const getMediaZoznam = async (req: Request, res: Response): Promise<void>
     res.json({
       success: true,
       data: rows.map((m) => m.toSafeJSON()),
-      pocet: rows.length,
-      celkom: count,
-      strankovanie: { limit, offset, ma_dalsie: offset + rows.length < count },
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri načítaní media knižnice:', error);
@@ -284,7 +283,7 @@ export const deleteMedium = async (req: Request, res: Response): Promise<void> =
           `(články: ${pouzitie.clanky}, stránky: ${pouzitie.stranky}, galérie: ${pouzitie.galerie}). ` +
           'Zmazaním by tam zostal prázdny obrázok. Ak to naozaj chcete, ' +
           'zopakujte požiadavku s ?force=true',
-        data: { pouzitie },
+        data: pouzitie,
       });
       return;
     }

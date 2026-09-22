@@ -77,7 +77,6 @@ export const getMenu = async (_req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: doStromu(pouzitelne),
-      pocet: pouzitelne.length,
     });
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
@@ -94,7 +93,6 @@ export const getMenuAdmin = async (_req: Request, res: Response): Promise<void> 
     res.json({
       success: true,
       data: { strom: doStromu(ploche), zoznam: ploche },
-      pocet: ploche.length,
     });
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
@@ -291,7 +289,6 @@ export const getPresmerovania = async (_req: Request, res: Response): Promise<vo
     res.json({
       success: true,
       data: zoznam.map((p) => p.toSafeJSON()),
-      pocet: zoznam.length,
     });
   } catch (error) {
     console.error('Chyba pri načítaní presmerovaní:', error);

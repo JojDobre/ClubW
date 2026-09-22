@@ -270,8 +270,6 @@ export const getLeagues = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: result,
-      count: result.length,
-      total: leagues.length, // Pre pagináciu
       message: `Nájdených ${result.length} líg`
     });
 
@@ -280,7 +278,7 @@ export const getLeagues = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní líg',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -369,7 +367,7 @@ export const getLeague = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -487,7 +485,7 @@ export const createLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -641,7 +639,7 @@ export const updateLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -709,7 +707,7 @@ export const deleteLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -736,7 +734,6 @@ export const getLeagueTableEndpoint = async (req: Request, res: Response): Promi
     res.json({
       success: true,
       data: tabulka.map(t => t.toSafeJSON()),
-      count: tabulka.length,
       message: 'Tabuľka úspešne načítaná'
     });
 
@@ -745,7 +742,7 @@ export const getLeagueTableEndpoint = async (req: Request, res: Response): Promi
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -788,7 +785,7 @@ export const recalculateLeagueTableEndpoint = async (req: Request, res: Response
     res.status(status).json({
       success: false,
       message,
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -953,7 +950,6 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.json({
       success: true,
       data: updatedTable.map(t => t.toSafeJSON()),
-      count: updatedTable.length,
       message: `Tabuľka úspešne aktualizovaná (${existingRecords.length} upravených, ${newRecords.length} nových)`
     });
 
@@ -973,7 +969,7 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri aktualizácii tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1013,7 +1009,7 @@ export const getLeagueTournamentEndpoint = async (req: Request, res: Response): 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní turnaja',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1045,7 +1041,7 @@ export const getLeagueStatsEndpoint = async (req: Request, res: Response): Promi
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní štatistík',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1077,7 +1073,7 @@ export const getLeagueOverviewEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri načítaní prehľadu ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1124,7 +1120,7 @@ export const exportLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri exporte tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1165,7 +1161,7 @@ export const importLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri importe tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

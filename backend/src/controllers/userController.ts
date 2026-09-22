@@ -8,6 +8,7 @@ import User from '../models/user';
 import Rola from '../models/Rola';
 // Kontrola sily hesla - nahrádza pôvodnú podmienku "aspoň 6 znakov"
 import { overSiluHesla } from '../utils/heslo';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // Validácia pre vytvorenie používateľa
 export const validateCreateUser = [
@@ -137,16 +138,8 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       success: true,
-      data: {
-        users: users.map(user => user.toSafeJSON()),
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalUsers: count,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-      },
+      data: users.map(user => user.toSafeJSON()),
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľov:', error);
@@ -176,7 +169,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     res.json({
       success: true,
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľa:', error);
@@ -247,7 +240,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     res.status(201).json({
       success: true,
       message: 'Používateľ úspešne vytvorený',
-      data: { user: newUser.toSafeJSON() },
+      data: newUser.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri vytváraní používateľa:', error);
@@ -311,7 +304,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       message: 'Používateľ úspešne aktualizovaný',
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri aktualizácii používateľa:', error);
@@ -392,7 +385,7 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     res.json({
       success: true,
       message: `Používateľ ${user.aktivity ? 'aktivovaný' : 'deaktivovaný'}`,
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri prepínaní stavu používateľa:', error);

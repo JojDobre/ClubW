@@ -164,7 +164,6 @@ export const getZostava = async (req: Request, res: Response): Promise<void> => 
           lavicka: podla('hostia', 'lavicka'),
         },
         vsetky,
-        pocet: vsetky.length,
       },
     });
   } catch (error) {
@@ -266,7 +265,6 @@ export const getUdalosti = async (req: Request, res: Response): Promise<void> =>
     res.json({
       success: true,
       data: udalosti.map((u) => u.toSafeJSON()),
-      pocet: udalosti.length,
     });
   } catch (error) {
     console.error('Chyba pri načítaní udalostí zápasu:', error);

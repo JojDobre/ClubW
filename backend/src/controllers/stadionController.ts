@@ -69,7 +69,6 @@ export const getStadiony = async (req: Request, res: Response): Promise<void> =>
     res.json({
       success: true,
       data: stadiony.map((s) => s.toSafeJSON()),
-      pocet: stadiony.length,
       message: `Nájdených ${stadiony.length} štadiónov`,
     });
   } catch (error) {
@@ -218,7 +217,7 @@ export const deleteStadion = async (req: Request, res: Response): Promise<void> 
         message:
           `Štadión ${stadion.nazov} nemožno archivovať - hrá na ňom ${pocetTimov} tímov. ` +
           'Najprv im nastavte iný štadión.',
-        data: { pocet_timov: pocetTimov },
+        data: pocetTimov,
       });
       return;
     }

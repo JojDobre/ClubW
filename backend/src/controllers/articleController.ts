@@ -14,6 +14,7 @@ import fs from 'fs/promises';
 // Sanitizácia HTML obsahu pred uložením do DB - ochrana pred stored XSS
 import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
 import path from 'path';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // Validácia pre VYTVORENIE článku - povinné polia musia prísť.
 export const validateArticle = [
@@ -202,16 +203,8 @@ export const getPublicArticles = async (req: Request, res: Response): Promise<vo
 
     res.json({
       success: true,
-      data: {
-        articles: formattedArticles,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalArticles: count,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-      },
+      data: formattedArticles,
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri získavaní článkov:', error);
@@ -284,7 +277,7 @@ export const getPublicArticleBySlug = async (req: Request, res: Response): Promi
 
     res.json({
       success: true,
-      data: { article: formattedArticle },
+      data: formattedArticle,
     });
   } catch (error) {
     console.error('Chyba pri získavaní článku:', error);
@@ -363,16 +356,8 @@ export const getAdminArticles = async (req: Request, res: Response): Promise<voi
 
     res.json({
       success: true,
-      data: {
-        articles: formattedArticles,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalArticles: count,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-      },
+      data: formattedArticles,
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri získavaní admin článkov:', error);
@@ -419,7 +404,7 @@ export const getAdminArticleById = async (req: Request, res: Response): Promise<
 
     res.json({
       success: true,
-      data: { article: formattedArticle },
+      data: formattedArticle,
     });
   } catch (error) {
     console.error('Chyba pri získavaní článku:', error);
@@ -537,12 +522,10 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     res.status(201).json({
       success: true,
       message: 'Článok úspešne vytvorený',
-      data: { 
-        article: {
-          ...articleWithRelations!.toAdminJSON(),
-          autor: (articleWithRelations as any).autor,
-          kategoria: (articleWithRelations as any).kategoria,
-        }
+      data: {
+        ...articleWithRelations!.toAdminJSON(),
+        autor: (articleWithRelations as any).autor,
+        kategoria: (articleWithRelations as any).kategoria,
       },
     });
   } catch (error) {
@@ -681,12 +664,10 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     res.json({
       success: true,
       message: 'Článok úspešne aktualizovaný',
-      data: { 
-        article: {
-          ...updatedArticle!.toAdminJSON(),
-          autor: (updatedArticle as any).autor,
-          kategoria: (updatedArticle as any).kategoria,
-        }
+      data: {
+        ...updatedArticle!.toAdminJSON(),
+        autor: (updatedArticle as any).autor,
+        kategoria: (updatedArticle as any).kategoria,
       },
     });
   } catch (error) {
@@ -905,9 +886,7 @@ export const bulkDeleteArticles = async (req: Request, res: Response): Promise<v
         res.status(403).json({
           success: false,
           message: 'Nemáte oprávnenie vymazať niektoré články',
-          data: {
-            unauthorizedArticles: unauthorizedArticles.map(a => ({ id: a.id, nazov: a.nazov }))
-          }
+          errors: unauthorizedArticles.map(a => ({ id: a.id, nazov: a.nazov }))
         });
         return;
       }

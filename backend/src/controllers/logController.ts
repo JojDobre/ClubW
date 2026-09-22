@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import AuditLog from '../models/AuditLog';
 import User from '../models/user';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 /** Akcie, podľa ktorých sa dá filtrovať. */
 const AKCIE = [
@@ -101,9 +102,7 @@ export const getLogy = async (req: Request, res: Response): Promise<void> => {
           : null,
         vytvoreny: z.vytvoreny,
       })),
-      pocet: rows.length,
-      celkom: count,
-      strankovanie: { limit, offset, ma_dalsie: offset + rows.length < count },
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri načítaní logov:', error);

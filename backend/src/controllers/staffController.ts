@@ -131,7 +131,6 @@ export const getStaff = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: result,
-      count: staff.length,
       message: `Nájdených ${staff.length} členov realizačného tímu`
     });
 
@@ -140,7 +139,7 @@ export const getStaff = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -193,7 +192,7 @@ export const getStaffById = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní člena realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -310,7 +309,7 @@ export const createStaff = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní člena realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -462,7 +461,7 @@ export const updateStaff = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii člena realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -511,7 +510,7 @@ export const deleteStaff = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vymazávaní člena realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

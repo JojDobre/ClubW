@@ -359,7 +359,7 @@ export const getAudit = async (req: Request, res: Response): Promise<void> => {
       limit,
     });
 
-    res.json({ success: true, data: zaznamy, pocet: zaznamy.length });
+    res.json({ success: true, data: zaznamy });
   } catch (error) {
     console.error('Chyba pri načítaní auditu:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });

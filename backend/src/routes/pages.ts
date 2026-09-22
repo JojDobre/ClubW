@@ -9,6 +9,7 @@ import { authenticateToken, requireAdmin, requireEditor } from '../middleware/au
 import { Op } from 'sequelize';
 // Sanitizácia HTML obsahu stránok pred uložením do DB
 import { sanitizeContent } from '../utils/sanitize';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 const router: Router = Router();
 
@@ -58,15 +59,12 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        pages: pages.rows.map(page => page.toJSON()),
-        pagination: {
-          total: pages.count,
-          limit: parseInt(limit as string) || 20,
-          offset: parseInt(offset as string) || 0,
-          has_more: pages.count > (parseInt(offset as string) || 0) + pages.rows.length
-        }
-      }
+      data: pages.rows.map(page => page.toJSON()),
+      pagination: zostavStrankovanie(
+        pages.count,
+        Math.min(parseInt(limit as string) || 20, 100),
+        parseInt(offset as string) || 0
+      )
     });
 
   } catch (error) {
@@ -88,15 +86,13 @@ router.get('/menu', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        pages: menuPages.map(page => ({
-          id: page.id,
-          nazov: page.nazov,
-          slug: page.slug,
-          url: page.getUrl(),
-          poradie_menu: page.poradie_menu
-        }))
-      }
+      data: menuPages.map(page => ({
+        id: page.id,
+        nazov: page.nazov,
+        slug: page.slug,
+        url: page.getUrl(),
+        poradie_menu: page.poradie_menu
+      }))
     });
 
   } catch (error) {
@@ -138,9 +134,7 @@ router.get('/:slug', [
 
     res.json({
       success: true,
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -208,21 +202,18 @@ adminPageRouter.get('/', [
 
     res.json({
       success: true,
-      data: {
-        pages: pages.rows.map(page => page.toJSON()),
-        pagination: {
-          total: pages.count,
-          limit: parseInt(limit as string) || 20,
-          offset: parseInt(offset as string) || 0,
-          has_more: pages.count > (parseInt(offset as string) || 0) + pages.rows.length
-        },
-        filters: {
-          search: search || '',
-          status: status || 'all',
-          in_menu: in_menu || 'all',
-          sort_by: sortField,
-          sort_order: sortDirection
-        }
+      data: pages.rows.map(page => page.toJSON()),
+      pagination: zostavStrankovanie(
+        pages.count,
+        Math.min(parseInt(limit as string) || 20, 100),
+        parseInt(offset as string) || 0
+      ),
+      filters: {
+        search: search || '',
+        status: status || 'all',
+        in_menu: in_menu || 'all',
+        sort_by: sortField,
+        sort_order: sortDirection
       }
     });
 
@@ -266,9 +257,7 @@ adminPageRouter.get('/:id', [
 
     res.json({
       success: true,
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -384,9 +373,7 @@ adminPageRouter.post('/', [
     res.status(201).json({
       success: true,
       message: 'Stránka bola úspešne vytvorená',
-      data: {
-        page: newPage.toJSON()
-      }
+      data: newPage.toJSON()
     });
 
   } catch (error) {
@@ -493,9 +480,7 @@ adminPageRouter.put('/:id', [
     res.json({
       success: true,
       message: 'Stránka bola úspešne aktualizovaná',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -603,9 +588,7 @@ adminPageRouter.patch('/:id/toggle-menu', [
     res.json({
       success: true,
       message: v_menu ? 'Stránka bola pridaná do menu' : 'Stránka bola odstránená z menu',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -657,9 +640,7 @@ adminPageRouter.patch('/:id/toggle-publish', [
     res.json({
       success: true,
       message: publikovany ? 'Stránka bola publikovaná' : 'Stránka bola zmenená na koncept',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {

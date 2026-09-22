@@ -185,7 +185,6 @@ export const getArchiv = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: polozky,
-      pocet: polozky.length,
       pocty_podla_typu: pocty,
       message: polozky.length
         ? `V archíve je ${polozky.length} položiek`

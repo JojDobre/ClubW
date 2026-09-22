@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { Galeria, GaleriaObrazok, Team, Article, Zapas } from '../models';
 import { getGalleryWithImages, getGalleriesByType, getAllGalleriesForAdmin } from '../models';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // ===== HELPER FUNCTIONS =====
 
@@ -102,17 +103,8 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        galerie: formattedGalleries,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: count,
-          pages: Math.ceil(count / limitNum),
-          hasNext: offset + limitNum < count,
-          hasPrev: pageNum > 1
-        }
-      },
+      data: formattedGalleries,
+      pagination: zostavStrankovanie(count, limitNum, offset),
       message: `Načítaných ${galerie.length} galérií`
     });
 
@@ -121,7 +113,7 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní galérií',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -155,10 +147,8 @@ export const getPublicGallery = async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
-        galeria: {
-          ...galeria.toJSON(),
-          obrazky: formattedImages
-        }
+        ...galeria.toJSON(),
+        obrazky: formattedImages
       },
       message: `Galéria "${galeria.nazov}" načítaná`
     });
@@ -168,7 +158,7 @@ export const getPublicGallery = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní galérie',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -210,7 +200,7 @@ export const getGalleriesByTypeEndpoint = async (req: Request, res: Response) =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní galérií',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -275,17 +265,8 @@ export const getAdminGalleries = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        galerie: paginatedGalleries.map(galeria => galeria.toJSON()),
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum),
-          hasNext: offset + limitNum < total,
-          hasPrev: pageNum > 1
-        }
-      },
+      data: paginatedGalleries.map(galeria => galeria.toJSON()),
+      pagination: zostavStrankovanie(total, limitNum, offset),
       message: `Načítaných ${paginatedGalleries.length} galérií pre admin`
     });
 
@@ -294,7 +275,7 @@ export const getAdminGalleries = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní galérií',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -366,7 +347,7 @@ export const createGallery = async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
-      data: { galeria: galeria.toJSON() },
+      data: galeria.toJSON(),
       message: `Galéria "${galeria.nazov}" bola úspešne vytvorená`
     });
 
@@ -391,7 +372,7 @@ export const createGallery = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní galérie',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -476,7 +457,7 @@ export const updateGallery = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: { galeria: galeria.toJSON() },
+      data: galeria.toJSON(),
       message: `Galéria "${galeria.nazov}" bola úspešne aktualizovaná`
     });
 
@@ -494,7 +475,7 @@ export const updateGallery = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii galérie',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -549,7 +530,7 @@ export const deleteGallery = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vymazávaní galérie',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

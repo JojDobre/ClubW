@@ -514,7 +514,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       ? err.message
       : 'Interná chyba servera',
     // Stack trace posielame len v developmente, v produkcii by prezrádzal interné detaily
-    error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    debug: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
 
