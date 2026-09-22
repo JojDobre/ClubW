@@ -28,6 +28,8 @@ import Media from './Media';
 import Rola from './Rola';
 import MenuPolozka from './MenuPolozka';
 import Presmerovanie from './Presmerovanie';
+import Formular from './Formular';
+import FormularOdpoved from './FormularOdpoved';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -165,6 +167,18 @@ MenuPolozka.belongsTo(Page, { foreignKey: 'stranka_id', as: 'stranka', constrain
 MenuPolozka.belongsTo(Category, { foreignKey: 'rubrika_id', as: 'rubrika', constraints: false });
 MenuPolozka.belongsTo(MenuPolozka, { foreignKey: 'rodic_id', as: 'rodic', constraints: false });
 MenuPolozka.hasMany(MenuPolozka, { foreignKey: 'rodic_id', as: 'deti', constraints: false });
+
+// Formular -> FormularOdpoved (1:N) - vyplnené formuláre
+Formular.hasMany(FormularOdpoved, {
+  foreignKey: 'formular_id',
+  as: 'odpovede',
+  onDelete: 'CASCADE',
+});
+
+FormularOdpoved.belongsTo(Formular, {
+  foreignKey: 'formular_id',
+  as: 'formular',
+});
 
 // 3. TEAM vzťahy
 // Team -> Players (1:N) - tím má viacero hráčov
@@ -516,6 +530,8 @@ export default {
   Rola,
   MenuPolozka,
   Presmerovanie,
+  Formular,
+  FormularOdpoved,
   SupiskaSezony,
   Suhlas,
   AuditLog,

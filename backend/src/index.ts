@@ -52,6 +52,9 @@ import stadionRoutes from './routes/stadiony';
 import mediaRoutes from './routes/media';
 import rolaRoutes from './routes/roly';
 import menuRoutes from './routes/menu';
+import formularRoutes from './routes/formulare';
+import logRoutes from './routes/logy';
+import { zaznamenajZmeny } from './middleware/auditLog';
 import { vykonajPresmerovania } from './middleware/presmerovania';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 import { spustiPlanovacZapasov } from './services/planovacZapasov';
@@ -233,6 +236,11 @@ app.get('/api/license/status', (_req, res) => {
 // presmerovanie stihne vyhodnotiť.
 app.use(vykonajPresmerovania);
 
+// Audit: zaznamená každý úspešný zápis. Musí byť pred routami, aby
+// zachytil všetky - dopĺňať volanie do každého controllera by
+// znamenalo, že sa naň pri novom endpointe zabudne.
+app.use(zaznamenajZmeny);
+
 app.use('/api', nastaveniaRoutes);
 
 // Sezóny a súpisky - čítanie je verejné (archív, súpisky tímov)
@@ -293,6 +301,12 @@ app.use('/api/admin/roles', rolaRoutes);
 
 // Menu a presmerovania
 app.use('/api', menuRoutes);
+
+// Formuláre - verejné vyplnenie aj správa vyplnených
+app.use('/api', formularRoutes);
+
+// Logy - všetky udalosti s filtrovaním
+app.use('/api/admin/logs', logRoutes);
 
 
 // ===== ŠTATISTIKY =====
