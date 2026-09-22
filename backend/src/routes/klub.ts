@@ -9,6 +9,7 @@ import { Router, Request, Response } from 'express';
 import { Model, ModelStatic, Op } from 'sequelize';
 import Sponzor from '../models/Sponzor';
 import Dokument from '../models/Dokument';
+import DokumentKategoria from '../models/DokumentKategoria';
 import Anketa from '../models/Anketa';
 import Fanusik from '../models/Fanusik';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
@@ -78,7 +79,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
 
       const zaznamy = await model.findAll({ where: kde, order: zoradenie, limit });
 
-      res.json({ success: true, data: zaznamy, pocet: zaznamy.length });
+      res.json({ success: true, data: zaznamy });
     } catch (chyba) {
       console.error(`Chyba pri načítaní (${nazov}):`, chyba);
       res.status(500).json({ success: false, message: `Chyba pri načítaní: ${nazov}` });
@@ -176,8 +177,20 @@ vytvorOperacie('sponsors', {
 vytvorOperacie('documents', {
   model: Dokument,
   nazov: 'Dokument',
-  polia: ['nazov', 'popis', 'subor_url', 'typ_suboru', 'velkost_kb', 'kategoria', 'verejny', 'poradie', 'aktivity'],
+  polia: ['nazov', 'popis', 'subor_url', 'typ_suboru', 'velkost_kb', 'kategoria', 'kategoria_id', 'verejny', 'poradie', 'aktivity'],
   textovePolia: ['nazov', 'popis', 'kategoria'],
+  zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
+  hladatV: ['nazov', 'popis'],
+});
+
+// ===== Kategórie dokumentov =====
+// Požiadavka hovorí „Kategória dokumentov - popis, názov", teda
+// samostatná entita. Doteraz to bol len voľný text na dokumente.
+vytvorOperacie('document-categories', {
+  model: DokumentKategoria,
+  nazov: 'Kategória dokumentov',
+  polia: ['nazov', 'popis', 'poradie', 'aktivity'],
+  textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
 });

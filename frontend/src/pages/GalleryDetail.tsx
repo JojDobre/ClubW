@@ -37,9 +37,7 @@ interface Gallery {
 
 interface ApiResponse {
   success: boolean;
-  data: {
-    galeria: Gallery;
-  };
+  data: Gallery;
   message: string;
 }
 
@@ -72,8 +70,8 @@ const GalleryDetail: React.FC = () => {
 
       const data: ApiResponse = await response.json();
       if (data.success) {
-        setGallery(data.data.galeria);
-        console.log('✅ Gallery nastavená:', data.data.galeria);
+        setGallery(data.data);
+        console.log('✅ Gallery nastavená:', data.data);
       } else {
         throw new Error(data.message || 'Chyba pri načítaní galérie');
       }

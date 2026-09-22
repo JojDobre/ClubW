@@ -218,22 +218,22 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
       const data = await response.json();
       if (data.success) {
-        setArticles(data.data.articles);
-        
+        setArticles(data.data);
+
         // Ak je dostupná paginácia, nastavíme ju
-        if (data.data.pagination) {
-          const pagination = data.data.pagination;
-          setCurrentPage(pagination.currentPage);
-          setTotalPages(pagination.totalPages);
-          setTotalArticles(pagination.totalArticles);
-          
+        if (data.pagination) {
+          const pagination = data.pagination;
+          setCurrentPage(pagination.current_page);
+          setTotalPages(pagination.pages);
+          setTotalArticles(pagination.total);
+
           // Nastavenie dát pre Table komponent
           setPaginationData({
-            currentPage: pagination.currentPage,
-            totalPages: pagination.totalPages,
-            totalItems: pagination.totalArticles,
-            hasNextPage: pagination.hasNextPage,
-            hasPrevPage: pagination.hasPrevPage
+            currentPage: pagination.current_page,
+            totalPages: pagination.pages,
+            totalItems: pagination.total,
+            hasNextPage: pagination.has_next,
+            hasPrevPage: pagination.has_prev
           });
         }
         setError('');
@@ -260,7 +260,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
       const data = await response.json();
       if (data.success) {
-        setCategories(data.data.categories);
+        setCategories(data.data);
       } else {
         console.error('Chyba pri načítavaní kategórií:', data.message);
       }
@@ -281,7 +281,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ currentUser }) =>
 
       const data = await response.json();
       if (data.success) {
-        const allArticles = data.data.articles;
+        const allArticles = data.data;
         
         // Aktuálne dátumy
         const teraz = new Date();

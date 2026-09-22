@@ -69,7 +69,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser }) => {
 
       const data = await response.json();
       if (data.success) {
-        setUsers(data.data.users);
+        setUsers(data.data);
       } else {
         setError(data.message || 'Chyba pri načítavaní používateľov');
       }

@@ -22,7 +22,8 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
-    "vytvor-spravcu": "tsx scripts/vytvor-spravcu.ts"
+    "vytvor-spravcu": "tsx scripts/vytvor-spravcu.ts",
+    "import-media": "tsx scripts/import-media.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

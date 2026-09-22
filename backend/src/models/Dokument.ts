@@ -13,6 +13,8 @@ interface DokumentAttributes {
   typ_suboru: string | null;
   velkost_kb: number | null;
   kategoria: string | null;
+  /** Väzba na kategóriu ako entitu; textové pole vyššie zostáva pre staré dáta */
+  kategoria_id: number | null;
   /** Neverejný dokument uvidia len prihlásení */
   verejny: boolean;
   pocet_stiahnuti: number;
@@ -25,7 +27,7 @@ interface DokumentAttributes {
 interface DokumentCreationAttributes
   extends Optional<
     DokumentAttributes,
-    'id' | 'popis' | 'typ_suboru' | 'velkost_kb' | 'kategoria' | 'verejny'
+    'id' | 'popis' | 'typ_suboru' | 'velkost_kb' | 'kategoria' | 'kategoria_id' | 'verejny'
     | 'pocet_stiahnuti' | 'poradie' | 'aktivity' | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -37,6 +39,7 @@ class Dokument extends Model<DokumentAttributes, DokumentCreationAttributes> imp
   public typ_suboru!: string | null;
   public velkost_kb!: number | null;
   public kategoria!: string | null;
+  public kategoria_id!: number | null;
   public verejny!: boolean;
   public pocet_stiahnuti!: number;
   public poradie!: number;
@@ -58,6 +61,11 @@ Dokument.init(
     typ_suboru: { type: DataTypes.STRING(10), allowNull: true },
     velkost_kb: { type: DataTypes.INTEGER, allowNull: true },
     kategoria: { type: DataTypes.STRING(60), allowNull: true },
+    kategoria_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'dokument_kategorie', key: 'id' },
+    },
     verejny: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     pocet_stiahnuti: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     poradie: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },

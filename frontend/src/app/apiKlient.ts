@@ -12,6 +12,7 @@
 //   - Zrozumiteľné hlášky namiesto „Failed to fetch".
 
 import { apiUrl } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 
 /** Chyba z API s prístupom k stavovému kódu a podrobnostiam. */
 export class ApiChyba extends Error {
@@ -113,11 +114,26 @@ const sParametrami = (cesta: string, parametre?: Moznosti['parametre']): string 
 };
 
 /**
- * Zavolá API a vráti obsah poľa `data` z odpovede.
+ * Jednotná obálka odpovede z API.
+ *
+ * `data` je priamo tá vec, o ktorú ide - entita pri detaile, pole pri zozname.
+ * `pagination` stojí vedľa nej, nie v nej, takže pri zoznamoch treba siahnuť
+ * po celej obálke (`zavolajCele` / `api.ziskajZoznam`), nie len po `data`.
+ */
+export interface Obalka<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: unknown[];
+  pagination?: Strankovanie;
+}
+
+/**
+ * Zavolá API a vráti CELÚ obálku odpovede (aj so stránkovaním).
  *
  * @throws ApiChyba pri chybe servera alebo siete
  */
-async function zavolaj<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZopakovanie = false): Promise<T> {
+async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZopakovanie = false): Promise<Obalka<T>> {
   const { metoda = 'GET', telo, parametre, bezTokenu, signal } = moznosti;
 
   const hlavicky: Record<string, string> = {};
@@ -152,13 +168,13 @@ async function zavolaj<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZopako
   if (odpoved.status === 401 && !bezTokenu && !jePokusOZopakovanie) {
     const obnovene = await obnovTokenRaz();
     if (obnovene) {
-      return zavolaj<T>(cesta, moznosti, true);
+      return zavolajCele<T>(cesta, moznosti, true);
     }
   }
 
   // 204 znamená úspech bez obsahu (napríklad po zmazaní)
   if (odpoved.status === 204) {
-    return undefined as T;
+    return { success: true, data: undefined as T };
   }
 
   const obsah = await odpoved.json().catch(() => null);
@@ -177,12 +193,58 @@ async function zavolaj<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZopako
 
   // Endpointy vracajú užitočné údaje v poli data; niektoré (napríklad
   // generované CSS) vracajú obsah priamo
-  return (obsah?.data !== undefined ? obsah.data : obsah) as T;
+  if (obsah && typeof obsah === 'object' && 'data' in obsah) {
+    return obsah as Obalka<T>;
+  }
+
+  return { success: true, data: obsah as T };
+}
+
+/**
+ * Zavolá API a vráti obsah poľa `data` z odpovede.
+ *
+ * @throws ApiChyba pri chybe servera alebo siete
+ */
+async function zavolaj<T>(cesta: string, moznosti: Moznosti = {}): Promise<T> {
+  const obalka = await zavolajCele<T>(cesta, moznosti);
+  return obalka.data;
+}
+
+/** Zoznam aj so stránkovaním - to, čo obrazovke so stránkovaním treba. */
+export interface Zoznam<T> {
+  polozky: T[];
+  strankovanie?: Strankovanie;
 }
 
 export const api = {
   ziskaj: <T>(cesta: string, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
     zavolaj<T>(cesta, { ...moznosti, metoda: 'GET' }),
+
+  /**
+   * Zavolá API a vráti CELÚ obálku odpovede.
+   *
+   * Treba ju tam, kde endpoint posiela popri `data` aj ďalšie údaje
+   * (počty podľa stavu, filtre) - `ziskaj` vracia len `data`.
+   */
+  ziskajObalku: <T>(cesta: string, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
+    zavolajCele<T>(cesta, { ...moznosti, metoda: 'GET' }),
+
+  /**
+   * Načíta zoznam aj so stránkovaním.
+   *
+   * Backend vracia stránkovanie vedľa `data`, nie v ňom, takže `ziskaj`
+   * by ho zahodil.
+   */
+  ziskajZoznam: async <T>(
+    cesta: string,
+    moznosti?: Omit<Moznosti, 'metoda' | 'telo'>
+  ): Promise<Zoznam<T>> => {
+    const obalka = await zavolajCele<T[]>(cesta, { ...moznosti, metoda: 'GET' });
+    return {
+      polozky: Array.isArray(obalka.data) ? obalka.data : [],
+      strankovanie: obalka.pagination,
+    };
+  },
 
   vytvor: <T>(cesta: string, telo: unknown, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
     zavolaj<T>(cesta, { ...moznosti, metoda: 'POST', telo }),

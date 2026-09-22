@@ -8,21 +8,9 @@ import type {
   PrehladSuhlasov, AuditnyZaznam, DruhSuhlasu, Hrac,
 } from './typy';
 
-/** Odstíni rozdiel medzi odpoveďou ako pole a ako objekt s poľom. */
-const akoPole = <T>(odpoved: unknown, kluc?: string): T[] => {
-  if (Array.isArray(odpoved)) return odpoved as T[];
-  if (odpoved && typeof odpoved === 'object') {
-    const o = odpoved as Record<string, unknown>;
-    if (kluc && Array.isArray(o[kluc])) return o[kluc] as T[];
-    const prve = Object.values(o).find(Array.isArray);
-    if (prve) return prve as T[];
-  }
-  return [];
-};
-
 export const pouzivateliaApi = {
-  vypis: async (signal?: AbortSignal): Promise<Pouzivatel[]> =>
-    akoPole<Pouzivatel>(await api.ziskaj('/users', { parametre: { limit: 200 }, signal }), 'users'),
+  vypis: (signal?: AbortSignal) =>
+    api.ziskaj<Pouzivatel[]>('/users', { parametre: { limit: 200 }, signal }),
 
   vytvor: (udaje: Partial<Pouzivatel> & { heslo: string }) =>
     api.vytvor<Pouzivatel>('/users', udaje),
@@ -47,7 +35,7 @@ export const nastaveniaApi = {
 
 export const sezonyApi = {
   vypis: async (signal?: AbortSignal): Promise<Sezona[]> =>
-    akoPole<Sezona>(await api.ziskaj('/seasons', { signal, bezTokenu: true })),
+    api.ziskaj<Sezona[]>('/seasons', { signal, bezTokenu: true }),
 
   aktualna: (signal?: AbortSignal) =>
     api.ziskaj<Sezona>('/seasons/current', { signal, bezTokenu: true }),
@@ -63,20 +51,16 @@ export const sezonyApi = {
   zmaz: (id: number) => api.zmaz(`/admin/seasons/${id}`),
 
   /** Súpiska tímu pre danú sezónu. */
-  supiska: async (timId: number, sezonaId?: number, signal?: AbortSignal): Promise<ZaznamSupisky[]> =>
-    akoPole<ZaznamSupisky>(
-      await api.ziskaj(`/teams/${timId}/roster`, {
-        parametre: { sezona_id: sezonaId },
-        signal,
-        bezTokenu: true,
-      })
-    ),
+  supiska: (timId: number, sezonaId?: number, signal?: AbortSignal) =>
+    api.ziskaj<ZaznamSupisky[]>(`/teams/${timId}/roster`, {
+      parametre: { sezona_id: sezonaId },
+      signal,
+      bezTokenu: true,
+    }),
 
   /** História pôsobenia hráča po sezónach. */
-  historiaHraca: async (hracId: number, signal?: AbortSignal): Promise<ZaznamSupisky[]> =>
-    akoPole<ZaznamSupisky>(
-      await api.ziskaj(`/players/${hracId}/history`, { signal, bezTokenu: true })
-    ),
+  historiaHraca: (hracId: number, signal?: AbortSignal) =>
+    api.ziskaj<ZaznamSupisky[]>(`/players/${hracId}/history`, { signal, bezTokenu: true }),
 
   zapisNaSupisku: (udaje: {
     sezona_id: number;
@@ -112,13 +96,10 @@ export const gdprApi = {
   anonymizuj: (hracId: number) =>
     api.vytvor(`/admin/players/${hracId}/anonymize`, { potvrdenie: 'ANONYMIZOVAT' }),
 
-  audit: async (
+  audit: (
     filtre: { entita?: string; akcia?: string; entita_id?: number; limit?: number } = {},
     signal?: AbortSignal
-  ): Promise<AuditnyZaznam[]> =>
-    akoPole<AuditnyZaznam>(
-      await api.ziskaj('/admin/gdpr/audit', { parametre: filtre as any, signal })
-    ),
+  ) => api.ziskaj<AuditnyZaznam[]>('/admin/gdpr/audit', { parametre: filtre as any, signal }),
 
   retencia: (signal?: AbortSignal) =>
     api.ziskaj<{

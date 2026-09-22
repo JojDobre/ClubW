@@ -197,9 +197,9 @@ export const getMonthCalendar = async (req: Request, res: Response): Promise<voi
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString()
         },
-        total_matches: formattedMatches.length,
-        filters: { liga_id, tim_id }
+        total_matches: formattedMatches.length
       },
+      filters: { liga_id, tim_id },
       message: `Kalendár pre ${monthNames[validation.mesiac - 1]} ${validation.rok}`
     });
 
@@ -208,7 +208,7 @@ export const getMonthCalendar = async (req: Request, res: Response): Promise<voi
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní mesačného kalendára',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -308,9 +308,9 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
           week_number: getWeekNumber(new Date(validation.rok, validation.mesiac - 1, denNum)),
           target_date: `${validation.rok}-${validation.mesiac.toString().padStart(2, '0')}-${denNum.toString().padStart(2, '0')}`
         },
-        total_matches: formattedMatches.length,
-        filters: { liga_id, tim_id }
+        total_matches: formattedMatches.length
       },
+      filters: { liga_id, tim_id },
       message: `Týždenný kalendár pre ${startDate.toLocaleDateString('sk-SK')} - ${endDate.toLocaleDateString('sk-SK')}`
     });
 
@@ -319,7 +319,7 @@ export const getWeekCalendar = async (req: Request, res: Response): Promise<void
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní týždenného kalendára',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -409,10 +409,6 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
       }
     ];
 
-    // DETEKCIA FORMÁTU: Legacy alebo nový
-    const isLegacyFormat = format === 'legacy' || req.originalUrl.includes('/calendar/upcoming');
-    console.log('Is legacy format:', isLegacyFormat);
-
     // Načítaj oba typy zápasov paralelne (pre oba formáty)
     const [upcomingMatches, matchesWithoutResult] = await Promise.all([
       Zapas.findAll({
@@ -466,35 +462,13 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
     const upcomingCount = limitedMatches.filter(m => m.match_type === 'upcoming').length;
     const withoutResultCount = limitedMatches.filter(m => m.match_type === 'without_result').length;
 
-    if (isLegacyFormat) {
-      // LEGACY FORMÁT: Priamo array (pre ZapasManagement)
-      console.log('Using LEGACY format for ZapasManagement - s oboma typmi zápasov');
-      
-      res.json({
-        success: true,
-        data: limitedMatches, // Priamo array - ale s oboma typmi zápasov
-        count: limitedMatches.length,
-        breakdown: {
-          upcoming: upcomingCount,
-          without_result: withoutResultCount
-        },
-        message: `${limitedMatches.length} zápasov (nadchádzajúce + bez výsledku)`
-      });
-      return;
-    }
-
-    // NOVÝ FORMÁT: Nested objekt (pre KalendarManagement)
-    console.log('Using NEW format for KalendarManagement');
-    
+    // `data` je priamo zoznam zápasov, rozpad počtov ide vedľa neho.
     res.json({
       success: true,
-      data: {
-        data: limitedMatches,              // Array zápasov
-        count: limitedMatches.length,      // Celkový počet
-        breakdown: {
-          upcoming: upcomingCount,         // Počet nadchádzajúcich
-          without_result: withoutResultCount // Počet bez výsledku
-        }
+      data: limitedMatches,
+      breakdown: {
+        upcoming: upcomingCount,
+        without_result: withoutResultCount
       },
       message: `${limitedMatches.length} zápasov (nadchádzajúce + bez výsledku)`
     });
@@ -504,7 +478,7 @@ export const getUpcomingMatches = async (req: Request, res: Response): Promise<v
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní nadchádzajúcich zápasov',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

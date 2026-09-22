@@ -11,7 +11,7 @@ export const prehladApi = {
 
   /** Najnovšie články pre panel na úvodnej obrazovke. */
   najnovsieClanky: (limit = 5, signal?: AbortSignal) =>
-    api.ziskaj<{ articles: ClanokVoVypise[] }>('/articles', {
+    api.ziskaj<ClanokVoVypise[]>('/articles', {
       parametre: { limit, page: 1 },
       signal,
       bezTokenu: true,
@@ -19,7 +19,7 @@ export const prehladApi = {
 
   /** Nadchádzajúce zápasy. */
   najblizsieZapasy: (limit = 4, signal?: AbortSignal) =>
-    api.ziskaj<ZapasVoVypise[] | { matches: ZapasVoVypise[] }>('/calendar/upcoming', {
+    api.ziskaj<ZapasVoVypise[]>('/calendar/upcoming', {
       parametre: { limit },
       signal,
       bezTokenu: true,

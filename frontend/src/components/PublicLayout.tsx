@@ -37,7 +37,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
         const data = await response.json();
         
         if (data.success) {
-          setMenuPages(data.data.pages);
+          setMenuPages(data.data);
         }
       } catch (error) {
         console.error('Chyba pri načítavaní menu:', error);

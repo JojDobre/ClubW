@@ -2,7 +2,10 @@
 // OPRAVENÝ Controller pre REST API tímov - BEZ express-validator
 
 import { Request, Response } from 'express';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 import Team from '../models/Team';
+import Stadion from '../models/Stadion';
+import Sezona from '../models/Sezona';
 import Player from '../models/Player';
 import Staff from '../models/Staff';
 
@@ -24,10 +27,14 @@ const validateTeamData = (data: any) => {
     errors.push('Veková kategória je povinná');
   }
   
+  // Logo býva nahraté do uploads, nie externá adresa. Pôvodná kontrola
+  // prijímala len https://..., takže logo z media knižnice sa nedalo
+  // uložiť vôbec.
   if (data.logo && typeof data.logo === 'string') {
-    const urlPattern = /^https?:\/\/.+/;
-    if (!urlPattern.test(data.logo)) {
-      errors.push('Logo musí byť platná URL');
+    try {
+      overObrazkovySubor(data.logo);
+    } catch (chyba) {
+      errors.push((chyba as Error).message);
     }
   }
   
@@ -109,7 +116,6 @@ export const getTeams = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: result,
-      count: result.length,
       message: `Nájdených ${result.length} tímov`
     });
 
@@ -118,7 +124,7 @@ export const getTeams = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tímov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -181,7 +187,7 @@ export const getTeamById = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -236,7 +242,6 @@ export const getTeamPlayers = async (req: Request, res: Response): Promise<void>
         tim: team.toSafeJSON(),
         hraci: players.map((player: any) => player.toSafeJSON())
       },
-      count: players.length,
       message: `Nájdených ${players.length} hráčov pre tím ${team.getFullName()}`
     });
 
@@ -245,7 +250,7 @@ export const getTeamPlayers = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráčov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -300,7 +305,6 @@ export const getTeamStaff = async (req: Request, res: Response): Promise<void> =
         tim: team.toSafeJSON(),
         realizacny_tim: staff.map((member: any) => member.toSafeJSON())
       },
-      count: staff.length,
       message: `Nájdených ${staff.length} členov realizačného tímu pre tím ${team.getFullName()}`
     });
 
@@ -309,12 +313,33 @@ export const getTeamStaff = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní realizačného tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
 
 // ===== ADMIN API ENDPOINTS =====
+
+
+/**
+ * Overí, že štadión a sezóna, na ktoré sa tím odkazuje, naozaj existujú.
+ *
+ * Bez toho by zápis padol až na cudzom kľúči a používateľ by dostal 500
+ * namiesto zrozumiteľnej hlášky.
+ *
+ * @returns text chyby, alebo null keď je všetko v poriadku
+ */
+const overVazbyTimu = async (udaje: any): Promise<string | null> => {
+  if (udaje.stadion_id) {
+    const stadion = await Stadion.findOne({ where: { id: udaje.stadion_id, aktivity: true } });
+    if (!stadion) return `Štadión s ID ${udaje.stadion_id} neexistuje`;
+  }
+  if (udaje.sezona_id) {
+    const sezona = await Sezona.findOne({ where: { id: udaje.sezona_id, aktivity: true } });
+    if (!sezona) return `Sezóna s ID ${udaje.sezona_id} neexistuje`;
+  }
+  return null;
+};
 
 // POST /api/teams - Vytvorenie nového tímu
 export const createTeam = async (req: Request, res: Response): Promise<void> => {
@@ -333,6 +358,12 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
     }
 
     const teamData = req.body;
+
+    const chybaVazby = await overVazbyTimu(teamData);
+    if (chybaVazby) {
+      res.status(400).json({ success: false, message: chybaVazby });
+      return;
+    }
 
     // Skontrolujeme duplicitný názov + veková kategória
     const existingTeam = await Team.findOne({
@@ -358,6 +389,8 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
       typ: teamData.typ,
       vekova_kategoria: teamData.vekova_kategoria,
       popis: teamData.popis || null,
+      stadion_id: teamData.stadion_id || null,
+      sezona_id: teamData.sezona_id || null,
       logo: teamData.logo || null,
       farba_prva: teamData.farba_prva || null,
       farba_druha: teamData.farba_druha || null,
@@ -377,7 +410,7 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -411,6 +444,12 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    const chybaVazby = await overVazbyTimu(updateData);
+    if (chybaVazby) {
+      res.status(400).json({ success: false, message: chybaVazby });
+      return;
+    }
+
     // Aktualizácia
     await team.update(updateData);
 
@@ -427,7 +466,7 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -495,7 +534,7 @@ export const deleteTeam = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní tímu',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

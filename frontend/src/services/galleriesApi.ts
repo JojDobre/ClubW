@@ -74,18 +74,21 @@ export interface Match {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  count?: number;
   message?: string;
   errors?: string[] | Record<string, string[]>;
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: PaginationData;
 }
 
+/** Jednotný tvar stránkovania zo servera. */
 export interface PaginationData {
-  page: number;
-  limit: number;
   total: number;
+  limit: number;
+  offset: number;
   pages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  current_page: number;
+  has_next: boolean;
+  has_prev: boolean;
 }
 
 // ===== HELPER FUNCTIONS =====
@@ -170,10 +173,7 @@ export const galleriesApi = {
     limit?: number;
     search?: string;
     typ_priradenia?: string;
-  }): Promise<ApiResponse<{
-    galerie: Gallery[];
-    pagination: PaginationData;
-  }>> => {
+  }): Promise<ApiResponse<Gallery[]>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.limit) searchParams.append('limit', params.limit.toString());
@@ -183,10 +183,7 @@ export const galleriesApi = {
     const queryString = searchParams.toString();
     const endpoint = queryString ? `/admin/galleries?${queryString}` : '/admin/galleries';
     
-    return apiRequest<{
-      galerie: Gallery[];
-      pagination: PaginationData;
-    }>(endpoint);
+    return apiRequest<Gallery[]>(endpoint);
   },
 
   // GET /api/galleries - Získať verejné galérie
@@ -195,10 +192,7 @@ export const galleriesApi = {
     limit?: number;
     search?: string;
     typ_priradenia?: string;
-  }): Promise<ApiResponse<{
-    galerie: Gallery[];
-    pagination: PaginationData;
-  }>> => {
+  }): Promise<ApiResponse<Gallery[]>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.limit) searchParams.append('limit', params.limit.toString());
@@ -208,19 +202,14 @@ export const galleriesApi = {
     const queryString = searchParams.toString();
     const endpoint = queryString ? `/galleries?${queryString}` : '/galleries';
     
-    return apiRequest<{
-      galerie: Gallery[];
-      pagination: PaginationData;
-    }>(endpoint);
+    return apiRequest<Gallery[]>(endpoint);
   },
 
   // GET /api/galleries/:id - Získať detail galérie
-  getGalleryById: async (id: number): Promise<ApiResponse<{
-    galeria: Gallery & { obrazky: GalleryImage[] };
-  }>> => {
-    return apiRequest<{
-      galeria: Gallery & { obrazky: GalleryImage[] };
-    }>(`/galleries/${id}`);
+  getGalleryById: async (
+    id: number
+  ): Promise<ApiResponse<Gallery & { obrazky: GalleryImage[] }>> => {
+    return apiRequest<Gallery & { obrazky: GalleryImage[] }>(`/galleries/${id}`);
   },
 
   // POST /api/admin/galleries - Vytvoriť novú galériu
@@ -296,7 +285,6 @@ export const galleriesApi = {
       pocet_obrazkov: number;
     };
     obrazky: GalleryImage[];
-    pagination: PaginationData;
   }>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append('page', params.page.toString());
@@ -314,7 +302,6 @@ export const galleriesApi = {
         pocet_obrazkov: number;
       };
       obrazky: GalleryImage[];
-      pagination: PaginationData;
     }>(endpoint);
   },
 

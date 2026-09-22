@@ -13,6 +13,9 @@ class Article extends Model {}
 export interface UserAttributes {
   id: number;
   meno: string;
+  priezvisko?: string | null;
+  /** Väzba na rolu s oprávneniami; pôvodný enum nižšie zostáva pre staré dáta */
+  rola_id?: number | null;
   email: string;
   heslo: string;
   rola: 'admin' | 'redaktor' | 'trener' | 'uzivatel';
@@ -24,12 +27,14 @@ export interface UserAttributes {
 }
 
 // Interface pre vytvorenie používateľa (bez auto-generovaných polí)
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'vytvoreny' | 'aktualizovany' | 'posledne_prihlasenie'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'priezvisko' | 'rola_id' | 'vytvoreny' | 'aktualizovany' | 'posledne_prihlasenie'> {}
 
 // Sequelize Model class
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
   public meno!: string;
+  public priezvisko!: string | null;
+  public rola_id!: number | null;
   public email!: string;
   public heslo!: string;
   public rola!: 'admin' | 'redaktor' | 'trener' | 'uzivatel';
@@ -94,10 +99,21 @@ User.init(
         len: [6, 255], // Minimálne 6 znakov
       },
     },
+    priezvisko: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
     rola: {
+      // Pôvodný enum ZOSTÁVA kvôli spätnej zlučiteľnosti a ako záloha,
+      // keď používateľ nemá priradenú rolu z tabuľky rolí.
       type: DataTypes.ENUM('admin', 'redaktor', 'trener', 'uzivatel'),
       allowNull: false,
       defaultValue: 'uzivatel',
+    },
+    rola_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'roly', key: 'id' },
     },
     tim_id: {
       type: DataTypes.INTEGER,

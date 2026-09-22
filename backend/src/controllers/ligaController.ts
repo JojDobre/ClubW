@@ -2,6 +2,7 @@
 // Rozšírený controller pre správu líg s tabuľkami a turnajmi - FÁZA 4+
 
 import { Request, Response } from 'express';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import Liga from '../models/Liga';
@@ -103,10 +104,14 @@ const validateLigaData = (data: any) => {
     }
   }
   
+  // Logo býva nahraté do uploads, nie externá adresa. Pôvodná kontrola
+  // prijímala len https://..., takže logo z media knižnice sa nedalo
+  // uložiť vôbec.
   if (data.logo && typeof data.logo === 'string') {
-    const urlPattern = /^https?:\/\/.+/;
-    if (!urlPattern.test(data.logo)) {
-      errors.push('Logo musí byť platná URL');
+    try {
+      overObrazkovySubor(data.logo);
+    } catch (chyba) {
+      errors.push((chyba as Error).message);
     }
   }
   
@@ -265,8 +270,6 @@ export const getLeagues = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: result,
-      count: result.length,
-      total: leagues.length, // Pre pagináciu
       message: `Nájdených ${result.length} líg`
     });
 
@@ -275,7 +278,7 @@ export const getLeagues = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní líg',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -364,7 +367,7 @@ export const getLeague = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -411,7 +414,12 @@ export const createLeague = async (req: Request, res: Response): Promise<void> =
       logo: req.body.logo,
       farba: req.body.farba,
       poradie: req.body.poradie,
-      
+      // Väzby: náš tím, ktorého sa súťaž týka, a sezóna.
+      // Bez nich by sa hodnoty z tela ticho zahodili, lebo liga sa
+      // skladá z vymenovaného zoznamu polí.
+      tim_id: req.body.tim_id || null,
+      sezona_id: req.body.sezona_id || null,
+
       // Nové rozšírené polia
       datum_start: req.body.datum_start,
       datum_koniec: req.body.datum_koniec,
@@ -477,7 +485,7 @@ export const createLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -631,7 +639,7 @@ export const updateLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -699,7 +707,7 @@ export const deleteLeague = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -726,7 +734,6 @@ export const getLeagueTableEndpoint = async (req: Request, res: Response): Promi
     res.json({
       success: true,
       data: tabulka.map(t => t.toSafeJSON()),
-      count: tabulka.length,
       message: 'Tabuľka úspešne načítaná'
     });
 
@@ -735,7 +742,7 @@ export const getLeagueTableEndpoint = async (req: Request, res: Response): Promi
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -778,7 +785,7 @@ export const recalculateLeagueTableEndpoint = async (req: Request, res: Response
     res.status(status).json({
       success: false,
       message,
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -880,6 +887,8 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
         // body, ich nemá z čoho dopočítať automatický prepočet.
         if (item.forma !== undefined) updateData.forma = normalizujFormu(item.forma);
         if (item.serie_zapasov !== undefined) updateData.serie_zapasov = item.serie_zapasov;
+        if (item.custom_tim_nazov !== undefined) updateData.custom_tim_nazov = item.custom_tim_nazov;
+        if (item.custom_tim_logo !== undefined) updateData.custom_tim_logo = item.custom_tim_logo || null;
 
         // Automatický výpočet gólovej bilancie
         if (item.goly_za !== undefined && item.goly_proti !== undefined) {
@@ -915,6 +924,8 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
           createData.tim_id = item.tim_id;
         } else {
           createData.custom_tim_nazov = item.custom_tim_nazov;
+          // Externý tím má vlastné logo - náš ho má na sebe
+          createData.custom_tim_logo = item.custom_tim_logo || null;
         }
 
         // Voliteľné polia
@@ -939,16 +950,26 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.json({
       success: true,
       data: updatedTable.map(t => t.toSafeJSON()),
-      count: updatedTable.length,
       message: `Tabuľka úspešne aktualizovaná (${existingRecords.length} upravených, ${newRecords.length} nových)`
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    // Neplatná hodnota (napríklad nezmyselné logo) je chyba vstupu,
+    // nie servera - vracala sa ako 500 s technickou hláškou.
+    if (error?.name === 'SequelizeValidationError') {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné údaje v tabuľke',
+        errors: error.errors.map((e: any) => e.message),
+      });
+      return;
+    }
+
     console.error('❌ Chyba pri aktualizácii tabuľky:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri aktualizácii tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -988,7 +1009,7 @@ export const getLeagueTournamentEndpoint = async (req: Request, res: Response): 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní turnaja',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1020,7 +1041,7 @@ export const getLeagueStatsEndpoint = async (req: Request, res: Response): Promi
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní štatistík',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1052,7 +1073,7 @@ export const getLeagueOverviewEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri načítaní prehľadu ligy',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1099,7 +1120,7 @@ export const exportLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri exporte tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -1140,7 +1161,200 @@ export const importLeagueTableEndpoint = async (req: Request, res: Response): Pr
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Chyba servera pri importe tabuľky',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
+
+/**
+ * DELETE /api/leagues/:id/table/:rowId
+ *
+ * Odstráni jeden tím z tabuľky.
+ *
+ * PREČO SAMOSTATNE: PUT tabuľky riadok, ktorý mu klient nepošle, ticho
+ * ponechá. Tím sa teda z tabuľky nedal odstrániť vôbec.
+ */
+export const deleteLeagueTableRowEndpoint = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validation = validateLigaId(req.params.id);
+    if (!validation.valid) {
+      res.status(400).json({ success: false, message: validation.error });
+      return;
+    }
+
+    const riadokId = Number(req.params.rowId);
+    if (!Number.isInteger(riadokId) || riadokId < 1) {
+      res.status(400).json({ success: false, message: 'ID riadku musí byť kladné celé číslo' });
+      return;
+    }
+
+    const riadok = await LigaTabulka.findOne({
+      where: { id: riadokId, liga_id: validation.id },
+    });
+
+    if (!riadok) {
+      res.status(404).json({ success: false, message: 'Riadok v tabuľke tejto ligy nebol nájdený' });
+      return;
+    }
+
+    const nazov = riadok.getTimNazov();
+    const uvolnenaPozicia = riadok.pozicia;
+
+    // Po odstránení posunieme zvyšné tímy nahor, aby v tabuľke
+    // nezostala diera. Celé v transakcii kvôli odloženému constraintu
+    // na dvojici (liga_id, pozicia).
+    await sequelize.transaction(async (transakcia) => {
+      await riadok.destroy({ transaction: transakcia });
+
+      const nizsie = await LigaTabulka.findAll({
+        where: { liga_id: validation.id, pozicia: { [Op.gt]: uvolnenaPozicia } },
+        order: [['pozicia', 'ASC']],
+        transaction: transakcia,
+      });
+
+      for (const r of nizsie) {
+        await r.update({ pozicia: r.pozicia - 1 }, { transaction: transakcia });
+      }
+    });
+
+    const tabulka = await getLeagueTable(validation.id!);
+
+    res.json({
+      success: true,
+      data: tabulka.map((t) => t.toSafeJSON()),
+      message: `Tím ${nazov} bol odstránený z tabuľky`,
+    });
+  } catch (error) {
+    console.error('Chyba pri mazaní riadku tabuľky:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri mazaní riadku tabuľky' });
+  }
+};
+
+/**
+ * POST /api/leagues/:id/duplicate
+ *
+ * Vytvorí kópiu ligy pre novú sezónu aj s tímami v tabuľke.
+ *
+ * PREČO: požiadavka hovorí „Všetky ligy sa dajú duplikovať na novú
+ * sezónu. Tak aby človek nemusel každú sezónu prepisovať všetky tímy.
+ * Pri duplikovaní sa opýta, či zachovať aj body alebo iba tímy."
+ *
+ * Telo: { "sezona": "2027/2028", "sezona_id": 4, "zachovat_body": false }
+ */
+export const duplicateLeagueEndpoint = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validation = validateLigaId(req.params.id);
+    if (!validation.valid) {
+      res.status(400).json({ success: false, message: validation.error });
+      return;
+    }
+
+    const povodna = await Liga.findOne({ where: { id: validation.id, aktivity: true } });
+    if (!povodna) {
+      res.status(404).json({ success: false, message: 'Liga nebola nájdená' });
+      return;
+    }
+
+    const novaSezona = String(req.body.sezona || '').trim();
+    if (novaSezona.length < 4) {
+      res.status(400).json({
+        success: false,
+        message: 'Uveďte sezónu novej ligy, napríklad "2027/2028"',
+      });
+      return;
+    }
+
+    // Bez výslovného súhlasu sa body neprenášajú - nová sezóna sa
+    // začína od nuly, čo je bežnejší prípad
+    const zachovatBody = req.body.zachovat_body === true;
+
+    const duplicitna = await Liga.findOne({
+      where: { nazov: povodna.nazov, sezona: novaSezona, aktivity: true },
+    });
+    if (duplicitna) {
+      res.status(409).json({
+        success: false,
+        message: `Liga ${povodna.nazov} pre sezónu ${novaSezona} už existuje`,
+      });
+      return;
+    }
+
+    const povodnaTabulka = await LigaTabulka.findAll({
+      where: { liga_id: povodna.id },
+      order: [['pozicia', 'ASC']],
+    });
+
+    const novaLiga = await sequelize.transaction(async (transakcia) => {
+      const nova = await Liga.create(
+        {
+          nazov: povodna.nazov,
+          sezona: novaSezona,
+          sezona_id: req.body.sezona_id || null,
+          tim_id: povodna.tim_id,
+          typ: povodna.typ,
+          popis: povodna.popis,
+          logo: povodna.logo,
+          farba: povodna.farba,
+          poradie: povodna.poradie,
+          format: povodna.format,
+          pocet_timov: povodna.pocet_timov,
+          body_za_vitazstvo: povodna.body_za_vitazstvo,
+          body_za_remizy: povodna.body_za_remizy,
+          body_za_prehru: povodna.body_za_prehru,
+          auto_update_tabulka: povodna.auto_update_tabulka,
+          zobrazit_formu: povodna.zobrazit_formu,
+          min_zapasov: povodna.min_zapasov,
+          turnaj_typ: povodna.turnaj_typ,
+          turnaj_pocet_postupujucich: povodna.turnaj_pocet_postupujucich,
+        } as any,
+        { transaction: transakcia }
+      );
+
+      for (const riadok of povodnaTabulka) {
+        await LigaTabulka.create(
+          {
+            liga_id: nova.id,
+            tim_id: riadok.tim_id,
+            custom_tim_nazov: riadok.custom_tim_nazov,
+            custom_tim_logo: riadok.custom_tim_logo,
+            pozicia: riadok.pozicia,
+            // Pri "iba tímy" sa všetky štatistiky nulujú
+            body: zachovatBody ? riadok.body : 0,
+            zapasy: zachovatBody ? riadok.zapasy : 0,
+            vitazstva: zachovatBody ? riadok.vitazstva : 0,
+            remizy: zachovatBody ? riadok.remizy : 0,
+            prehry: zachovatBody ? riadok.prehry : 0,
+            goly_za: zachovatBody ? riadok.goly_za : 0,
+            goly_proti: zachovatBody ? riadok.goly_proti : 0,
+            goly_rozdiel: zachovatBody ? riadok.goly_rozdiel : 0,
+            forma: zachovatBody ? riadok.forma : null,
+            serie_zapasov: zachovatBody ? riadok.serie_zapasov : null,
+            penalizacne_body: zachovatBody ? riadok.penalizacne_body : 0,
+            bonus_body: zachovatBody ? riadok.bonus_body : 0,
+            manualne_upravene: true,
+          } as any,
+          { transaction: transakcia }
+        );
+      }
+
+      return nova;
+    });
+
+    const novaTabulka = await getLeagueTable(novaLiga.id);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        liga: novaLiga.toSafeJSON(),
+        tabulka: novaTabulka.map((t) => t.toSafeJSON()),
+      },
+      message:
+        `Liga ${novaLiga.nazov} bola duplikovaná na sezónu ${novaSezona} ` +
+        `(${povodnaTabulka.length} tímov, ${zachovatBody ? 'aj s bodmi' : 'bez bodov'})`,
+    });
+  } catch (error) {
+    console.error('Chyba pri duplikovaní ligy:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri duplikovaní ligy' });
+  }
+};
+

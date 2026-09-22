@@ -13,6 +13,8 @@ import LigaTabulka from './LigaTabulka';      // NOVÝ
 import LigaTurnaj from './LigaTurnaj';        // NOVÝ
 import Zapas from './Zapas';
 import ZapasStatistika from './ZapasStatistika';
+import ZapasZostava from './ZapasZostava';
+import ZapasUdalost from './ZapasUdalost';
 // Tokeny pre obnovu relácie a obnovu zabudnutého hesla
 import RefreshToken from './RefreshToken';
 import ResetHeslaToken from './ResetHeslaToken';
@@ -20,6 +22,14 @@ import ResetHeslaToken from './ResetHeslaToken';
 import NastaveniaKlubu from './NastaveniaKlubu';
 // Sezóny a súpisky hráčov po sezónach
 import Sezona from './Sezona';
+import Stadion from './Stadion';
+import KalendarUdalost from './KalendarUdalost';
+import Media from './Media';
+import Rola from './Rola';
+import MenuPolozka from './MenuPolozka';
+import Presmerovanie from './Presmerovanie';
+import Formular from './Formular';
+import FormularOdpoved from './FormularOdpoved';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -27,6 +37,7 @@ import AuditLog from './AuditLog';
 // Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
 import Sponzor from './Sponzor';
 import Dokument from './Dokument';
+import DokumentKategoria from './DokumentKategoria';
 import Anketa from './Anketa';
 import Fanusik from './Fanusik';
 // Komentáre a videá
@@ -75,6 +86,114 @@ Category.hasMany(Article, {
 Article.belongsTo(Category, {
   foreignKey: 'kategoria_id',
   as: 'kategoria',
+});
+
+// Team -> Stadion (N:1) - domáci štadión tímu
+Team.belongsTo(Stadion, {
+  foreignKey: 'stadion_id',
+  as: 'stadion',
+});
+
+Stadion.hasMany(Team, {
+  foreignKey: 'stadion_id',
+  as: 'timy',
+});
+
+// Team -> Sezona (N:1) - sezóna, do ktorej tím patrí
+Team.belongsTo(Sezona, {
+  foreignKey: 'sezona_id',
+  as: 'sezona',
+});
+
+// Article -> Team (N:1) - voliteľná väzba, článok sa nemusí týkať tímu
+Article.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
+});
+
+Team.hasMany(Article, {
+  foreignKey: 'tim_id',
+  as: 'clanky',
+});
+
+// Team -> KalendarUdalost (1:N) - tréningy a akcie tímu.
+// Kalendár z tímu berie aj farbu, pod ktorou udalosť zobrazuje.
+Team.hasMany(KalendarUdalost, {
+  foreignKey: 'tim_id',
+  as: 'udalosti',
+  onDelete: 'CASCADE',
+});
+
+KalendarUdalost.belongsTo(Team, {
+  foreignKey: 'tim_id',
+  as: 'tim',
+});
+
+// Media -> User (kto súbor nahral)
+Media.belongsTo(User, {
+  foreignKey: 'autor_id',
+  as: 'autor',
+  constraints: false,
+});
+
+// Dokument -> DokumentKategoria (N:1)
+Dokument.belongsTo(DokumentKategoria, {
+  foreignKey: 'kategoria_id',
+  as: 'kategoria_obj',
+  constraints: false,
+});
+
+DokumentKategoria.hasMany(Dokument, {
+  foreignKey: 'kategoria_id',
+  as: 'dokumenty',
+  constraints: false,
+});
+
+// User -> Rola (N:1) - rola s oprávneniami
+User.belongsTo(Rola, {
+  foreignKey: 'rola_id',
+  as: 'rola_obj',
+  constraints: false,
+});
+
+Rola.hasMany(User, {
+  foreignKey: 'rola_id',
+  as: 'pouzivatelia',
+  constraints: false,
+});
+
+// MenuPolozka -> ciele odkazu a vnorenie
+MenuPolozka.belongsTo(Page, { foreignKey: 'stranka_id', as: 'stranka', constraints: false });
+MenuPolozka.belongsTo(Category, { foreignKey: 'rubrika_id', as: 'rubrika', constraints: false });
+MenuPolozka.belongsTo(MenuPolozka, { foreignKey: 'rodic_id', as: 'rodic', constraints: false });
+MenuPolozka.hasMany(MenuPolozka, { foreignKey: 'rodic_id', as: 'deti', constraints: false });
+
+// Formular -> FormularOdpoved (1:N) - vyplnené formuláre
+Formular.hasMany(FormularOdpoved, {
+  foreignKey: 'formular_id',
+  as: 'odpovede',
+  onDelete: 'CASCADE',
+});
+
+FormularOdpoved.belongsTo(Formular, {
+  foreignKey: 'formular_id',
+  as: 'formular',
+});
+
+// Komentar -> User (prihlásený autor komentára).
+// Bez tejto väzby sa nedalo overiť vlastníctvo, takže autor nemohol
+// upravovať svoj vlastný komentár.
+Komentar.belongsTo(User, {
+  foreignKey: 'pouzivatel_id',
+  as: 'pouzivatel',
+  constraints: false,
+});
+
+// Video -> Category (rubrika videa)
+Video.belongsTo(Category, {
+  foreignKey: 'rubrika_id',
+  as: 'rubrika',
+  constraints: false,
 });
 
 // 3. TEAM vzťahy
@@ -253,6 +372,50 @@ ZapasStatistika.belongsTo(Player, {
   as: 'hrac',
 });
 
+// Zapas -> Stadion (miesto konania)
+Zapas.belongsTo(Stadion, {
+  foreignKey: 'stadion_id',
+  as: 'stadion',
+  constraints: false,
+});
+
+// Zapas -> ZapasZostava (1:N) - zostava a lavička oboch tímov
+Zapas.hasMany(ZapasZostava, {
+  foreignKey: 'zapas_id',
+  as: 'zostava',
+  onDelete: 'CASCADE',
+});
+
+ZapasZostava.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+});
+
+ZapasZostava.belongsTo(Player, {
+  foreignKey: 'hrac_id',
+  as: 'hrac',
+  constraints: false,
+});
+
+// Zapas -> ZapasUdalost (1:N) - voľný textový priebeh zápasu
+Zapas.hasMany(ZapasUdalost, {
+  foreignKey: 'zapas_id',
+  as: 'udalosti',
+  onDelete: 'CASCADE',
+});
+
+ZapasUdalost.belongsTo(Zapas, {
+  foreignKey: 'zapas_id',
+  as: 'zapas',
+});
+
+// ZapasStatistika -> Player (striedaný hráč pri striedaní)
+ZapasStatistika.belongsTo(Player, {
+  foreignKey: 'striedany_hrac_id',
+  as: 'striedany_hrac',
+  constraints: false,
+});
+
 // 7. FOTOGALÉRIA vzťahy - FÁZA 7 (NOVÉ)
 // Galeria -> GaleriaObrazok (1:N) - galéria má viacero obrázkov
 Galeria.hasMany(GaleriaObrazok, {
@@ -320,6 +483,8 @@ export {
   LigaTurnaj, 
   Zapas,
   ZapasStatistika,
+  ZapasZostava,
+  ZapasUdalost,
   Page,
   Galeria,          
   GaleriaObrazok,   
@@ -375,11 +540,20 @@ export default {
   ResetHeslaToken,
   NastaveniaKlubu,
   Sezona,
+  Stadion,
+  KalendarUdalost,
+  Media,
+  Rola,
+  MenuPolozka,
+  Presmerovanie,
+  Formular,
+  FormularOdpoved,
   SupiskaSezony,
   Suhlas,
   AuditLog,
   Sponzor,
   Dokument,
+  DokumentKategoria,
   Anketa,
   Fanusik,
   Komentar,
@@ -394,6 +568,8 @@ export default {
   LigaTurnaj,
   Zapas,
   ZapasStatistika,
+  ZapasZostava,
+  ZapasUdalost,
   Page,
   Galeria,           
   GaleriaObrazok,

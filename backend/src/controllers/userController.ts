@@ -5,8 +5,10 @@ import { Request, Response } from 'express';
 import { body, validationResult, query } from 'express-validator';
 import { Op } from 'sequelize';
 import User from '../models/user';
+import Rola from '../models/Rola';
 // Kontrola sily hesla - nahrádza pôvodnú podmienku "aspoň 6 znakov"
 import { overSiluHesla } from '../utils/heslo';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 // Validácia pre vytvorenie používateľa
 export const validateCreateUser = [
@@ -27,9 +29,19 @@ export const validateCreateUser = [
     }
     return true;
   }),
+  body('priezvisko')
+    .optional({ nullable: true })
+    .isLength({ max: 100 })
+    .withMessage('Priezvisko môže mať najviac 100 znakov')
+    .trim(),
   body('rola')
+    .optional()
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])
     .withMessage('Neplatná rola'),
+  body('rola_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Rola musí byť platné ID'),
   body('tim_id')
     .optional()
     .isInt({ min: 1 })
@@ -57,10 +69,19 @@ export const validateUpdateUser = [
       }
       return true;
     }),
+  body('priezvisko')
+    .optional({ nullable: true })
+    .isLength({ max: 100 })
+    .withMessage('Priezvisko môže mať najviac 100 znakov')
+    .trim(),
   body('rola')
     .optional()
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])
     .withMessage('Neplatná rola'),
+  body('rola_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('Rola musí byť platné ID'),
   body('tim_id')
     .optional()
     .isInt({ min: 1 })
@@ -117,16 +138,8 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       success: true,
-      data: {
-        users: users.map(user => user.toSafeJSON()),
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalUsers: count,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-      },
+      data: users.map(user => user.toSafeJSON()),
+      pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľov:', error);
@@ -156,7 +169,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     res.json({
       success: true,
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľa:', error);
@@ -197,11 +210,29 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     }
 
     // Vytvorenie nového používateľa
+    // Rola z tabuľky rolí má prednosť. Keď ju klient neposlal, doplníme
+    // ju podľa pôvodného enumu, aby mal používateľ vždy platné práva.
+    let rolaId = req.body.rola_id ? Number(req.body.rola_id) : null;
+    const kodRoly = rola || 'uzivatel';
+
+    if (rolaId) {
+      const zvolena = await Rola.findOne({ where: { id: rolaId, aktivity: true } });
+      if (!zvolena) {
+        res.status(400).json({ success: false, message: `Rola s ID ${rolaId} neexistuje` });
+        return;
+      }
+    } else {
+      const podlaKodu = await Rola.findOne({ where: { kod: kodRoly, aktivity: true } });
+      rolaId = podlaKodu ? podlaKodu.id : null;
+    }
+
     const newUser = await User.create({
       meno,
+      priezvisko: req.body.priezvisko ? String(req.body.priezvisko).trim() : null,
       email: email.toLowerCase(),
       heslo,
-      rola,
+      rola: kodRoly,
+      rola_id: rolaId,
       tim_id: tim_id || null,
       aktivity: true,
     });
@@ -209,7 +240,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     res.status(201).json({
       success: true,
       message: 'Používateľ úspešne vytvorený',
-      data: { user: newUser.toSafeJSON() },
+      data: newUser.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri vytváraní používateľa:', error);
@@ -273,7 +304,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       message: 'Používateľ úspešne aktualizovaný',
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri aktualizácii používateľa:', error);
@@ -354,7 +385,7 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     res.json({
       success: true,
       message: `Používateľ ${user.aktivity ? 'aktivovaný' : 'deaktivovaný'}`,
-      data: { user: user.toSafeJSON() },
+      data: user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri prepínaní stavu používateľa:', error);

@@ -26,7 +26,7 @@ echo ""
 KAT=$(curl -s -m 5 -X POST $API/api/admin/categories -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"nazov":"XSS Test Rubrika","popis":"test"}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('category',{}).get('id') or d.get('data',{}).get('id',''))" 2>/dev/null)
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('id',''))" 2>/dev/null)
 echo "Kategória ID: ${KAT:-nepodarilo sa}"
 
 # Škodlivý obsah - typické XSS vektory
@@ -38,7 +38,7 @@ ODP=$(curl -s -m 10 -X POST $API/api/admin/articles -H "Content-Type: applicatio
   -H "Authorization: Bearer $TOKEN" \
   -d "{\"nazov\":\"XSS Test Clanok\",\"obsah\":\"$(echo $SKODLIVY | sed 's/"/\\"/g')\",\"kategoria_id\":${KAT:-1},\"status\":\"published\"}")
 
-SLUG=$(echo "$ODP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('article',{}).get('slug',''))" 2>/dev/null)
+SLUG=$(echo "$ODP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('slug',''))" 2>/dev/null)
 
 if [ -z "$SLUG" ]; then
   echo "  ⚠️  Článok sa nevytvoril, odpoveď:"
@@ -49,7 +49,7 @@ echo "  Článok vytvorený, slug: $SLUG"
 
 # Načítanie uloženého obsahu z DB
 ULOZENY=$(curl -s -m 5 "$API/api/articles/$SLUG" \
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['article']['obsah'])" 2>/dev/null)
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['obsah'])" 2>/dev/null)
 
 echo ""
 echo "═══ Uložený obsah v databáze ═══"

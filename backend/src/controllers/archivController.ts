@@ -20,6 +20,7 @@ import Player from '../models/Player';
 import Staff from '../models/Staff';
 import Liga from '../models/Liga';
 import Sezona from '../models/Sezona';
+import Stadion from '../models/Stadion';
 
 /**
  * Popis jednej archivovateľnej entity.
@@ -96,6 +97,14 @@ const TYPY: Record<string, TypArchivu> = {
     nazovJednotne: 'Liga',
     popis: (l) => l.nazov,
     detail: (l) => l.sezona,
+    stlpecZmeny: 'aktualizovany',
+  },
+
+  stadiony: {
+    model: Stadion,
+    nazovJednotne: 'Štadión',
+    popis: (s: any) => s.nazov,
+    detail: (s: any) => s.adresa,
     stlpecZmeny: 'aktualizovany',
   },
 
@@ -176,7 +185,6 @@ export const getArchiv = async (req: Request, res: Response): Promise<void> => {
     res.json({
       success: true,
       data: polozky,
-      pocet: polozky.length,
       pocty_podla_typu: pocty,
       message: polozky.length
         ? `V archíve je ${polozky.length} položiek`

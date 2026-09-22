@@ -2,9 +2,6 @@
 // Routes pre články
 
 import { Router } from 'express';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs/promises';
 
 import {
   getPublicArticles,
@@ -13,47 +10,17 @@ import {
   getAdminArticleById,
   createArticle,
   updateArticle,
+  previewArticle,
   deleteArticle,
   bulkDeleteArticles,    
   bulkDuplicateArticles,
   validateArticle,
+  validateArticleUpdate,
   uploadArticleImage, 
 } from '../controllers/articleController';
+import { uploadMedia } from '../controllers/mediaController';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 
-
-// Pridaj konfiguráciu multer:
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    try {
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'articles');
-      await fs.mkdir(uploadsDir, { recursive: true });
-      cb(null, uploadsDir);
-    } catch (error) {
-      cb(error as Error, '');
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `article-${uniqueSuffix}${ext}`);
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Nepodporovaný typ súboru'));
-    }
-  }
-});
 
 const router: Router = Router();
 
@@ -80,12 +47,27 @@ adminArticleRouter.get('/:id', authenticateToken, requireEditor, getAdminArticle
 adminArticleRouter.post('/', authenticateToken, requireEditor, validateArticle, createArticle);
 
 // PUT /api/admin/articles/:id - Úprava článku
-adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticle, updateArticle);
+adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticleUpdate, updateArticle);
 
 // DELETE /api/admin/articles/:id - Vymazanie článku
 adminArticleRouter.delete('/:id', authenticateToken, requireEditor, deleteArticle);
 
-adminArticleRouter.post('/upload-image', authenticateToken, requireEditor, upload.single('image'), uploadArticleImage);
+// Náhľad článku vo verejnom tvare, aj keď ešte nie je zverejnený
+adminArticleRouter.get('/:id/preview', authenticateToken, requireEditor, previewArticle);
+
+// Obrázok článku ide cez MEDIA KNIŽNICU.
+//
+// Pôvodne sa ukladal ploche do /uploads/articles/, bez roka a mesiaca
+// a bez akéhokoľvek záznamu v databáze - nedal sa teda znovu použiť
+// a nemal alt text. Teraz končí v /uploads/media/<rok>/<mesiac>/
+// a objaví sa v knižnici ako každý iný súbor.
+adminArticleRouter.post(
+  '/upload-image',
+  authenticateToken,
+  requireEditor,
+  uploadMedia,
+  uploadArticleImage
+);
 
 
 // POST /api/admin/articles/bulk-delete - Bulk vymazanie článkov

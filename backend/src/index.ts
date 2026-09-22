@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
+import sequelize from './config/database';
 import path from 'path';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
@@ -48,6 +49,16 @@ import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
+import stadionRoutes from './routes/stadiony';
+import mediaRoutes from './routes/media';
+import rolaRoutes from './routes/roly';
+import menuRoutes from './routes/menu';
+import formularRoutes from './routes/formulare';
+import logRoutes from './routes/logy';
+import { zaznamenajZmeny } from './middleware/auditLog';
+import { vykonajPresmerovania } from './middleware/presmerovania';
+import { spustiPlanovacClankov } from './services/planovacClankov';
+import { spustiPlanovacZapasov } from './services/planovacZapasov';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -219,8 +230,61 @@ app.get('/api/license/status', (_req, res) => {
   res.json({ success: true, data: stavLicencie() });
 });
 
+/**
+ * GET /api/license/version
+ *
+ * Verzie systému - aplikácia aj schéma databázy.
+ *
+ * PREČO: požiadavka žiada pri licencii aj „aktualizácia systému,
+ * verzie a podobne". Bez tohto sa nedalo zistiť ani to, ktorá verzia
+ * kde beží a či má inštalácia dobehnuté migrácie.
+ */
+app.get('/api/license/version', async (_req, res) => {
+  try {
+    // Verzia aplikácie z package.json - jeden zdroj pravdy
+    const balicek = require('../package.json');
+
+    // Posledná dobehnutá migrácia hovorí, na akej schéme databáza beží
+    const [riadky] = await sequelize.query(
+      'SELECT name FROM "SequelizeMeta" ORDER BY name DESC LIMIT 1'
+    );
+    const poslednaMigracia = (riadky as any[])[0]?.name ?? null;
+
+    const [pocet] = await sequelize.query('SELECT COUNT(*)::int AS pocet FROM "SequelizeMeta"');
+
+    res.json({
+      success: true,
+      data: {
+        verzia_aplikacie: balicek.version,
+        node: process.version,
+        prostredie: process.env.NODE_ENV || 'development',
+        schema: {
+          posledna_migracia: poslednaMigracia,
+          pocet_migracii: (pocet as any[])[0]?.pocet ?? 0,
+        },
+        licencia: stavLicencie(),
+        // Bežiaci proces - koľko je server hore
+        bezi_sekund: Math.round(process.uptime()),
+      },
+    });
+  } catch (chyba) {
+    console.error('Chyba pri zisťovaní verzie:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera pri zisťovaní verzie' });
+  }
+});
+
 // Nastavenia klubu - musia byť dostupné aj bez prihlásenia,
 // verejný web z nich berie farby a názov
+// Presmerovania starých odkazov. Musia byť PRED ostatnými routami,
+// inak by stará adresa skončila na chybovej stránke skôr, než sa
+// presmerovanie stihne vyhodnotiť.
+app.use(vykonajPresmerovania);
+
+// Audit: zaznamená každý úspešný zápis. Musí byť pred routami, aby
+// zachytil všetky - dopĺňať volanie do každého controllera by
+// znamenalo, že sa naň pri novom endpointe zabudne.
+app.use(zaznamenajZmeny);
+
 app.use('/api', nastaveniaRoutes);
 
 // Sezóny a súpisky - čítanie je verejné (archív, súpisky tímov)
@@ -267,8 +331,26 @@ app.use('/api/admin/galleries', adminGalleryRouter);
 
 app.use('/api/upload', uploadRoutes);
 
+// Štadióny - čítanie verejné (adresa patrí na web)
+app.use('/api/stadiums', stadionRoutes);
+
 // Archív - mäkko odstránené položky a ich obnova
 app.use('/api/admin/archive', archivRoutes);
+
+// Media knižnica - všetky nahraté súbory na jednom mieste
+app.use('/api/admin/media', mediaRoutes);
+
+// Role a oprávnenia - vlastné role so zaškrtávacími právami na modul
+app.use('/api/admin/roles', rolaRoutes);
+
+// Menu a presmerovania
+app.use('/api', menuRoutes);
+
+// Formuláre - verejné vyplnenie aj správa vyplnených
+app.use('/api', formularRoutes);
+
+// Logy - všetky udalosti s filtrovaním
+app.use('/api/admin/logs', logRoutes);
 
 
 // ===== ŠTATISTIKY =====
@@ -432,7 +514,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       ? err.message
       : 'Interná chyba servera',
     // Stack trace posielame len v developmente, v produkcii by prezrádzal interné detaily
-    error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    debug: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
 
@@ -472,6 +554,14 @@ async function startServer() {
     void uprataStareTokeny();
     const upratovanie = setInterval(() => void uprataStareTokeny(), 24 * 60 * 60 * 1000);
     upratovanie.unref(); // časovač nebráni ukončeniu procesu
+
+    // Zverejňovanie naplánovaných článkov - bez neho zostane článok
+    // v stave "scheduled" navždy, aj keď jeho čas vydania dávno prešiel
+    spustiPlanovacClankov();
+
+    // Prepínanie stavu zápasov na odohratý - logika existovala, ale
+    // nikto ju nevolal, takže sa stav menil len ručne
+    spustiPlanovacZapasov();
 
     // Spustenie servera
     app.listen(PORT, () => {

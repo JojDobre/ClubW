@@ -16,6 +16,14 @@ export interface StaffAttributes {
   email?: string | null;
   telefon?: string | null;
   datum_narodenia?: Date | null;
+  /** Štátna príslušnosť - hráč ju má, realizačný tím ju mať tiež musí */
+  narodnost?: string | null;
+  /** Kedy prišiel do klubu */
+  datum_pripojenia?: Date | null;
+  /** Kedy z klubu odišiel */
+  datum_odpojenia?: Date | null;
+  /** Sezóna, do ktorej zaradenie patrí */
+  sezona_id?: number | null;
   kvalifikacia?: string | null; // Trénerské licencie, vzdelanie
   fotka?: string | null; // URL fotky
   tim_id?: number | null; // Foreign key na tím (voliteľné - môže byť pre celý klub)
@@ -38,6 +46,10 @@ export class Staff extends Model<StaffAttributes, StaffCreationAttributes> imple
   public email!: string | null;
   public telefon!: string | null;
   public datum_narodenia!: Date | null;
+  public narodnost!: string | null;
+  public datum_pripojenia!: Date | null;
+  public datum_odpojenia!: Date | null;
+  public sezona_id!: number | null;
   public kvalifikacia!: string | null;
   public fotka!: string | null;
   public tim_id!: number | null;
@@ -96,9 +108,13 @@ export class Staff extends Model<StaffAttributes, StaffCreationAttributes> imple
       email: this.email,
       telefon: this.telefon,
       datum_narodenia: this.datum_narodenia,
+      narodnost: this.narodnost,
       kvalifikacia: this.kvalifikacia,
       fotka: this.fotka,
       tim_id: this.tim_id,
+      sezona_id: this.sezona_id,
+      datum_pripojenia: this.datum_pripojenia,
+      datum_odpojenia: this.datum_odpojenia,
       aktivity: this.aktivity,
       poznamky: this.poznamky,
       poradie: this.poradie,
@@ -246,6 +262,23 @@ Staff.init(
       },
       onDelete: 'SET NULL', // Ak sa vymaže tím, nastaví sa na NULL
       onUpdate: 'CASCADE',
+    },
+    narodnost: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    datum_pripojenia: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    datum_odpojenia: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    sezona_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'sezony', key: 'id' },
     },
     aktivity: {
       type: DataTypes.BOOLEAN,

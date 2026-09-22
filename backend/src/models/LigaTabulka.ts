@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional, Op } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Interface pre atribúty LigaTabulka
 interface LigaTabulkaAttributes {
@@ -10,6 +11,8 @@ interface LigaTabulkaAttributes {
   liga_id: number;                  // FK na ligu
   tim_id?: number | null;                  // FK na tím (voliteľné - môže byť aj custom názov)
   custom_tim_nazov?: string | null; // Pre tímy mimo systému
+  /** Logo tímu mimo systému - náš tím ho má na sebe */
+  custom_tim_logo?: string | null;
   
   // POZÍCIA A ZÁKLADNÉ ÚDAJE
   pozicia: number;                  // Aktuálna pozícia v tabuľke
@@ -60,7 +63,7 @@ interface LigaTabulkaAttributes {
 
 // Interface pre vytvorenie záznamu (bez automatických polí)
 interface LigaTabulkaCreationAttributes extends Optional<LigaTabulkaAttributes,
-  'id' | 'custom_tim_nazov' | 'domace_zapasy' | 'domace_vitazstva' | 'domace_remizy' | 'domace_prehry' |
+  'id' | 'custom_tim_nazov' | 'custom_tim_logo' | 'domace_zapasy' | 'domace_vitazstva' | 'domace_remizy' | 'domace_prehry' |
   'domace_goly_za' | 'domace_goly_proti' | 'vonkajsie_zapasy' | 'vonkajsie_vitazstva' | 'vonkajsie_remizy' |
   'vonkajsie_prehry' | 'vonkajsie_goly_za' | 'vonkajsie_goly_proti' | 'forma' | 'serie_zapasov' |
   'penalizacne_body' | 'bonus_body' | 'posledny_zapas' | 'poznamky' | 'vytvoreny' | 'aktualizovany'> {}
@@ -71,6 +74,7 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
   public liga_id!: number;
   public tim_id!: number | null; 
   public custom_tim_nazov!: string | null;
+  public custom_tim_logo!: string | null;
   
   public pozicia!: number;
   public body!: number;
@@ -123,6 +127,17 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
       return this.tim.nazov;
     }
     return this.custom_tim_nazov || 'Neznámy tím';
+  }
+
+  /**
+   * Logo tímu - z našej databázy, inak vlastné logo externého tímu.
+   *
+   * Požiadavka hovorí „Tímy iba v tejto tabuľke - logo tímu, názov",
+   * takže externý tím musí mať kam uložiť logo rovnako ako náš.
+   */
+  public getTimLogo(): string | null {
+    if (this.tim && this.tim.logo) return this.tim.logo;
+    return this.custom_tim_logo || null;
   }
 
   // Výpočet skutočných bodov (základné + bonus - penalizácie)
@@ -240,7 +255,9 @@ class LigaTabulka extends Model<LigaTabulkaAttributes, LigaTabulkaCreationAttrib
       liga_id: this.liga_id,
       tim_id: this.tim_id,
       custom_tim_nazov: this.custom_tim_nazov,
+      custom_tim_logo: this.custom_tim_logo,
       tim_nazov: this.getTimNazov(),
+      tim_logo: this.getTimLogo(),
       
       pozicia: this.pozicia,
       body: this.body,
@@ -673,6 +690,13 @@ LigaTabulka.init(
           }
         }
       }
+    },
+    custom_tim_logo: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      validate: {
+        jePlatnyObrazok: overObrazkovySubor,
+      },
     },
     custom_tim_nazov: {
       type: DataTypes.STRING(100),

@@ -15,7 +15,16 @@ import Player from '../models/Player';
 import Team from '../models/Team';
 
 // Povolené typy štatistík (zhodné s ENUM v modeli)
-const POVOLENE_TYPY = ['gol', 'asistencia', 'zlta_karta', 'cervena_karta', 'vlastny_gol'];
+const POVOLENE_TYPY = [
+  'gol',
+  'asistencia',
+  'zlta_karta',
+  'cervena_karta',
+  'vlastny_gol',
+  // Striedanie: hrac_id je ten, kto prichadza, striedany_hrac_id ten,
+  // kto odchadza z ihriska.
+  'striedanie',
+];
 
 // Maximálna minúta - 90 minút + predĺženie + nadstavený čas
 const MAX_MINUTA = 130;
@@ -24,8 +33,15 @@ const MAX_MINUTA = 130;
  * Jeden záznam štatistiky tak, ako ho posiela klient.
  */
 interface StatistikaVstup {
-  hrac_id: number;
+  /** Náš hráč. Pri hosťujúcom sa neuvádza a použije sa meno nižšie. */
+  hrac_id?: number | null;
+  /** Hosťujúci hráč, ktorý v našej databáze nie je */
+  hostujuci_hrac_meno?: string | null;
+  hostujuci_hrac_cislo?: number | null;
   typ: string;
+  /** Pri striedaní: kto odchádza z ihriska */
+  striedany_hrac_id?: number | null;
+  striedany_hrac_meno?: string | null;
   minuta?: number | null;
   poznamka?: string | null;
 }
@@ -58,12 +74,50 @@ export const overStatistiky = async (statistiky: any): Promise<string[]> => {
       chyby.push(`Záznam ${poradie}: neplatný typ "${s.typ}" (povolené: ${POVOLENE_TYPY.join(', ')})`);
     }
 
-    // Hráč
-    const hracId = Number(s.hrac_id);
-    if (!Number.isInteger(hracId) || hracId <= 0) {
-      chyby.push(`Záznam ${poradie}: hrac_id musí byť kladné celé číslo`);
-    } else {
-      idHracov.add(hracId);
+    // Hráč. Záznam sa musí týkať buď nášho hráča (hrac_id), alebo
+    // hosťujúceho, ktorý v našej databáze nie je a zadáva sa menom.
+    const maHracId = s.hrac_id !== undefined && s.hrac_id !== null && s.hrac_id !== '';
+    const maMenoHosta =
+      typeof s.hostujuci_hrac_meno === 'string' && s.hostujuci_hrac_meno.trim().length > 0;
+
+    if (!maHracId && !maMenoHosta) {
+      chyby.push(
+        `Záznam ${poradie}: uveďte hrac_id nášho hráča alebo hostujuci_hrac_meno`
+      );
+    }
+
+    if (maHracId) {
+      const hracId = Number(s.hrac_id);
+      if (!Number.isInteger(hracId) || hracId <= 0) {
+        chyby.push(`Záznam ${poradie}: hrac_id musí byť kladné celé číslo`);
+      } else {
+        idHracov.add(hracId);
+      }
+    }
+
+    if (maMenoHosta && s.hostujuci_hrac_meno.length > 100) {
+      chyby.push(`Záznam ${poradie}: meno hosťujúceho hráča je príliš dlhé (maximum 100 znakov)`);
+    }
+
+    if (
+      s.hostujuci_hrac_cislo !== undefined &&
+      s.hostujuci_hrac_cislo !== null &&
+      s.hostujuci_hrac_cislo !== ''
+    ) {
+      const cislo = Number(s.hostujuci_hrac_cislo);
+      if (!Number.isInteger(cislo) || cislo < 0 || cislo > 999) {
+        chyby.push(`Záznam ${poradie}: číslo dresu hosťujúceho hráča musí byť 0-999`);
+      }
+    }
+
+    // Pri striedaní nás zaujíma aj ten, kto ide z ihriska
+    if (s.striedany_hrac_id !== undefined && s.striedany_hrac_id !== null && s.striedany_hrac_id !== '') {
+      const striedanyId = Number(s.striedany_hrac_id);
+      if (!Number.isInteger(striedanyId) || striedanyId <= 0) {
+        chyby.push(`Záznam ${poradie}: striedany_hrac_id musí byť kladné celé číslo`);
+      } else {
+        idHracov.add(striedanyId);
+      }
     }
 
     // Minúta je voliteľná, ale ak je zadaná, musí dávať zmysel
@@ -122,9 +176,22 @@ export const ulozStatistikyZapasu = async (
       return;
     }
 
-    const zaznamy = statistiky.map((s) => ({
+    const prazdne = (hodnota: any) =>
+      hodnota === undefined || hodnota === null || hodnota === '';
+
+    const zaznamy = statistiky.map((s: any) => ({
       zapas_id: zapasId,
-      hrac_id: Number(s.hrac_id),
+      hrac_id: prazdne(s.hrac_id) ? null : Number(s.hrac_id),
+      hostujuci_hrac_meno: s.hostujuci_hrac_meno
+        ? String(s.hostujuci_hrac_meno).trim().slice(0, 100)
+        : null,
+      hostujuci_hrac_cislo: prazdne(s.hostujuci_hrac_cislo)
+        ? null
+        : Number(s.hostujuci_hrac_cislo),
+      striedany_hrac_id: prazdne(s.striedany_hrac_id) ? null : Number(s.striedany_hrac_id),
+      striedany_hrac_meno: s.striedany_hrac_meno
+        ? String(s.striedany_hrac_meno).trim().slice(0, 100)
+        : null,
       typ: s.typ as any,
       // Prázdnu minútu ukladáme ako null (napr. pri karte bez zaznamenaného času)
       minuta:
@@ -188,7 +255,6 @@ export const getMatchStatistics = async (req: Request, res: Response): Promise<v
         zapas_id: zapasId,
         vsetky: statistiky,
         podla_typu: podlaTypu,
-        pocet: statistiky.length,
       },
     });
   } catch (error) {

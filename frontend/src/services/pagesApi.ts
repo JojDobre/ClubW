@@ -1,5 +1,6 @@
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { API_BASE_URL } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 // frontend/src/services/pagesApi.ts
 // API služba pre správu stránok (FÁZA 5)
 
@@ -42,16 +43,8 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   errors?: string[];
-}
-
-export interface PagesListResponse {
-  pages: Page[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    has_more: boolean;
-  };
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: Strankovanie;
   filters?: {
     search: string;
     status: string;
@@ -61,14 +54,13 @@ export interface PagesListResponse {
   };
 }
 
-export interface MenuPagesResponse {
-  pages: Array<{
-    id: number;
-    nazov: string;
-    slug: string;
-    url: string;
-    poradie_menu: number;
-  }>;
+/** Položka menu tak, ako ju vracia /api/pages/menu. */
+export interface MenuPage {
+  id: number;
+  nazov: string;
+  slug: string;
+  url: string;
+  poradie_menu: number;
 }
 
 // ===== HELPER FUNCTIONS =====
@@ -101,7 +93,7 @@ export const getPublicPages = async (params?: {
   in_menu?: boolean;
   limit?: number;
   offset?: number;
-}): Promise<ApiResponse<PagesListResponse>> => {
+}): Promise<ApiResponse<Page[]>> => {
   try {
     const queryParams = new URLSearchParams();
     
@@ -127,7 +119,7 @@ export const getPublicPages = async (params?: {
 /**
  * Získanie stránok pre menu
  */
-export const getMenuPages = async (): Promise<ApiResponse<MenuPagesResponse>> => {
+export const getMenuPages = async (): Promise<ApiResponse<MenuPage[]>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/pages/menu`, {
       credentials: 'include',
@@ -146,7 +138,7 @@ export const getMenuPages = async (): Promise<ApiResponse<MenuPagesResponse>> =>
 /**
  * Získanie stránky podľa slug
  */
-export const getPageBySlug = async (slug: string): Promise<ApiResponse<{ page: Page }>> => {
+export const getPageBySlug = async (slug: string): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/pages/${encodeURIComponent(slug)}`, {
       credentials: 'include',
@@ -178,7 +170,7 @@ export const getAdminPages = async (params?: {
   offset?: number;
   sort_by?: string;
   sort_order?: 'ASC' | 'DESC';
-}): Promise<ApiResponse<PagesListResponse>> => {
+}): Promise<ApiResponse<Page[]>> => {
   try {
     const queryParams = new URLSearchParams();
     
@@ -208,7 +200,7 @@ export const getAdminPages = async (params?: {
 /**
  * Získanie stránky podľa ID pre admin
  */
-export const getAdminPageById = async (id: number): Promise<ApiResponse<{ page: Page }>> => {
+export const getAdminPageById = async (id: number): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, {
       headers: getAuthHeaders(),
@@ -231,7 +223,7 @@ export const getAdminPageById = async (id: number): Promise<ApiResponse<{ page: 
 /**
  * Vytvorenie novej stránky
  */
-export const createPage = async (pageData: PageFormData): Promise<ApiResponse<{ page: Page }>> => {
+export const createPage = async (pageData: PageFormData): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages`, {
       method: 'POST',
@@ -253,7 +245,7 @@ export const createPage = async (pageData: PageFormData): Promise<ApiResponse<{ 
 /**
  * Aktualizácia existujúcej stránky
  */
-export const updatePage = async (id: number, pageData: PageFormData): Promise<ApiResponse<{ page: Page }>> => {
+export const updatePage = async (id: number, pageData: PageFormData): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, {
       method: 'PUT',
@@ -296,7 +288,7 @@ export const deletePage = async (id: number): Promise<ApiResponse<any>> => {
 /**
  * Prepnutie publikovania stránky
  */
-export const togglePagePublish = async (id: number, publikovany: boolean): Promise<ApiResponse<{ page: Page }>> => {
+export const togglePagePublish = async (id: number, publikovany: boolean): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages/${id}/toggle-publish`, {
       method: 'PATCH',
@@ -318,7 +310,7 @@ export const togglePagePublish = async (id: number, publikovany: boolean): Promi
 /**
  * Prepnutie zobrazenia v menu
  */
-export const togglePageMenu = async (id: number, v_menu: boolean): Promise<ApiResponse<{ page: Page }>> => {
+export const togglePageMenu = async (id: number, v_menu: boolean): Promise<ApiResponse<Page>> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages/${id}/toggle-menu`, {
       method: 'PATCH',

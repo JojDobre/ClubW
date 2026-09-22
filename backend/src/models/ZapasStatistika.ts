@@ -8,8 +8,16 @@ import sequelize from '../config/database';
 interface ZapasStatistikaAttributes {
   id: number;
   zapas_id: number;
-  hrac_id: number;
-  typ: 'gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta' | 'vlastny_gol';
+  /** Náš hráč. Pri hosťujúcom hráčovi zostáva prázdne. */
+  hrac_id: number | null;
+  /** Meno hosťujúceho hráča, ktorý nie je v našej databáze */
+  hostujuci_hrac_meno: string | null;
+  hostujuci_hrac_cislo: number | null;
+  typ: 'gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta' | 'vlastny_gol' | 'striedanie';
+  /** Pri striedaní: koho hráč vystriedal (náš hráč) */
+  striedany_hrac_id: number | null;
+  /** Pri striedaní: koho vystriedal, ak to nie je náš hráč */
+  striedany_hrac_meno: string | null;
   minuta?: number | null;
   poznamka?: string | null;
   aktivity: boolean;
@@ -18,14 +26,22 @@ interface ZapasStatistikaAttributes {
 }
 
 // Interface pre vytvorenie novej ZapasStatistika (bez automatických polí)
-interface ZapasStatistikaCreationAttributes extends Optional<ZapasStatistikaAttributes, 'id' | 'minuta' | 'poznamka' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+interface ZapasStatistikaCreationAttributes extends Optional<ZapasStatistikaAttributes,
+  'id' | 'minuta' | 'poznamka' | 'aktivity' | 'hrac_id' |
+  'hostujuci_hrac_meno' | 'hostujuci_hrac_cislo' |
+  'striedany_hrac_id' | 'striedany_hrac_meno' |
+  'vytvoreny' | 'aktualizovany'> {}
 
 // Trieda pre model ZapasStatistika
 class ZapasStatistika extends Model<ZapasStatistikaAttributes, ZapasStatistikaCreationAttributes> implements ZapasStatistikaAttributes {
   public id!: number;
   public zapas_id!: number;
-  public hrac_id!: number;
-  public typ!: 'gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta' | 'vlastny_gol';
+  public hrac_id!: number | null;
+  public hostujuci_hrac_meno!: string | null;
+  public hostujuci_hrac_cislo!: number | null;
+  public typ!: 'gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta' | 'vlastny_gol' | 'striedanie';
+  public striedany_hrac_id!: number | null;
+  public striedany_hrac_meno!: string | null;
   public minuta!: number | null;
   public poznamka!: string | null;
   public aktivity!: boolean;
@@ -43,7 +59,8 @@ class ZapasStatistika extends Model<ZapasStatistikaAttributes, ZapasStatistikaCr
       'asistencia': 'Asistencia',
       'zlta_karta': 'Žltá karta',
       'cervena_karta': 'Červená karta',
-      'vlastny_gol': 'Vlastný gól'
+      'vlastny_gol': 'Vlastný gól',
+      'striedanie': 'Striedanie'
     };
     return typNames[this.typ] || this.typ;
   }
@@ -74,7 +91,8 @@ class ZapasStatistika extends Model<ZapasStatistikaAttributes, ZapasStatistikaCr
       'asistencia': '🅰️',
       'zlta_karta': '🟨',
       'cervena_karta': '🟥',
-      'vlastny_gol': '🥅'
+      'vlastny_gol': '🥅',
+      'striedanie': '🔄'
     };
     return emojis[this.typ] || '📝';
   }
@@ -85,6 +103,10 @@ class ZapasStatistika extends Model<ZapasStatistikaAttributes, ZapasStatistikaCr
       id: this.id,
       zapas_id: this.zapas_id,
       hrac_id: this.hrac_id,
+      hostujuci_hrac_meno: this.hostujuci_hrac_meno,
+      hostujuci_hrac_cislo: this.hostujuci_hrac_cislo,
+      striedany_hrac_id: this.striedany_hrac_id,
+      striedany_hrac_meno: this.striedany_hrac_meno,
       typ: this.typ,
       minuta: this.minuta,
       poznamka: this.poznamka,
@@ -118,15 +140,38 @@ ZapasStatistika.init(
       },
     },
     hrac_id: {
+      // Voliteľné: hosťujúci hráč v našej databáze nie je a zapisuje sa
+      // menom nižšie. Databáza stráži, že záznam má aspoň jedno z oboch.
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'hraci',
         key: 'id',
       },
     },
+    hostujuci_hrac_meno: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    hostujuci_hrac_cislo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: { args: [0], msg: 'Číslo dresu nemôže byť záporné' },
+        max: { args: [999], msg: 'Číslo dresu je príliš vysoké' },
+      },
+    },
+    striedany_hrac_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'hraci', key: 'id' },
+    },
+    striedany_hrac_meno: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
     typ: {
-      type: DataTypes.ENUM('gol', 'asistencia', 'zlta_karta', 'cervena_karta', 'vlastny_gol'),
+      type: DataTypes.ENUM('gol', 'asistencia', 'zlta_karta', 'cervena_karta', 'vlastny_gol', 'striedanie'),
       allowNull: false,
     },
     minuta: {

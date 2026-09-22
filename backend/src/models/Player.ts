@@ -20,6 +20,17 @@ export interface PlayerAttributes {
   vyska?: number | null; // v cm
   fotka?: string | null; // URL fotky hráča
   tim_id: number; // Foreign key na tím
+  /** Kedy hráč prišiel do klubu */
+  datum_pripojenia?: Date | null;
+  /** Kedy z klubu odišiel - prestupom, archiváciou alebo ukončením */
+  datum_odpojenia?: Date | null;
+  /**
+   * Stav v rámci kádra. NIE JE to archivácia.
+   * Neaktívny hráč (zranený, na hosťovaní) sa naďalej zobrazuje
+   * a má štatistiky, len nie je súčasťou aktuálneho kádra.
+   */
+  stav: 'aktivny' | 'neaktivny';
+  /** Archivácia - false znamená „schované, ale dáta zostávajú" */
   aktivity: boolean;
   poznamky?: string | null; // Interné poznámky
   vytvoreny: Date;
@@ -27,7 +38,9 @@ export interface PlayerAttributes {
 }
 
 // Interface pre vytvorenie hráča (bez auto-generovaných polí)
-export interface PlayerCreationAttributes extends Optional<PlayerAttributes, 'id' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+// 'stav' ma v databaze predvolenu hodnotu 'aktivny', takze sa pri
+// vytvarani zadavat nemusi - rovnako ako 'aktivity'.
+export interface PlayerCreationAttributes extends Optional<PlayerAttributes, 'id' | 'aktivity' | 'stav' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Sequelize Model class
 export class Player extends Model<PlayerAttributes, PlayerCreationAttributes> implements PlayerAttributes {
@@ -42,6 +55,9 @@ export class Player extends Model<PlayerAttributes, PlayerCreationAttributes> im
   public vyska!: number | null;
   public fotka!: string | null;
   public tim_id!: number;
+  public datum_pripojenia!: Date | null;
+  public datum_odpojenia!: Date | null;
+  public stav!: 'aktivny' | 'neaktivny';
   public aktivity!: boolean;
   public poznamky!: string | null;
   public readonly vytvoreny!: Date;
@@ -83,6 +99,9 @@ export class Player extends Model<PlayerAttributes, PlayerCreationAttributes> im
       vyska: this.vyska,
       fotka: this.fotka,
       tim_id: this.tim_id,
+      datum_pripojenia: this.datum_pripojenia,
+      datum_odpojenia: this.datum_odpojenia,
+      stav: this.stav,
       aktivity: this.aktivity,
       poznamky: this.poznamky,
       vytvoreny: this.vytvoreny,
@@ -240,6 +259,21 @@ Player.init(
       },
       onDelete: 'CASCADE', // Ak sa vymaže tím, vymažú sa aj hráči
       onUpdate: 'CASCADE',
+    },
+    datum_pripojenia: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    datum_odpojenia: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    stav: {
+      // Stav v kádri. Oddelený od archivácie zámerne - zranený hráč sa
+      // má naďalej zobrazovať, len nehrá.
+      type: DataTypes.ENUM('aktivny', 'neaktivny'),
+      allowNull: false,
+      defaultValue: 'aktivny',
     },
     aktivity: {
       type: DataTypes.BOOLEAN,

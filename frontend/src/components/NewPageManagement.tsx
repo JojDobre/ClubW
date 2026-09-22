@@ -112,7 +112,7 @@ const NewPageManagement: React.FC<NewPageManagementProps> = ({ pageId }) => {
       const data = await response.json();
 
       if (data.success) {
-        const page = data.data.page;
+        const page = data.data;
         setOriginalPage(page);
         
         // Naplnenie formulára údajmi

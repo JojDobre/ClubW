@@ -137,7 +137,6 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
     res.json({
       success: true,
       data: result,
-      count: result.length,
       message: `Nájdených ${result.length} hráčov`
     });
 
@@ -146,7 +145,7 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráčov',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -200,10 +199,31 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri načítaní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
+
+
+/**
+ * Overí dátumy členstva v klube.
+ *
+ * @returns text chyby, alebo null keď je všetko v poriadku
+ */
+const overDatumyClenstva = (udaje: any): string | null => {
+  const od = udaje.datum_pripojenia ? new Date(udaje.datum_pripojenia) : null;
+  const do_ = udaje.datum_odpojenia ? new Date(udaje.datum_odpojenia) : null;
+
+  if (od && isNaN(od.getTime())) return 'Dátum pripojenia do klubu je neplatný';
+  if (do_ && isNaN(do_.getTime())) return 'Dátum odpojenia z klubu je neplatný';
+  if (od && do_ && do_ < od) {
+    return 'Dátum odpojenia nemôže byť skôr než dátum pripojenia do klubu';
+  }
+  return null;
+};
+
+/** Povolené hodnoty stavu hráča v kádri. */
+const STAVY_HRACA = ['aktivny', 'neaktivny'];
 
 // POST /api/players - Vytvorenie nového hráča
 export const createPlayer = async (req: Request, res: Response): Promise<void> => {
@@ -260,6 +280,20 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
       }
     }
 
+    const chybaDatumov = overDatumyClenstva(playerData);
+    if (chybaDatumov) {
+      res.status(400).json({ success: false, message: chybaDatumov });
+      return;
+    }
+
+    if (playerData.stav && !STAVY_HRACA.includes(playerData.stav)) {
+      res.status(400).json({
+        success: false,
+        message: `Stav musí byť jeden z: ${STAVY_HRACA.join(', ')}`,
+      });
+      return;
+    }
+
     // Vytvorenie hráča
     const newPlayer = await Player.create({
       meno: playerData.meno,
@@ -272,6 +306,9 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
       vyska: playerData.vyska || null,
       fotka: playerData.fotka || null,
       tim_id: playerData.tim_id,
+      datum_pripojenia: playerData.datum_pripojenia || null,
+      datum_odpojenia: playerData.datum_odpojenia || null,
+      stav: playerData.stav || 'aktivny',
       poznamky: playerData.poznamky || null
     });
 
@@ -288,7 +325,7 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri vytváraní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -309,6 +346,20 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
 
     const playerId = validation.id!;
     const updateData = req.body;
+
+    const chybaDatumov = overDatumyClenstva(updateData);
+    if (chybaDatumov) {
+      res.status(400).json({ success: false, message: chybaDatumov });
+      return;
+    }
+
+    if (updateData.stav !== undefined && !STAVY_HRACA.includes(updateData.stav)) {
+      res.status(400).json({
+        success: false,
+        message: `Stav musí byť jeden z: ${STAVY_HRACA.join(', ')}`,
+      });
+      return;
+    }
 
     const player = await Player.findOne({
       where: { id: playerId, aktivity: true }
@@ -358,7 +409,7 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri aktualizácii hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
@@ -415,7 +466,7 @@ export const deletePlayer = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Chyba servera pri mazaní hráča',
-      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

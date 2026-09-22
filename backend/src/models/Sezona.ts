@@ -108,6 +108,21 @@ class Sezona
     return posledna.nazov;
   }
 
+  /**
+   * Stav sezóny v troch hodnotách, ako ho žiadala požiadavka:
+   * aktívna / neaktívna / archivovaná.
+   *
+   * PREČO ODVODENÝ A NIE SAMOSTATNÝ STĹPEC: stav by sa inak musel
+   * držať v súlade s príznakmi aktivity, aktualna a uzavreta - a dva
+   * zdroje pravdy sa skôr či neskôr rozídu. Tu je jeden zdroj
+   * a stav je pohľad naň.
+   */
+  public stav(): 'aktivna' | 'neaktivna' | 'archivovana' {
+    if (!this.aktivity) return 'archivovana';
+    if (this.aktualna && !this.uzavreta) return 'aktivna';
+    return 'neaktivna';
+  }
+
   /** Prebieha sezóna práve teraz podľa zadaných dátumov? */
   public prebieha(): boolean {
     const teraz = new Date();

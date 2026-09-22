@@ -14,6 +14,7 @@ export interface ArticleAttributes {
   obrazok?: string | null; // URL hlavného obrázka
   autor_id: number; // Foreign key na používateľa
   kategoria_id: number; // Foreign key na kategóriu
+  tim_id?: number | null; // Voliteľná väzba na tím, ktorého sa článok týka
   status: 'draft' | 'published' | 'scheduled' | 'archived';
   publikovany_datum?: Date | null; // Kedy má byť/bol publikovaný
   views: number; // Počet zobrazení
@@ -39,6 +40,7 @@ export class Article extends Model<ArticleAttributes, ArticleCreationAttributes>
   public obrazok!: string | null;
   public autor_id!: number;
   public kategoria_id!: number;
+  public tim_id!: number | null;
   public status!: 'draft' | 'published' | 'scheduled' | 'archived';
   public publikovany_datum!: Date | null;
   public views!: number;
@@ -81,6 +83,33 @@ export class Article extends Model<ArticleAttributes, ArticleCreationAttributes>
       : truncated + '...';
   }
 
+  /**
+   * Doplní SEO polia z obsahu článku, ak sú prázdne.
+   *
+   * Požiadavka znie „SEO ideálne automaticky z článku s možnosťou
+   * upraviť". Platí tu preto rovnaké pravidlo ako pri krátkom popise:
+   * stroj dopĺňa len to, čo je prázdne, a ručne zadanú hodnotu nikdy
+   * neprepíše. Kto chce znovu automatické, pole vymaže a uloží.
+   *
+   * Dĺžky sú zvolené podľa toho, koľko Google reálne zobrazí a koľko
+   * pripúšťa databáza: meta_title 70 znakov, meta_description 160.
+   */
+  public doplnSeoAkChyba(): void {
+    if (!this.meta_title && this.nazov) {
+      this.meta_title = this.nazov.length <= 70
+        ? this.nazov
+        : this.nazov.substring(0, 67).trimEnd() + '...';
+    }
+
+    if (!this.meta_description) {
+      // Prednosť má krátky popis - je to už raz zhustený text článku.
+      const zdroj = this.excerpt || this.obsah;
+      if (zdroj) {
+        this.meta_description = Article.generateExcerpt(zdroj, 160);
+      }
+    }
+  }
+
   // Parsovanie tagov z JSON stringu
   public getTagsArray(): string[] {
     if (!this.tags) return [];
@@ -119,6 +148,7 @@ export class Article extends Model<ArticleAttributes, ArticleCreationAttributes>
       views: this.views,
       tags: this.getTagsArray(),
       featured: this.featured,
+      tim_id: this.tim_id,
       vytvoreny: this.vytvoreny,
     };
   }
@@ -134,6 +164,7 @@ export class Article extends Model<ArticleAttributes, ArticleCreationAttributes>
       obrazok: this.obrazok,
       autor_id: this.autor_id,
       kategoria_id: this.kategoria_id,
+      tim_id: this.tim_id,
       status: this.status,
       publikovany_datum: this.publikovany_datum,
       views: this.views,
@@ -202,6 +233,16 @@ Article.init(
       allowNull: false,
       references: {
         model: 'rubriky',
+        key: 'id',
+      },
+    },
+    tim_id: {
+      // Voliteľné - väčšina článkov sa netýka konkrétneho tímu.
+      // Pri zmazaní tímu sa len vynuluje, článok zostáva.
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'timy',
         key: 'id',
       },
     },
@@ -278,6 +319,10 @@ Article.init(
           console.log('Vygenerovaný excerpt:', article.excerpt);
         }
         
+        // SEO polia sa dopĺňajú až po excerpte - meta_description
+        // z neho vychádza
+        article.doplnSeoAkChyba();
+
         // Nastavenie publikačného dátumu pre publikované články
         if (article.status === 'published' && !article.publikovany_datum) {
           article.publikovany_datum = new Date();
@@ -292,11 +337,23 @@ Article.init(
           console.log('Aktualizovaný slug:', article.slug);
         }
         
-        // Aktualizácia excerpt pri zmene obsahu
-        if (article.changed('obsah') && !article.changed('excerpt')) {
+        // Excerpt dopĺňame automaticky LEN vtedy, keď žiadny nie je.
+        //
+        // Pôvodne sa prepisoval pri každej zmene obsahu, takže ručne
+        // napísaný krátky popis zmizol, len čo autor siahol na text
+        // článku - a nedalo sa to nijako obísť. Raz zadaný popis je
+        // rozhodnutie človeka a stroj ho neprepisuje.
+        //
+        // Podmienka sa pýta na výslednú hodnotu, nie na to, čo sa menilo.
+        // Vďaka tomu funguje aj opačný smer: kto chce znovu automatický
+        // popis, vymaže pole a uloží - prázdny excerpt sa doplní z obsahu.
+        if (!article.excerpt && article.obsah) {
           article.excerpt = Article.generateExcerpt(article.obsah);
-          console.log('Aktualizovaný excerpt:', article.excerpt);
+          console.log('Doplnený excerpt (bol prázdny):', article.excerpt);
         }
+
+        // Prázdne SEO polia doplníme z článku, vyplnených sa nedotkneme
+        article.doplnSeoAkChyba();
         
         // Nastavenie publikačného dátumu pri prvom publikovaní
         if (article.changed('status') && article.status === 'published' && !article.publikovany_datum) {

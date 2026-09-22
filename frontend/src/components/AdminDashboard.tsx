@@ -390,21 +390,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       if (teamsResponse.ok) {
         const teamsData = await teamsResponse.json();
         setDashboardCards(prev => prev.map(card => 
-          card.id === 'teams' ? { ...card, value: teamsData.count || 0 } : card
+          card.id === 'teams' ? { ...card, value: teamsData.data?.length || 0 } : card
         ));
       }
 
       if (playersResponse.ok) {
         const playersData = await playersResponse.json();
         setDashboardCards(prev => prev.map(card => 
-          card.id === 'players' ? { ...card, value: playersData.count || 0 } : card
+          card.id === 'players' ? { ...card, value: playersData.data?.length || 0 } : card
         ));
       }
 
       if (staffResponse.ok) {
         const staffData = await staffResponse.json();
         setDashboardCards(prev => prev.map(card => 
-          card.id === 'staff' ? { ...card, value: staffData.count || 0 } : card
+          card.id === 'staff' ? { ...card, value: staffData.data?.length || 0 } : card
         ));
       }
 
@@ -412,14 +412,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
       if (ligyResponse.ok) {
         const ligyData = await ligyResponse.json();
         setDashboardCards(prev => prev.map(card => 
-          card.id === 'ligy' ? { ...card, value: ligyData.count || 0 } : card
+          card.id === 'ligy' ? { ...card, value: ligyData.data?.length || 0 } : card
         ));
       }
 
       if (zapasyResponse.ok) {
         const zapasyData = await zapasyResponse.json();
         setDashboardCards(prev => prev.map(card => 
-          card.id === 'zapasy' ? { ...card, value: zapasyData.total || 0 } : card
+          card.id === 'zapasy' ? { ...card, value: zapasyData.pagination?.total ?? zapasyData.data?.length ?? 0 } : card
         ));
       }
 

@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Interface pre atribúty Zápasu
 interface ZapasAttributes {
@@ -16,6 +17,14 @@ interface ZapasAttributes {
   kolo?: string | null;
   datum_cas: Date;
   miesto?: string | null;
+  /** Kde sa hrá. Pri „doma" sa miesto dopĺňa zo štadióna domáceho tímu. */
+  typ_zapasu: 'doma' | 'vonku' | 'neutralne';
+  /** Štadión, na ktorom sa hrá - pri domácom zápase sa doplní sám */
+  stadion_id?: number | null;
+  /** Rozhodca, voliteľné textové pole */
+  rozhodca?: string | null;
+  /** Logo súpera, ktorý nie je náš tím */
+  supier_logo?: string | null;
   
   // Tímy môžu byť z databázy alebo custom
   domaci_tim_id?: number | null;
@@ -38,7 +47,8 @@ interface ZapasAttributes {
 
 // Interface pre vytvorenie nového Zápasu (bez automatických polí)
 interface ZapasCreationAttributes extends Optional<ZapasAttributes, 
-  'id' | 'liga_id' | 'liga_nazov' | 'kolo' | 'miesto' | 
+  'id' | 'liga_id' | 'liga_nazov' | 'kolo' | 'miesto' |
+  'typ_zapasu' | 'stadion_id' | 'rozhodca' | 'supier_logo' | 
   'domaci_tim_id' | 'domaci_tim_nazov' | 'hostujuci_tim_id' | 'hostujuci_tim_nazov' | 
   'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' | 
   'clanok_id' | 'fotogaleria_id' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
@@ -55,6 +65,10 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public kolo!: string | null;
   public datum_cas!: Date;
   public miesto!: string | null;
+  public typ_zapasu!: 'doma' | 'vonku' | 'neutralne';
+  public stadion_id!: number | null;
+  public rozhodca!: string | null;
+  public supier_logo!: string | null;
   
   // Tím handling
   public domaci_tim_id!: number | null;
@@ -213,6 +227,10 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
       kolo: this.kolo,
       datum_cas: this.datum_cas,
       miesto: this.miesto,
+      typ_zapasu: this.typ_zapasu,
+      stadion_id: this.stadion_id,
+      rozhodca: this.rozhodca,
+      supier_logo: this.supier_logo,
       domaci_tim_id: this.domaci_tim_id,
       domaci_tim_nazov: this.domaci_tim_nazov,
       hostujuci_tim_id: this.hostujuci_tim_id,
@@ -302,6 +320,29 @@ Zapas.init(
       allowNull: true,
       validate: {
         len: [2, 100],
+      },
+    },
+    typ_zapasu: {
+      // Pri "doma" sa miesto konania doplní zo štadióna domáceho tímu,
+      // pri "vonku" a "neutralne" ho zadáva používateľ.
+      type: DataTypes.ENUM('doma', 'vonku', 'neutralne'),
+      allowNull: false,
+      defaultValue: 'doma',
+    },
+    stadion_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'stadiony', key: 'id' },
+    },
+    rozhodca: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+    },
+    supier_logo: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      validate: {
+        jePlatnyObrazok: overObrazkovySubor,
       },
     },
     // Domáci tím handling - buď ID alebo custom názov

@@ -131,8 +131,8 @@ const EditArticleManagement: React.FC<EditArticleManagementProps> = ({ articleId
       const articleData = await articleResponse.json();
       const categoriesData = await categoriesResponse.json();
 
-      if (articleData.success && articleData.data.article) {
-        const article = articleData.data.article;
+      if (articleData.success && articleData.data) {
+        const article = articleData.data;
         setOriginalArticle(article);
         
         // Predvyplnenie formulára údajmi článku
@@ -159,7 +159,7 @@ const EditArticleManagement: React.FC<EditArticleManagementProps> = ({ articleId
       }
 
       if (categoriesData.success) {
-        setCategories(categoriesData.data.categories || []);
+        setCategories(categoriesData.data || []);
       }
 
     } catch (error) {

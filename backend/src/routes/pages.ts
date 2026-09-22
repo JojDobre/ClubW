@@ -9,6 +9,7 @@ import { authenticateToken, requireAdmin, requireEditor } from '../middleware/au
 import { Op } from 'sequelize';
 // Sanitizácia HTML obsahu stránok pred uložením do DB
 import { sanitizeContent } from '../utils/sanitize';
+import { zostavStrankovanie } from '../utils/odpoved';
 
 const router: Router = Router();
 
@@ -58,15 +59,12 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        pages: pages.rows.map(page => page.toJSON()),
-        pagination: {
-          total: pages.count,
-          limit: parseInt(limit as string) || 20,
-          offset: parseInt(offset as string) || 0,
-          has_more: pages.count > (parseInt(offset as string) || 0) + pages.rows.length
-        }
-      }
+      data: pages.rows.map(page => page.toJSON()),
+      pagination: zostavStrankovanie(
+        pages.count,
+        Math.min(parseInt(limit as string) || 20, 100),
+        parseInt(offset as string) || 0
+      )
     });
 
   } catch (error) {
@@ -88,15 +86,13 @@ router.get('/menu', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: {
-        pages: menuPages.map(page => ({
-          id: page.id,
-          nazov: page.nazov,
-          slug: page.slug,
-          url: page.getUrl(),
-          poradie_menu: page.poradie_menu
-        }))
-      }
+      data: menuPages.map(page => ({
+        id: page.id,
+        nazov: page.nazov,
+        slug: page.slug,
+        url: page.getUrl(),
+        poradie_menu: page.poradie_menu
+      }))
     });
 
   } catch (error) {
@@ -138,9 +134,7 @@ router.get('/:slug', [
 
     res.json({
       success: true,
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -208,21 +202,18 @@ adminPageRouter.get('/', [
 
     res.json({
       success: true,
-      data: {
-        pages: pages.rows.map(page => page.toJSON()),
-        pagination: {
-          total: pages.count,
-          limit: parseInt(limit as string) || 20,
-          offset: parseInt(offset as string) || 0,
-          has_more: pages.count > (parseInt(offset as string) || 0) + pages.rows.length
-        },
-        filters: {
-          search: search || '',
-          status: status || 'all',
-          in_menu: in_menu || 'all',
-          sort_by: sortField,
-          sort_order: sortDirection
-        }
+      data: pages.rows.map(page => page.toJSON()),
+      pagination: zostavStrankovanie(
+        pages.count,
+        Math.min(parseInt(limit as string) || 20, 100),
+        parseInt(offset as string) || 0
+      ),
+      filters: {
+        search: search || '',
+        status: status || 'all',
+        in_menu: in_menu || 'all',
+        sort_by: sortField,
+        sort_order: sortDirection
       }
     });
 
@@ -266,9 +257,7 @@ adminPageRouter.get('/:id', [
 
     res.json({
       success: true,
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -384,9 +373,7 @@ adminPageRouter.post('/', [
     res.status(201).json({
       success: true,
       message: 'Stránka bola úspešne vytvorená',
-      data: {
-        page: newPage.toJSON()
-      }
+      data: newPage.toJSON()
     });
 
   } catch (error) {
@@ -493,9 +480,7 @@ adminPageRouter.put('/:id', [
     res.json({
       success: true,
       message: 'Stránka bola úspešne aktualizovaná',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -560,7 +545,11 @@ adminPageRouter.patch('/:id/toggle-menu', [
   authenticateToken,
   requireEditor,
   param('id').isInt({ min: 1 }),
-  body('v_menu').isBoolean()
+  // Hodnota je VOLITEĽNÁ. Endpoint sa volá toggle, takže bez nej sa stav
+  // jednoducho preklopí. Pôvodne bola povinná, takže "prepni" bez tela
+  // skončilo na 400 - názov endpointu sľuboval niečo iné, než robil.
+  // Kto pošle konkrétnu hodnotu, nastaví ju natvrdo (to funguje ďalej).
+  body('v_menu').optional().isBoolean()
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -573,7 +562,6 @@ adminPageRouter.patch('/:id/toggle-menu', [
     }
 
     const { id } = req.params;
-    const { v_menu } = req.body;
 
     const page = await Page.findByPk(parseInt(id));
     if (!page) {
@@ -582,6 +570,9 @@ adminPageRouter.patch('/:id/toggle-menu', [
         message: 'Stránka nebola nájdená'
       });
     }
+
+    // Bez zadanej hodnoty preklopíme aktuálny stav
+    const v_menu = req.body?.v_menu === undefined ? !page.v_menu : Boolean(req.body.v_menu);
 
     // Ak pridávame do menu a nemá poradie, nastav automatické
     let poradie_menu = page.poradie_menu;
@@ -597,9 +588,7 @@ adminPageRouter.patch('/:id/toggle-menu', [
     res.json({
       success: true,
       message: v_menu ? 'Stránka bola pridaná do menu' : 'Stránka bola odstránená z menu',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -619,7 +608,8 @@ adminPageRouter.patch('/:id/toggle-publish', [
   authenticateToken,
   requireEditor,
   param('id').isInt({ min: 1 }),
-  body('publikovany').isBoolean()
+  // Voliteľné z rovnakého dôvodu ako pri toggle-menu
+  body('publikovany').optional().isBoolean()
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -632,7 +622,6 @@ adminPageRouter.patch('/:id/toggle-publish', [
     }
 
     const { id } = req.params;
-    const { publikovany } = req.body;
 
     const page = await Page.findByPk(parseInt(id));
     if (!page) {
@@ -642,14 +631,16 @@ adminPageRouter.patch('/:id/toggle-publish', [
       });
     }
 
+    // Bez zadanej hodnoty preklopíme aktuálny stav
+    const publikovany =
+      req.body?.publikovany === undefined ? !page.publikovany : Boolean(req.body.publikovany);
+
     await page.update({ publikovany });
 
     res.json({
       success: true,
       message: publikovany ? 'Stránka bola publikovaná' : 'Stránka bola zmenená na koncept',
-      data: {
-        page: page.toJSON()
-      }
+      data: page.toJSON()
     });
 
   } catch (error) {
@@ -657,6 +648,53 @@ adminPageRouter.patch('/:id/toggle-publish', [
     res.status(500).json({
       success: false,
       message: 'Chyba pri zmene publikovania'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/pages/:id/nahlad
+ * Náhľad stránky vrátane nepublikovaného konceptu.
+ * Slúži na to, aby si editor vedel pozrieť stránku ešte pred publikovaním.
+ */
+adminPageRouter.get('/:id/nahlad', [
+  authenticateToken,
+  requireEditor,
+  param('id').isInt({ min: 1 })
+], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Neplatné ID stránky',
+        errors: errors.array()
+      });
+    }
+
+    const page = await Page.findByPk(req.params.id);
+
+    if (!page) {
+      return res.status(404).json({
+        success: false,
+        message: 'Stránka nebola nájdená'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        page: page.toJSON(),
+        nahlad: true,
+        publikovana: page.publikovany
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri načítavaní náhľadu stránky:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri načítavaní náhľadu stránky'
     });
   }
 });

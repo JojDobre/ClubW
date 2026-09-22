@@ -20,7 +20,10 @@ interface VideoAttributes {
   nahlad: string | null;
   /** Dĺžka v sekundách */
   dlzka: number | null;
+  /** Pôvodná voľná kategória; zostáva pre staré dáta */
   kategoria: string | null;
+  /** Rubrika ako väzba - požiadavka žiada rubriku, nie voľný text */
+  rubrika_id: number | null;
   zapas_id: number | null;
   publikovane: boolean;
   poradie: number;
@@ -31,7 +34,7 @@ interface VideoAttributes {
 interface VideoCreationAttributes
   extends Optional<
     VideoAttributes,
-    'id' | 'popis' | 'zdroj' | 'video_id' | 'nahlad' | 'dlzka' | 'kategoria'
+    'id' | 'popis' | 'zdroj' | 'video_id' | 'nahlad' | 'dlzka' | 'kategoria' | 'rubrika_id'
     | 'zapas_id' | 'publikovane' | 'poradie' | 'vytvorene' | 'aktualizovane'
   > {}
 
@@ -45,6 +48,7 @@ class Video extends Model<VideoAttributes, VideoCreationAttributes> implements V
   public nahlad!: string | null;
   public dlzka!: number | null;
   public kategoria!: string | null;
+  public rubrika_id!: number | null;
   public zapas_id!: number | null;
   public publikovane!: boolean;
   public poradie!: number;
@@ -100,6 +104,11 @@ Video.init(
     nahlad: { type: DataTypes.STRING(400), allowNull: true },
     dlzka: { type: DataTypes.INTEGER, allowNull: true },
     kategoria: { type: DataTypes.STRING(60), allowNull: true },
+    rubrika_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'rubriky', key: 'id' },
+    },
     zapas_id: {
       type: DataTypes.INTEGER,
       allowNull: true,

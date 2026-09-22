@@ -24,7 +24,9 @@ import {
   
   // Import/Export
   exportLeagueTableEndpoint,
-  importLeagueTableEndpoint
+  importLeagueTableEndpoint,
+  deleteLeagueTableRowEndpoint,
+  duplicateLeagueEndpoint
 } from '../controllers/ligaController';
 // Controller pre poradie strelcov ligy
 import { getTopScorers } from '../controllers/ZapasStatistikaController';
@@ -219,6 +221,20 @@ router.get('/:id/export', exportLeagueTableEndpoint);
  * @note Vymaže existujúcu tabuľku a nahradí ju importovanými dátami
  */
 router.post('/:id/import', authenticateToken, requireEditor, importLeagueTableEndpoint);
+
+/**
+ * @route DELETE /api/leagues/:id/table/:rowId
+ * @desc Odstráni tím z tabuľky. PUT tabuľky riadok, ktorý nedostane,
+ *       ticho ponechá, takže odstrániť sa dovtedy nedalo.
+ */
+router.delete('/:id/table/:rowId', authenticateToken, requireEditor, deleteLeagueTableRowEndpoint);
+
+/**
+ * @route POST /api/leagues/:id/duplicate
+ * @desc Kópia ligy na novú sezónu aj s tímami.
+ *       Telo: { sezona, sezona_id?, zachovat_body? }
+ */
+router.post('/:id/duplicate', authenticateToken, requireEditor, duplicateLeagueEndpoint);
 
 // ===== POKROČILÉ ROUTES (pre budúce rozšírenia) =====
 

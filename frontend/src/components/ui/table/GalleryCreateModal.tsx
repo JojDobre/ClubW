@@ -451,8 +451,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
           
           console.log('✅ Galéria vytvorená s novým slug:', retryResult.data);
           
-          // Backend môže vrátiť buď retryResult.data.id alebo retryResult.data.galeria.id
-          const retryGalleryId = retryResult.data?.id || retryResult.data?.galeria?.id;
+          const retryGalleryId = retryResult.data?.id;
           
           if (!retryGalleryId) {
             console.error('❌ Nepodarilo sa získať ID galérie z retry response:', retryResult);
@@ -482,8 +481,7 @@ const GalleryCreateModal: React.FC<GalleryCreateModalProps> = ({
 
       console.log('✅ Galéria vytvorená:', result.data);
       
-      // Backend môže vrátiť buď result.data.id alebo result.data.galeria.id
-      const galleryId = result.data?.id || result.data?.galeria?.id;
+      const galleryId = result.data?.id;
       
       if (!galleryId) {
         console.error('❌ Nepodarilo sa získať ID galérie z response:', result);

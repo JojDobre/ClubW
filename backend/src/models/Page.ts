@@ -54,6 +54,40 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
   }
 
   /**
+   * Zhustí HTML obsah stránky na čistý text danej dĺžky.
+   */
+  public static generateExcerpt(obsah: string, maxLength: number = 160): string {
+    const textOnly = obsah.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    if (textOnly.length <= maxLength) {
+      return textOnly;
+    }
+
+    const truncated = textOnly.substring(0, maxLength);
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+
+    return lastSpaceIndex > 0
+      ? truncated.substring(0, lastSpaceIndex) + '...'
+      : truncated + '...';
+  }
+
+  /**
+   * Doplní SEO polia z názvu a obsahu stránky, ak sú prázdne.
+   * Ručne vyplnené meta polia sa nikdy neprepisujú.
+   */
+  public doplnSeoAkChyba(): void {
+    if (!this.meta_title && this.nazov) {
+      this.meta_title = this.nazov.length <= 70
+        ? this.nazov
+        : this.nazov.substring(0, 67).trimEnd() + '...';
+    }
+
+    if (!this.meta_description && this.obsah) {
+      this.meta_description = Page.generateExcerpt(this.obsah, 160);
+    }
+  }
+
+  /**
    * ✅ NOVÉ: Vytvorí unikátny slug pridaním číselného suffixu ak je potrebné
    * Príklad: "historia" → "historia-1" → "historia-2" atď.
    */
@@ -132,9 +166,15 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
    * Skráti obsah pre excerpt
    */
   public getExcerpt(length: number = 150): string {
+    // Niektoré výbery si obsah zámerne neťahajú (zoznamy stránok), tak radšej
+    // vrátime prázdny text, než aby celý endpoint spadol.
+    if (!this.obsah) {
+      return '';
+    }
+
     // Odstráni HTML tagy
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
-    
+
     if (plainText.length <= length) {
       return plainText;
     }
@@ -146,6 +186,10 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
    * Spočíta slová v obsahu
    */
   public getWordCount(): number {
+    if (!this.obsah) {
+      return 0;
+    }
+
     const plainText = this.obsah.replace(/<[^>]*>/g, '');
     return plainText.trim().split(/\s+/).filter(word => word.length > 0).length;
   }
@@ -289,6 +333,9 @@ Page.init(
         if (!page.slug && page.nazov) {
           page.slug = await Page.generateUniqueSlugFromTitle(page.nazov);
         }
+
+        // SEO sa dopĺňa automaticky z obsahu, ručne zadané hodnoty ostávajú.
+        page.doplnSeoAkChyba();
       },
       
       // Automatické nastavenie poradia v menu

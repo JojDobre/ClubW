@@ -7,7 +7,9 @@ import {
   uploadGalleryImages,
   getGalleryImages,
   updateGalleryImage,
-  deleteGalleryImage
+  deleteGalleryImage,
+  pridajZKniznice,
+  nastavTitulnyObrazok,
 } from '../controllers/galeriaObrazokController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -45,6 +47,19 @@ adminGalleryImagesRouter.put('/:galleryId/images/:imageId', updateGalleryImage);
 
 // DELETE /api/admin/galleries/:galleryId/images/:imageId - Vymazanie obrázka  
 adminGalleryImagesRouter.delete('/:galleryId/images/:imageId', deleteGalleryImage);
+
+/**
+ * @route POST /api/admin/galleries/:id/images/from-media
+ * @desc Pridá do galérie obrázok, ktorý je už v media knižnici -
+ *       bez opätovného nahrávania toho istého súboru
+ */
+adminGalleryImagesRouter.post('/:id/images/from-media', pridajZKniznice);
+
+/**
+ * @route PATCH /api/admin/galleries/:galleryId/images/:imageId/cover
+ * @desc Označí obrázok ako titulný obrázok galérie
+ */
+adminGalleryImagesRouter.patch('/:galleryId/images/:imageId/cover', nastavTitulnyObrazok);
 
 // Export admin router
 export default adminGalleryImagesRouter;

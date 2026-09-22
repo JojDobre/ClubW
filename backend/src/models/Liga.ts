@@ -3,6 +3,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import { overObrazkovySubor } from '../utils/obrazokValidator';
 
 // Interface pre rozšírené atribúty Ligy
 interface LigaAttributes {
@@ -12,6 +13,8 @@ interface LigaAttributes {
   // Väzba na entitu sezóny. Textové pole sezona zostáva kvôli
   // spätnej kompatibilite existujúceho kódu.
   sezona_id?: number | null;
+  /** Náš tím, ktorého sa súťaž týka - požiadavka ho žiada pri vytvorení ligy */
+  tim_id?: number | null;
   typ: 'sutaz' | 'pohar' | 'priatelska';
   popis?: string | null;
   external_widget_url?: string | null;
@@ -60,6 +63,7 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
   public nazov!: string;
   public sezona!: string;
   public sezona_id!: number | null;
+  public tim_id!: number | null;
   public typ!: 'sutaz' | 'pohar' | 'priatelska';
   public popis!: string | null;
   public external_widget_url!: string | null;
@@ -181,6 +185,9 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
       id: this.id,
       nazov: this.nazov,
       sezona: this.sezona,
+      sezona_id: this.sezona_id,
+      // Náš tím, ktorého sa súťaž týka
+      tim_id: this.tim_id,
       typ: this.typ,
       popis: this.popis,
       external_widget_url: this.external_widget_url,
@@ -254,6 +261,11 @@ Liga.init(
       allowNull: true,
       references: { model: 'sezony', key: 'id' },
     },
+    tim_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'timy', key: 'id' },
+    },
     typ: {
       type: DataTypes.ENUM('sutaz', 'pohar', 'priatelska'),
       allowNull: false,
@@ -274,7 +286,8 @@ Liga.init(
       type: DataTypes.STRING(255),
       allowNull: true,
       validate: {
-        isUrl: true,
+        // Logo býva nahraté do uploads, nie externá adresa
+        jePlatnyObrazok: overObrazkovySubor,
       },
     },
     farba: {

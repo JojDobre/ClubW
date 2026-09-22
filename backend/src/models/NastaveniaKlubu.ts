@@ -55,6 +55,17 @@ interface NastaveniaKlubuAttributes {
   meta_popis: string | null;
   google_analytics_id: string | null;
 
+  // Sady nastavení sú JSON, nie desiatky stĺpcov - menia sa často
+  // a nová položka v nich nevyžaduje migráciu.
+  /** Dodatkové farby podľa šablóny, napríklad {"uspech":"#2E7D32"} */
+  dodatkove_farby: Record<string, string>;
+  /** Globálne nastavenia komentárov */
+  nastavenia_komentarov: Record<string, unknown>;
+  /** GDPR - cookie lišta, text súhlasu, retencia */
+  nastavenia_gdpr: Record<string, unknown>;
+  /** SEO nad rámec meta_popis */
+  nastavenia_seo: Record<string, unknown>;
+
   vytvoreny: Date;
   aktualizovany: Date;
 }
@@ -68,6 +79,8 @@ interface NastaveniaKlubuCreationAttributes
     | 'email' | 'telefon' | 'adresa' | 'ico' | 'dic'
     | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url'
     | 'meta_popis' | 'google_analytics_id'
+    | 'dodatkove_farby' | 'nastavenia_komentarov'
+    | 'nastavenia_gdpr' | 'nastavenia_seo'
     | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -98,6 +111,10 @@ class NastaveniaKlubu
   public x_url!: string | null;
   public meta_popis!: string | null;
   public google_analytics_id!: string | null;
+  public dodatkove_farby!: Record<string, string>;
+  public nastavenia_komentarov!: Record<string, unknown>;
+  public nastavenia_gdpr!: Record<string, unknown>;
+  public nastavenia_seo!: Record<string, unknown>;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
 
@@ -132,6 +149,8 @@ class NastaveniaKlubu
         akcent: this.farba_akcent,
         primarna_kontrast: this.farba_primarna_kontrast,
         akcent_kontrast: this.farba_akcent_kontrast,
+        // Dodatkové farby podľa šablóny sa pridávajú k základným
+        ...(this.dodatkove_farby || {}),
       },
       kontakt: {
         email: this.email,
@@ -145,6 +164,11 @@ class NastaveniaKlubu
         x: this.x_url,
       },
       meta_popis: this.meta_popis,
+      // Web podľa nich rozhodne, či ukázať cookie lištu a či sú
+      // komentáre vôbec zapnuté
+      komentare: this.nastavenia_komentarov,
+      gdpr: this.nastavenia_gdpr,
+      seo: this.nastavenia_seo,
     };
   }
 }
@@ -241,6 +265,43 @@ NastaveniaKlubu.init(
     google_analytics_id: {
       type: DataTypes.STRING(40),
       allowNull: true,
+    },
+
+    dodatkove_farby: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
+    },
+    nastavenia_komentarov: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {
+        povolene: true,
+        moderovat: true,
+        vyzadovat_email: false,
+        povolit_odpovede: true,
+      },
+    },
+    nastavenia_gdpr: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {
+        cookie_lista: true,
+        text_suhlasu: null,
+        kontakt_zodpovednej_osoby: null,
+        retencia_mesiacov: 36,
+      },
+    },
+    nastavenia_seo: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {
+        meta_title_sablona: null,
+        kluc_slova: null,
+        og_obrazok: null,
+        indexovat: true,
+        google_search_console: null,
+      },
     },
 
     vytvoreny: {

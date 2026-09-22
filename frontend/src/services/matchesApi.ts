@@ -1,5 +1,6 @@
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { API_BASE_URL } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 // frontend/src/services/matchesApi.ts
 // API služba pre správu zápasov - FÁZA 4
 
@@ -95,9 +96,10 @@ export interface ZapasFormData {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  count?: number;
   message?: string;
   errors?: string[];
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: Strankovanie;
 }
 
 export interface MatchFilters {
@@ -255,8 +257,7 @@ export const matchesApi = {
         
         return {
           ...response,
-          data: filteredMatches,
-          count: filteredMatches.length
+          data: filteredMatches
         };
       }
       return response;
