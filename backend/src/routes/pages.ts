@@ -671,4 +671,51 @@ adminPageRouter.patch('/:id/toggle-publish', [
   }
 });
 
+/**
+ * GET /api/admin/pages/:id/nahlad
+ * Náhľad stránky vrátane nepublikovaného konceptu.
+ * Slúži na to, aby si editor vedel pozrieť stránku ešte pred publikovaním.
+ */
+adminPageRouter.get('/:id/nahlad', [
+  authenticateToken,
+  requireEditor,
+  param('id').isInt({ min: 1 })
+], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Neplatné ID stránky',
+        errors: errors.array()
+      });
+    }
+
+    const page = await Page.findByPk(req.params.id);
+
+    if (!page) {
+      return res.status(404).json({
+        success: false,
+        message: 'Stránka nebola nájdená'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        page: page.toJSON(),
+        nahlad: true,
+        publikovana: page.publikovany
+      }
+    });
+
+  } catch (error) {
+    console.error('Chyba pri načítavaní náhľadu stránky:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Chyba pri načítavaní náhľadu stránky'
+    });
+  }
+});
+
 export default router;
