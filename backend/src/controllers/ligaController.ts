@@ -3,6 +3,7 @@
 
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
+import sequelize from '../config/database';
 import Liga from '../models/Liga';
 import LigaTabulka from '../models/LigaTabulka';
 import LigaTurnaj from '../models/LigaTurnaj';
@@ -118,6 +119,45 @@ const validateLigaData = (data: any) => {
   }
   
   return errors;
+};
+
+/**
+ * Overí ručne zadanú formu tímu.
+ *
+ * Forma je reťazec posledných zápasov, napríklad "WWDLW"
+ * (W = výhra, D = remíza, L = prehra). Zadáva sa ručne najmä v ligách,
+ * kde sa vedú len body a automatický prepočet nemá z čoho formu odvodiť.
+ *
+ * @returns text chyby, alebo null keď je hodnota v poriadku
+ */
+const overFormu = (hodnota: unknown): string | null => {
+  if (hodnota === undefined || hodnota === null || hodnota === '') {
+    return null;
+  }
+
+  if (typeof hodnota !== 'string') {
+    return 'Forma musí byť text (napríklad "WWDLW")';
+  }
+
+  const normalizovana = hodnota.trim().toUpperCase();
+
+  if (normalizovana.length > 10) {
+    return 'Forma môže mať najviac 10 znakov';
+  }
+
+  if (!/^[WDL]+$/.test(normalizovana)) {
+    return 'Forma smie obsahovať len znaky W (výhra), D (remíza) a L (prehra)';
+  }
+
+  return null;
+};
+
+/** Zjednotí zápis formy - veľké písmená bez okrajových medzier. */
+const normalizujFormu = (hodnota: unknown): string | null => {
+  if (hodnota === undefined || hodnota === null || hodnota === '') {
+    return null;
+  }
+  return String(hodnota).trim().toUpperCase();
 };
 
 // Validácia ID ligy
@@ -776,86 +816,119 @@ export const updateLeagueTableEndpoint = async (req: Request, res: Response): Pr
     console.log(`📝 Existujúce záznamy: ${existingRecords.length}`);
     console.log(`🆕 Nové záznamy: ${newRecords.length}`);
 
-    // 1. AKTUALIZÁCIA EXISTUJÚCICH ZÁZNAMOV
-    const updatePromises = existingRecords.map(async (item: any) => {
+    // Overenie vstupov PRED otvorením transakcie - zbytočne nezačíname
+    // zápis, o ktorom vopred vieme, že skončí výnimkou.
+    const chybyVstupu: string[] = [];
+
+    for (const item of existingRecords) {
       if (!item.pozicia) {
-        throw new Error(`Existujúci záznam ID ${item.id} musí mať pozíciu`);
+        chybyVstupu.push(`Existujúci záznam ID ${item.id} musí mať pozíciu`);
       }
+      const chybaFormy = overFormu(item.forma);
+      if (chybaFormy) chybyVstupu.push(`Záznam ID ${item.id}: ${chybaFormy}`);
+    }
 
-      const updateData: any = {
-        pozicia: item.pozicia,
-        manualne_upravene: true
-      };
-
-      // Voliteľné polia
-      if (item.body !== undefined) updateData.body = item.body;
-      if (item.zapasy !== undefined) updateData.zapasy = item.zapasy;
-      if (item.vitazstva !== undefined) updateData.vitazstva = item.vitazstva;
-      if (item.remizy !== undefined) updateData.remizy = item.remizy;
-      if (item.prehry !== undefined) updateData.prehry = item.prehry;
-      if (item.goly_za !== undefined) updateData.goly_za = item.goly_za;
-      if (item.goly_proti !== undefined) updateData.goly_proti = item.goly_proti;
-      if (item.penalizacne_body !== undefined) updateData.penalizacne_body = item.penalizacne_body;
-      if (item.bonus_body !== undefined) updateData.bonus_body = item.bonus_body;
-      if (item.poznamky !== undefined) updateData.poznamky = item.poznamky;
-
-      // Automatický výpočet gólovej bilancie
-      if (item.goly_za !== undefined && item.goly_proti !== undefined) {
-        updateData.goly_rozdiel = item.goly_za - item.goly_proti;
-      }
-
-      console.log(`🔄 Aktualizujem záznam ID ${item.id}:`, updateData);
-
-      return LigaTabulka.update(updateData, {
-        where: { id: item.id, liga_id: validation.id }
-      });
-    });
-
-    // 2. VYTVORENIE NOVÝCH ZÁZNAMOV
-    const createPromises = newRecords.map(async (item: any) => {
-      // Validácia povinných polí pre nové záznamy
+    for (const item of newRecords) {
       if (!item.pozicia) {
-        throw new Error('Nový záznam musí mať pozíciu');
+        chybyVstupu.push('Nový záznam musí mať pozíciu');
       }
-
       if (!item.tim_id && !item.custom_tim_nazov) {
-        throw new Error('Nový záznam musí mať buď tim_id alebo custom_tim_nazov');
+        chybyVstupu.push('Nový záznam musí mať buď tim_id alebo custom_tim_nazov');
+      }
+      const chybaFormy = overFormu(item.forma);
+      if (chybaFormy) chybyVstupu.push(`Nový záznam: ${chybaFormy}`);
+    }
+
+    if (chybyVstupu.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné dáta tabuľky',
+        errors: chybyVstupu
+      });
+      return;
+    }
+
+    // Celý zápis beží v JEDNEJ TRANSAKCII. Pôvodne šlo o Promise.all nad
+    // samostatnými dotazmi: keď jeden padol, ostatné už boli zapísané
+    // a tabuľka zostala rozbitá v polovici. Transakcia navyše umožňuje
+    // výmenu poradia - odložený constraint liga_tabulky_liga_pozicia sa
+    // vyhodnotí až pri COMMIT-e, takže medzistav s dvoma rovnakými
+    // pozíciami je v poriadku.
+    //
+    // Operácie idú ZA SEBOU, nie cez Promise.all: transakcia drží jedno
+    // spojenie a súbežné dotazy nad ním si navzájom prekrývajú stav.
+    await sequelize.transaction(async (transakcia) => {
+      // 1. AKTUALIZÁCIA EXISTUJÚCICH ZÁZNAMOV
+      for (const item of existingRecords as any[]) {
+        const updateData: any = {
+          pozicia: item.pozicia,
+          manualne_upravene: true
+        };
+
+        // Voliteľné polia
+        if (item.body !== undefined) updateData.body = item.body;
+        if (item.zapasy !== undefined) updateData.zapasy = item.zapasy;
+        if (item.vitazstva !== undefined) updateData.vitazstva = item.vitazstva;
+        if (item.remizy !== undefined) updateData.remizy = item.remizy;
+        if (item.prehry !== undefined) updateData.prehry = item.prehry;
+        if (item.goly_za !== undefined) updateData.goly_za = item.goly_za;
+        if (item.goly_proti !== undefined) updateData.goly_proti = item.goly_proti;
+        if (item.penalizacne_body !== undefined) updateData.penalizacne_body = item.penalizacne_body;
+        if (item.bonus_body !== undefined) updateData.bonus_body = item.bonus_body;
+        if (item.poznamky !== undefined) updateData.poznamky = item.poznamky;
+        // Forma a séria sa dajú zadať ručne - pri lige, kde sa vedú len
+        // body, ich nemá z čoho dopočítať automatický prepočet.
+        if (item.forma !== undefined) updateData.forma = normalizujFormu(item.forma);
+        if (item.serie_zapasov !== undefined) updateData.serie_zapasov = item.serie_zapasov;
+
+        // Automatický výpočet gólovej bilancie
+        if (item.goly_za !== undefined && item.goly_proti !== undefined) {
+          updateData.goly_rozdiel = item.goly_za - item.goly_proti;
+        }
+
+        console.log(`🔄 Aktualizujem záznam ID ${item.id}:`, updateData);
+
+        await LigaTabulka.update(updateData, {
+          where: { id: item.id, liga_id: validation.id },
+          transaction: transakcia
+        });
       }
 
-      const createData: any = {
-        liga_id: validation.id,
-        pozicia: item.pozicia,
-        body: item.body || 0,
-        zapasy: item.zapasy || 0,
-        vitazstva: item.vitazstva || 0,
-        remizy: item.remizy || 0,
-        prehry: item.prehry || 0,
-        goly_za: item.goly_za || 0,
-        goly_proti: item.goly_proti || 0,
-        goly_rozdiel: (item.goly_za || 0) - (item.goly_proti || 0),
-        manualne_upravene: true
-      };
+      // 2. VYTVORENIE NOVÝCH ZÁZNAMOV
+      for (const item of newRecords as any[]) {
+        const createData: any = {
+          liga_id: validation.id,
+          pozicia: item.pozicia,
+          body: item.body || 0,
+          zapasy: item.zapasy || 0,
+          vitazstva: item.vitazstva || 0,
+          remizy: item.remizy || 0,
+          prehry: item.prehry || 0,
+          goly_za: item.goly_za || 0,
+          goly_proti: item.goly_proti || 0,
+          goly_rozdiel: (item.goly_za || 0) - (item.goly_proti || 0),
+          manualne_upravene: true
+        };
 
-      // Tím z databázy alebo custom názov
-      if (item.tim_id) {
-        createData.tim_id = item.tim_id;
-      } else {
-        createData.custom_tim_nazov = item.custom_tim_nazov;
+        // Tím z databázy alebo custom názov
+        if (item.tim_id) {
+          createData.tim_id = item.tim_id;
+        } else {
+          createData.custom_tim_nazov = item.custom_tim_nazov;
+        }
+
+        // Voliteľné polia
+        if (item.penalizacne_body !== undefined) createData.penalizacne_body = item.penalizacne_body;
+        if (item.bonus_body !== undefined) createData.bonus_body = item.bonus_body;
+        if (item.poznamky !== undefined) createData.poznamky = item.poznamky;
+        if (item.forma !== undefined) createData.forma = normalizujFormu(item.forma);
+        if (item.serie_zapasov !== undefined) createData.serie_zapasov = item.serie_zapasov;
+
+        console.log('🆕 Vytváram nový záznam:', createData);
+
+        await LigaTabulka.create(createData, { transaction: transakcia });
       }
-
-      // Voliteľné polia
-      if (item.penalizacne_body !== undefined) createData.penalizacne_body = item.penalizacne_body;
-      if (item.bonus_body !== undefined) createData.bonus_body = item.bonus_body;
-      if (item.poznamky !== undefined) createData.poznamky = item.poznamky;
-
-      console.log('🆕 Vytváram nový záznam:', createData);
-
-      return LigaTabulka.create(createData);
     });
-
-    // Vykonanie všetkých operácií
-    console.log('⚡ Vykonávam všetky operácie...');
-    await Promise.all([...updatePromises, ...createPromises]);
 
     // Načítanie aktualizovanej tabuľky
     console.log('📊 Načítavam aktualizovanú tabuľku...');

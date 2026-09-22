@@ -927,12 +927,14 @@ LigaTabulka.init(
       },
     },
     indexes: [
-      // Index na ligu + pozíciu pre rýchle zoradenie
-      {
-        fields: ['liga_id', 'pozicia'],
-        unique: true,
-        name: 'liga_tabulky_liga_pozicia'
-      },
+      // Unikátnosť dvojice (liga_id, pozicia) tu zámerne NIE JE deklarovaná.
+      // Sequelize by z nej spravil obyčajný unikátny index, ktorý sa kontroluje
+      // po každom riadku, a tým by znemožnil výmenu poradia tímov: medzi dvoma
+      // UPDATE-mi vždy nastane okamih s dvoma rovnakými pozíciami.
+      // Namiesto toho existuje ODLOŽENÝ constraint liga_tabulky_liga_pozicia,
+      // ktorý vytvára migrácia 20260922000000 a ktorý sa vyhodnotí až pri
+      // COMMIT-e. Backing index k nemu si PostgreSQL drží sám, takže
+      // vyhľadávanie podľa (liga_id, pozicia) je naďalej indexované.
       // Index na tím (môže byť null pre custom tímy)
       {
         fields: ['tim_id'],
