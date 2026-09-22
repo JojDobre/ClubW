@@ -49,6 +49,7 @@ import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
 import stadionRoutes from './routes/stadiony';
+import mediaRoutes from './routes/media';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 import { spustiPlanovacZapasov } from './services/planovacZapasov';
 
@@ -275,6 +276,9 @@ app.use('/api/stadiums', stadionRoutes);
 
 // Archív - mäkko odstránené položky a ich obnova
 app.use('/api/admin/archive', archivRoutes);
+
+// Media knižnica - všetky nahraté súbory na jednom mieste
+app.use('/api/admin/media', mediaRoutes);
 
 
 // ===== ŠTATISTIKY =====

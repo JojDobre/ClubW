@@ -24,6 +24,7 @@ import NastaveniaKlubu from './NastaveniaKlubu';
 import Sezona from './Sezona';
 import Stadion from './Stadion';
 import KalendarUdalost from './KalendarUdalost';
+import Media from './Media';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -120,6 +121,13 @@ Team.hasMany(KalendarUdalost, {
 KalendarUdalost.belongsTo(Team, {
   foreignKey: 'tim_id',
   as: 'tim',
+});
+
+// Media -> User (kto súbor nahral)
+Media.belongsTo(User, {
+  foreignKey: 'autor_id',
+  as: 'autor',
+  constraints: false,
 });
 
 // 3. TEAM vzťahy
@@ -468,6 +476,7 @@ export default {
   Sezona,
   Stadion,
   KalendarUdalost,
+  Media,
   SupiskaSezony,
   Suhlas,
   AuditLog,

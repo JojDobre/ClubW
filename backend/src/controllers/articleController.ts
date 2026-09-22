@@ -8,6 +8,8 @@ import Article from '../models/Article';
 import Category from '../models/Category';
 import User from '../models/user';
 import Team from '../models/Team';
+import Media from '../models/Media';
+import { ulozMedium } from '../utils/mediaUlozisko';
 import fs from 'fs/promises';
 // Sanitizácia HTML obsahu pred uložením do DB - ochrana pred stored XSS
 import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
@@ -737,7 +739,10 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
 // Pridaj túto funkciu na koniec súboru:
 export const uploadArticleImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.file) {
+    const subory = (req.files as Express.Multer.File[]) || [];
+    const subor = subory[0];
+
+    if (!subor) {
       res.status(400).json({
         success: false,
         message: 'Žiadny súbor nebol nahraný'
@@ -745,35 +750,44 @@ export const uploadArticleImage = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const filename = req.file.filename;
-    const filePath = `/uploads/articles/${filename}`;
+    // Uloženie ide cez media knižnicu: /uploads/media/<rok>/<mesiac>/,
+    // obsah sa overí a obrázok sa pre-enkóduje. Zároveň vznikne záznam,
+    // takže sa obrázok dá neskôr nájsť a znovu použiť.
+    const ulozeny = await ulozMedium(subor.buffer, subor.originalname);
 
-    console.log('✅ Obrázok článku nahraný:', {
-      originalName: req.file.originalname,
-      filename: filename,
-      size: req.file.size,
-      path: filePath
+    const medium = await Media.create({
+      nazov: subor.originalname.replace(/\.[^.]+$/, '').slice(0, 200),
+      originalny_nazov: subor.originalname.slice(0, 255),
+      cesta: ulozeny.cesta,
+      typ: ulozeny.typ,
+      mime_typ: ulozeny.mimeTyp,
+      velkost: ulozeny.velkost,
+      sirka: ulozeny.sirka,
+      vyska: ulozeny.vyska,
+      autor_id: req.userId ?? null,
     });
 
     res.json({
       success: true,
       data: {
-        filename: filePath,
-        originalName: req.file.originalname,
-        size: req.file.size
+        // "filename" ponechávame kvôli existujúcemu frontendu, ktorý ho číta
+        filename: medium.cesta,
+        cesta: medium.cesta,
+        media_id: medium.id,
+        originalName: subor.originalname,
+        size: medium.velkost,
       },
       message: 'Obrázok bol úspešne nahraný'
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chyba pri uploade obrázka článku:', error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
-      message: 'Chyba pri uploade obrázka'
+      message: error?.message || 'Chyba pri uploade obrázka'
     });
   }
 };
-
 
 /**
  * GET /api/admin/articles/:id/preview
