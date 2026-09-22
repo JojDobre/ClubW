@@ -50,6 +50,7 @@ import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
 import stadionRoutes from './routes/stadiony';
 import mediaRoutes from './routes/media';
+import rolaRoutes from './routes/roly';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 import { spustiPlanovacZapasov } from './services/planovacZapasov';
 
@@ -279,6 +280,9 @@ app.use('/api/admin/archive', archivRoutes);
 
 // Media knižnica - všetky nahraté súbory na jednom mieste
 app.use('/api/admin/media', mediaRoutes);
+
+// Role a oprávnenia - vlastné role so zaškrtávacími právami na modul
+app.use('/api/admin/roles', rolaRoutes);
 
 
 // ===== ŠTATISTIKY =====

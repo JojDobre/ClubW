@@ -2,6 +2,7 @@
 // Middleware pre JWT autentifikáciu
 
 import { Request, Response, NextFunction } from 'express';
+import Rola from '../models/Rola';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
 
@@ -115,6 +116,69 @@ export const requireRole = (allowedRoles: string[]) => {
     }
 
     next();
+  };
+};
+
+/**
+ * Middleware pre kontrolu KONKRÉTNEHO OPRÁVNENIA.
+ *
+ * PREČO POPRI requireRole: role boli doteraz pevný enum, takže sa dalo
+ * povedať len „musíš byť admin alebo redaktor". Odkedy si klub vie
+ * vytvoriť vlastnú rolu a zaškrtať jej práva po moduloch, musí sa
+ * kontrolovať samotné právo, nie meno roly.
+ *
+ * Používateľ bez priradenej roly z tabuľky rolí sa posudzuje podľa
+ * pôvodného enumu, aby po nasadení nikto neprišiel o prístup.
+ *
+ * @param modul - modul administrácie, napríklad 'clanky'
+ * @param akcia - 'citat' | 'pisat' | 'mazat'
+ */
+export const requirePermission = (modul: string, akcia: 'citat' | 'pisat' | 'mazat') => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Autentifikácia je potrebná.' });
+      return;
+    }
+
+    // Správca podľa pôvodného enumu smie všetko - poistka, aby sa klub
+    // nemohol omylom zamknúť mimo vlastnej administrácie
+    if (req.user.rola === 'admin') {
+      next();
+      return;
+    }
+
+    const rolaId = (req.user as any).rola_id;
+
+    if (rolaId) {
+      const rola = await Rola.findOne({ where: { id: rolaId, aktivity: true } });
+      if (rola && rola.smie(modul, akcia)) {
+        next();
+        return;
+      }
+
+      res.status(403).json({
+        success: false,
+        message: `Vaša rola nemá právo „${akcia}" v module „${modul}".`,
+      });
+      return;
+    }
+
+    // Bez priradenej roly padáme späť na pôvodný enum
+    const podlaEnumu: Record<string, string[]> = {
+      citat: ['admin', 'redaktor', 'trener'],
+      pisat: ['admin', 'redaktor'],
+      mazat: ['admin'],
+    };
+
+    if (podlaEnumu[akcia]?.includes(req.user.rola)) {
+      next();
+      return;
+    }
+
+    res.status(403).json({
+      success: false,
+      message: `Prístup odmietnutý - chýba právo „${akcia}" v module „${modul}".`,
+    });
   };
 };
 

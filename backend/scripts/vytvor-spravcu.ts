@@ -15,6 +15,7 @@
 import readline from 'readline';
 import sequelize from '../src/config/database';
 import User from '../src/models/user';
+import Rola from '../src/models/Rola';
 import { overSiluHesla } from '../src/utils/heslo';
 
 /** Prečíta hodnotu z argumentov príkazu, napríklad --email hodnota */
@@ -100,6 +101,11 @@ async function spusti() {
   }
 
   try {
+    // Systémová rola Správca; keď ešte neexistuje (nezbehli migrácie),
+    // účet vznikne aj bez nej a práva mu dá pôvodný enum
+    const spravcovskaRola = await Rola.findOne({ where: { kod: 'admin' } });
+    const idSpravcovskejRoly = spravcovskaRola ? spravcovskaRola.id : null;
+
     if (existujuci) {
       // Účet už existuje — namiesto chyby ponúkneme obnovu prístupu
       console.log(`\nÚčet ${email} už existuje.`);
@@ -110,7 +116,7 @@ async function spusti() {
         process.exit(0);
       }
 
-      await existujuci.update({ heslo, rola: 'admin', aktivity: true, meno });
+      await existujuci.update({ heslo, rola: 'admin', rola_id: idSpravcovskejRoly, aktivity: true, meno });
       console.log('\n✅ Účet aktualizovaný. Heslo bolo zmenené a rola nastavená na admin.');
     } else {
       await User.create({
@@ -118,6 +124,9 @@ async function spusti() {
         email,
         heslo, // model ho pri uložení sám zahashuje
         rola: 'admin',
+        // Odkedy existuje tabuľka rolí, priradíme aj ju. Bez toho by
+        // správca fungoval len cez záložnú cestu podľa pôvodného enumu.
+        rola_id: idSpravcovskejRoly,
         aktivity: true,
       } as any);
       console.log('\n✅ Správca bol vytvorený.');

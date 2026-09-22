@@ -25,6 +25,7 @@ import Sezona from './Sezona';
 import Stadion from './Stadion';
 import KalendarUdalost from './KalendarUdalost';
 import Media from './Media';
+import Rola from './Rola';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -141,6 +142,19 @@ Dokument.belongsTo(DokumentKategoria, {
 DokumentKategoria.hasMany(Dokument, {
   foreignKey: 'kategoria_id',
   as: 'dokumenty',
+  constraints: false,
+});
+
+// User -> Rola (N:1) - rola s oprávneniami
+User.belongsTo(Rola, {
+  foreignKey: 'rola_id',
+  as: 'rola_obj',
+  constraints: false,
+});
+
+Rola.hasMany(User, {
+  foreignKey: 'rola_id',
+  as: 'pouzivatelia',
   constraints: false,
 });
 
@@ -491,6 +505,7 @@ export default {
   Stadion,
   KalendarUdalost,
   Media,
+  Rola,
   SupiskaSezony,
   Suhlas,
   AuditLog,
