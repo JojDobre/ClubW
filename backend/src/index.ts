@@ -47,6 +47,7 @@ import pagesRoutes, { adminPageRouter } from './routes/pages';
 import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
+import archivRoutes from './routes/archiv';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -265,6 +266,9 @@ app.use('/api/admin/galleries', adminGalleryImagesRouter);
 app.use('/api/admin/galleries', adminGalleryRouter);
 
 app.use('/api/upload', uploadRoutes);
+
+// Archív - mäkko odstránené položky a ich obnova
+app.use('/api/admin/archive', archivRoutes);
 
 
 // ===== ŠTATISTIKY =====
