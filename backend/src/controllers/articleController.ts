@@ -496,7 +496,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       meta_title: meta_title?.trim() || null,
       meta_description: meta_description?.trim() || null,
       featured: featured || false,
-      komentare_povolene: komentare_povolene !== false,
+      // Komentáre sú vypnuté, kým ich niekto vedome nezapne
+      komentare_povolene: komentare_povolene === true,
     });
 
     // Nastavenie tagov
@@ -809,35 +810,36 @@ export const previewArticle = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // `data` je samotný článok, rovnako ako pri verejnom detaile - stránka
+    // náhľadu tak použije ten istý kód a líši sa len adresou, z ktorej číta.
     res.json({
       success: true,
       data: {
-        article: {
-          id: article.id,
-          nazov: article.nazov,
-          slug: article.slug,
-          obsah: article.obsah,
-          excerpt: article.excerpt,
-          obrazok: article.obrazok,
-          publikovany_datum: article.publikovany_datum,
-          views: article.views,
-          autor: (article as any).autor,
-          kategoria: (article as any).kategoria,
-          tim_id: article.tim_id,
-          tags: article.getTagsArray(),
-          featured: article.featured,
-          komentare_povolene: article.komentare_povolene,
-          meta_title: article.meta_title,
-          meta_description: article.meta_description,
-          vytvoreny: article.vytvoreny,
-        },
-        // Frontend podľa toho môže zobraziť pruh "toto je náhľad,
-        // článok ešte nie je zverejnený"
-        nahlad: {
-          status: article.status,
-          publikovany: article.status === 'published',
-          planovane_na: article.status === 'scheduled' ? article.publikovany_datum : null,
-        },
+        id: article.id,
+        nazov: article.nazov,
+        slug: article.slug,
+        obsah: article.obsah,
+        excerpt: article.excerpt,
+        obrazok: article.obrazok,
+        publikovany_datum: article.publikovany_datum,
+        views: article.views,
+        autor: (article as any).autor,
+        kategoria: (article as any).kategoria,
+        tim_id: article.tim_id,
+        tags: article.getTagsArray(),
+        featured: article.featured,
+        komentare_povolene: article.komentare_povolene,
+        meta_title: article.meta_title,
+        meta_description: article.meta_description,
+        status: article.status,
+        vytvoreny: article.vytvoreny,
+      },
+      // Podľa toho vie stránka zobraziť pruh „toto je náhľad,
+      // článok ešte nie je zverejnený"
+      nahlad: {
+        status: article.status,
+        publikovany: article.status === 'published',
+        planovane_na: article.status === 'scheduled' ? article.publikovany_datum : null,
       },
     });
   } catch (error) {

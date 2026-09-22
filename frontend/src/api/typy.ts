@@ -95,6 +95,10 @@ export interface Clanok extends ClanokVoVypise {
   obsah: string;
   status: StavClanku;
   kategoria_id: number | null;
+  /** Voliteľné priradenie článku k tímu (napr. reportáž z jeho zápasu). */
+  tim_id?: number | null;
+  /** Komentáre sú pri novom článku vypnuté, zapínajú sa vedome. */
+  komentare_povolene?: boolean;
   meta_title: string | null;
   meta_description: string | null;
   aktualizovany?: string;
@@ -107,9 +111,11 @@ export interface ClanokNaUlozenie {
   excerpt?: string | null;
   obrazok?: string | null;
   kategoria_id: number | null;
+  tim_id?: number | null;
   status: StavClanku;
   publikovany_datum?: string | null;
   featured?: boolean;
+  komentare_povolene?: boolean;
   meta_title?: string | null;
   meta_description?: string | null;
   tags?: string[];

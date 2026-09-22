@@ -283,7 +283,8 @@ Article.init(
     komentare_povolene: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true,
+      // Vypnuté, kým ich niekto pri článku vedome nezapne
+      defaultValue: false,
     },
     vytvoreny: {
       type: DataTypes.DATE,

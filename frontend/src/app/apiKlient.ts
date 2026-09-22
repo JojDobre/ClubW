@@ -167,8 +167,12 @@ export interface Obalka<T> {
 async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZopakovanie = false): Promise<Obalka<T>> {
   const { metoda = 'GET', telo, parametre, bezTokenu, signal } = moznosti;
 
+  // Pri nahrávaní súboru sa Content-Type NESMIE nastaviť ručne - prehliadač
+  // ho musí doplniť aj s hranicou (boundary), inak server telo neprečíta.
+  const jeSubor = typeof FormData !== 'undefined' && telo instanceof FormData;
+
   const hlavicky: Record<string, string> = {};
-  if (telo !== undefined) hlavicky['Content-Type'] = 'application/json';
+  if (telo !== undefined && !jeSubor) hlavicky['Content-Type'] = 'application/json';
 
   if (!bezTokenu) {
     const token = localStorage.getItem(KLUC_TOKEN);
@@ -181,7 +185,7 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
       method: metoda,
       headers: hlavicky,
       credentials: 'include',
-      body: telo !== undefined ? JSON.stringify(telo) : undefined,
+      body: telo === undefined ? undefined : jeSubor ? (telo as FormData) : JSON.stringify(telo),
       signal,
     });
   } catch (e: any) {

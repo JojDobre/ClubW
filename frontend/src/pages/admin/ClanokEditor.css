@@ -318,3 +318,24 @@
     justify-content: center;
   }
 }
+
+/* Tlačidlá nad poľom s adresou obrázka (nahrať / odobrať) */
+.cw-ced__obrazok-akcie {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cw-ced__obrazok-akcie .cw-ced__btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.cw-ced__obrazok-akcie .cw-ced__btn--nebezpecne {
+  flex: 0 0 auto;
+}
+
+/* Prepínače v paneli Publikovanie potrebujú medzeru, inak sa zlievajú */
+.cw-ced__panel .cw-switch + .cw-switch {
+  margin-top: 14px;
+}
