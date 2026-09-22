@@ -17,6 +17,10 @@ export interface TeamAttributes {
   typ: 'muzi' | 'zeny' | 'mladez';
   vekova_kategoria: string; // Napríklad: U9, U13, U16, U21, seniori
   popis?: string | null;
+  /** Domáci štadión - miesto domácich zápasov sa z neho dopĺňa automaticky */
+  stadion_id?: number | null;
+  /** Sezóna, do ktorej tím patrí */
+  sezona_id?: number | null;
   logo?: string | null; // URL loga tímu
   farba_prva?: string | null; // Hex farba prvého dresu
   farba_druha?: string | null; // Hex farba druhého dresu
@@ -37,6 +41,8 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
   public typ!: 'muzi' | 'zeny' | 'mladez';
   public vekova_kategoria!: string;
   public popis!: string | null;
+  public stadion_id!: number | null;
+  public sezona_id!: number | null;
   public logo!: string | null;
   public farba_prva!: string | null;
   public farba_druha!: string | null;
@@ -72,6 +78,8 @@ export class Team extends Model<TeamAttributes, TeamCreationAttributes> implemen
       typ: this.typ,
       vekova_kategoria: this.vekova_kategoria,
       popis: this.popis,
+      stadion_id: this.stadion_id,
+      sezona_id: this.sezona_id,
       logo: this.logo,
       farba_prva: this.farba_prva,
       farba_druha: this.farba_druha,
@@ -132,6 +140,18 @@ Team.init(
     popis: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    stadion_id: {
+      // Voliteľné - nie každý tím má vlastný štadión.
+      // Pri zmazaní štadióna sa len vynuluje, tím zostáva.
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'stadiony', key: 'id' },
+    },
+    sezona_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'sezony', key: 'id' },
     },
     logo: {
       type: DataTypes.STRING(500),

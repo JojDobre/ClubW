@@ -20,6 +20,7 @@ import ResetHeslaToken from './ResetHeslaToken';
 import NastaveniaKlubu from './NastaveniaKlubu';
 // Sezóny a súpisky hráčov po sezónach
 import Sezona from './Sezona';
+import Stadion from './Stadion';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -75,6 +76,23 @@ Category.hasMany(Article, {
 Article.belongsTo(Category, {
   foreignKey: 'kategoria_id',
   as: 'kategoria',
+});
+
+// Team -> Stadion (N:1) - domáci štadión tímu
+Team.belongsTo(Stadion, {
+  foreignKey: 'stadion_id',
+  as: 'stadion',
+});
+
+Stadion.hasMany(Team, {
+  foreignKey: 'stadion_id',
+  as: 'timy',
+});
+
+// Team -> Sezona (N:1) - sezóna, do ktorej tím patrí
+Team.belongsTo(Sezona, {
+  foreignKey: 'sezona_id',
+  as: 'sezona',
 });
 
 // Article -> Team (N:1) - voliteľná väzba, článok sa nemusí týkať tímu
@@ -386,6 +404,7 @@ export default {
   ResetHeslaToken,
   NastaveniaKlubu,
   Sezona,
+  Stadion,
   SupiskaSezony,
   Suhlas,
   AuditLog,

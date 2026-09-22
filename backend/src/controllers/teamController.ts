@@ -3,6 +3,8 @@
 
 import { Request, Response } from 'express';
 import Team from '../models/Team';
+import Stadion from '../models/Stadion';
+import Sezona from '../models/Sezona';
 import Player from '../models/Player';
 import Staff from '../models/Staff';
 
@@ -316,6 +318,27 @@ export const getTeamStaff = async (req: Request, res: Response): Promise<void> =
 
 // ===== ADMIN API ENDPOINTS =====
 
+
+/**
+ * Overí, že štadión a sezóna, na ktoré sa tím odkazuje, naozaj existujú.
+ *
+ * Bez toho by zápis padol až na cudzom kľúči a používateľ by dostal 500
+ * namiesto zrozumiteľnej hlášky.
+ *
+ * @returns text chyby, alebo null keď je všetko v poriadku
+ */
+const overVazbyTimu = async (udaje: any): Promise<string | null> => {
+  if (udaje.stadion_id) {
+    const stadion = await Stadion.findOne({ where: { id: udaje.stadion_id, aktivity: true } });
+    if (!stadion) return `Štadión s ID ${udaje.stadion_id} neexistuje`;
+  }
+  if (udaje.sezona_id) {
+    const sezona = await Sezona.findOne({ where: { id: udaje.sezona_id, aktivity: true } });
+    if (!sezona) return `Sezóna s ID ${udaje.sezona_id} neexistuje`;
+  }
+  return null;
+};
+
 // POST /api/teams - Vytvorenie nového tímu
 export const createTeam = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -333,6 +356,12 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
     }
 
     const teamData = req.body;
+
+    const chybaVazby = await overVazbyTimu(teamData);
+    if (chybaVazby) {
+      res.status(400).json({ success: false, message: chybaVazby });
+      return;
+    }
 
     // Skontrolujeme duplicitný názov + veková kategória
     const existingTeam = await Team.findOne({
@@ -358,6 +387,8 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
       typ: teamData.typ,
       vekova_kategoria: teamData.vekova_kategoria,
       popis: teamData.popis || null,
+      stadion_id: teamData.stadion_id || null,
+      sezona_id: teamData.sezona_id || null,
       logo: teamData.logo || null,
       farba_prva: teamData.farba_prva || null,
       farba_druha: teamData.farba_druha || null,
@@ -408,6 +439,12 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
         success: false,
         message: 'Tím nebol nájdený'
       });
+      return;
+    }
+
+    const chybaVazby = await overVazbyTimu(updateData);
+    if (chybaVazby) {
+      res.status(400).json({ success: false, message: chybaVazby });
       return;
     }
 

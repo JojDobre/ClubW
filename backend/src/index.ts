@@ -48,6 +48,7 @@ import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
 import archivRoutes from './routes/archiv';
+import stadionRoutes from './routes/stadiony';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 
 // Načítanie environment premenných
@@ -267,6 +268,9 @@ app.use('/api/admin/galleries', adminGalleryImagesRouter);
 app.use('/api/admin/galleries', adminGalleryRouter);
 
 app.use('/api/upload', uploadRoutes);
+
+// Štadióny - čítanie verejné (adresa patrí na web)
+app.use('/api/stadiums', stadionRoutes);
 
 // Archív - mäkko odstránené položky a ich obnova
 app.use('/api/admin/archive', archivRoutes);
