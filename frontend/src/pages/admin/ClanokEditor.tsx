@@ -14,7 +14,7 @@ import {
   ConfirmDialog, useToast,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
-import { clankyApi, kategorieApi, rozbal } from '../../api/clanky';
+import { clankyApi, kategorieApi } from '../../api/clanky';
 import { ApiChyba } from '../../app/apiKlient';
 import { naVstupDatumCas } from '../../utils/datum';
 import type { Clanok, Kategoria, StavClanku, ClanokNaUlozenie } from '../../api/typy';
@@ -82,7 +82,7 @@ export const ClanokEditor: React.FC = () => {
   useEffect(() => {
     if (!clanok.data) return;
 
-    const c = rozbal<Clanok>(clanok.data as any, 'article');
+    const c = clanok.data;
     const naplnene = {
       nazov: c.nazov ?? '',
       slug: c.slug ?? '',
@@ -189,8 +189,7 @@ export const ClanokEditor: React.FC = () => {
     setUklada(true);
     try {
       if (jeNovy) {
-        const vysledok = await clankyApi.vytvor(naUlozenie);
-        const novy = rozbal<Clanok>(vysledok as any, 'article');
+        const novy = await clankyApi.vytvor(naUlozenie);
         uspech('Článok bol vytvorený');
         povodnyStav.current = JSON.stringify(naUlozenie);
         setZmenene(false);

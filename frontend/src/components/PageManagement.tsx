@@ -56,15 +56,7 @@ interface ApiResponse<T> {
   errors?: string[];
 }
 
-interface PagesListResponse {
-  pages: Page[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    has_more: boolean;
-  };
-}
+
 
 // ===== MAIN COMPONENT =====
 const PageManagement: React.FC = () => {
@@ -147,11 +139,11 @@ const PageManagement: React.FC = () => {
         throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      const data: ApiResponse<PagesListResponse> = await response.json();
+      const data: ApiResponse<Page[]> = await response.json();
 
       if (data.success) {
-        setPages(data.data.pages);
-        console.log(`✅ Načítaných ${data.data.pages.length} stránok`);
+        setPages(data.data);
+        console.log(`✅ Načítaných ${data.data.length} stránok`);
       } else {
         throw new Error(data.message || 'Nepodarilo sa načítať stránky');
       }

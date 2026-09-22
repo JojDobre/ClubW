@@ -15,6 +15,7 @@ import '../styles/components/ui/table/GalleryModal.css';
 import '../styles/components/ui/table/GalleryEditModal.css';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 
 
 // ===== INTERFACE DEFINITIONS =====
@@ -65,8 +66,14 @@ interface ApiResponse<T> {
   data: T;
   message?: string;
   errors?: Record<string, string[]>;
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: Strankovanie;
 }
 
+/**
+ * Stav stránkovania obrazovky. `page` a `limit` riadia dotaz,
+ * zvyšok sa dopĺňa z odpovede.
+ */
 interface PaginationData {
   page: number;
   limit: number;
@@ -145,17 +152,14 @@ const GalleryManagement: React.FC = () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result: ApiResponse<{
-        galerie: Gallery[];
-        pagination: PaginationData;
-      }> = await response.json();
+      const result: ApiResponse<Gallery[]> = await response.json();
 
       if (!result.success) {
         throw new Error(result.message || 'Chyba pri načítaní galérií');
       }
 
       // Simulácia štatistík pre každú galériu (v reále by to prišlo z API)
-      const galleriesWithStats: GalleryWithStats[] = result.data.galerie.map(gallery => ({
+      const galleriesWithStats: GalleryWithStats[] = result.data.map(gallery => ({
         ...gallery,
         stats: {
           celkovo_zobrazeni: Math.floor(Math.random() * 15000) + 500,
@@ -165,7 +169,16 @@ const GalleryManagement: React.FC = () => {
       }));
 
       setGalleries(galleriesWithStats);
-      setPaginationData(result.data.pagination);
+      if (result.pagination) {
+        setPaginationData({
+          page: result.pagination.current_page,
+          limit: result.pagination.limit,
+          total: result.pagination.total,
+          pages: result.pagination.pages,
+          hasNext: result.pagination.has_next,
+          hasPrev: result.pagination.has_prev,
+        });
+      }
 
       console.log(`✅ Načítaných ${galleriesWithStats.length} galérií`);
 

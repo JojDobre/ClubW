@@ -7,25 +7,9 @@ import type {
   StatistikyZapasu, UdalostNaUlozenie,
 } from './typy';
 
-/**
- * Odpovede prichádzajú raz ako pole, raz ako objekt s poľom vnútri.
- * Táto funkcia rozdiel odstíni na jednom mieste.
- */
-const akoPole = <T>(odpoved: unknown, kluc?: string): T[] => {
-  if (Array.isArray(odpoved)) return odpoved as T[];
-  if (odpoved && typeof odpoved === 'object') {
-    const o = odpoved as Record<string, unknown>;
-    if (kluc && Array.isArray(o[kluc])) return o[kluc] as T[];
-    // Prvé pole, ktoré v objekte nájdeme
-    const prve = Object.values(o).find(Array.isArray);
-    if (prve) return prve as T[];
-  }
-  return [];
-};
-
 export const zapasyApi = {
-  vypis: async (signal?: AbortSignal): Promise<Zapas[]> =>
-    akoPole<Zapas>(await api.ziskaj('/matches', { parametre: { limit: 500 }, signal }), 'matches'),
+  vypis: (signal?: AbortSignal) =>
+    api.ziskaj<Zapas[]>('/matches', { parametre: { limit: 500 }, signal }),
 
   detail: (id: number, signal?: AbortSignal) =>
     api.ziskaj<Zapas>(`/matches/${id}`, { signal }),
@@ -46,8 +30,8 @@ export const zapasyApi = {
 };
 
 export const timyApi = {
-  vypis: async (signal?: AbortSignal): Promise<Tim[]> =>
-    akoPole<Tim>(await api.ziskaj('/teams', { parametre: { limit: 200 }, signal }), 'teams'),
+  vypis: (signal?: AbortSignal) =>
+    api.ziskaj<Tim[]>('/teams', { parametre: { limit: 200 }, signal }),
 
   vytvor: (udaje: Partial<Tim>) => api.vytvor<Tim>('/teams', udaje),
   uprav: (id: number, udaje: Partial<Tim>) => api.uprav<Tim>(`/teams/${id}`, udaje),
@@ -55,11 +39,8 @@ export const timyApi = {
 };
 
 export const hraciApi = {
-  vypis: async (timId?: number, signal?: AbortSignal): Promise<Hrac[]> =>
-    akoPole<Hrac>(
-      await api.ziskaj('/players', { parametre: { limit: 500, tim_id: timId }, signal }),
-      'players'
-    ),
+  vypis: (timId?: number, signal?: AbortSignal) =>
+    api.ziskaj<Hrac[]>('/players', { parametre: { limit: 500, tim_id: timId }, signal }),
 
   vytvor: (udaje: Partial<Hrac>) => api.vytvor<Hrac>('/players', udaje),
   uprav: (id: number, udaje: Partial<Hrac>) => api.uprav<Hrac>(`/players/${id}`, udaje),
@@ -67,6 +48,6 @@ export const hraciApi = {
 };
 
 export const ligyApi = {
-  vypis: async (signal?: AbortSignal): Promise<Liga[]> =>
-    akoPole<Liga>(await api.ziskaj('/leagues', { parametre: { limit: 200 }, signal }), 'leagues'),
+  vypis: (signal?: AbortSignal) =>
+    api.ziskaj<Liga[]>('/leagues', { parametre: { limit: 200 }, signal }),
 };

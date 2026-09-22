@@ -174,9 +174,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
     res.json({
       success: true,
-      data: {
-        user: req.user.toSafeJSON(),
-      },
+      data: req.user.toSafeJSON(),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľa:', error);

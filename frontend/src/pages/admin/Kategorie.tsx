@@ -34,7 +34,7 @@ export const Kategorie: React.FC = () => {
 
   /** Počet článkov v kategórii — dôležité pri mazaní. */
   const pocetClankov = (id: number): number =>
-    (clanky.data?.articles ?? []).filter((c) => c.kategoria?.id === id).length;
+    (clanky.data?.polozky ?? []).filter((c) => c.kategoria?.id === id).length;
 
   const jeNova = upravovana !== null && !upravovana.id;
 

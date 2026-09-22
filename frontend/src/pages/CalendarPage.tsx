@@ -74,6 +74,9 @@ const Calendar: React.FC = () => {
 
       const data = await response.json();
       if (data.success) {
+        // Endpoint vracia zoznam zápasov priamo v `data`
+        const zapasy = Array.isArray(data.data) ? data.data : [];
+
         // Prekonvertujeme na MonthData formát pre jednoduchosť
         setMonthData({
           month_info: {
@@ -83,8 +86,8 @@ const Calendar: React.FC = () => {
             pocet_dni: 0
           },
           calendar: {},
-          matches: data.data.matches || [],
-          total_matches: data.data.count || 0
+          matches: zapasy,
+          total_matches: zapasy.length
         });
       } else {
         throw new Error(data.message || 'Chyba pri načítaní zápasov');

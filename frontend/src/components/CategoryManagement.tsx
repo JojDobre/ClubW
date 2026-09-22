@@ -114,7 +114,7 @@ const CategoryManagement: React.FC = () => {
 
       const data = await response.json();
       if (data.success) {
-        setCategories(data.data.categories);
+        setCategories(data.data);
         setError('');
       } else {
         setError(data.message || 'Chyba pri načítavaní kategórií');
@@ -141,7 +141,7 @@ const CategoryManagement: React.FC = () => {
 
       const data = await response.json();
       if (data.success) {
-        const allCategories = data.data.categories;
+        const allCategories = data.data;
         
         // Výpočet základných štatistík
         const celkovo = allCategories.length;
@@ -272,7 +272,7 @@ const CategoryManagement: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        console.log('✅ Kategória úspešne vytvorená:', data.data.category);
+        console.log('✅ Kategória úspešne vytvorená:', data.data);
         
         // Refresh zoznamu kategórií
         await fetchCategories();

@@ -99,10 +99,10 @@ echo ""
 echo "═══ TEST 5: Súpiska tímu pre sezónu ═══"
 SUP=$(curl -s -m 5 "$API/api/teams/$TIM/roster?sezona_id=$SEZ_ID")
 over "Súpiska seniorov v novej sezóne" "1" \
-  "$(echo "$SUP" | python3 -c "import sys,json; print(json.load(sys.stdin)['meta']['pocet'])" 2>/dev/null)"
+  "$(echo "$SUP" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']))" 2>/dev/null)"
 SUP_STARA=$(curl -s -m 5 "$API/api/teams/$TIM/roster?sezona_id=$STARA_ID")
 over "V starej sezóne seniori hráča nemali" "0" \
-  "$(echo "$SUP_STARA" | python3 -c "import sys,json; print(json.load(sys.stdin)['meta']['pocet'])" 2>/dev/null)"
+  "$(echo "$SUP_STARA" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']))" 2>/dev/null)"
 
 echo ""
 echo "═══ TEST 6: Uzavretá sezóna sa needituje ═══"

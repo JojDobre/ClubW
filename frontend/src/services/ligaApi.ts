@@ -1,5 +1,6 @@
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { API_BASE_URL } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 // frontend/src/services/ligaApi.ts
 // API služba pre správu líg - kompatibilná s backend controllerom
 
@@ -96,10 +97,10 @@ export interface Team {
 interface ApiResponse<T> {
   success: boolean;
   data: T;
-  count?: number;
-  total?: number;
   message?: string;
   errors?: string[];
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: Strankovanie;
 }
 
 // Interface pre query parametre

@@ -1,5 +1,6 @@
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { API_BASE_URL } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 // frontend/src/services/teamsApi.ts
 // OPRAVENÉ API service pre komunikáciu s backend Teams API
 
@@ -87,9 +88,10 @@ export interface Staff {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  count?: number;
   message?: string;
   errors?: string[];
+  /** Stránkovanie chodí vedľa `data`, nie v ňom. */
+  pagination?: Strankovanie;
 }
 
 // Helper function pre API requesty s autentifikáciou

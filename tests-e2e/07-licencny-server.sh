@@ -1,6 +1,7 @@
 #!/bin/bash
 # Umiestnenie: /home/claude/test-krok14.sh
 # Overenie Kroku 14: reálny licenčný server a kontrola na strane klienta
+export BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 
 LS="http://localhost:3001"
 ADMIN_KEY="test_admin_kluc_pre_sandbox_12345"
@@ -59,7 +60,7 @@ def stabilny(h):
 
 # Verejny kluc z .env backendu
 kluc=''
-for r in open('/home/claude/ClubW/backend/.env'):
+for r in open(os.environ['BACKEND'] + '/.env'):
     if r.startswith('LICENSE_PUBLIC_KEY='):
         kluc = r.split('=',1)[1].strip().strip('"').replace('\\\\n','\n')
 open('/tmp/pub.pem','w').write(kluc+'\n')

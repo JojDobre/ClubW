@@ -39,9 +39,7 @@ interface Article {
 // Interface pre API response
 interface ArticleResponse {
   success: boolean;
-  data: {
-    article: Article;
-  };
+  data: Article;
   message?: string;
 }
 
@@ -84,11 +82,11 @@ const ArticleDetailPage: React.FC = () => {
       const data: ArticleResponse = await response.json();
       
       if (data.success) {
-        setArticle(data.data.article);
+        setArticle(data.data);
         setError('');
         
         // Načítanie podobných článkov z tej istej kategórie
-        fetchRelatedArticles(data.data.article.kategoria.slug, data.data.article.id);
+        fetchRelatedArticles(data.data.kategoria.slug, data.data.id);
       } else {
         setError(data.message || 'Chyba pri načítavaní článku');
       }
@@ -108,7 +106,7 @@ const ArticleDetailPage: React.FC = () => {
         const data = await response.json();
         if (data.success) {
           // Filtrovanie aktuálneho článku
-          const related = data.data.articles.filter((a: Article) => a.id !== currentArticleId);
+          const related = data.data.filter((a: Article) => a.id !== currentArticleId);
           setRelatedArticles(related.slice(0, 3));
         }
       }

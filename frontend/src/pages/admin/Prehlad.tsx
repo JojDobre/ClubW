@@ -38,7 +38,7 @@ export const Prehlad: React.FC = () => {
   const zapasy = useNacitanie((signal) => zapasyApi.vypis(signal));
 
   const s = statistiky.data;
-  const zoznamClankov = clanky.data?.articles ?? [];
+  const zoznamClankov = clanky.data ?? [];
 
   /** Najbližší zápas, ktorý ešte neskončil. */
   const najblizsi: Zapas | null = useMemo(() => {

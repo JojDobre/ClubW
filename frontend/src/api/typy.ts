@@ -6,14 +6,34 @@
 
 // ===== Stránkovanie =====
 
+/**
+ * Stránkovanie. Backend ho vracia ako súrodenca `data`, nie ako jeho súčasť,
+ * a pre všetky zoznamy má rovnaký tvar.
+ */
 export interface Strankovanie {
-  currentPage: number;
-  totalPages: number;
-  /** Celkový počet záznamov. Názov poľa sa medzi endpointmi líši. */
-  totalArticles?: number;
-  total?: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
+  /** Celkový počet záznamov (nie len tých na tejto stránke). */
+  total: number;
+  limit: number;
+  offset: number;
+  /** Počet stránok. */
+  pages: number;
+  current_page: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+/**
+ * Jednotná obálka odpovede z API.
+ *
+ * `data` je priamo tá vec, o ktorú ide - entita pri detaile, pole pri zozname.
+ * `pagination` stojí vedľa nej, nie v nej.
+ */
+export interface OdpovedApi<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: unknown[];
+  pagination?: Strankovanie;
 }
 
 // ===== Prehľadové štatistiky =====

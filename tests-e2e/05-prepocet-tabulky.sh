@@ -39,15 +39,15 @@ echo "═══ Príprava: liga a dva tímy ═══"
 
 TIM1=$(curl -s -m 5 -X POST $API/api/teams $HDR_JSON -H "Authorization: Bearer $TOKEN" \
   -d '{"nazov":"AutoTest Tim 1 '$RND'","typ":"muzi","vekova_kategoria":"seniori"}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'].get('id') or d['data']['team']['id'])" 2>/dev/null)
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['id'])" 2>/dev/null)
 TIM2=$(curl -s -m 5 -X POST $API/api/teams $HDR_JSON -H "Authorization: Bearer $TOKEN" \
   -d '{"nazov":"AutoTest Tim 2 '$RND'","typ":"muzi","vekova_kategoria":"seniori"}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'].get('id') or d['data']['team']['id'])" 2>/dev/null)
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['id'])" 2>/dev/null)
 echo "  Tímy: $TIM1, $TIM2"
 
 LIGA=$(curl -s -m 5 -X POST $API/api/leagues $HDR_JSON -H "Authorization: Bearer $TOKEN" \
   -d '{"nazov":"AutoTest Liga '$RND'","sezona":"2025/2026","typ":"sutaz","format":"tabulka","auto_update_tabulka":true,"body_za_vitazstvo":3,"body_za_remizy":1}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'].get('id') or d['data']['liga']['id'])" 2>/dev/null)
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['id'])" 2>/dev/null)
 echo "  Liga: $LIGA (auto_update_tabulka = true)"
 
 [ -z "$LIGA" ] && { echo "❌ Ligu sa nepodarilo vytvoriť"; exit 1; }
@@ -81,7 +81,7 @@ echo ""
 echo "═══ TEST 4: Liga s vypnutým auto_update ═══"
 LIGA2=$(curl -s -m 5 -X POST $API/api/leagues $HDR_JSON -H "Authorization: Bearer $TOKEN" \
   -d '{"nazov":"AutoTest Liga Vypnuta '$RND'","sezona":"2025/2026","typ":"sutaz","format":"tabulka","auto_update_tabulka":false}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'].get('id') or d['data']['liga']['id'])" 2>/dev/null)
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data']['id'])" 2>/dev/null)
 curl -s -m 10 -X POST $API/api/matches $HDR_JSON -H "Authorization: Bearer $TOKEN" \
   -d "{\"nazov\":\"Zapas bez auto\",\"liga_id\":$LIGA2,\"datum_cas\":\"2026-05-10T15:00:00Z\",\"domaci_tim_id\":$TIM1,\"hostujuci_tim_id\":$TIM2,\"goly_domaci\":5,\"goly_hostia\":0,\"status\":\"ukonceny\"}" > /dev/null
 sleep 1

@@ -4,6 +4,8 @@
 # licencii, povolené čítanie, ochranná lehota pri nedostupnom serveri.
 #
 # Spúšťa licenčný server aj backend naraz - procesy neprežijú medzi volaniami.
+export BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
+export LICENCNY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../license-server" && pwd)"
 
 API="http://localhost:3000"
 LIC="http://localhost:3001"
@@ -22,7 +24,7 @@ sleep 3
 pkill -9 -f "src/index.ts" 2>/dev/null; sleep 1
 
 # ===== 2. Licenčný server =====
-cd /home/claude/ClubW/license-server
+cd $LICENCNY
 setsid nohup npx tsx src/index.ts > /tmp/licsrv.log 2>&1 < /dev/null &
 for i in $(seq 1 25); do sleep 1; curl -s -m 2 $LIC/health >/dev/null 2>&1 && break; done
 curl -s -m 2 $LIC/health >/dev/null 2>&1 || { echo "❌ Licenčný server nenaštartoval"; tail -8 /tmp/licsrv.log; exit 1; }
@@ -37,10 +39,10 @@ KLUC=$(echo "$NOVA" | python3 -c "import sys,json; print(json.load(sys.stdin)['d
 echo "✅ Licencia vytvorená: $KLUC"
 
 # Verejný kľúč pre overenie podpisu na strane klienta
-VEREJNY=$(grep '^LICENSE_PUBLIC_KEY=' /home/claude/ClubW/license-server/.env | head -1 | cut -d= -f2-)
+VEREJNY=$(grep '^LICENSE_PUBLIC_KEY=' $LICENCNY/.env | head -1 | cut -d= -f2-)
 
 # ===== 4. Backend .env s platnou licenciou =====
-cd /home/claude/ClubW/backend
+cd $BACKEND
 cat > .env << EOF
 NODE_ENV=development
 PORT=3000
@@ -58,7 +60,7 @@ EOF
 
 spusti_backend() {
   pkill -9 -f "ts-node src/index.ts" 2>/dev/null; sleep 1
-  cd /home/claude/ClubW/backend
+  cd $BACKEND
   setsid nohup npx ts-node src/index.ts > /tmp/backend.log 2>&1 < /dev/null &
   for i in $(seq 1 35); do sleep 1; curl -s -m 2 $API/health >/dev/null 2>&1 && return 0; done
   return 1

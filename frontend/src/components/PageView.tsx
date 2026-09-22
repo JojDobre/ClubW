@@ -55,24 +55,25 @@ const PageView: React.FC = () => {
         if (response.status === 404) {
           setError('Stránka nebola nájdená');
         } else if (data.success) {
-          setPage(data.data.page);
-          
+          const stranka = data.data;
+          setPage(stranka);
+
           // Nastavenie SEO meta tagov
-          if (data.data.page.meta_title) {
-            document.title = data.data.page.meta_title;
+          if (stranka.meta_title) {
+            document.title = stranka.meta_title;
           } else {
-            document.title = `${data.data.page.nazov} | ClubW`;
+            document.title = `${stranka.nazov} | ClubW`;
           }
-          
+
           // Meta description
-          if (data.data.page.meta_description) {
+          if (stranka.meta_description) {
             let metaDesc = document.querySelector('meta[name="description"]');
             if (!metaDesc) {
               metaDesc = document.createElement('meta');
               metaDesc.setAttribute('name', 'description');
               document.head.appendChild(metaDesc);
             }
-            metaDesc.setAttribute('content', data.data.page.meta_description);
+            metaDesc.setAttribute('content', stranka.meta_description);
           }
         } else {
           setError(data.message || 'Chyba pri načítavaní stránky');

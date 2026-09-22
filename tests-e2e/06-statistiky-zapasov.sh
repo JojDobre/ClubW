@@ -62,7 +62,7 @@ ZAPAS=$(curl -s -X POST $API/api/matches -H "$JSON" -H "$AUTH" -d "{
 echo "  Zápas vytvorený: id=$ZAPAS"
 
 STAT=$(curl -s "$API/api/matches/$ZAPAS/statistics")
-over "Celkový počet záznamov" "5" "$(echo $STAT | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['pocet'])" 2>/dev/null)"
+over "Celkový počet záznamov" "5" "$(echo $STAT | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['vsetky']))" 2>/dev/null)"
 over "Počet gólov" "3" "$(echo $STAT | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['podla_typu']['goly']))" 2>/dev/null)"
 over "Počet asistencií" "1" "$(echo $STAT | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['podla_typu']['asistencie']))" 2>/dev/null)"
 over "Počet žltých kariet" "1" "$(echo $STAT | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['podla_typu']['zlte_karty']))" 2>/dev/null)"
@@ -100,7 +100,7 @@ echo "═══ TEST 4: Nahradenie štatistík cez PUT ═══"
 KOD=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $API/api/matches/$ZAPAS/statistics -H "$JSON" -H "$AUTH" \
   -d "{\"statistiky\":[{\"hrac_id\":$HRAC2,\"typ\":\"gol\",\"minuta\":10}]}")
 over "PUT štatistík" "200" "$KOD"
-over "Staré záznamy nahradené (zostal 1)" "1" "$(curl -s "$API/api/matches/$ZAPAS/statistics" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['pocet'])" 2>/dev/null)"
+over "Staré záznamy nahradené (zostal 1)" "1" "$(curl -s "$API/api/matches/$ZAPAS/statistics" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['vsetky']))" 2>/dev/null)"
 
 echo ""
 echo "═══ TEST 5: Validácia ═══"
@@ -123,7 +123,7 @@ over "Bez tokenu odmietnuté" "401" "$KOD"
 echo ""
 echo "═══ TEST 6: Prázdne pole vymaže štatistiky ═══"
 curl -s -X PUT $API/api/matches/$ZAPAS/statistics -H "$JSON" -H "$AUTH" -d '{"statistiky":[]}' > /dev/null
-over "Štatistiky vymazané" "0" "$(curl -s "$API/api/matches/$ZAPAS/statistics" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['pocet'])" 2>/dev/null)"
+over "Štatistiky vymazané" "0" "$(curl -s "$API/api/matches/$ZAPAS/statistics" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['data']['vsetky']))" 2>/dev/null)"
 
 echo ""
 echo "═══════════════════════════════════════"

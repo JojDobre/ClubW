@@ -1,7 +1,7 @@
 // Umiestnenie: frontend/src/pages/admin/Clanky.tsx
 // Zoznam článkov.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, Card, Button, Badge, Icon, DataTable, ConfirmDialog, useToast,
@@ -32,13 +32,9 @@ export const Clanky: React.FC = () => {
   const clanky = useNacitanie((signal) => clankyApi.vypis({ limit: 500 }, signal));
   const kategorie = useNacitanie((signal) => kategorieApi.vypis(signal));
 
-  const zoznam = clanky.data?.articles ?? [];
+  const zoznam = clanky.data?.polozky ?? [];
 
-  const zoznamKategorii: Kategoria[] = useMemo(() => {
-    const d = kategorie.data;
-    if (!d) return [];
-    return Array.isArray(d) ? d : (d as any).categories ?? [];
-  }, [kategorie.data]);
+  const zoznamKategorii: Kategoria[] = kategorie.data ?? [];
 
   // ===== Mazanie =====
 

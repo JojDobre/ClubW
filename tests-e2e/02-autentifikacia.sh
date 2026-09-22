@@ -1,6 +1,7 @@
 #!/bin/bash
 # Umiestnenie: /home/claude/test-krok3.sh
 # Overenie Kroku 3: autentifikácia na zápisových operáciách
+export BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 
 API="http://localhost:3000"
 PASS=0
@@ -43,7 +44,7 @@ done
 echo ""
 echo "═══ ČASŤ C: S platným tokenom musí zápis fungovať ═══"
 # Vytvorenie admin používateľa priamo v DB (registračný endpoint neexistuje)
-cd /home/claude/ClubW/backend
+cd $BACKEND
 npx tsx -e "
 import User from './src/models/user';
 (async () => {

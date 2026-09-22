@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 
 // Interface pre článok z backend API
 interface Article {
@@ -30,28 +31,17 @@ interface Article {
   vytvoreny: string;
 }
 
-// Interface pre pagination z backend
-interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  totalArticles: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-}
-
 // Interface pre API response
 interface ArticlesResponse {
   success: boolean;
-  data: {
-    articles: Article[];
-    pagination: Pagination;
-  };
+  data: Article[];
+  pagination?: Strankovanie;
   message?: string;
 }
 
 const ArticlesPage: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [pagination, setPagination] = useState<Strankovanie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   
@@ -90,8 +80,8 @@ const ArticlesPage: React.FC = () => {
       const data: ArticlesResponse = await response.json();
       
       if (data.success) {
-        setArticles(data.data.articles);
-        setPagination(data.data.pagination);
+        setArticles(data.data);
+        setPagination(data.pagination ?? null);
         setError('');
       } else {
         setError(data.message || 'Chyba pri načítavaní článkov');
@@ -294,7 +284,7 @@ const ArticlesPage: React.FC = () => {
           color: '#64748b',
           fontSize: '14px'
         }}>
-          Zobrazených {articles.length} z {pagination.totalArticles} článkov
+          Zobrazených {articles.length} z {pagination.total} článkov
           {searchTerm && ` pre "${searchTerm}"`}
         </div>
       )}
@@ -484,7 +474,7 @@ const ArticlesPage: React.FC = () => {
       )}
 
       {/* Stránkovanie */}
-      {!loading && pagination && pagination.totalPages > 1 && (
+      {!loading && pagination && pagination.pages > 1 && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -495,28 +485,28 @@ const ArticlesPage: React.FC = () => {
           {/* Predchádzajúca stránka */}
           <button
             onClick={() => handlePageChange(currentPage - 1)}
-            disabled={!pagination.hasPrevPage}
+            disabled={!pagination.has_prev}
             style={{
               padding: '8px 12px',
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              background: pagination.hasPrevPage ? 'white' : '#f3f4f6',
-              color: pagination.hasPrevPage ? '#374151' : '#9ca3af',
-              cursor: pagination.hasPrevPage ? 'pointer' : 'not-allowed'
+              background: pagination.has_prev ? 'white' : '#f3f4f6',
+              color: pagination.has_prev ? '#374151' : '#9ca3af',
+              cursor: pagination.has_prev ? 'pointer' : 'not-allowed'
             }}
           >
             ← Predchádzajúca
           </button>
 
           {/* Čísla stránok */}
-          {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+          {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => {
             let pageNumber: number;
-            if (pagination.totalPages <= 5) {
+            if (pagination.pages <= 5) {
               pageNumber = i + 1;
             } else if (currentPage <= 3) {
               pageNumber = i + 1;
-            } else if (currentPage >= pagination.totalPages - 2) {
-              pageNumber = pagination.totalPages - 4 + i;
+            } else if (currentPage >= pagination.pages - 2) {
+              pageNumber = pagination.pages - 4 + i;
             } else {
               pageNumber = currentPage - 2 + i;
             }
@@ -543,14 +533,14 @@ const ArticlesPage: React.FC = () => {
           {/* Nasledujúca stránka */}
           <button
             onClick={() => handlePageChange(currentPage)}
-            disabled={!pagination.hasNextPage}
+            disabled={!pagination.has_next}
             style={{
               padding: '8px 12px',
               border: '1px solid #d1d5db',
               borderRadius: '6px',
-              background: pagination.hasNextPage ? 'white' : '#f3f4f6',
-              color: pagination.hasNextPage ? '#374151' : '#9ca3af',
-              cursor: pagination.hasNextPage ? 'pointer' : 'not-allowed'
+              background: pagination.has_next ? 'white' : '#f3f4f6',
+              color: pagination.has_next ? '#374151' : '#9ca3af',
+              cursor: pagination.has_next ? 'pointer' : 'not-allowed'
             }}
           >
             Nasledujúca →

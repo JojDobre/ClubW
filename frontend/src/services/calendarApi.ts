@@ -80,11 +80,17 @@ export interface UpcomingMatchesData {
   };
 }
 
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
   errors?: string[];
+  /** Rozpad počtov pri nadchádzajúcich zápasoch - chodí vedľa `data`. */
+  breakdown?: {
+    upcoming: number;
+    without_result: number;
+  };
 }
 
 export interface CalendarFilters {
@@ -181,15 +187,18 @@ export const calendarApi = {
     
     const response = await apiRequest<CalendarMatch[]>(endpoint);
     
-    // Transformuj response pre konzistentný formát
+    // Server vracia zoznam v `data` a rozpad počtov vedľa neho;
+    // obrazovka ich chce pokope
+    const zapasy = response.data ?? [];
+
     return {
       success: response.success,
       data: {
-        data: response.data,
-        count: response.data.length,
-        breakdown: {
-          upcoming: response.data.filter(m => m.match_type === 'upcoming').length,
-          without_result: response.data.filter(m => m.match_type === 'without_result').length
+        data: zapasy,
+        count: zapasy.length,
+        breakdown: response.breakdown ?? {
+          upcoming: zapasy.filter(m => m.match_type === 'upcoming').length,
+          without_result: zapasy.filter(m => m.match_type === 'without_result').length
         }
       },
       message: response.message

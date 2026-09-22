@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import type { Strankovanie } from '../api/typy';
 
 interface Gallery {
   id: number;
@@ -25,17 +26,8 @@ interface Gallery {
 
 interface ApiResponse {
   success: boolean;
-  data: {
-    galerie: Gallery[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  };
+  data: Gallery[];
+  pagination?: Strankovanie;
   message: string;
 }
 
@@ -46,7 +38,7 @@ const Galleries: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pagination, setPagination] = useState<any>(null);
+  const [pagination, setPagination] = useState<Strankovanie | null>(null);
 
   // Načítanie galérií z API
   const fetchGalleries = async (page: number = 1) => {
@@ -77,11 +69,11 @@ const Galleries: React.FC = () => {
       console.log('📡 Galleries data:', data);
       
       if (data.success) {
-        let filteredGalleries = data.data.galerie;
-        
+        let filteredGalleries = data.data;
+
         // DOČASNÉ: Frontend filtrovanie ak backend nefiltruje správne
         if (filterType) {
-          filteredGalleries = data.data.galerie.filter(gallery => {
+          filteredGalleries = data.data.filter(gallery => {
             const assignment = getAssignmentTypeRaw(gallery);
             switch (filterType) {
               case 'tim':
@@ -96,14 +88,16 @@ const Galleries: React.FC = () => {
                 return true;
             }
           });
-          console.log(`🔍 Frontend filter ${filterType}: ${filteredGalleries.length} z ${data.data.galerie.length} galérií`);
+          console.log(`🔍 Frontend filter ${filterType}: ${filteredGalleries.length} z ${data.data.length} galérií`);
         }
         
         setGalleries(filteredGalleries);
-        setPagination({
-          ...data.data.pagination,
-          total: filteredGalleries.length // Aktualizujeme počet pre frontend filter
-        });
+        if (data.pagination) {
+          setPagination({
+            ...data.pagination,
+            total: filteredGalleries.length // Aktualizujeme počet pre frontend filter
+          });
+        }
         setCurrentPage(page);
         console.log('✅ Galleries nastavené:', filteredGalleries.length);
       } else {
@@ -296,7 +290,7 @@ const Galleries: React.FC = () => {
               borderRadius: '6px',
               fontSize: '14px'
             }}>
-              📄 Stránka: <strong>{pagination.page}</strong> z <strong>{pagination.pages}</strong>
+              📄 Stránka: <strong>{pagination.current_page}</strong> z <strong>{pagination.pages}</strong>
             </div>
           </div>
         )}
@@ -494,14 +488,14 @@ const Galleries: React.FC = () => {
           {/* Predchádzajúca */}
           <button
             onClick={() => handlePageChange(currentPage - 1)}
-            disabled={!pagination.hasPrev || loading}
+            disabled={!pagination.has_prev || loading}
             style={{
               padding: '8px 16px',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              backgroundColor: pagination.hasPrev && !loading ? 'white' : '#f5f5f5',
-              color: pagination.hasPrev && !loading ? '#333' : '#999',
-              cursor: pagination.hasPrev && !loading ? 'pointer' : 'not-allowed'
+              backgroundColor: pagination.has_prev && !loading ? 'white' : '#f5f5f5',
+              color: pagination.has_prev && !loading ? '#333' : '#999',
+              cursor: pagination.has_prev && !loading ? 'pointer' : 'not-allowed'
             }}
           >
             ← Predchádzajúca
@@ -535,14 +529,14 @@ const Galleries: React.FC = () => {
           {/* Ďalšia */}
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={!pagination.hasNext || loading}
+            disabled={!pagination.has_next || loading}
             style={{
               padding: '8px 16px',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              backgroundColor: pagination.hasNext && !loading ? 'white' : '#f5f5f5',
-              color: pagination.hasNext && !loading ? '#333' : '#999',
-              cursor: pagination.hasNext && !loading ? 'pointer' : 'not-allowed'
+              backgroundColor: pagination.has_next && !loading ? 'white' : '#f5f5f5',
+              color: pagination.has_next && !loading ? '#333' : '#999',
+              cursor: pagination.has_next && !loading ? 'pointer' : 'not-allowed'
             }}
           >
             Ďalšia →

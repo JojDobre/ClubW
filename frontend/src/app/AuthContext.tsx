@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (odpoved.ok) {
         const telo = await odpoved.json();
-        setPouzivatel(telo.data.user ?? telo.data);
+        setPouzivatel(telo.data);
       } else if (odpoved.status === 401) {
         // Prístupový token vypršal — skúsime ho obnoviť.
         // Bez tohto kroku by používateľa vyhodilo každých 24 hodín.

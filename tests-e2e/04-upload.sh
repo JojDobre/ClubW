@@ -1,6 +1,7 @@
 #!/bin/bash
 # Umiestnenie: /home/claude/test-krok5.sh
 # Overenie Kroku 5: bezpečnosť uploadov
+export BACKEND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../backend" && pwd)"
 
 API="http://localhost:3000"
 PASS=0; FAIL=0
@@ -86,7 +87,7 @@ check "Bez tokenu odmietnuté" "401" "$KOD"
 
 echo ""
 echo "═══ Kontrola uloženého súboru ═══"
-NAJDENE=$(find /home/claude/ClubW/backend/uploads/images/players -name "*.jpg" 2>/dev/null | head -1)
+NAJDENE=$(find $BACKEND/uploads/images/players -name "*.jpg" 2>/dev/null | head -1)
 if [ -n "$NAJDENE" ]; then
   TYP=$(python3 -c "
 import sys
