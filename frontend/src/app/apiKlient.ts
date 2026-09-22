@@ -114,6 +114,37 @@ const sParametrami = (cesta: string, parametre?: Moznosti['parametre']): string 
 };
 
 /**
+ * Prevedie chyby zo servera na obyčajné reťazce.
+ *
+ * PREČO: express-validator posiela chyby ako objekty
+ * { type, value, msg, path, location }, iné endpointy ako pole reťazcov.
+ * Obrazovky ich vykresľujú priamo, takže pri objekte spadlo celé
+ * vykreslenie na „Objects are not valid as a React child" - a používateľ
+ * neuvidel ani tú chybu, ani nič iné. Prevod patrí sem, na jedno miesto,
+ * nie do každej obrazovky zvlášť.
+ */
+const chybyNaText = (chyby: unknown): string[] | undefined => {
+  if (!Array.isArray(chyby)) return undefined;
+
+  const text = chyby
+    .map((ch) => {
+      if (typeof ch === 'string') return ch;
+      if (ch && typeof ch === 'object') {
+        const o = ch as Record<string, unknown>;
+        // express-validator: msg je hláška, path názov poľa
+        const hlaska = o.msg ?? o.message;
+        if (typeof hlaska === 'string') {
+          return typeof o.path === 'string' && o.path ? `${o.path}: ${hlaska}` : hlaska;
+        }
+      }
+      return String(ch);
+    })
+    .filter((ch) => ch && ch !== 'undefined' && ch !== '[object Object]');
+
+  return text.length > 0 ? text : undefined;
+};
+
+/**
  * Jednotná obálka odpovede z API.
  *
  * `data` je priamo tá vec, o ktorú ide - entita pri detaile, pole pri zozname.
@@ -188,7 +219,7 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
           ? 'Záznam sa nenašiel.'
           : `Chyba servera (${odpoved.status})`);
 
-    throw new ApiChyba(odpoved.status, sprava, obsah?.errors);
+    throw new ApiChyba(odpoved.status, sprava, chybyNaText(obsah?.errors));
   }
 
   // Endpointy vracajú užitočné údaje v poli data; niektoré (napríklad

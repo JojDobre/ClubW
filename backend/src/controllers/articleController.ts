@@ -26,7 +26,7 @@ export const validateArticle = [
     .isLength({ min: 10, max: 50000 })
     .withMessage('Obsah musí mať 10-50000 znakov'),
   body('excerpt')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 500 })
     .withMessage('Excerpt môže mať maximálne 500 znakov')
     .trim(),
@@ -40,20 +40,24 @@ export const validateArticle = [
   body('status')
     .isIn(['draft', 'published', 'scheduled', 'archived'])
     .withMessage('Neplatný status článku'),
+  // Pozor na .optional() bez nullable: express-validator ním preskočí len
+  // undefined, nie null. Editor pri koncepte posiela publikovany_datum: null
+  // (a rovnako prázdne SEO polia), takže by validácia spadla na
+  // „Neplatný dátum publikovania" a koncept by sa vôbec nedal uložiť.
   body('publikovany_datum')
-    .optional()
+    .optional({ nullable: true })
     .isISO8601()
     .withMessage('Neplatný dátum publikovania'),
   body('meta_title')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 70 })
     .withMessage('Meta title môže mať maximálne 70 znakov'),
   body('meta_description')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 160 })
     .withMessage('Meta description môže mať maximálne 160 znakov'),
   body('tags')
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage('Tagy musia byť pole'),
 ];
@@ -109,7 +113,7 @@ export const validateArticleUpdate = [
     .isLength({ max: 160 })
     .withMessage('Meta description môže mať maximálne 160 znakov'),
   body('tags')
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage('Tagy musia byť pole'),
 ];
