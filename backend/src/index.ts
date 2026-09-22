@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import './models'; // DÔLEŽITÉ - pre načítanie vzťahov
+import sequelize from './config/database';
 import path from 'path';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
@@ -227,6 +228,49 @@ app.use(kontrolaLicencie);
 // Stav licencie pre admin rozhranie
 app.get('/api/license/status', (_req, res) => {
   res.json({ success: true, data: stavLicencie() });
+});
+
+/**
+ * GET /api/license/version
+ *
+ * Verzie systému - aplikácia aj schéma databázy.
+ *
+ * PREČO: požiadavka žiada pri licencii aj „aktualizácia systému,
+ * verzie a podobne". Bez tohto sa nedalo zistiť ani to, ktorá verzia
+ * kde beží a či má inštalácia dobehnuté migrácie.
+ */
+app.get('/api/license/version', async (_req, res) => {
+  try {
+    // Verzia aplikácie z package.json - jeden zdroj pravdy
+    const balicek = require('../package.json');
+
+    // Posledná dobehnutá migrácia hovorí, na akej schéme databáza beží
+    const [riadky] = await sequelize.query(
+      'SELECT name FROM "SequelizeMeta" ORDER BY name DESC LIMIT 1'
+    );
+    const poslednaMigracia = (riadky as any[])[0]?.name ?? null;
+
+    const [pocet] = await sequelize.query('SELECT COUNT(*)::int AS pocet FROM "SequelizeMeta"');
+
+    res.json({
+      success: true,
+      data: {
+        verzia_aplikacie: balicek.version,
+        node: process.version,
+        prostredie: process.env.NODE_ENV || 'development',
+        schema: {
+          posledna_migracia: poslednaMigracia,
+          pocet_migracii: (pocet as any[])[0]?.pocet ?? 0,
+        },
+        licencia: stavLicencie(),
+        // Bežiaci proces - koľko je server hore
+        bezi_sekund: Math.round(process.uptime()),
+      },
+    });
+  } catch (chyba) {
+    console.error('Chyba pri zisťovaní verzie:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera pri zisťovaní verzie' });
+  }
 });
 
 // Nastavenia klubu - musia byť dostupné aj bez prihlásenia,

@@ -12,6 +12,10 @@ export type StavKomentara = 'caka' | 'schvaleny' | 'zamietnuty' | 'spam';
 interface KomentarAttributes {
   id: number;
   clanok_id: number;
+  /** Prihlásený autor; bez neho ide o komentár nespárovaný s účtom */
+  pouzivatel_id: number | null;
+  /** Kedy komentár naposledy upravil jeho autor */
+  upraveny_autorom: Date | null;
   autor_meno: string;
   autor_email: string | null;
   obsah: string;
@@ -26,12 +30,15 @@ interface KomentarAttributes {
 interface KomentarCreationAttributes
   extends Optional<
     KomentarAttributes,
-    'id' | 'autor_email' | 'stav' | 'ip_adresa' | 'rodic_id' | 'vytvoreny' | 'aktualizovany'
+    'id' | 'autor_email' | 'stav' | 'ip_adresa' | 'rodic_id'
+    | 'pouzivatel_id' | 'upraveny_autorom' | 'vytvoreny' | 'aktualizovany'
   > {}
 
 class Komentar extends Model<KomentarAttributes, KomentarCreationAttributes> implements KomentarAttributes {
   public id!: number;
   public clanok_id!: number;
+  public pouzivatel_id!: number | null;
+  public upraveny_autorom!: Date | null;
   public autor_meno!: string;
   public autor_email!: string | null;
   public obsah!: string;
@@ -50,6 +57,15 @@ Komentar.init(
       allowNull: false,
       references: { model: 'clanky', key: 'id' },
       onDelete: 'CASCADE',
+    },
+    pouzivatel_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'pouzivatelia', key: 'id' },
+    },
+    upraveny_autorom: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     autor_meno: {
       type: DataTypes.STRING(100),

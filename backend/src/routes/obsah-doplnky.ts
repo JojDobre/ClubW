@@ -14,8 +14,9 @@ import {
   ulozPavuka,
   zapisVysledok,
 } from '../controllers/turnajController';
-import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
+import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
+import { zistiUdajeVidea } from '../services/youtube';
 
 const router = Router();
 
@@ -109,7 +110,7 @@ router.delete('/comments/:id', authenticateToken, requireEditor, async (req: Req
  * POST /api/comments
  * Nový komentár od návštevníka webu — bez prihlásenia.
  */
-router.post('/comments', async (req: Request, res: Response) => {
+router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
   try {
     const clanokId = Number(req.body?.clanok_id);
     const clanok = await Article.findByPk(clanokId);
@@ -120,7 +121,13 @@ router.post('/comments', async (req: Request, res: Response) => {
 
     const komentar = await Komentar.create({
       clanok_id: clanokId,
-      autor_meno: sanitizePlainText(String(req.body?.autor_meno || '')),
+      // Keď je návštevník prihlásený, komentár si spárujeme s jeho
+      // účtom - inak sa nedá overiť vlastníctvo a autor by svoj
+      // vlastný komentár nemohol upraviť.
+      pouzivatel_id: req.userId ?? null,
+      autor_meno: sanitizePlainText(
+        String(req.body?.autor_meno || req.user?.meno || '')
+      ),
       autor_email: req.body?.autor_email || null,
       obsah: sanitizePlainText(String(req.body?.obsah || '')),
       rodic_id: req.body?.rodic_id ? Number(req.body.rodic_id) : null,
@@ -144,6 +151,60 @@ router.post('/comments', async (req: Request, res: Response) => {
       return;
     }
     console.error('Chyba pri ukladaní komentára:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+/**
+ * PUT /api/comments/:id/moj
+ *
+ * Úprava VLASTNÉHO komentára prihláseným autorom.
+ *
+ * PREČO SAMOSTATNE OD ADMIN ÚPRAVY: PUT /api/comments/:id je chránený
+ * pre redaktora a slúži na moderovanie. Požiadavka hovorí „na klubovom
+ * frontende ich autor vie upravovať", čo je iná operácia: autor smie
+ * zmeniť len text svojho komentára a nič iné.
+ *
+ * Upravený komentár ide znova na schválenie - inak by sa dal
+ * po schválení prepísať na ľubovoľný obsah.
+ */
+router.put('/comments/:id/moj', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const komentar = await Komentar.findByPk(Number(req.params.id));
+
+    if (!komentar) {
+      res.status(404).json({ success: false, message: 'Komentár sa nenašiel' });
+      return;
+    }
+
+    if (!komentar.pouzivatel_id || komentar.pouzivatel_id !== req.userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Upraviť sa dá len vlastný komentár',
+      });
+      return;
+    }
+
+    const obsah = sanitizePlainText(String(req.body?.obsah || '')).trim();
+    if (obsah.length < 2) {
+      res.status(400).json({ success: false, message: 'Komentár nesmie byť prázdny' });
+      return;
+    }
+
+    await komentar.update({
+      obsah,
+      upraveny_autorom: new Date(),
+      // Znova na schválenie
+      stav: 'caka',
+    });
+
+    res.json({
+      success: true,
+      data: komentar,
+      message: 'Komentár bol upravený a čaká na schválenie.',
+    });
+  } catch (chyba) {
+    console.error('Chyba pri úprave komentára:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
@@ -183,13 +244,34 @@ router.get('/videos', async (req: Request, res: Response) => {
 /** POST /api/videos */
 router.post('/videos', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
+    const url = String(req.body?.url || '');
+
+    // Čo sa dá, doplníme z videa. Ručne zadané hodnoty majú prednosť -
+    // požiadavka hovorí „automaticky" ako pohodlie, nie ako prepisovanie.
+    const zistene = await zistiUdajeVidea(url);
+
+    // Keď názov neprišiel a ani sa ho nepodarilo zistiť (video je
+    // súkromné, zmazané, alebo server nemá von prístup), povieme to
+    // rovno - inak by z toho bola technická hláška o validácii.
+    const nazovVidea = sanitizePlainText(String(req.body?.nazov || zistene.nazov || '')).trim();
+    if (!nazovVidea) {
+      res.status(400).json({
+        success: false,
+        message:
+          'Názov videa sa nepodarilo zistiť automaticky. ' +
+          'Skontrolujte adresu, alebo názov zadajte ručne.',
+      });
+      return;
+    }
+
     const video = await Video.create({
-      nazov: sanitizePlainText(String(req.body?.nazov || '')),
+      nazov: nazovVidea,
       popis: req.body?.popis ? sanitizePlainText(req.body.popis) : null,
-      url: String(req.body?.url || ''),
-      nahlad: req.body?.nahlad || null,
-      dlzka: req.body?.dlzka ?? null,
+      url,
+      nahlad: req.body?.nahlad || zistene.nahlad,
+      dlzka: req.body?.dlzka ?? zistene.dlzka,
       kategoria: req.body?.kategoria || null,
+      rubrika_id: req.body?.rubrika_id ?? null,
       zapas_id: req.body?.zapas_id ?? null,
       publikovane: req.body?.publikovane ?? true,
       poradie: req.body?.poradie ?? 0,
@@ -219,7 +301,7 @@ router.put('/videos/:id', authenticateToken, requireEditor, async (req: Request,
       return;
     }
 
-    const polia = ['nazov', 'popis', 'url', 'nahlad', 'dlzka', 'kategoria', 'zapas_id', 'publikovane', 'poradie'];
+    const polia = ['nazov', 'popis', 'url', 'nahlad', 'dlzka', 'kategoria', 'rubrika_id', 'zapas_id', 'publikovane', 'poradie'];
     const zmeny: any = {};
 
     for (const pole of polia) {

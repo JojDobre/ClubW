@@ -13,6 +13,15 @@ import { sanitizePlainText } from '../utils/sanitize';
  * GET /api/seasons
  * Zoznam sezón, najnovšia prvá.
  */
+/**
+ * Tvar sezóny pre API - k uloženým poliam pridá odvodený stav
+ * (aktívna / neaktívna / archivovaná), ktorý žiadala požiadavka.
+ */
+const soStavom = (sezona: any) => ({
+  ...sezona.toJSON(),
+  stav: sezona.stav(),
+});
+
 export const getSezony = async (_req: Request, res: Response): Promise<void> => {
   try {
     // Archivované sezóny sem nepatria - tie má na starosti /api/admin/archive
@@ -20,7 +29,7 @@ export const getSezony = async (_req: Request, res: Response): Promise<void> => 
       where: { aktivity: true },
       order: [['nazov', 'DESC']],
     });
-    res.json({ success: true, data: sezony, pocet: sezony.length });
+    res.json({ success: true, data: sezony.map(soStavom), pocet: sezony.length });
   } catch (error) {
     console.error('Chyba pri načítaní sezón:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri načítaní sezón' });
@@ -38,7 +47,7 @@ export const getAktualnaSezona = async (_req: Request, res: Response): Promise<v
       res.status(404).json({ success: false, message: 'Žiadna sezóna nie je vytvorená' });
       return;
     }
-    res.json({ success: true, data: sezona });
+    res.json({ success: true, data: soStavom(sezona) });
   } catch (error) {
     console.error('Chyba pri načítaní aktuálnej sezóny:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });
@@ -129,7 +138,7 @@ export const updateSezona = async (req: Request, res: Response): Promise<void> =
 
     await sezona.update(zmeny);
 
-    res.json({ success: true, data: sezona, message: 'Sezóna bola upravená' });
+    res.json({ success: true, data: soStavom(sezona), message: 'Sezóna bola upravená' });
   } catch (error: any) {
     if (error.name === 'SequelizeValidationError') {
       res.status(400).json({

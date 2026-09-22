@@ -180,6 +180,22 @@ FormularOdpoved.belongsTo(Formular, {
   as: 'formular',
 });
 
+// Komentar -> User (prihlásený autor komentára).
+// Bez tejto väzby sa nedalo overiť vlastníctvo, takže autor nemohol
+// upravovať svoj vlastný komentár.
+Komentar.belongsTo(User, {
+  foreignKey: 'pouzivatel_id',
+  as: 'pouzivatel',
+  constraints: false,
+});
+
+// Video -> Category (rubrika videa)
+Video.belongsTo(Category, {
+  foreignKey: 'rubrika_id',
+  as: 'rubrika',
+  constraints: false,
+});
+
 // 3. TEAM vzťahy
 // Team -> Players (1:N) - tím má viacero hráčov
 Team.hasMany(Player, {
