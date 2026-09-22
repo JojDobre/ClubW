@@ -3,7 +3,7 @@
 
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
-import { Galeria, GaleriaObrazok } from '../models';
+import { Galeria, GaleriaObrazok, Team, Article, Zapas } from '../models';
 import { getGalleryWithImages, getGalleriesByType, getAllGalleriesForAdmin } from '../models';
 
 // ===== HELPER FUNCTIONS =====
@@ -299,6 +299,27 @@ export const getAdminGalleries = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Overí, že objekt, ku ktorému sa galéria priraďuje, existuje.
+ *
+ * @returns text chyby, alebo null keď je všetko v poriadku
+ */
+const overPriradenie = async (udaje: any): Promise<string | null> => {
+  if (udaje.tim_id) {
+    const tim = await Team.findByPk(udaje.tim_id);
+    if (!tim) return `Tím s ID ${udaje.tim_id} neexistuje`;
+  }
+  if (udaje.clanok_id) {
+    const clanok = await Article.findByPk(udaje.clanok_id);
+    if (!clanok) return `Článok s ID ${udaje.clanok_id} neexistuje`;
+  }
+  if (udaje.zapas_id) {
+    const zapas = await Zapas.findByPk(udaje.zapas_id);
+    if (!zapas) return `Zápas s ID ${udaje.zapas_id} neexistuje`;
+  }
+  return null;
+};
+
 // POST /api/admin/galleries - Vytvorenie novej galérie
 export const createGallery = async (req: Request, res: Response) => {
   try {
@@ -331,6 +352,15 @@ export const createGallery = async (req: Request, res: Response) => {
     if (tim_id && tim_id !== '') galeriaData.tim_id = parseInt(tim_id, 10);
     if (clanok_id && clanok_id !== '') galeriaData.clanok_id = parseInt(clanok_id, 10);
     if (zapas_id && zapas_id !== '') galeriaData.zapas_id = parseInt(zapas_id, 10);
+
+    // Overenie, že priradený objekt naozaj existuje.
+    //
+    // Bez toho padol zápis až na cudzom kľúči v databáze a používateľ
+    // dostal 500 "Chyba servera", z ktorej sa nedalo vyčítať, čo je zle.
+    const chybaPriradenia = await overPriradenie(galeriaData);
+    if (chybaPriradenia) {
+      return res.status(400).json({ success: false, message: chybaPriradenia });
+    }
 
     const galeria = await Galeria.create(galeriaData);
 
@@ -370,7 +400,7 @@ export const createGallery = async (req: Request, res: Response) => {
 export const updateGallery = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nazov, popis, tim_id, clanok_id, zapas_id } = req.body;
+    const { nazov, popis, tim_id, clanok_id, zapas_id, aktivity } = req.body;
     const galeriaId = parseInt(id, 10);
 
     if (isNaN(galeriaId)) {
@@ -410,16 +440,37 @@ export const updateGallery = async (req: Request, res: Response) => {
     const updateData: any = {};
     if (nazov !== undefined) updateData.nazov = nazov.trim();
     if (popis !== undefined) updateData.popis = popis ? popis.trim() : null;
-    
-    // Resetovanie priradení
-    updateData.tim_id = null;
-    updateData.clanok_id = null;
-    updateData.zapas_id = null;
-    
-    // Nastavenie nového priradenia
-    if (tim_id && tim_id !== '' && tim_id !== null) updateData.tim_id = parseInt(tim_id, 10);
-    if (clanok_id && clanok_id !== '' && clanok_id !== null) updateData.clanok_id = parseInt(clanok_id, 10);
-    if (zapas_id && zapas_id !== '' && zapas_id !== null) updateData.zapas_id = parseInt(zapas_id, 10);
+    if (aktivity !== undefined) updateData.aktivity = Boolean(aktivity);
+
+    // PRIRADENIE K TÍMU / ČLÁNKU / ZÁPASU
+    //
+    // Pôvodne sa všetky tri väzby na tomto mieste bezpodmienečne nulovali
+    // a znovu nastavovali len z toho, čo prišlo v tele. Úprava samotného
+    // názvu tak galérii ticho zmazala priradenie k zápasu - z galérie
+    // zápasu sa stala voľná galéria bez toho, aby o to niekto požiadal.
+    //
+    // Väzby preto prepisujeme LEN vtedy, keď klient aspoň jednu z nich
+    // naozaj poslal. Vtedy platí pôvodné pravidlo "galéria patrí najviac
+    // k jednému objektu", takže ostatné dve sa vynulujú. Poslať
+    // zapas_id: null je stále platný spôsob, ako priradenie zrušiť.
+    const poslaneTim = Object.prototype.hasOwnProperty.call(req.body, 'tim_id');
+    const poslaneClanok = Object.prototype.hasOwnProperty.call(req.body, 'clanok_id');
+    const poslaneZapas = Object.prototype.hasOwnProperty.call(req.body, 'zapas_id');
+
+    if (poslaneTim || poslaneClanok || poslaneZapas) {
+      updateData.tim_id = null;
+      updateData.clanok_id = null;
+      updateData.zapas_id = null;
+
+      if (tim_id && tim_id !== '' && tim_id !== null) updateData.tim_id = parseInt(tim_id, 10);
+      if (clanok_id && clanok_id !== '' && clanok_id !== null) updateData.clanok_id = parseInt(clanok_id, 10);
+      if (zapas_id && zapas_id !== '' && zapas_id !== null) updateData.zapas_id = parseInt(zapas_id, 10);
+
+      const chybaPriradenia = await overPriradenie(updateData);
+      if (chybaPriradenia) {
+        return res.status(400).json({ success: false, message: chybaPriradenia });
+      }
+    }
 
     await galeria.update(updateData);
 

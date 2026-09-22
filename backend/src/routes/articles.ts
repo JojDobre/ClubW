@@ -17,6 +17,7 @@ import {
   bulkDeleteArticles,    
   bulkDuplicateArticles,
   validateArticle,
+  validateArticleUpdate,
   uploadArticleImage, 
 } from '../controllers/articleController';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
@@ -80,7 +81,7 @@ adminArticleRouter.get('/:id', authenticateToken, requireEditor, getAdminArticle
 adminArticleRouter.post('/', authenticateToken, requireEditor, validateArticle, createArticle);
 
 // PUT /api/admin/articles/:id - Úprava článku
-adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticle, updateArticle);
+adminArticleRouter.put('/:id', authenticateToken, requireEditor, validateArticleUpdate, updateArticle);
 
 // DELETE /api/admin/articles/:id - Vymazanie článku
 adminArticleRouter.delete('/:id', authenticateToken, requireEditor, deleteArticle);

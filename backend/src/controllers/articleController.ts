@@ -12,7 +12,7 @@ import fs from 'fs/promises';
 import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
 import path from 'path';
 
-// Validácia pre vytvorenie/úpravu článku
+// Validácia pre VYTVORENIE článku - povinné polia musia prísť.
 export const validateArticle = [
   body('nazov')
     .isLength({ min: 5, max: 200 })
@@ -42,6 +42,58 @@ export const validateArticle = [
     .withMessage('Meta title môže mať maximálne 70 znakov'),
   body('meta_description')
     .optional()
+    .isLength({ max: 160 })
+    .withMessage('Meta description môže mať maximálne 160 znakov'),
+  body('tags')
+    .optional()
+    .isArray()
+    .withMessage('Tagy musia byť pole'),
+];
+
+/**
+ * Validácia pre ÚPRAVU článku.
+ *
+ * PREČO SAMOSTATNE: úprava a vytvorenie zdieľali jeden validator, v ktorom
+ * boli nazov, obsah, kategoria_id aj status povinné. Znamenalo to, že sa
+ * nedal zmeniť samotný názov - požiadavka bez statusu skončila na
+ * „Neplatný status článku", hoci status nemal s úpravou nič spoločné.
+ *
+ * Tu je voliteľné všetko. Pravidlá pre hodnoty zostávajú rovnaké: keď
+ * pole príde, musí byť platné; keď nepríde, jednoducho sa nemení.
+ */
+export const validateArticleUpdate = [
+  body('nazov')
+    .optional()
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Názov musí mať 5-200 znakov')
+    .trim(),
+  body('obsah')
+    .optional()
+    .isLength({ min: 10, max: 50000 })
+    .withMessage('Obsah musí mať 10-50000 znakov'),
+  body('excerpt')
+    .optional({ nullable: true })
+    .isLength({ max: 500 })
+    .withMessage('Excerpt môže mať maximálne 500 znakov')
+    .trim(),
+  body('kategoria_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Kategória musí byť platné ID'),
+  body('status')
+    .optional()
+    .isIn(['draft', 'published', 'scheduled', 'archived'])
+    .withMessage('Neplatný status článku'),
+  body('publikovany_datum')
+    .optional({ nullable: true })
+    .isISO8601()
+    .withMessage('Neplatný dátum publikovania'),
+  body('meta_title')
+    .optional({ nullable: true })
+    .isLength({ max: 70 })
+    .withMessage('Meta title môže mať maximálne 70 znakov'),
+  body('meta_description')
+    .optional({ nullable: true })
     .isLength({ max: 160 })
     .withMessage('Meta description môže mať maximálne 160 znakov'),
   body('tags')

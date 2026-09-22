@@ -560,7 +560,11 @@ adminPageRouter.patch('/:id/toggle-menu', [
   authenticateToken,
   requireEditor,
   param('id').isInt({ min: 1 }),
-  body('v_menu').isBoolean()
+  // Hodnota je VOLITEĽNÁ. Endpoint sa volá toggle, takže bez nej sa stav
+  // jednoducho preklopí. Pôvodne bola povinná, takže "prepni" bez tela
+  // skončilo na 400 - názov endpointu sľuboval niečo iné, než robil.
+  // Kto pošle konkrétnu hodnotu, nastaví ju natvrdo (to funguje ďalej).
+  body('v_menu').optional().isBoolean()
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -573,7 +577,6 @@ adminPageRouter.patch('/:id/toggle-menu', [
     }
 
     const { id } = req.params;
-    const { v_menu } = req.body;
 
     const page = await Page.findByPk(parseInt(id));
     if (!page) {
@@ -582,6 +585,9 @@ adminPageRouter.patch('/:id/toggle-menu', [
         message: 'Stránka nebola nájdená'
       });
     }
+
+    // Bez zadanej hodnoty preklopíme aktuálny stav
+    const v_menu = req.body?.v_menu === undefined ? !page.v_menu : Boolean(req.body.v_menu);
 
     // Ak pridávame do menu a nemá poradie, nastav automatické
     let poradie_menu = page.poradie_menu;
@@ -619,7 +625,8 @@ adminPageRouter.patch('/:id/toggle-publish', [
   authenticateToken,
   requireEditor,
   param('id').isInt({ min: 1 }),
-  body('publikovany').isBoolean()
+  // Voliteľné z rovnakého dôvodu ako pri toggle-menu
+  body('publikovany').optional().isBoolean()
 ], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -632,7 +639,6 @@ adminPageRouter.patch('/:id/toggle-publish', [
     }
 
     const { id } = req.params;
-    const { publikovany } = req.body;
 
     const page = await Page.findByPk(parseInt(id));
     if (!page) {
@@ -641,6 +647,10 @@ adminPageRouter.patch('/:id/toggle-publish', [
         message: 'Stránka nebola nájdená'
       });
     }
+
+    // Bez zadanej hodnoty preklopíme aktuálny stav
+    const publikovany =
+      req.body?.publikovany === undefined ? !page.publikovany : Boolean(req.body.publikovany);
 
     await page.update({ publikovany });
 

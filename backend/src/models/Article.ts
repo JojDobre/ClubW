@@ -292,10 +292,19 @@ Article.init(
           console.log('Aktualizovaný slug:', article.slug);
         }
         
-        // Aktualizácia excerpt pri zmene obsahu
-        if (article.changed('obsah') && !article.changed('excerpt')) {
+        // Excerpt dopĺňame automaticky LEN vtedy, keď žiadny nie je.
+        //
+        // Pôvodne sa prepisoval pri každej zmene obsahu, takže ručne
+        // napísaný krátky popis zmizol, len čo autor siahol na text
+        // článku - a nedalo sa to nijako obísť. Raz zadaný popis je
+        // rozhodnutie človeka a stroj ho neprepisuje.
+        //
+        // Podmienka sa pýta na výslednú hodnotu, nie na to, čo sa menilo.
+        // Vďaka tomu funguje aj opačný smer: kto chce znovu automatický
+        // popis, vymaže pole a uloží - prázdny excerpt sa doplní z obsahu.
+        if (!article.excerpt && article.obsah) {
           article.excerpt = Article.generateExcerpt(article.obsah);
-          console.log('Aktualizovaný excerpt:', article.excerpt);
+          console.log('Doplnený excerpt (bol prázdny):', article.excerpt);
         }
         
         // Nastavenie publikačného dátumu pri prvom publikovaní
