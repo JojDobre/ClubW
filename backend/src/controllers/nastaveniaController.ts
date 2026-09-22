@@ -14,7 +14,16 @@ const UPRAVITELNE_POLIA = [
   'email', 'telefon', 'adresa', 'ico', 'dic',
   'facebook_url', 'instagram_url', 'youtube_url', 'x_url',
   'meta_popis', 'google_analytics_id',
+  // Sady nastavení ako JSON: dodatkové farby podľa šablóny, globálne
+  // nastavenia komentárov, GDPR a širšie SEO. Doteraz z nich bol
+  // v nastaveniach len meta_popis.
+  'dodatkove_farby', 'nastavenia_komentarov', 'nastavenia_gdpr', 'nastavenia_seo',
 ] as const;
+
+/** Polia, ktoré sú JSON objektom a nesmú prejsť cez odstránenie HTML. */
+const JSONOVE_POLIA = [
+  'dodatkove_farby', 'nastavenia_komentarov', 'nastavenia_gdpr', 'nastavenia_seo',
+];
 
 // Textové polia, ktoré prechádzajú odstránením HTML.
 // Sem sa nikdy nemá dostať značkovanie - hodnoty sa vypisujú do stránky.
@@ -109,6 +118,23 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
       if (req.body[pole] === undefined) continue;
 
       let hodnota: any = req.body[pole];
+
+      // JSON sady sa spracúvajú zvlášť - nie sú to textové polia
+      // a prázdny objekt je platná hodnota.
+      if (JSONOVE_POLIA.includes(pole)) {
+        if (hodnota === null || hodnota === undefined) {
+          hodnota = {};
+        }
+        if (typeof hodnota !== 'object' || Array.isArray(hodnota)) {
+          res.status(400).json({
+            success: false,
+            message: `Pole ${pole} musí byť objekt s nastaveniami`,
+          });
+          return;
+        }
+        zmeny[pole] = hodnota;
+        continue;
+      }
 
       // Prázdny reťazec berieme ako zámer pole vyprázdniť.
       // Názov a farby sú povinné, tie takto vymazať nejde.

@@ -51,6 +51,8 @@ import archivRoutes from './routes/archiv';
 import stadionRoutes from './routes/stadiony';
 import mediaRoutes from './routes/media';
 import rolaRoutes from './routes/roly';
+import menuRoutes from './routes/menu';
+import { vykonajPresmerovania } from './middleware/presmerovania';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 import { spustiPlanovacZapasov } from './services/planovacZapasov';
 
@@ -226,6 +228,11 @@ app.get('/api/license/status', (_req, res) => {
 
 // Nastavenia klubu - musia byť dostupné aj bez prihlásenia,
 // verejný web z nich berie farby a názov
+// Presmerovania starých odkazov. Musia byť PRED ostatnými routami,
+// inak by stará adresa skončila na chybovej stránke skôr, než sa
+// presmerovanie stihne vyhodnotiť.
+app.use(vykonajPresmerovania);
+
 app.use('/api', nastaveniaRoutes);
 
 // Sezóny a súpisky - čítanie je verejné (archív, súpisky tímov)
@@ -283,6 +290,9 @@ app.use('/api/admin/media', mediaRoutes);
 
 // Role a oprávnenia - vlastné role so zaškrtávacími právami na modul
 app.use('/api/admin/roles', rolaRoutes);
+
+// Menu a presmerovania
+app.use('/api', menuRoutes);
 
 
 // ===== ŠTATISTIKY =====

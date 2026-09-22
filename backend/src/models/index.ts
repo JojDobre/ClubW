@@ -26,6 +26,8 @@ import Stadion from './Stadion';
 import KalendarUdalost from './KalendarUdalost';
 import Media from './Media';
 import Rola from './Rola';
+import MenuPolozka from './MenuPolozka';
+import Presmerovanie from './Presmerovanie';
 import SupiskaSezony from './SupiskaSezony';
 // GDPR - súhlasy so spracovaním údajov a auditný záznam
 import Suhlas from './Suhlas';
@@ -157,6 +159,12 @@ Rola.hasMany(User, {
   as: 'pouzivatelia',
   constraints: false,
 });
+
+// MenuPolozka -> ciele odkazu a vnorenie
+MenuPolozka.belongsTo(Page, { foreignKey: 'stranka_id', as: 'stranka', constraints: false });
+MenuPolozka.belongsTo(Category, { foreignKey: 'rubrika_id', as: 'rubrika', constraints: false });
+MenuPolozka.belongsTo(MenuPolozka, { foreignKey: 'rodic_id', as: 'rodic', constraints: false });
+MenuPolozka.hasMany(MenuPolozka, { foreignKey: 'rodic_id', as: 'deti', constraints: false });
 
 // 3. TEAM vzťahy
 // Team -> Players (1:N) - tím má viacero hráčov
@@ -506,6 +514,8 @@ export default {
   KalendarUdalost,
   Media,
   Rola,
+  MenuPolozka,
+  Presmerovanie,
   SupiskaSezony,
   Suhlas,
   AuditLog,
