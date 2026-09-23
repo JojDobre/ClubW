@@ -8,6 +8,8 @@ import Video from '../models/Video';
 import LigaTurnaj from '../models/LigaTurnaj';
 import Liga from '../models/Liga';
 import Article from '../models/Article';
+import Category from '../models/Category';
+import Zapas from '../models/Zapas';
 import {
   getPavuk,
   generujPavuka,
@@ -373,32 +375,175 @@ router.put('/comments/:id/moj', authenticateToken, async (req: Request, res: Res
 
 // ============ VIDEÁ ============
 
-/** GET /api/videos — verejné */
-router.get('/videos', async (req: Request, res: Response) => {
+/** Pridružené záznamy, ktoré sa vracajú pri videu. */
+const PRILOHY_VIDEA = [
+  { model: Category, as: 'rubrika', attributes: ['id', 'nazov', 'slug', 'farba'], required: false },
+  {
+    model: Zapas,
+    as: 'zapas',
+    attributes: ['id', 'nazov', 'datum_cas', 'domaci_tim_nazov', 'hostujuci_tim_nazov', 'goly_domaci', 'goly_hostia'],
+    required: false,
+  },
+];
+
+/** Video pre klienta - s adresou náhľadu, ktorú vieme pri YouTube odvodiť. */
+const videoNaVystup = (v: Video) => ({ ...v.toJSON(), nahlad_url: v.nahladovyObrazok() });
+
+/** Prihlásený redaktor alebo správca smie vidieť aj skryté videá. */
+const jeRedaktor = (req: Request): boolean =>
+  ['admin', 'redaktor'].includes(String((req as any).user?.rola || ''));
+
+/** Kladné celé číslo alebo null; pri nezmysle vráti undefined. */
+const idAleboNull = (hodnota: unknown): number | null | undefined => {
+  if (hodnota === null || hodnota === '' || hodnota === undefined) return null;
+  const cislo = Number(hodnota);
+  return Number.isInteger(cislo) && cislo > 0 ? cislo : undefined;
+};
+
+/**
+ * Overí a pripraví polia videa z tela požiadavky.
+ * Vracia buď chybovú správu, alebo objekt len s poslanými poliami.
+ */
+const pripravPoliaVidea = async (
+  telo: any
+): Promise<{ chyba: string } | { polia: Record<string, any> }> => {
+  const polia: Record<string, any> = {};
+
+  if (telo.url !== undefined) {
+    const url = String(telo.url || '').trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) {
+      return { chyba: 'Zadajte platný odkaz na video (začína https://)' };
+    }
+    polia.url = url;
+  }
+
+  if (telo.nazov !== undefined) polia.nazov = sanitizePlainText(String(telo.nazov || '')).trim();
+  if (telo.popis !== undefined) {
+    polia.popis = telo.popis ? sanitizePlainText(String(telo.popis)).trim() || null : null;
+  }
+  if (telo.kategoria !== undefined) {
+    polia.kategoria = telo.kategoria ? sanitizePlainText(String(telo.kategoria)).slice(0, 60) : null;
+  }
+  if (telo.nahlad !== undefined) {
+    const nahlad = telo.nahlad ? String(telo.nahlad).trim() : null;
+    if (nahlad && !/^(https?:\/\/|\/uploads\/)/i.test(nahlad)) {
+      return { chyba: 'Náhľad musí byť odkaz na obrázok' };
+    }
+    polia.nahlad = nahlad;
+  }
+
+  if (telo.dlzka !== undefined) {
+    if (telo.dlzka === null || telo.dlzka === '') {
+      polia.dlzka = null;
+    } else {
+      const dlzka = Number(telo.dlzka);
+      if (!Number.isInteger(dlzka) || dlzka < 0 || dlzka > 86400) {
+        return { chyba: 'Dĺžka videa musí byť počet sekúnd (0 – 86400)' };
+      }
+      polia.dlzka = dlzka;
+    }
+  }
+
+  if (telo.poradie !== undefined) {
+    const poradie = Number(telo.poradie);
+    polia.poradie = Number.isInteger(poradie) ? poradie : 0;
+  }
+  if (telo.publikovane !== undefined) polia.publikovane = Boolean(telo.publikovane);
+
+  // Väzby overíme vopred - inak by neexistujúce ID skončilo chybou databázy
+  if (telo.rubrika_id !== undefined) {
+    const id = idAleboNull(telo.rubrika_id);
+    if (id === undefined) return { chyba: 'Neplatná rubrika' };
+    if (id !== null && !(await Category.findByPk(id))) {
+      return { chyba: 'Zvolená rubrika neexistuje' };
+    }
+    polia.rubrika_id = id;
+  }
+  if (telo.zapas_id !== undefined) {
+    const id = idAleboNull(telo.zapas_id);
+    if (id === undefined) return { chyba: 'Neplatný zápas' };
+    if (id !== null && !(await Zapas.findByPk(id))) {
+      return { chyba: 'Zvolený zápas neexistuje' };
+    }
+    polia.zapas_id = id;
+  }
+
+  return { polia };
+};
+
+/**
+ * GET /api/videos
+ * Verejne len zverejnené videá. Redaktor s ?vsetky=1 dostane aj skryté
+ * (administrácia ich musí vidieť, aby ich mohla znova zverejniť).
+ * Filtre: rubrika_id, zapas_id, kategoria, search.
+ */
+router.get('/videos', optionalAuth, async (req: Request, res: Response) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 200, 1), 500);
     const kde: any = {};
 
+    if (!(req.query.vsetky === '1' && jeRedaktor(req))) kde.publikovane = true;
     if (req.query.kategoria) kde.kategoria = String(req.query.kategoria);
+    const rubrika = idAleboNull(req.query.rubrika_id);
+    if (rubrika) kde.rubrika_id = rubrika;
+    const zapas = idAleboNull(req.query.zapas_id);
+    if (zapas) kde.zapas_id = zapas;
     if (req.query.search) {
       kde.nazov = { [Op.iLike]: `%${String(req.query.search)}%` };
     }
 
     const videa = await Video.findAll({
       where: kde,
+      include: PRILOHY_VIDEA as any,
       order: [['poradie', 'ASC'], ['vytvorene', 'DESC']],
       limit,
     });
 
-    // Doplníme adresu náhľadu — pri YouTube ju vieme odvodiť
-    const sNahladmi = videa.map((v) => ({
-      ...v.toJSON(),
-      nahlad_url: v.nahladovyObrazok(),
-    }));
-
-    res.json({ success: true, data: sNahladmi });
+    res.json({ success: true, data: videa.map(videoNaVystup) });
   } catch (chyba) {
     console.error('Chyba pri načítaní videí:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+/**
+ * GET /api/videos/zisti?url=...
+ * Predvyplnenie formulára - názov, náhľad a dĺžka zistené z videa.
+ */
+router.get('/videos/zisti', authenticateToken, requireEditor, async (req: Request, res: Response) => {
+  const url = String(req.query.url || '').trim();
+  if (!/^https?:\/\/\S+$/i.test(url)) {
+    res.status(400).json({ success: false, message: 'Zadajte platný odkaz na video' });
+    return;
+  }
+
+  const zistene = await zistiUdajeVidea(url);
+  const rozpoznane = Video.rozpoznajId(url);
+
+  res.json({
+    success: true,
+    data: { ...zistene, zdroj: rozpoznane.zdroj },
+    message:
+      rozpoznane.zdroj === 'ine'
+        ? 'Odkaz nie je z YouTube ani Vimeo - údaje zadajte ručne'
+        : undefined,
+  });
+});
+
+/** GET /api/videos/:id - verejne len zverejnené video */
+router.get('/videos/:id', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id, { include: PRILOHY_VIDEA as any }) : null;
+
+    if (!video || (!video.publikovane && !jeRedaktor(req))) {
+      res.status(404).json({ success: false, message: 'Video sa nenašlo' });
+      return;
+    }
+
+    res.json({ success: true, data: videoNaVystup(video) });
+  } catch (chyba) {
+    console.error('Chyba pri načítaní videa:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
@@ -406,16 +551,21 @@ router.get('/videos', async (req: Request, res: Response) => {
 /** POST /api/videos */
 router.post('/videos', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const url = String(req.body?.url || '');
+    const pripravene = await pripravPoliaVidea({ ...req.body, url: req.body?.url ?? '' });
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
+      return;
+    }
+    const polia = pripravene.polia;
 
     // Čo sa dá, doplníme z videa. Ručne zadané hodnoty majú prednosť -
     // požiadavka hovorí „automaticky" ako pohodlie, nie ako prepisovanie.
-    const zistene = await zistiUdajeVidea(url);
+    const zistene = await zistiUdajeVidea(polia.url);
 
     // Keď názov neprišiel a ani sa ho nepodarilo zistiť (video je
     // súkromné, zmazané, alebo server nemá von prístup), povieme to
     // rovno - inak by z toho bola technická hláška o validácii.
-    const nazovVidea = sanitizePlainText(String(req.body?.nazov || zistene.nazov || '')).trim();
+    const nazovVidea = polia.nazov || sanitizePlainText(zistene.nazov || '').trim();
     if (!nazovVidea) {
       res.status(400).json({
         success: false,
@@ -427,19 +577,16 @@ router.post('/videos', authenticateToken, requireEditor, async (req: Request, re
     }
 
     const video = await Video.create({
+      publikovane: true,
+      poradie: 0,
+      ...polia,
       nazov: nazovVidea,
-      popis: req.body?.popis ? sanitizePlainText(req.body.popis) : null,
-      url,
-      nahlad: req.body?.nahlad || zistene.nahlad,
-      dlzka: req.body?.dlzka ?? zistene.dlzka,
-      kategoria: req.body?.kategoria || null,
-      rubrika_id: req.body?.rubrika_id ?? null,
-      zapas_id: req.body?.zapas_id ?? null,
-      publikovane: req.body?.publikovane ?? true,
-      poradie: req.body?.poradie ?? 0,
+      nahlad: polia.nahlad || zistene.nahlad,
+      dlzka: polia.dlzka ?? zistene.dlzka,
     } as any);
 
-    res.status(201).json({ success: true, data: video, message: 'Video bolo pridané' });
+    await video.reload({ include: PRILOHY_VIDEA as any });
+    res.status(201).json({ success: true, data: videoNaVystup(video), message: 'Video bolo pridané' });
   } catch (chyba: any) {
     if (chyba.name === 'SequelizeValidationError') {
       res.status(400).json({
@@ -457,37 +604,55 @@ router.post('/videos', authenticateToken, requireEditor, async (req: Request, re
 /** PUT /api/videos/:id */
 router.put('/videos/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const video = await Video.findByPk(Number(req.params.id));
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id) : null;
     if (!video) {
       res.status(404).json({ success: false, message: 'Video sa nenašlo' });
       return;
     }
 
-    const polia = ['nazov', 'popis', 'url', 'nahlad', 'dlzka', 'kategoria', 'rubrika_id', 'zapas_id', 'publikovane', 'poradie'];
-    const zmeny: any = {};
+    const pripravene = await pripravPoliaVidea(req.body || {});
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
+      return;
+    }
+    const zmeny = pripravene.polia;
 
-    for (const pole of polia) {
-      if (req.body[pole] === undefined) continue;
-      let hodnota = req.body[pole];
-      if (hodnota === '') hodnota = null;
-      if (hodnota !== null && ['nazov', 'popis', 'kategoria'].includes(pole)) {
-        hodnota = sanitizePlainText(String(hodnota));
-      }
-      zmeny[pole] = hodnota;
+    if (zmeny.nazov !== undefined && !zmeny.nazov) {
+      res.status(400).json({ success: false, message: 'Názov videa nesmie byť prázdny' });
+      return;
+    }
+
+    // Nový odkaz = iné video: náhľad a dĺžku doplníme z neho,
+    // pokiaľ ich redaktor zároveň nezadal ručne
+    if (zmeny.url && zmeny.url !== video.url) {
+      const zistene = await zistiUdajeVidea(zmeny.url);
+      if (!zmeny.nahlad) zmeny.nahlad = zistene.nahlad;
+      if (zmeny.dlzka === undefined || zmeny.dlzka === null) zmeny.dlzka = zistene.dlzka;
     }
 
     await video.update(zmeny);
-    res.json({ success: true, data: video, message: 'Zmeny boli uložené' });
-  } catch (chyba) {
+    await video.reload({ include: PRILOHY_VIDEA as any });
+    res.json({ success: true, data: videoNaVystup(video), message: 'Zmeny boli uložené' });
+  } catch (chyba: any) {
+    if (chyba.name === 'SequelizeValidationError') {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné údaje',
+        errors: chyba.errors.map((e: any) => e.message),
+      });
+      return;
+    }
     console.error('Chyba pri úprave videa:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
-/** DELETE /api/videos/:id */
-router.delete('/videos/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+/** DELETE /api/videos/:id - rovnako ako galérie smie mazať redaktor */
+router.delete('/videos/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const video = await Video.findByPk(Number(req.params.id));
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id) : null;
     if (!video) {
       res.status(404).json({ success: false, message: 'Video sa nenašlo' });
       return;

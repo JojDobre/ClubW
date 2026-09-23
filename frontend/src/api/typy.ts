@@ -630,11 +630,24 @@ export interface Video {
   /** Adresu náhľadu dopĺňa server — pri YouTube ju vie odvodiť */
   nahlad_url?: string | null;
   dlzka: number | null;
+  /** Pôvodná voľná kategória - len pre staré záznamy */
   kategoria: string | null;
+  rubrika_id: number | null;
+  rubrika?: { id: number; nazov: string; slug: string; farba: string | null } | null;
   zapas_id: number | null;
+  zapas?: { id: number; nazov: string; datum_cas: string } | null;
   publikovane: boolean;
   poradie: number;
   vytvorene: string;
+}
+
+/** Čo server zistí z odkazu na video. */
+export interface ZisteneVideo {
+  zdroj: ZdrojVidea;
+  video_id: string | null;
+  nazov: string | null;
+  nahlad: string | null;
+  dlzka: number | null;
 }
 
 export type TypTurnaja = 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff';
