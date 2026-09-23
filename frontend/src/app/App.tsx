@@ -54,6 +54,8 @@ import FormularOdpovede from '../pages/admin/FormularOdpovede';
 import KniznicaMedii from '../pages/admin/KniznicaMedii';
 import Logy from '../pages/admin/Logy';
 import MenuWebu from '../pages/admin/MenuWebu';
+import Profil from '../pages/admin/Profil';
+import { ZabudnuteHeslo, ObnovaHesla } from '../pages/ObnovaHesla';
 
 import '../design/global.css';
 import './App.css';
@@ -67,6 +69,8 @@ export const App: React.FC = () => (
             <Routes>
               {/* Verejné cesty */}
               <Route path="/prihlasenie" element={<Prihlasenie />} />
+              <Route path="/zabudnute-heslo" element={<ZabudnuteHeslo />} />
+              <Route path="/obnova-hesla" element={<ObnovaHesla />} />
 
               {/* Administrácia */}
               <Route
@@ -127,7 +131,7 @@ export const App: React.FC = () => (
                 />
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
-                <Route path="profil" element={<Navigate to="/admin/pouzivatelia" replace />} />
+                <Route path="profil" element={<Profil />} />
 
                 {/* Cesty len pre administrátora */}
                 <Route
