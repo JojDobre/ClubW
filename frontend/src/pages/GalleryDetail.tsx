@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
-import { apiUrl } from '../config/api';
+import { apiUrl, souborUrl } from '../config/api';
 
 interface GalleryImage {
   id: number;
@@ -11,6 +11,7 @@ interface GalleryImage {
   popis?: string;
   cesta_suboru: string;
   nahladovy_maly?: string;
+  nahladovy_stredny?: string;
   nahladovy_velky?: string;
   poradie: number;
   aktivity: boolean;
@@ -348,7 +349,7 @@ const GalleryDetail: React.FC = () => {
                   )}
                   
                   <img
-                    src={image.nahladovy_maly || image.cesta_suboru}
+                    src={souborUrl(image.nahladovy_stredny || image.nahladovy_maly || image.cesta_suboru)}
                     alt={image.nazov || `Obrázok ${index + 1}`}
                     style={{
                       width: '100%',
@@ -513,7 +514,7 @@ const GalleryDetail: React.FC = () => {
 
             {/* Obrázok */}
             <img
-              src={images[selectedImage].nahladovy_velky || images[selectedImage].cesta_suboru}
+              src={souborUrl(images[selectedImage].cesta_suboru)}
               alt={images[selectedImage].nazov || `Obrázok ${selectedImage + 1}`}
               style={{
                 maxWidth: '100%',

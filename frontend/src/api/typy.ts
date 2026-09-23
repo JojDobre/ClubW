@@ -459,7 +459,38 @@ export interface Galeria {
   clanok_id: number | null;
   zapas_id: number | null;
   typ_priradenia: string;
+  /** Zobrazuje sa na webe? (skrytie - nie zmazanie) */
+  zobrazit_na_webe: boolean;
   aktivity: boolean;
+  vytvoreny: string;
+}
+
+/** Fotka v galérii. Cesty sú celé (/uploads/...). */
+export interface GaleriaObrazok {
+  id: number;
+  galeria_id: number;
+  nazov: string | null;
+  /** Popis pod fotkou */
+  popis: string | null;
+  cesta_suboru: string;
+  nahladovy_maly: string | null;
+  nahladovy_stredny: string | null;
+  poradie: number;
+  je_nahladovy: boolean;
+  sirka: number | null;
+  vyska: number | null;
+}
+
+/** Súbor v Media knižnici. */
+export interface MediaSubor {
+  id: number;
+  nazov: string;
+  originalny_nazov: string;
+  cesta: string;
+  typ: 'obrazok' | 'dokument' | 'ine';
+  sirka: number | null;
+  vyska: number | null;
+  alt_text: string | null;
   vytvoreny: string;
 }
 

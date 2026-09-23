@@ -73,15 +73,14 @@ export class GaleriaObrazok extends Model<GaleriaObrazokAttributes, GaleriaObraz
   // Metóda pre získanie URL obrázka
   public getImageUrl(typ: 'original' | 'maly' | 'stredny' = 'original'): string {
     const baseUrl = process.env.UPLOADS_URL || '/uploads';
-    
-    switch (typ) {
-      case 'maly':
-        return this.nahladovy_maly ? `${baseUrl}${this.nahladovy_maly}` : `${baseUrl}${this.cesta_suboru}`;
-      case 'stredny':
-        return this.nahladovy_stredny ? `${baseUrl}${this.nahladovy_stredny}` : `${baseUrl}${this.cesta_suboru}`;
-      default:
-        return `${baseUrl}${this.cesta_suboru}`;
-    }
+    const cesta =
+      typ === 'maly' ? this.nahladovy_maly || this.cesta_suboru
+        : typ === 'stredny' ? this.nahladovy_stredny || this.cesta_suboru
+          : this.cesta_suboru;
+    if (!cesta) return '';
+    // Cesty sa ukladajú už s predponou /uploads - druhý raz ju nepridávame
+    if (/^https?:\/\//.test(cesta) || cesta.startsWith('/uploads/')) return cesta;
+    return `${baseUrl}${cesta.startsWith('/') ? '' : '/'}${cesta}`;
   }
 
   // Metóda pre získanie informácií o veľkosti súboru
@@ -126,6 +125,11 @@ export class GaleriaObrazok extends Model<GaleriaObrazokAttributes, GaleriaObraz
       poradie: this.poradie,
       je_nahladovy: this.je_nahladovy,
       zobrazenia: this.zobrazenia,
+
+      // Uložené cesty - používa ich administrácia aj verejná stránka
+      cesta_suboru: this.cesta_suboru,
+      nahladovy_maly: this.nahladovy_maly,
+      nahladovy_stredny: this.nahladovy_stredny,
       
       // URL adresy
       url_original: this.getImageUrl('original'),

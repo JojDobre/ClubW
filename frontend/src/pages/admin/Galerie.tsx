@@ -2,26 +2,32 @@
 // Fotogalérie klubu.
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  PageHeader, Button, Badge, Icon, Modal, Input, Textarea, Switch,
+  PageHeader, Button, Badge, Icon, Input,
   Skeleton, EmptyState, ErrorState, ConfirmDialog, useToast,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { galerieApi } from '../../api/obsah';
 import { formatujDatum } from '../../utils/datum';
+import { souborUrl } from '../../config/api';
 import type { Galeria } from '../../api/typy';
 import './Galerie.css';
 
-const PRAZDNA: Partial<Galeria> = { nazov: '', popis: '', nahladovy_obrazok: '', aktivity: true };
+/** Krátky popis, ku čomu galéria patrí. */
+const priradenie = (g: Galeria): string | null =>
+  g.zapas_id ? 'Zápas' : g.tim_id ? 'Tím' : g.clanok_id ? 'Článok' : null;
 
 export const Galerie: React.FC = () => {
-  const { uspech, chyba: hlasChybu, varovanie } = useToast();
+  const { uspech, chyba: hlasChybu } = useToast();
+  const navigate = useNavigate();
 
-  const [upravovana, setUpravovana] = useState<Partial<Galeria> | null>(null);
   const [naZmazanie, setNaZmazanie] = useState<Galeria | null>(null);
   const [hladanie, setHladanie] = useState('');
-  const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
+
+  const otvor = (g: Galeria) => navigate(`/admin/galerie/${g.id}`);
+  const nova = () => navigate('/admin/galerie/nova');
 
   const galerie = useNacitanie((signal) => galerieApi.vypis(signal));
 
@@ -32,40 +38,6 @@ export const Galerie: React.FC = () => {
       ? `${g.nazov} ${g.popis ?? ''}`.toLowerCase().includes(hladanie.trim().toLowerCase())
       : true
   );
-
-  const jeNova = upravovana !== null && !upravovana.id;
-
-  const uloz = async () => {
-    if (!upravovana) return;
-
-    if (!upravovana.nazov?.trim()) {
-      varovanie('Zadajte názov galérie');
-      return;
-    }
-
-    setUklada(true);
-    try {
-      const naUlozenie = {
-        ...upravovana,
-        popis: upravovana.popis?.trim() || null,
-        nahladovy_obrazok: upravovana.nahladovy_obrazok?.trim() || null,
-      };
-
-      if (jeNova) {
-        await galerieApi.vytvor(naUlozenie);
-        uspech('Galéria bola vytvorená');
-      } else {
-        await galerieApi.uprav(upravovana.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
-      }
-      setUpravovana(null);
-      galerie.obnov();
-    } catch (e: any) {
-      hlasChybu(e?.message || 'Galériu sa nepodarilo uložiť');
-    } finally {
-      setUklada(false);
-    }
-  };
 
   const zmaz = async () => {
     if (!naZmazanie) return;
@@ -88,7 +60,7 @@ export const Galerie: React.FC = () => {
         nadpis="Galérie"
         podnadpis="Fotogalérie zo zápasov, turnajov a klubových podujatí."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovana({ ...PRAZDNA })}>
+          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={nova}>
             Nová galéria
           </Button>
         }
@@ -134,7 +106,7 @@ export const Galerie: React.FC = () => {
                   Vymazať hľadanie
                 </Button>
               ) : (
-                <Button onClick={() => setUpravovana({ ...PRAZDNA })}>Vytvoriť galériu</Button>
+                <Button onClick={nova}>Vytvoriť galériu</Button>
               )
             }
           />
@@ -143,10 +115,10 @@ export const Galerie: React.FC = () => {
         <div className="cw-gal__mriezka">
           {zoznam.map((g) => (
             <div key={g.id} className="cw-gal__karta">
-              <button className="cw-gal__nahlad" onClick={() => setUpravovana({ ...g })}>
+              <button className="cw-gal__nahlad" onClick={() => otvor(g)}>
                 {g.nahladovy_obrazok ? (
                   <img
-                    src={g.nahladovy_obrazok}
+                    src={souborUrl(g.nahladovy_obrazok)}
                     alt=""
                     onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                   />
@@ -161,9 +133,14 @@ export const Galerie: React.FC = () => {
 
               <div className="cw-gal__telo">
                 <div className="cw-gal__hlava">
-                  <span className="cw-gal__nazov">{g.nazov}</span>
-                  {!g.aktivity && <Badge>Skrytá</Badge>}
+                  <span className="cw-gal__nazov" title={g.nazov}>{g.nazov}</span>
                 </div>
+                {(g.zobrazit_na_webe === false || priradenie(g)) && (
+                  <div className="cw-gal__stitky">
+                    {g.zobrazit_na_webe === false && <Badge>Skrytá</Badge>}
+                    {priradenie(g) && <Badge ton="info">{priradenie(g)}</Badge>}
+                  </div>
+                )}
 
                 {g.popis && <p className="cw-gal__popis">{g.popis}</p>}
 
@@ -173,7 +150,7 @@ export const Galerie: React.FC = () => {
                   </span>
                   <div className="cw-gal__akcie">
                     <button
-                      onClick={() => setUpravovana({ ...g })}
+                      onClick={() => otvor(g)}
                       aria-label={`Upraviť galériu ${g.nazov}`}
                     >
                       <Icon nazov="upravit" velkost={15} />
@@ -193,60 +170,10 @@ export const Galerie: React.FC = () => {
         </div>
       )}
 
-      <Modal
-        otvorene={upravovana !== null}
-        onZavri={() => setUpravovana(null)}
-        nadpis={jeNova ? 'Nová galéria' : upravovana?.nazov ?? 'Galéria'}
-        sirka="sm"
-        pata={
-          <>
-            <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
-            </Button>
-            <Button onClick={uloz} nacitava={uklada}>
-              {jeNova ? 'Vytvoriť' : 'Uložiť'}
-            </Button>
-          </>
-        }
-      >
-        {upravovana && (
-          <>
-            <Input
-              menovka="Názov galérie"
-              value={upravovana.nazov ?? ''}
-              onChange={(e) => setUpravovana((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: Zápas s Račou"
-              povinne
-            />
-
-            <Textarea
-              menovka="Popis"
-              value={upravovana.popis ?? ''}
-              onChange={(e) => setUpravovana((d) => ({ ...d!, popis: e.target.value }))}
-              rows={2}
-            />
-
-            <Input
-              menovka="Titulný obrázok"
-              value={upravovana.nahladovy_obrazok ?? ''}
-              onChange={(e) => setUpravovana((d) => ({ ...d!, nahladovy_obrazok: e.target.value }))}
-              placeholder="/uploads/images/galleries/…"
-              napoveda="Nahrávanie fotiek pribudne v ďalšej fáze"
-            />
-
-            <Switch
-              zapnute={upravovana.aktivity !== false}
-              onZmena={(v) => setUpravovana((d) => ({ ...d!, aktivity: v }))}
-              menovka="Zobraziť na webe"
-            />
-          </>
-        )}
-      </Modal>
-
       <ConfirmDialog
         otvorene={naZmazanie !== null}
         nadpis="Zmazať galériu?"
-        sprava={`Galéria ${naZmazanie?.nazov} bude odstránená aj so všetkými fotkami.`}
+        sprava={`Galéria ${naZmazanie?.nazov} bude zmazaná aj so všetkými fotkami. Súbory v Media knižnici zostanú.`}
         potvrdit="Zmazať"
         nebezpecne
         nacitava={maze}

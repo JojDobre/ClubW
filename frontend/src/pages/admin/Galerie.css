@@ -84,6 +84,13 @@
   white-space: nowrap;
 }
 
+.cw-gal__stitky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
 .cw-gal__popis {
   font-size: 12.5px;
   color: var(--muted);

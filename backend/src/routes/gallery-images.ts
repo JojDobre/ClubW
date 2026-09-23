@@ -11,13 +11,15 @@ import {
   pridajZKniznice,
   nastavTitulnyObrazok,
 } from '../controllers/galeriaObrazokController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireEditor } from '../middleware/auth';
 
 // Vytvoríme admin router pre obrázky
 export const adminGalleryImagesRouter = express.Router();
 
 // Middleware pre autentifikáciu na všetky admin routes
-adminGalleryImagesRouter.use(authenticateToken);
+// Správa galérií patrí redaktorovi - samotné prihlásenie nestačí, inak by
+// galérie menil aj bežný používateľ bez prístupu do administrácie
+adminGalleryImagesRouter.use(authenticateToken, requireEditor);
 
 // ===== ADMIN ROUTES PRE OBRÁZKY =====
 

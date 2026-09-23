@@ -28,13 +28,16 @@ export interface GaleriaAttributes {
   nahladovy_obrazok?: string | null; // URL náhľadového obrázka
   
   // Metadata
+  /** Zobrazuje sa galéria návštevníkom? (skrytie, nie zmazanie) */
+  zobrazit_na_webe: boolean;
+  /** false = galéria je zmazaná (mäkké mazanie) */
   aktivity: boolean;
   vytvoreny: Date;
   aktualizovany: Date;
 }
 
 // Interface pre vytvorenie galérie (bez auto-generovaných polí)
-export interface GaleriaCreationAttributes extends Optional<GaleriaAttributes, 'id' | 'slug' | 'pocet_obrazkov' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+export interface GaleriaCreationAttributes extends Optional<GaleriaAttributes, 'id' | 'slug' | 'pocet_obrazkov' | 'zobrazit_na_webe' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Sequelize Model class
 export class Galeria extends Model<GaleriaAttributes, GaleriaCreationAttributes> implements GaleriaAttributes {
@@ -47,6 +50,7 @@ export class Galeria extends Model<GaleriaAttributes, GaleriaCreationAttributes>
   public zapas_id!: number | null;
   public pocet_obrazkov!: number;
   public nahladovy_obrazok!: string | null;
+  public zobrazit_na_webe!: boolean;
   public aktivity!: boolean;
   public vytvoreny!: Date;
   public aktualizovany!: Date;
@@ -90,6 +94,7 @@ export class Galeria extends Model<GaleriaAttributes, GaleriaCreationAttributes>
       pocet_obrazkov: this.pocet_obrazkov,
       nahladovy_obrazok: this.nahladovy_obrazok,
       typ_priradenia: this.getTypPriradenia(),
+      zobrazit_na_webe: this.zobrazit_na_webe,
       aktivity: this.aktivity,
       vytvoreny: this.vytvoreny,
       aktualizovany: this.aktualizovany,
@@ -169,6 +174,11 @@ Galeria.init(
         // Tento prijíma nahratý súbor aj externú adresu.
         jePlatnyObrazok: overObrazkovySubor,
       },
+    },
+    zobrazit_na_webe: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     aktivity: {
       type: DataTypes.BOOLEAN,

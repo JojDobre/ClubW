@@ -37,9 +37,10 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
     const { page: pageNum, limit: limitNum, offset } = validatePagination(page as string, limit as string);
     const typPriradenia = validateAssignmentType(typ as string);
 
-    // Základná WHERE podmienka
+    // Verejný výpis: len nezmazané galérie, ktoré sa majú zobrazovať na webe
     const whereClause: any = {
-      aktivity: true
+      aktivity: true,
+      zobrazit_na_webe: true,
     };
 
     // Filtrovanie podľa typu priradenia
@@ -84,16 +85,17 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
     // Formátovanie výsledku
     const formattedGalleries = galerie.map(galeria => {
       const galeriaJson = galeria.toJSON();
-      let nahladovyObrazok = null;
-      
-      if (galeria.obrazky && galeria.obrazky.length > 0) {
+
+      // Prednosť má titulný obrázok zvolený v administrácii. Cesty sú uložené
+      // celé (/uploads/...), takže sa k nim už nič nepridáva - predtým tu
+      // vznikalo /uploads/uploads/... a náhľad sa nenačítal.
+      let nahladovyObrazok: string | null = galeria.nahladovy_obrazok || null;
+
+      if (!nahladovyObrazok && galeria.obrazky && galeria.obrazky.length > 0) {
         const prvyObrazok = galeria.obrazky[0] as any; // Type assertion pre include dáta
-        const baseUrl = process.env.UPLOADS_URL || '/uploads';
-        nahladovyObrazok = prvyObrazok.nahladovy_maly 
-          ? `${baseUrl}${prvyObrazok.nahladovy_maly}` 
-          : `${baseUrl}${prvyObrazok.cesta_suboru}`;
+        nahladovyObrazok = prvyObrazok.nahladovy_maly || prvyObrazok.cesta_suboru;
       }
-      
+
       return {
         ...galeriaJson,
         nahladovy_obrazok: nahladovyObrazok,
@@ -134,7 +136,7 @@ export const getPublicGallery = async (req: Request, res: Response) => {
     // Získanie galérie s obrázkami
     const galeria = await getGalleryWithImages(galeriaId);
 
-    if (!galeria || !galeria.aktivity) {
+    if (!galeria || !galeria.aktivity || !galeria.zobrazit_na_webe) {
       return res.status(404).json({
         success: false,
         message: 'Galéria nenájdená'
@@ -214,8 +216,8 @@ export const getAdminGalleries = async (req: Request, res: Response) => {
     const { page: pageNum, limit: limitNum, offset } = validatePagination(page as string, limit as string);
     const typPriradenia = validateAssignmentType(typ as string);
 
-    // Základná WHERE podmienka (admin vidí aj neaktívne)
-    const whereClause: any = {};
+    // Admin vidí aj skryté galérie, ale nie zmazané (aktivity=false)
+    const whereClause: any = { aktivity: true };
 
     // Filtrovanie podľa typu priradenia
     if (typPriradenia === 'volna') {
@@ -301,10 +303,33 @@ const overPriradenie = async (udaje: any): Promise<string | null> => {
   return null;
 };
 
+// GET /api/admin/galleries/:id - Detail galérie pre editor
+//
+// Verejný detail skrytú galériu nevráti (404), editor ju ale potrebuje
+// otvoriť - práve skrytú galériu chce redaktor dokončiť pred zverejnením.
+export const getAdminGallery = async (req: Request, res: Response) => {
+  try {
+    const galeriaId = parseInt(req.params.id, 10);
+    if (isNaN(galeriaId)) {
+      return res.status(400).json({ success: false, message: 'Neplatné ID galérie' });
+    }
+
+    const galeria = await Galeria.findOne({ where: { id: galeriaId, aktivity: true } });
+    if (!galeria) {
+      return res.status(404).json({ success: false, message: 'Galéria nenájdená' });
+    }
+
+    res.json({ success: true, data: galeria.toJSON() });
+  } catch (error: any) {
+    console.error('Chyba pri načítaní galérie pre editor:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri načítaní galérie' });
+  }
+};
+
 // POST /api/admin/galleries - Vytvorenie novej galérie
 export const createGallery = async (req: Request, res: Response) => {
   try {
-    const { nazov, popis, tim_id, clanok_id, zapas_id } = req.body;
+    const { nazov, popis, tim_id, clanok_id, zapas_id, zobrazit_na_webe } = req.body;
 
     // Validácia povinných polí
     if (!nazov || nazov.trim().length < 3) {
@@ -327,6 +352,7 @@ export const createGallery = async (req: Request, res: Response) => {
     const galeriaData: any = {
       nazov: nazov.trim(),
       popis: popis ? popis.trim() : null,
+      zobrazit_na_webe: zobrazit_na_webe === undefined ? true : Boolean(zobrazit_na_webe),
     };
 
     // Pridanie priradenia ak je zadané
@@ -381,7 +407,7 @@ export const createGallery = async (req: Request, res: Response) => {
 export const updateGallery = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nazov, popis, tim_id, clanok_id, zapas_id, aktivity } = req.body;
+    const { nazov, popis, tim_id, clanok_id, zapas_id, zobrazit_na_webe } = req.body;
     const galeriaId = parseInt(id, 10);
 
     if (isNaN(galeriaId)) {
@@ -421,7 +447,8 @@ export const updateGallery = async (req: Request, res: Response) => {
     const updateData: any = {};
     if (nazov !== undefined) updateData.nazov = nazov.trim();
     if (popis !== undefined) updateData.popis = popis ? popis.trim() : null;
-    if (aktivity !== undefined) updateData.aktivity = Boolean(aktivity);
+    // Viditeľnosť na webe - aktivity cez úpravu meniť nejde, to je zmazanie
+    if (zobrazit_na_webe !== undefined) updateData.zobrazit_na_webe = Boolean(zobrazit_na_webe);
 
     // PRIRADENIE K TÍMU / ČLÁNKU / ZÁPASU
     //

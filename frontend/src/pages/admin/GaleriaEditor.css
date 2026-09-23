@@ -1,0 +1,250 @@
+/* Umiestnenie: frontend/src/pages/admin/GaleriaEditor.css */
+
+.cw-ged__lista {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.cw-ged__stav {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cw-ged__rozlozenie {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .cw-ged__rozlozenie {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cw-ged__hlavny,
+.cw-ged__bok {
+  display: grid;
+  gap: 18px;
+}
+
+.cw-ged__panel {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.cw-ged__panel-hlava {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.cw-ged__nadpis {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-ged__pocet {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2, #f1f5f9);
+  color: var(--muted);
+}
+
+.cw-ged__akcie-fotiek {
+  display: flex;
+  gap: 8px;
+}
+
+.cw-ged__napoveda {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+/* Zóna na pretiahnutie súborov */
+.cw-ged__zona {
+  border: 2px dashed transparent;
+  border-radius: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cw-ged__zona.is-aktivna {
+  border-color: var(--primary, #1b5e20);
+  background: color-mix(in srgb, var(--primary, #1b5e20) 6%, transparent);
+}
+
+.cw-ged__prazdne {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--muted);
+  border: 2px dashed var(--border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.cw-ged__prazdne p {
+  margin: 0;
+}
+
+.cw-ged__mriezka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.cw-ged__fotka {
+  display: grid;
+  gap: 6px;
+}
+
+.cw-ged__fotka-obraz {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2, #f1f5f9);
+  border: 2px solid transparent;
+}
+
+.cw-ged__fotka.is-titulna .cw-ged__fotka-obraz {
+  border-color: var(--primary, #1b5e20);
+}
+
+.cw-ged__fotka-obraz img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cw-ged__titulna-stitok {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  background: var(--primary, #1b5e20);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.cw-ged__fotka-akcie {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.cw-ged__fotka-obraz:hover .cw-ged__fotka-akcie,
+.cw-ged__fotka-obraz:focus-within .cw-ged__fotka-akcie {
+  opacity: 1;
+}
+
+/* Na dotykových zariadeniach nie je hover - akcie ukážeme vždy */
+@media (hover: none) {
+  .cw-ged__fotka-akcie {
+    opacity: 1;
+  }
+}
+
+.cw-ged__fotka-akcie button {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1e293b;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+}
+
+.cw-ged__fotka-akcie button.is-danger {
+  color: #b91c1c;
+}
+
+.cw-ged__popis-fotky {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
+.cw-ged__popis-fotky:focus {
+  outline: 2px solid var(--primary, #1b5e20);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.cw-ged__priebeh {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.cw-ged__priebeh-pas {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2, #f1f5f9);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.cw-ged__priebeh-pas span {
+  display: block;
+  height: 100%;
+  background: var(--primary, #1b5e20);
+  transition: width 0.2s;
+}
+
+.cw-ged__titulna {
+  margin-top: 8px;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2, #f1f5f9);
+}
+
+.cw-ged__titulna img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cw-ged__titulna-prazdna {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}

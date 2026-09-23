@@ -287,6 +287,10 @@ export const api = {
   uprav: <T>(cesta: string, telo: unknown, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
     zavolaj<T>(cesta, { ...moznosti, metoda: 'PUT', telo }),
 
+  /** Čiastočná zmena (PATCH) - napr. nastavenie titulnej fotky. */
+  ciastocne: <T>(cesta: string, telo: unknown = {}, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
+    zavolaj<T>(cesta, { ...moznosti, metoda: 'PATCH', telo }),
+
   zmaz: <T = void>(cesta: string, moznosti?: Omit<Moznosti, 'metoda' | 'telo'>) =>
     zavolaj<T>(cesta, { ...moznosti, metoda: 'DELETE' }),
 };
