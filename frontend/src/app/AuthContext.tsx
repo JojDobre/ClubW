@@ -15,6 +15,7 @@ import React, {
   createContext, useContext, useState, useEffect, useCallback, ReactNode,
 } from 'react';
 import { apiUrl } from '../config/api';
+import { UDALOST_RELACIA_SKONCILA } from './apiKlient';
 
 export type Rola = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
 
@@ -128,6 +129,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     void overRelaciu();
   }, [overRelaciu]);
+
+  // Server reláciu odmietol (napr. po reštarte s novou databázou) -
+  // odhlásime aj rozhranie, chránené cesty presmerujú na prihlásenie
+  useEffect(() => {
+    const skoncila = () => setPouzivatel(null);
+    window.addEventListener(UDALOST_RELACIA_SKONCILA, skoncila);
+    return () => window.removeEventListener(UDALOST_RELACIA_SKONCILA, skoncila);
+  }, []);
 
   const prihlas = useCallback(async (email: string, heslo: string) => {
     const odpoved = await fetch(apiUrl('/auth/login'), {

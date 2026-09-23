@@ -77,6 +77,13 @@ const obnovToken = async (): Promise<boolean> => {
   }
 };
 
+/**
+ * Udalosť pre AuthContext: relácia na serveri už neplatí (token nejde
+ * obnoviť). Bez nej zostal používateľ v rozhraní „prihlásený", ale každé
+ * uloženie zlyhalo - napríklad po reštarte servera alebo zmene databázy.
+ */
+export const UDALOST_RELACIA_SKONCILA = 'clubw:relacia-skoncila';
+
 const obnovTokenRaz = (): Promise<boolean> => {
   if (!prebiehaObnova) {
     prebiehaObnova = obnovToken().finally(() => {
@@ -205,6 +212,10 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
     if (obnovene) {
       return zavolajCele<T>(cesta, moznosti, true);
     }
+    // Reláciu sa nepodarilo obnoviť - odhlásime používateľa aj v rozhraní
+    localStorage.removeItem(KLUC_TOKEN);
+    localStorage.removeItem(KLUC_REFRESH);
+    window.dispatchEvent(new Event(UDALOST_RELACIA_SKONCILA));
   }
 
   // 204 znamená úspech bez obsahu (napríklad po zmazaní)
@@ -213,6 +224,11 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
   }
 
   const obsah = await odpoved.json().catch(() => null);
+
+  // Vývojový proxy (Vite) vracia 500/502/504 bez tela, keď backend nebeží
+  if (!obsah && [500, 502, 503, 504].includes(odpoved.status)) {
+    throw new ApiChyba(odpoved.status, 'Server neodpovedá. Skontrolujte, či je backend spustený.');
+  }
 
   if (!odpoved.ok || obsah?.success === false) {
     const sprava =
