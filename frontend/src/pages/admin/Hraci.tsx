@@ -140,7 +140,10 @@ export const Hraci: React.FC = () => {
       stav: upravovany.stav || 'aktivny',
       poznamky: upravovany.poznamky?.trim() || null,
     };
-    if (upravovany.sezona_id) naUlozenie.sezona_id = upravovany.sezona_id;
+    // Nový hráč sa predvolene zapíše na súpisku aktuálnej sezóny
+    // (undefined = nezmenená predvoľba, null = výslovne bez sezóny)
+    const sezona = upravovany.sezona_id === undefined && jeNovy ? aktualnaSezona?.id : upravovany.sezona_id;
+    if (sezona) naUlozenie.sezona_id = sezona;
 
     setUklada(true);
     try {
@@ -181,7 +184,7 @@ export const Hraci: React.FC = () => {
       ...h,
       datum_pripojenia: h.datum_pripojenia?.slice(0, 10) ?? '',
       datum_odpojenia: h.datum_odpojenia?.slice(0, 10) ?? '',
-      sezona_id: null,
+      sezona_id: undefined,
     });
 
   const otvorPresun = (h: Hrac) => {
@@ -468,15 +471,15 @@ export const Hraci: React.FC = () => {
 
             <Select
               menovka={jeNovy ? 'Sezóna (súpiska)' : 'Zapísať aj na súpisku sezóny'}
-              value={upravovany.sezona_id ?? ''}
+              value={
+                upravovany.sezona_id === undefined && jeNovy
+                  ? aktualnaSezona?.id ?? ''
+                  : upravovany.sezona_id ?? ''
+              }
               onChange={(e) =>
                 setUpravovany((d) => ({ ...d!, sezona_id: e.target.value ? Number(e.target.value) : null }))
               }
-              prazdna={
-                jeNovy
-                  ? aktualnaSezona ? `Aktuálna sezóna (${aktualnaSezona.nazov})` : 'Bez sezóny'
-                  : 'Nemeniť'
-              }
+              prazdna={jeNovy ? 'Bez sezóny' : 'Nemeniť'}
               moznosti={(sezony.data ?? [])
                 .filter((se) => !se.uzavreta)
                 .map((se) => ({ hodnota: se.id, popis: se.nazov }))}

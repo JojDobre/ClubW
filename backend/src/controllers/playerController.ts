@@ -365,8 +365,10 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
 
     console.log('Player created successfully:', newPlayer.id);
 
-    // Nový hráč patrí do súpisky zvolenej (alebo aktuálnej) sezóny
-    await zapisNaSupiskuSezony(newPlayer, playerData.sezona_id ? Number(playerData.sezona_id) : null);
+    // Keď administrácia zvolila sezónu, hráč sa zapíše na jej súpisku
+    if (playerData.sezona_id) {
+      await zapisNaSupiskuSezony(newPlayer, Number(playerData.sezona_id));
+    }
 
     res.status(201).json({
       success: true,
