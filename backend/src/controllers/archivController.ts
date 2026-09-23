@@ -22,6 +22,25 @@ import Liga from '../models/Liga';
 import Sezona from '../models/Sezona';
 import Stadion from '../models/Stadion';
 import LigaTurnaj from '../models/LigaTurnaj';
+import Galeria from '../models/Galeria';
+import GaleriaObrazok from '../models/GaleriaObrazok';
+import Zapas from '../models/Zapas';
+import KalendarUdalost from '../models/KalendarUdalost';
+import Formular from '../models/Formular';
+import { prepocitajTabulkuAkTreba } from './ZapasController';
+
+/** Dátum a čas v pásme klubu - do popisu položky v archíve. */
+const datumCas = (hodnota: unknown): string =>
+  hodnota
+    ? new Date(String(hodnota)).toLocaleString('sk-SK', {
+        timeZone: 'Europe/Bratislava',
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
 
 /**
  * Popis jednej archivovateľnej entity.
@@ -47,6 +66,8 @@ interface TypArchivu {
    * by aktívny hráč pod neaktívnym tímom, ktorý sa nikde nezobrazí.
    */
   prekazkaObnovy?: (zaznam: any) => Promise<string | null>;
+  /** Čo treba urobiť po obnove (napr. prepočítať tabuľku ligy) */
+  poObnove?: (zaznam: any) => Promise<void>;
 }
 
 const TYPY: Record<string, TypArchivu> = {
@@ -114,6 +135,47 @@ const TYPY: Record<string, TypArchivu> = {
     nazovJednotne: 'Turnaj',
     popis: (t: any) => t.nazov,
     detail: (t: any) => (t.datum_start ? String(t.datum_start) : null),
+    stlpecZmeny: 'aktualizovany',
+  },
+
+  galerie: {
+    model: Galeria,
+    nazovJednotne: 'Galéria',
+    popis: (g: any) => g.nazov,
+    detail: (g: any) => (g.pocet_obrazkov ? `${g.pocet_obrazkov} fotiek` : null),
+    stlpecZmeny: 'aktualizovany',
+    // Pri zmazaní galérie sa skryli aj jej fotky - vrátime ich späť
+    poObnove: async (g: any) => {
+      await GaleriaObrazok.update({ aktivity: true }, { where: { galeria_id: g.id, aktivity: false } });
+    },
+  },
+
+  zapasy: {
+    model: Zapas,
+    nazovJednotne: 'Zápas',
+    popis: (z: any) =>
+      z.nazov || `${z.domaci_tim_nazov ?? 'Domáci'} – ${z.hostujuci_tim_nazov ?? 'Hostia'}`,
+    detail: (z: any) => datumCas(z.datum_cas),
+    stlpecZmeny: 'aktualizovany',
+    // Obnovený zápas sa musí znova započítať do tabuľky ligy
+    poObnove: async (z: any) => {
+      await prepocitajTabulkuAkTreba(z.liga_id);
+    },
+  },
+
+  udalosti: {
+    model: KalendarUdalost,
+    nazovJednotne: 'Udalosť kalendára',
+    popis: (u: any) => u.nazov,
+    detail: (u: any) => (u.datum ? new Date(`${u.datum}T12:00:00`).toLocaleDateString('sk-SK') : null),
+    stlpecZmeny: 'aktualizovana',
+  },
+
+  formulare: {
+    model: Formular,
+    nazovJednotne: 'Formulár',
+    popis: (f: any) => f.nazov,
+    detail: (f: any) => `/formular/${f.slug} - po obnove je vypnutý, zapnete ho v editore`,
     stlpecZmeny: 'aktualizovany',
   },
 
@@ -256,6 +318,7 @@ export const obnovPolozku = async (req: Request, res: Response): Promise<void> =
     }
 
     await zaznam.update({ aktivity: true });
+    if (nastavenia.poObnove) await nastavenia.poObnove(zaznam);
 
     res.json({
       success: true,

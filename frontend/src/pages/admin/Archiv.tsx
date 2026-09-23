@@ -24,12 +24,17 @@ const TYPY: Array<{ hodnota: TypArchivu; popis: string }> = [
   { hodnota: 'stadiony', popis: 'Štadióny' },
   { hodnota: 'ligy', popis: 'Ligy' },
   { hodnota: 'turnaje', popis: 'Turnaje' },
+  { hodnota: 'zapasy', popis: 'Zápasy' },
+  { hodnota: 'galerie', popis: 'Galérie' },
+  { hodnota: 'udalosti', popis: 'Udalosti kalendára' },
+  { hodnota: 'formulare', popis: 'Formuláre' },
 ];
 
 export const Archiv: React.FC = () => {
   const { uspech, chyba: hlasChybu } = useToast();
-  const { pouzivatel } = useAuth();
-  const jeAdmin = pouzivatel?.rola === 'admin';
+  const { smie } = useAuth();
+  // Natrvalo mazať smie, koho rola smie v archíve mazať (správca vždy)
+  const jeAdmin = smie('archiv', 'mazat');
 
   const [filter, setFilter] = useState('');
   const [hladat, setHladat] = useState('');

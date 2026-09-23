@@ -339,7 +339,7 @@ export const getMatch = async (req: Request, res: Response): Promise<void> => {
  *
  * @param ligaId - ID ligy, do ktorej zápas patrí (môže byť null pri priateľských zápasoch)
  */
-const prepocitajTabulkuAkTreba = async (ligaId: number | null | undefined): Promise<void> => {
+export const prepocitajTabulkuAkTreba = async (ligaId: number | null | undefined): Promise<void> => {
   if (!ligaId) return; // Zápas nepatrí do žiadnej ligy
 
   try {

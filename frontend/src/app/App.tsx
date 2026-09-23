@@ -148,7 +148,7 @@ export const App: React.FC = () => (
                 <Route
                   path="licencia"
                   element={
-                    <ChranenaCesta role={['admin']}>
+                    <ChranenaCesta modul="licencia">
                       <Licencia />
                     </ChranenaCesta>
                   }

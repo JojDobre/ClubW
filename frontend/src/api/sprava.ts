@@ -32,8 +32,19 @@ export const pouzivateliaApi = {
   zmaz: (id: number) => api.zmaz(`/users/${id}`),
 };
 
+export interface VerziaSystemu {
+  verzia_aplikacie: string;
+  node: string;
+  prostredie: string;
+  schema: { posledna_migracia: string | null; pocet_migracii: number; cakajuce_migracie: string[] };
+  bezi_sekund: number;
+}
+
 export const licenciaApi = {
   stav: (signal?: AbortSignal) => api.ziskaj<StavLicencie>('/license/status', { signal }),
+  /** Overí licenciu na licenčnom serveri hneď teraz. */
+  over: () => api.vytvor<StavLicencie>('/license/check', {}),
+  verzia: (signal?: AbortSignal) => api.ziskaj<VerziaSystemu>('/license/version', { signal }),
 };
 
 export const nastaveniaApi = {

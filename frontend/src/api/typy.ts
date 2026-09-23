@@ -171,7 +171,9 @@ export interface Stadion {
 
 // ===== Archív =====
 
-export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje';
+export type TypArchivu =
+  | 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje'
+  | 'galerie' | 'zapasy' | 'udalosti' | 'formulare';
 
 export interface PolozkaArchivu {
   typ: TypArchivu;
