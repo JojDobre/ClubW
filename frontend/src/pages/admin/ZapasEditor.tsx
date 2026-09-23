@@ -23,7 +23,7 @@ import { galerieApi } from '../../api/obsah';
 import { videaApi } from '../../api/doplnky';
 import { ApiChyba } from '../../app/apiKlient';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
-import { naVstupDatumCas } from '../../utils/datum';
+import { naVstupDatumCas, zoVstupuDatumCas } from '../../utils/datum';
 import { udalostNaUlozenie } from '../../api/typy';
 import type {
   Zapas, ZapasNaUlozenie, StavZapasu, UdalostZapasu, UdalostNaUlozenie, TypUdalosti,
@@ -419,7 +419,7 @@ export const ZapasEditor: React.FC = () => {
     if ((golyNas === null) !== (golySuper === null)) return varovanie('Zadajte skóre oboch tímov, alebo nechajte obe prázdne');
     if (f.video_url.trim() && !/^https?:\/\//i.test(f.video_url.trim())) return varovanie('Odkaz na video musí začínať https://');
 
-    const datumCas = new Date(`${f.datum}T${f.cas || '00:00'}`).toISOString();
+    const datumCas = zoVstupuDatumCas(`${f.datum}T${f.cas || '00:00'}`);
     const stav: StavZapasu = f.stav === 'auto' ? automatickyStav(datumCas) : f.stav;
     if (stav === 'ukonceny' && golyNas === null) return varovanie('Odohraný zápas musí mať zadaný výsledok');
 
@@ -527,7 +527,7 @@ export const ZapasEditor: React.FC = () => {
   const nasDomaci = formular.typ_zapasu !== 'vonku';
   const nazovDomacich = nasDomaci ? nasTim?.nazov ?? 'Náš tím' : superNazov;
   const nazovHosti = nasDomaci ? superNazov : nasTim?.nazov ?? 'Náš tím';
-  const datumIso = formular.datum ? new Date(`${formular.datum}T${formular.cas || '00:00'}`).toISOString() : '';
+  const datumIso = formular.datum ? zoVstupuDatumCas(`${formular.datum}T${formular.cas || '00:00'}`) : '';
   const autoStav = STAVY.find((s) => s.hodnota === automatickyStav(datumIso))?.popis ?? '';
   const videaZapasu = (videa.data ?? []).filter((v) => idCislo && v.zapas_id === idCislo);
   const golyVstup = (pole: 'goly_nas' | 'goly_super', menovka: string) => (

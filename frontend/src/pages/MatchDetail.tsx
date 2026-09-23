@@ -127,16 +127,16 @@ const MatchDetail: React.FC = () => {
   const formatDateTime = (dateTimeStr: string) => {
     const date = new Date(dateTimeStr);
     return {
-      date: date.toLocaleDateString('sk-SK', { 
+      date: date.toLocaleDateString('sk-SK', { timeZone: 'Europe/Bratislava', 
         day: '2-digit', 
         month: '2-digit', 
         year: 'numeric' 
       }),
-      time: date.toLocaleTimeString('sk-SK', { 
+      time: date.toLocaleTimeString('sk-SK', { timeZone: 'Europe/Bratislava', 
         hour: '2-digit', 
         minute: '2-digit' 
       }),
-      dayName: date.toLocaleDateString('sk-SK', { weekday: 'long' })
+      dayName: date.toLocaleDateString('sk-SK', { timeZone: 'Europe/Bratislava', weekday: 'long' })
     };
   };
 

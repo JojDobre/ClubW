@@ -16,7 +16,7 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { clankyApi, kategorieApi } from '../../api/clanky';
 import { ApiChyba } from '../../app/apiKlient';
-import { naVstupDatumCas } from '../../utils/datum';
+import { naVstupDatumCas, zoVstupuDatumCas } from '../../utils/datum';
 import { timyApi } from '../../api/sport';
 import type { Clanok, Kategoria, StavClanku, ClanokNaUlozenie } from '../../api/typy';
 import './ClanokEditor.css';
@@ -549,7 +549,7 @@ export const ClanokEditor: React.FC = () => {
               onChange={(e) =>
                 zmen(
                   'publikovany_datum',
-                  e.target.value ? new Date(e.target.value).toISOString() : null
+                  e.target.value ? zoVstupuDatumCas(e.target.value) : null
                 )
               }
               napoveda="Prázdne = pri publikovaní sa doplní aktuálny čas"

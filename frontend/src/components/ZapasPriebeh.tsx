@@ -94,6 +94,15 @@ const ZapasPriebeh: React.FC<{ zapasId: number; domaci: string; hostia: string }
     void nacitaj(`/matches/${zapasId}/lineup`).then((d) => setZostava(d?.vsetky ?? []));
   }, [zapasId]);
 
+  // Mená hráčov podľa ID - striedaný hráč prichádza zo servera len ako ID
+  const hraciPodlaId = new Map<number, Hrac>();
+  [...zostava.map((z) => z.hrac), ...udalosti.map((u) => u.hrac)].forEach((h) => h && hraciPodlaId.set(h.id, h));
+  const striedany = (u: Udalost) => {
+    if (u.striedany_hrac_meno) return u.striedany_hrac_meno;
+    const h = u.striedany_hrac_id ? hraciPodlaId.get(u.striedany_hrac_id) : undefined;
+    return h ? `${h.meno} ${h.priezvisko}` : null;
+  };
+
   // Udalosti hráčov a poznámky spolu, podľa minúty
   const priebeh = [
     ...udalosti.map((u) => ({ minuta: u.minuta, kluc: `u${u.id}`, udalost: u as Udalost | null, text: null as string | null })),
@@ -123,12 +132,9 @@ const ZapasPriebeh: React.FC<{ zapasId: number; domaci: string; hostia: string }
                   <span>
                     {TYPY[p.udalost.typ]?.symbol} <strong>{TYPY[p.udalost.typ]?.popis ?? p.udalost.typ}</strong>{' '}
                     {menoHraca(p.udalost.hrac, p.udalost.hostujuci_hrac_meno, p.udalost.hostujuci_hrac_cislo)}
-                    {p.udalost.typ === 'striedanie' &&
-                      (p.udalost.striedany_hrac_meno || p.udalost.striedany_hrac_id) && (
-                        <span style={{ color: '#64748b' }}>
-                          {' '}za {p.udalost.striedany_hrac_meno ?? `hráča #${p.udalost.striedany_hrac_id}`}
-                        </span>
-                      )}
+                    {p.udalost.typ === 'striedanie' && striedany(p.udalost) && (
+                      <span style={{ color: '#64748b' }}> za {striedany(p.udalost)}</span>
+                    )}
                   </span>
                 ) : (
                   <span>{p.text}</span>
