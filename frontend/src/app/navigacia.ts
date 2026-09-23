@@ -83,6 +83,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať
       { cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
       { cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
+      { cesta: '/admin/logy', popis: 'Logy', ikona: 'hodiny', role: ['admin'] },
       { cesta: '/admin/ochrana-udajov', popis: 'Ochrana údajov', ikona: 'gdpr', role: ['admin'] },
     ],
   },

@@ -51,7 +51,7 @@ Sponzor.init(
     nazov: {
       type: DataTypes.STRING(150),
       allowNull: false,
-      validate: { notEmpty: true, len: [2, 150] },
+      validate: { len: { args: [2, 150], msg: 'Názov sponzora musí mať 2-150 znakov' } },
     },
     uroven: {
       type: DataTypes.ENUM('generalny', 'hlavny', 'partner', 'dodavatel'),
@@ -59,7 +59,17 @@ Sponzor.init(
       defaultValue: 'partner',
     },
     logo: { type: DataTypes.STRING(255), allowNull: true },
-    web_url: { type: DataTypes.STRING(255), allowNull: true },
+    web_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      validate: {
+        jeAdresa(hodnota: string | null) {
+          if (hodnota && !/^https?:\/\/[^\s/$.?#][^\s]*\.[^\s]+$/i.test(hodnota)) {
+            throw new Error('Webová adresa nie je platná (napríklad https://firma.sk)');
+          }
+        },
+      },
+    },
     popis: { type: DataTypes.TEXT, allowNull: true },
     platny_od: { type: DataTypes.DATEONLY, allowNull: true },
     platny_do: { type: DataTypes.DATEONLY, allowNull: true },
@@ -76,6 +86,21 @@ Sponzor.init(
     createdAt: 'vytvoreny',
     updatedAt: 'aktualizovany',
     indexes: [{ fields: ['uroven', 'poradie'], name: 'sponzori_uroven_poradie' }],
+    validate: {
+      obdobie(this: any) {
+        if (this.platny_od && this.platny_do && String(this.platny_od) > String(this.platny_do)) {
+          throw new Error('Partnerstvo nemôže skončiť skôr, ako začalo');
+        }
+      },
+    },
+    hooks: {
+      // Adresu bez protokolu (firma.sk) doplníme, aby odkaz na webe fungoval
+      beforeValidate: (sponzor: any) => {
+        const url = typeof sponzor.web_url === 'string' ? sponzor.web_url.trim() : sponzor.web_url;
+        if (url && !/^https?:\/\//i.test(url)) sponzor.web_url = `https://${url}`;
+        else sponzor.web_url = url || null;
+      },
+    },
   }
 );
 

@@ -52,6 +52,7 @@ import Formulare from '../pages/admin/Formulare';
 import FormularEditor from '../pages/admin/FormularEditor';
 import FormularOdpovede from '../pages/admin/FormularOdpovede';
 import KniznicaMedii from '../pages/admin/KniznicaMedii';
+import Logy from '../pages/admin/Logy';
 
 import '../design/global.css';
 import './App.css';
@@ -114,6 +115,7 @@ export const App: React.FC = () => (
                 <Route path="formulare/:id" element={<FormularEditor />} />
                 <Route path="formulare/:id/odpovede" element={<FormularOdpovede />} />
                 <Route path="media" element={<KniznicaMedii />} />
+                <Route path="logy" element={<Logy />} />
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
                 <Route path="profil" element={<Navigate to="/admin/pouzivatelia" replace />} />

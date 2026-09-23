@@ -37,7 +37,7 @@ interface NastaveniaEntity {
    */
   citanie?: 'verejne' | 'redaktor';
   /** Podmienka pre verejné čítanie (napr. len verejné dokumenty) */
-  verejnyFilter?: Record<string, unknown>;
+  verejnyFilter?: Record<string, unknown> | (() => Record<string | symbol, unknown>);
 }
 
 /** Prihlásený redaktor alebo správca? */
@@ -70,7 +70,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
       });
       return null;
     }
-    return verejnyFilter ?? {};
+    return (typeof verejnyFilter === 'function' ? verejnyFilter() : verejnyFilter) ?? {};
   };
 
   /** Vyberie z tela požiadavky len povolené polia. */
@@ -193,6 +193,17 @@ vytvorOperacie('sponsors', {
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
+  // Na webe len zobrazení sponzori s platným partnerstvom
+  verejnyFilter: () => {
+    const dnes = new Date().toISOString().slice(0, 10);
+    return {
+      aktivity: true,
+      [Op.and]: [
+        { [Op.or]: [{ platny_od: null }, { platny_od: { [Op.lte]: dnes } }] },
+        { [Op.or]: [{ platny_do: null }, { platny_do: { [Op.gte]: dnes } }] },
+      ],
+    };
+  },
 });
 
 // ===== Dokumenty =====

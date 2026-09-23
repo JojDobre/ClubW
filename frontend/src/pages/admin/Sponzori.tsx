@@ -8,6 +8,9 @@ import {
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { sponzoriApi } from '../../api/klub';
+import { PoleObrazka } from '../../components/admin/PoleObrazka';
+import { souborUrl } from '../../config/api';
+import { formatujDatum } from '../../utils/datum';
 import type { Sponzor, UrovenSponzora } from '../../api/typy';
 import './Sponzori.css';
 
@@ -18,6 +21,15 @@ const UROVNE: Array<{ hodnota: UrovenSponzora; popis: string; ton: TonStitka }> 
   { hodnota: 'partner', popis: 'Partner', ton: 'info' },
   { hodnota: 'dodavatel', popis: 'Dodávateľ', ton: 'neutral' },
 ];
+
+/** Stav partnerstva podľa dátumov - na webe sa ukážu len platní sponzori. */
+export const stavPartnerstva = (s: Pick<Sponzor, 'platny_od' | 'platny_do' | 'aktivity'>) => {
+  const dnes = new Date().toISOString().slice(0, 10);
+  if (!s.aktivity) return { popis: 'Skrytý', ton: 'neutral' as TonStitka, naWebe: false };
+  if (s.platny_do && s.platny_do.slice(0, 10) < dnes) return { popis: 'Partnerstvo skončilo', ton: 'warning' as TonStitka, naWebe: false };
+  if (s.platny_od && s.platny_od.slice(0, 10) > dnes) return { popis: 'Začne ' + formatujDatum(s.platny_od), ton: 'info' as TonStitka, naWebe: false };
+  return { popis: 'Na webe', ton: 'success' as TonStitka, naWebe: true };
+};
 
 const PRAZDNY: Partial<Sponzor> = {
   nazov: '',
@@ -45,8 +57,12 @@ export const Sponzori: React.FC = () => {
   const uloz = async () => {
     if (!upravovany) return;
 
-    if (!upravovany.nazov?.trim()) {
-      varovanie('Zadajte názov sponzora');
+    if ((upravovany.nazov?.trim().length ?? 0) < 2) {
+      varovanie('Názov sponzora musí mať aspoň 2 znaky');
+      return;
+    }
+    if (upravovany.platny_od && upravovany.platny_do && upravovany.platny_od > upravovany.platny_do) {
+      varovanie('Partnerstvo nemôže skončiť skôr, ako začalo');
       return;
     }
 
@@ -100,7 +116,7 @@ export const Sponzori: React.FC = () => {
     <div className="cw-screen">
       <PageHeader
         nadpis="Sponzori"
-        podnadpis="Partneri klubu zoradení podľa úrovne partnerstva."
+        podnadpis="Partneri klubu podľa úrovne partnerstva. Na webe sú na adrese /sponzori."
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
             Nový sponzor
@@ -137,11 +153,11 @@ export const Sponzori: React.FC = () => {
 
             <div className="cw-spon__mriezka">
               {skupina.map((s) => (
-                <div key={s.id} className={`cw-spon__karta ${!s.aktivity ? 'is-neaktivny' : ''}`}>
+                <div key={s.id} className={`cw-spon__karta ${!stavPartnerstva(s).naWebe ? 'is-neaktivny' : ''}`}>
                   <div className="cw-spon__logo">
                     {s.logo ? (
                       <img
-                        src={s.logo}
+                        src={souborUrl(s.logo)}
                         alt=""
                         onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                       />
@@ -163,7 +179,14 @@ export const Sponzori: React.FC = () => {
                         {s.web_url.replace(/^https?:\/\//, '')}
                       </a>
                     )}
-                    {!s.aktivity && <Badge>Neaktívny</Badge>}
+                    <div className="cw-spon__stav">
+                      <Badge ton={stavPartnerstva(s).ton}>{stavPartnerstva(s).popis}</Badge>
+                      {(s.platny_od || s.platny_do) && (
+                        <span>
+                          {s.platny_od ? formatujDatum(s.platny_od) : '…'} – {s.platny_do ? formatujDatum(s.platny_do) : '…'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="cw-spon__akcie">
@@ -215,18 +238,19 @@ export const Sponzori: React.FC = () => {
               napoveda="Určuje veľkosť loga na verejnom webe"
             />
 
-            <Input
-              menovka="Adresa loga"
-              value={upravovany.logo ?? ''}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, logo: e.target.value }))}
-              placeholder="/uploads/images/sponzori/…"
+            <PoleObrazka
+              menovka="Logo"
+              hodnota={upravovany.logo}
+              onZmena={(cesta) => setUpravovany((d) => ({ ...d!, logo: cesta }))}
+              napoveda="Nahrajte nové alebo vyberte z knižnice médií"
             />
 
             <Input
               menovka="Webová stránka"
               value={upravovany.web_url ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, web_url: e.target.value }))}
-              placeholder="https://…"
+              placeholder="https://firma.sk"
+              napoveda="Stačí aj firma.sk - https:// sa doplní"
             />
 
             <Textarea
@@ -264,6 +288,7 @@ export const Sponzori: React.FC = () => {
               zapnute={Boolean(upravovany.aktivity)}
               onZmena={(v) => setUpravovany((d) => ({ ...d!, aktivity: v }))}
               menovka="Zobraziť na webe"
+              popis="Na webe sa zobrazí len počas obdobia partnerstva"
             />
           </>
         )}

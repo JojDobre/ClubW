@@ -132,3 +132,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+.cw-spon__stav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}

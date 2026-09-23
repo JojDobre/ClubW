@@ -13,6 +13,8 @@ import { gdprApi } from '../api/sprava';
 import { useAuth } from '../app/AuthContext';
 import { Skeleton, Icon } from '../ui';
 import './RightBar.css';
+import { Link, useLocation } from 'react-router-dom';
+import { opisZaznamu } from '../api/logy';
 
 /** Slovné popisy akcií z auditu. */
 const POPISY_AKCII: Record<string, string> = {
@@ -60,9 +62,12 @@ export const RightBar: React.FC = () => {
   // rolách by volanie skončilo chybou 403
   const jeAdmin = maRolu('admin');
 
+  // Pri prechode na inú obrazovku sa zoznam obnoví - inak by ukazoval
+  // stav z prvého načítania administrácie
+  const { pathname } = useLocation();
   const aktivita = useNacitanie(
     (signal) => (jeAdmin ? gdprApi.audit({ limit: 12 }, signal) : Promise.resolve([])),
-    [jeAdmin]
+    [jeAdmin, pathname]
   );
 
   // Panel nezobrazujeme nikomu, kto naň nemá právo
@@ -74,6 +79,7 @@ export const RightBar: React.FC = () => {
     <aside className="cw-rightbar" aria-label="Nedávna aktivita">
       <div className="cw-rightbar__hlava">
         <span className="cw-rightbar__nadpis">Nedávna aktivita</span>
+        <Link to="/admin/logy" className="cw-rightbar__vsetko">Všetky logy</Link>
       </div>
 
       <div className="cw-rightbar__telo">
@@ -98,7 +104,7 @@ export const RightBar: React.FC = () => {
                   <strong>{z.pouzivatel_email?.split('@')[0] ?? 'Systém'}</strong>{' '}
                   {POPISY_AKCII[z.akcia] ?? z.akcia.replace(/_/g, ' ')}
                 </div>
-                {z.popis && <div className="cw-rightbar__detail">{z.popis}</div>}
+                <div className="cw-rightbar__detail">{opisZaznamu(z)}</div>
                 <div className="cw-rightbar__cas">{predAko(z.vytvoreny)}</div>
               </div>
             </div>

@@ -143,6 +143,9 @@ export const zaznamenajZmeny = (req: Request, res: Response, next: NextFunction)
       entita,
       entita_id: id,
       popis: `${metoda} ${cesta}`,
+      // Pri prihlásení ešte nie je známy používateľ z tokenu - zapíšeme
+      // e-mail, ktorým sa prihlásil, aby log nehovoril len „Systém"
+      email: jePrihlasenie && typeof req.body?.email === 'string' ? req.body.email.slice(0, 150) : null,
     });
   });
 

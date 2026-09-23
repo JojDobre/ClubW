@@ -102,6 +102,7 @@ const Videos = lazy(() => import('./pages/Videos'));
 const TurnajeVerejne = lazy(() => import('./pages/Turnaje'));
 const DokumentyVerejne = lazy(() => import('./pages/Dokumenty'));
 const FormularStranka = lazy(() => import('./pages/FormularStranka'));
+const SponzoriVerejne = lazy(() => import('./pages/SponzoriVerejne'));
 const Stats = lazy(() => import('./pages/Stats'));
 const TestPage = lazy(() => import('./components/TestPage'));
 
@@ -380,6 +381,7 @@ const AppContent: React.FC<{
   const isVideosPage = currentPath === '/videa';
   const isTurnajePage = currentPath === '/turnaje' || currentPath.startsWith('/turnaje/');
   const isDokumentyPage = currentPath === '/dokumenty';
+  const isSponzoriPage = currentPath === '/sponzori';
   const isFormularPage = currentPath.startsWith('/formular/') && currentPath.length > '/formular/'.length;
   const isStatsPage = currentPath === '/stats';
   const isTestPage = currentPath === '/testpage';
@@ -746,6 +748,16 @@ if (isFormularPage) {
     <Suspense fallback={<PublicLayout><p style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Načítavam formulár...</p></PublicLayout>}>
       <PublicLayout>
         <FormularStranka />
+      </PublicLayout>
+    </Suspense>
+  );
+}
+
+if (isSponzoriPage) {
+  return (
+    <Suspense fallback={<PublicLayout><p style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Načítavam partnerov...</p></PublicLayout>}>
+      <PublicLayout>
+        <SponzoriVerejne />
       </PublicLayout>
     </Suspense>
   );
