@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
-import { apiUrl } from '../config/api';
+import { apiUrl, souborUrl } from '../config/api';
 
 interface League {
   id: number;
@@ -16,12 +16,17 @@ interface League {
   farba?: string;
   poradie: number;
   aktivity: boolean;
+  rezim_tabulky?: 'plna' | 'len_body';
+  zobrazit_formu?: boolean;
 }
 
-// Mock data pre tabuľku (v skutočnosti by sa načítavalo z API)
+// Riadok tabuľky pre zobrazenie
 interface TableTeam {
   id: number;
   nazov: string;
+  logo: string | null;
+  /** Náš tím (z databázy klubu) - zvýrazní sa */
+  nas: boolean;
   pozicia: number;
   zapasy: number;
   vitazstva: number;
@@ -46,6 +51,8 @@ const LeagueDetail: React.FC = () => {
   const [tableData, setTableData] = useState<TableTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lenBody = league?.rezim_tabulky === 'len_body';
+  const zobrazitFormu = league?.zobrazit_formu !== false;
 
   // Načítanie dát ligy
   const fetchLeagueData = async () => {
@@ -80,8 +87,7 @@ const LeagueDetail: React.FC = () => {
         setLeague(data.data);
         console.log('✅ League nastavená:', data.data);
         
-        // Generovanie mock tabuľky
-        generateMockTable();
+        await nacitajTabulku();
       } else {
         throw new Error(data.message || 'Chyba pri načítaní ligy');
       }
@@ -93,95 +99,35 @@ const LeagueDetail: React.FC = () => {
     }
   };
 
-  // Generovanie mock tabuľky (neskôr nahradíme skutočnými dátami)
-  const generateMockTable = () => {
-    const mockTeams: TableTeam[] = [
-      {
-        id: 1,
-        nazov: 'Náš klub FC',
-        pozicia: 1,
-        zapasy: 15,
-        vitazstva: 12,
-        remizy: 2,
-        prehry: 1,
-        goly_za: 34,
-        goly_proti: 8,
-        goly_rozdiel: 26,
-        body: 38,
-        forma: ['V', 'V', 'R', 'V', 'V']
-      },
-      {
-        id: 2,
-        nazov: 'Rival FC',
-        pozicia: 2,
-        zapasy: 15,
-        vitazstva: 10,
-        remizy: 3,
-        prehry: 2,
-        goly_za: 28,
-        goly_proti: 12,
-        goly_rozdiel: 16,
-        body: 33,
-        forma: ['V', 'R', 'V', 'P', 'V']
-      },
-      {
-        id: 3,
-        nazov: 'Lokálny tím',
-        pozicia: 3,
-        zapasy: 15,
-        vitazstva: 8,
-        remizy: 4,
-        prehry: 3,
-        goly_za: 22,
-        goly_proti: 15,
-        goly_rozdiel: 7,
-        body: 28,
-        forma: ['R', 'V', 'P', 'V', 'R']
-      },
-      {
-        id: 4,
-        nazov: 'Mestský klub',
-        pozicia: 4,
-        zapasy: 15,
-        vitazstva: 7,
-        remizy: 3,
-        prehry: 5,
-        goly_za: 20,
-        goly_proti: 18,
-        goly_rozdiel: 2,
-        body: 24,
-        forma: ['P', 'V', 'V', 'R', 'P']
-      },
-      {
-        id: 5,
-        nazov: 'Regionálny FC',
-        pozicia: 5,
-        zapasy: 15,
-        vitazstva: 6,
-        remizy: 5,
-        prehry: 4,
-        goly_za: 18,
-        goly_proti: 16,
-        goly_rozdiel: 2,
-        body: 23,
-        forma: ['R', 'P', 'V', 'R', 'V']
-      },
-      {
-        id: 6,
-        nazov: 'Susedný klub',
-        pozicia: 6,
-        zapasy: 15,
-        vitazstva: 5,
-        remizy: 4,
-        prehry: 6,
-        goly_za: 16,
-        goly_proti: 20,
-        goly_rozdiel: -4,
-        body: 19,
-        forma: ['P', 'R', 'P', 'V', 'P']
-      }
-    ];
-    setTableData(mockTeams);
+  // Skutočná tabuľka zo servera (predtým sa tu generovali vymyslené dáta)
+  const nacitajTabulku = async () => {
+    try {
+      const odpoved = await fetch(apiUrl(`/leagues/${id}/table`));
+      const json = await odpoved.json();
+      if (!json.success) throw new Error(json.message || 'Tabuľku sa nepodarilo načítať');
+      const naSk: Record<string, string> = { W: 'V', D: 'R', L: 'P' };
+      setTableData(
+        (json.data ?? []).map((r: any): TableTeam => ({
+          id: r.id,
+          nazov: r.tim_nazov || r.tim?.nazov || r.custom_tim_nazov || '—',
+          logo: r.tim_logo || r.custom_tim_logo || null,
+          nas: Boolean(r.tim_id),
+          pozicia: r.pozicia,
+          zapasy: r.zapasy,
+          vitazstva: r.vitazstva,
+          remizy: r.remizy,
+          prehry: r.prehry,
+          goly_za: r.goly_za,
+          goly_proti: r.goly_proti,
+          goly_rozdiel: r.goly_rozdiel,
+          body: r.body,
+          forma: String(r.forma || '').split('').filter(Boolean).map((z: string) => naSk[z] ?? z),
+        }))
+      );
+    } catch (chyba) {
+      console.error('Chyba pri načítaní tabuľky:', chyba);
+      setTableData([]);
+    }
   };
 
   useEffect(() => {
@@ -481,6 +427,7 @@ const LeagueDetail: React.FC = () => {
               <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Pos</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Tím</th>
+                {!lenBody && (<>
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>Z</th>
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>V</th>
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>R</th>
@@ -488,8 +435,11 @@ const LeagueDetail: React.FC = () => {
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>GZ</th>
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>GP</th>
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>+/-</th>
+                </>)}
                 <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>Body</th>
+                {!lenBody && zobrazitFormu && (
                 <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>Forma</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -530,14 +480,17 @@ const LeagueDetail: React.FC = () => {
                   </td>
                   <td style={{ 
                     padding: '12px 16px', 
-                    fontWeight: team.nazov.includes('Náš klub') ? '600' : '500',
-                    color: team.nazov.includes('Náš klub') ? '#059669' : '#374151'
+                    fontWeight: team.nas ? '600' : '500',
+                    color: team.nas ? '#059669' : '#374151'
                   }}>
-                    {team.nazov}
-                    {team.nazov.includes('Náš klub') && (
-                      <span style={{ marginLeft: '8px', fontSize: '12px' }}>🏠</span>
-                    )}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      {team.logo && (
+                        <img src={souborUrl(team.logo)} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                      )}
+                      {team.nazov}
+                    </span>
                   </td>
+                  {!lenBody && (<>
                   <td style={{ padding: '12px 8px', textAlign: 'center' }}>{team.zapasy}</td>
                   <td style={{ padding: '12px 8px', textAlign: 'center', color: '#059669', fontWeight: '500' }}>{team.vitazstva}</td>
                   <td style={{ padding: '12px 8px', textAlign: 'center', color: '#d97706', fontWeight: '500' }}>{team.remizy}</td>
@@ -552,6 +505,7 @@ const LeagueDetail: React.FC = () => {
                   }}>
                     {team.goly_rozdiel > 0 ? '+' : ''}{team.goly_rozdiel}
                   </td>
+                  </>)}
                   <td style={{ 
                     padding: '12px 8px', 
                     textAlign: 'center', 
@@ -561,6 +515,7 @@ const LeagueDetail: React.FC = () => {
                   }}>
                     {team.body}
                   </td>
+                  {!lenBody && zobrazitFormu && (
                   <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
                       {team.forma.map((result, idx) => (
@@ -570,6 +525,7 @@ const LeagueDetail: React.FC = () => {
                       ))}
                     </div>
                   </td>
+                  )}
                 </tr>
               ))}
             </tbody>

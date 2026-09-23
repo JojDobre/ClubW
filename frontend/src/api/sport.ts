@@ -4,7 +4,7 @@
 import api from '../app/apiKlient';
 import type {
   Zapas, ZapasNaUlozenie, Tim, Hrac, Liga, Stadion, PolozkaArchivu, TypArchivu,
-  StatistikyZapasu, UdalostNaUlozenie,
+  StatistikyZapasu, UdalostNaUlozenie, HracZostavy, TextovaUdalost, UdalostKalendara,
 } from './typy';
 
 export const zapasyApi = {
@@ -27,6 +27,17 @@ export const zapasyApi = {
   /** Nastaví štatistiky zápasu — nahradí predchádzajúce. */
   ulozStatistiky: (id: number, statistiky: UdalostNaUlozenie[]) =>
     api.uprav(`/matches/${id}/statistics`, { statistiky }),
+
+  zostava: (id: number, signal?: AbortSignal) =>
+    api.ziskaj<{ vsetky: HracZostavy[] }>(`/matches/${id}/lineup`, { signal }),
+  /** Nahradí celú zostavu zápasu. */
+  ulozZostavu: (id: number, zostava: HracZostavy[]) =>
+    api.uprav(`/matches/${id}/lineup`, { zostava }),
+
+  textoveUdalosti: (id: number, signal?: AbortSignal) =>
+    api.ziskaj<TextovaUdalost[]>(`/matches/${id}/events`, { signal }),
+  ulozTextoveUdalosti: (id: number, udalosti: TextovaUdalost[]) =>
+    api.uprav(`/matches/${id}/events`, { udalosti }),
 };
 
 export const timyApi = {
@@ -50,6 +61,7 @@ export const hraciApi = {
 export const ligyApi = {
   vypis: (signal?: AbortSignal) =>
     api.ziskaj<Liga[]>('/leagues', { parametre: { limit: 200 }, signal }),
+  detail: (id: number, signal?: AbortSignal) => api.ziskaj<Liga>(`/leagues/${id}`, { signal }),
 };
 
 export const stadionyApi = {
@@ -64,4 +76,14 @@ export const archivApi = {
   vypis: (signal?: AbortSignal) => api.ziskaj<PolozkaArchivu[]>('/admin/archive', { signal }),
   obnov: (typ: TypArchivu, id: number) => api.vytvor(`/admin/archive/${typ}/${id}/restore`, {}),
   zmazTrvalo: (typ: TypArchivu, id: number) => api.zmaz(`/admin/archive/${typ}/${id}`),
+};
+
+export const kalendarApi = {
+  /** Výskyty udalostí v rozsahu - opakované udalosti rozvinie server. */
+  udalosti: (od: string, doKedy: string, signal?: AbortSignal) =>
+    api.ziskaj<UdalostKalendara[]>('/calendar/events', { parametre: { od, do: doKedy }, signal }),
+  detail: (id: number) => api.ziskaj<UdalostKalendara>(`/calendar/events/${id}`),
+  vytvor: (udaje: Partial<UdalostKalendara>) => api.vytvor<UdalostKalendara>('/calendar/events', udaje),
+  uprav: (id: number, udaje: Partial<UdalostKalendara>) => api.uprav<UdalostKalendara>(`/calendar/events/${id}`, udaje),
+  zmaz: (id: number) => api.zmaz(`/calendar/events/${id}`),
 };

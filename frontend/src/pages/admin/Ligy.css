@@ -193,3 +193,136 @@
     width: 100%;
   }
 }
+
+/* ===== Doplnky: správa súťaže a úprava tabuľky ===== */
+.cw-ligy__logo-ligy {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.cw-ligy__popis {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cw-ligy__tabulka tbody tr.is-nas td {
+  background: var(--pri-soft);
+}
+
+.cw-ligy__riadok {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.cw-ligy__riadok--3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.cw-ligy__vstup {
+  width: 52px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+}
+
+.cw-ligy__vstup:focus {
+  outline: 2px solid var(--pri);
+  outline-offset: -1px;
+}
+
+.cw-ligy__vstup--nazov {
+  width: 180px;
+  text-align: left;
+}
+
+.cw-ligy__vstup--forma {
+  width: 80px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cw-ligy__tabulka--uprava td {
+  padding: 6px var(--sp-2);
+}
+
+.cw-ligy__poradie {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cw-ligy__sipky {
+  display: flex;
+  flex-direction: column;
+}
+
+.cw-ligy__sipky button,
+.cw-ligy__odstranit {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.cw-ligy__sipky button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.cw-ligy__sipky button:not(:disabled):hover,
+.cw-ligy__odstranit:hover {
+  color: var(--pri);
+}
+
+.cw-ligy__odstranit:hover {
+  color: var(--danger, #dc2626);
+}
+
+.cw-ligy__pridat {
+  padding: var(--sp-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+
+.cw-ligy__pridat-riadok {
+  display: grid;
+  grid-template-columns: 220px minmax(220px, 320px);
+  gap: var(--sp-3);
+}
+
+.cw-ligy__pridat .cw-field {
+  margin-bottom: 0;
+}
+
+.cw-ligy__napoveda {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.cw-ligy__zapasy {
+  margin-top: var(--sp-3);
+}
+
+@media (max-width: 640px) {
+  .cw-ligy__riadok,
+  .cw-ligy__riadok--3,
+  .cw-ligy__pridat-riadok {
+    grid-template-columns: 1fr;
+  }
+}

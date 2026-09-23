@@ -37,6 +37,8 @@ interface LigaAttributes {
   // NASTAVENIA TABUĽKY
   auto_update_tabulka: boolean;           // Automatická aktualizácia tabuľky
   zobrazit_formu: boolean;                // Zobrazovať formu tímov
+  /** 'plna' = všetky stĺpce, 'len_body' = iba poradie a body */
+  rezim_tabulky: 'plna' | 'len_body';
   min_zapasov: number;                    // Minimálny počet zápasov pre zaradenie
   
   // TURNAJOVÉ NASTAVENIA
@@ -55,7 +57,7 @@ interface LigaAttributes {
 interface LigaCreationAttributes extends Optional<LigaAttributes, 
   'id' | 'popis' | 'external_widget_url' | 'logo' | 'farba' | 'poradie' | 'aktivity' |
   'datum_start' | 'datum_koniec' | 'pocet_timov' | 'turnaj_typ' | 'turnaj_pocet_postupujucich' |
-  'posledny_import' | 'external_sync' | 'vytvoreny' | 'aktualizovany'> {}
+  'posledny_import' | 'external_sync' | 'rezim_tabulky' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Trieda pre model Liga
 class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements LigaAttributes {
@@ -82,6 +84,7 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
   public body_za_prehru!: number;
   public auto_update_tabulka!: boolean;
   public zobrazit_formu!: boolean;
+  public rezim_tabulky!: 'plna' | 'len_body';
   public min_zapasov!: number;
   public turnaj_typ!: 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff' | null;
   public turnaj_pocet_postupujucich!: number | null;
@@ -206,6 +209,7 @@ class Liga extends Model<LigaAttributes, LigaCreationAttributes> implements Liga
       body_za_prehru: this.body_za_prehru,
       auto_update_tabulka: this.auto_update_tabulka,
       zobrazit_formu: this.zobrazit_formu,
+      rezim_tabulky: this.rezim_tabulky,
       min_zapasov: this.min_zapasov,
       turnaj_typ: this.turnaj_typ,
       turnaj_pocet_postupujucich: this.turnaj_pocet_postupujucich,
@@ -385,6 +389,14 @@ Liga.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    rezim_tabulky: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'plna',
+      validate: {
+        isIn: { args: [['plna', 'len_body']], msg: 'Režim tabuľky musí byť plna alebo len_body' },
+      },
     },
     min_zapasov: {
       type: DataTypes.INTEGER,

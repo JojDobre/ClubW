@@ -35,6 +35,8 @@ interface ZapasAttributes {
   goly_domaci?: number | null;
   goly_hostia?: number | null;
   status: 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny';
+  /** Stav určil človek - plánovač ho neprepisuje */
+  stav_rucne: boolean;
   pocet_divakov?: number | null;
   poznamky?: string | null;
   video_url?: string | null;
@@ -51,7 +53,7 @@ interface ZapasCreationAttributes extends Optional<ZapasAttributes,
   'typ_zapasu' | 'stadion_id' | 'rozhodca' | 'supier_logo' | 
   'domaci_tim_id' | 'domaci_tim_nazov' | 'hostujuci_tim_id' | 'hostujuci_tim_nazov' | 
   'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' | 
-  'clanok_id' | 'fotogaleria_id' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+  'clanok_id' | 'fotogaleria_id' | 'stav_rucne' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Trieda pre model Zapas
 class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements ZapasAttributes {
@@ -79,6 +81,7 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public goly_domaci!: number | null;
   public goly_hostia!: number | null;
   public status!: 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny';
+  public stav_rucne!: boolean;
   public pocet_divakov!: number | null;
   public poznamky!: string | null;
   public video_url!: string | null;
@@ -178,8 +181,8 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
 
   // Helper method - vracia skutočný status (auto alebo manuálny)
   public getActualStatus(): 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny' {
-    // Ak je status manuálne nastavený na zrušený/odložený, ponechaj to
-    if (this.status === 'zruseny' || this.status === 'odlozeny') {
+    // Ručne určený stav (a zrušený/odložený) má vždy prednosť
+    if (this.stav_rucne || this.status === 'zruseny' || this.status === 'odlozeny') {
       return this.status;
     }
     
@@ -239,6 +242,7 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
       goly_hostia: this.goly_hostia,
       status: this.status,
       actual_status: this.getActualStatus(), // PRIDANÉ: skutočný status
+      stav_rucne: this.stav_rucne,
       pocet_divakov: this.pocet_divakov,
       poznamky: this.poznamky,
       video_url: this.video_url,
@@ -413,6 +417,11 @@ Zapas.init(
       type: DataTypes.ENUM('naplanovany', 'prebieha', 'ukonceny', 'odlozeny', 'zruseny'),
       allowNull: false,
       defaultValue: 'naplanovany',
+    },
+    stav_rucne: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     pocet_divakov: {
       type: DataTypes.INTEGER,

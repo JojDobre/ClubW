@@ -17,7 +17,7 @@ import './Zapasy.css';
 const STAVY: Record<StavZapasu, { popis: string; ton: TonStitka; zivy?: boolean }> = {
   naplanovany: { popis: 'Naplánovaný', ton: 'info' },
   prebieha: { popis: 'Prebieha', ton: 'danger', zivy: true },
-  ukonceny: { popis: 'Ukončený', ton: 'success' },
+  ukonceny: { popis: 'Odohraný', ton: 'success' },
   odlozeny: { popis: 'Odložený', ton: 'warning' },
   zruseny: { popis: 'Zrušený', ton: 'neutral' },
 };

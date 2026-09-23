@@ -7,6 +7,7 @@
 // web dostanú hotový zoznam výskytov a nemusia pravidlo riešiť samy.
 
 import { Request, Response } from 'express';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { Op } from 'sequelize';
 import KalendarUdalost, { TypOpakovania } from '../models/KalendarUdalost';
 import Team from '../models/Team';
@@ -264,6 +265,7 @@ export const createUdalost = async (req: Request, res: Response): Promise<void> 
       message: `Udalosť ${udalost.nazov} bola vytvorená`,
     });
   } catch (error: any) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     if (error?.name === 'SequelizeValidationError') {
       res.status(400).json({
         success: false,
@@ -314,6 +316,7 @@ export const updateUdalost = async (req: Request, res: Response): Promise<void> 
       message: `Udalosť ${udalost.nazov} bola upravená`,
     });
   } catch (error: any) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     if (error?.name === 'SequelizeValidationError') {
       res.status(400).json({
         success: false,

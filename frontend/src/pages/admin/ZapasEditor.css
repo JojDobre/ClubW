@@ -186,3 +186,123 @@
     display: none;
   }
 }
+
+/* ===== Zostava, hostia, priebeh ===== */
+.cw-zed__pocet {
+  float: right;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cw-zed__zostava-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--sp-3);
+}
+
+.cw-zed__zostava {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm, 13px);
+}
+
+.cw-zed__zostava th {
+  text-align: left;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cw-zed__zostava td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.cw-zed__zostava tr.is-mimo td {
+  color: var(--muted);
+}
+
+.cw-zed__cislo {
+  display: inline-block;
+  min-width: 22px;
+  font-weight: 700;
+  color: var(--pri);
+}
+
+.cw-zed__mini {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+}
+
+.cw-zed__mini--cislo {
+  width: 56px;
+  text-align: center;
+}
+
+.cw-zed__mini:disabled {
+  opacity: 0.4;
+}
+
+.cw-zed__host,
+.cw-zed__text-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 110px auto;
+  gap: var(--sp-2);
+  align-items: end;
+}
+
+.cw-zed__text-form {
+  grid-template-columns: 80px 1fr auto;
+  margin-bottom: var(--sp-3);
+}
+
+.cw-zed__host .cw-field,
+.cw-zed__text-form .cw-field,
+.cw-zed__udalost-form--siroky .cw-field {
+  margin-bottom: 0;
+}
+
+.cw-zed__udalost-form--siroky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: flex-end;
+}
+
+.cw-zed__udalost-form--siroky > .cw-field {
+  flex: 1 1 140px;
+}
+
+.cw-zed__videa {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .cw-zed__host,
+  .cw-zed__text-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dlhé mená (striedanie) a text priebehu sa zalomia namiesto orezania */
+.cw-zed__udalost .cw-zed__hrac {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cw-zed__udalost--text {
+  grid-template-columns: 44px 1fr 30px;
+}
+
+.cw-zed__udalost--text .cw-zed__hrac {
+  font-weight: 500;
+}

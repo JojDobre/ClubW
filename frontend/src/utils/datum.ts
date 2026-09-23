@@ -94,3 +94,35 @@ export const naVstupDatumCas = (hodnota: string | Date | null | undefined): stri
   // Formát 'sv-SE' dáva "2026-03-15 15:30", input potrebuje "2026-03-15T15:30"
   return casti.replace(' ', 'T');
 };
+
+/**
+ * Opak naVstupDatumCas: hodnotu z formulára ("2026-03-15T15:30") chápe
+ * ako čas klubu (Europe/Bratislava) a vráti ISO reťazec v UTC.
+ *
+ * PREČO: new Date("2026-03-15T15:30") použije pásmo prehliadača. Keď
+ * administrátor nie je v slovenskom pásme (dovolenka, server v cloude),
+ * zápas zadaný na 17:00 sa uložil na iný čas, než aký sa potom zobrazil.
+ */
+export const zoVstupuDatumCas = (hodnota: string): string => {
+  const zhoda = hodnota.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!zhoda) return new Date(hodnota).toISOString();
+  const [, r, m, d, h, min] = zhoda.map(Number) as unknown as number[];
+  const cielUtc = Date.UTC(r, m - 1, d, h, min);
+
+  // Posun pásma zistíme z toho, ako daný okamih vyzerá v Bratislave.
+  // Dva kroky stačia aj pri prechode letného času.
+  let odhad = cielUtc;
+  for (let i = 0; i < 2; i++) {
+    const casti = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: CASOVE_PASMO,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(new Date(odhad));
+    const [datum, cas] = casti.split(' ');
+    const [rr, mm, dd] = datum.split('-').map(Number);
+    const [hh, mi] = cas.split(':').map(Number);
+    const zobrazeneUtc = Date.UTC(rr, mm - 1, dd, hh === 24 ? 0 : hh, mi);
+    odhad += cielUtc - zobrazeneUtc;
+  }
+  return new Date(odhad).toISOString();
+};

@@ -29,8 +29,22 @@ interface MonthData {
   total_matches: number;
 }
 
+/** Vlastná udalosť klubu (tréning, akcia) - výskyt v danom dni. */
+interface KlubovaUdalost {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  miesto: string | null;
+  cas_od: string | null;
+  cas_do: string | null;
+  datum_vyskytu: string;
+  farba: string | null;
+  tim?: { nazov: string } | null;
+}
+
 const Calendar: React.FC = () => {
   const [monthData, setMonthData] = useState<MonthData | null>(null);
+  const [udalosti, setUdalosti] = useState<KlubovaUdalost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -42,6 +56,14 @@ const Calendar: React.FC = () => {
       setLoading(true);
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
+
+      // Vlastné udalosti mesiaca (tréningy…) - opakovanie rozvinie server
+      const od = `${year}-${String(month).padStart(2, '0')}-01`;
+      const doKedy = `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
+      fetch(apiUrl(`/calendar/events?od=${od}&do=${doKedy}`))
+        .then((r) => r.json())
+        .then((json) => setUdalosti(json.success ? json.data ?? [] : []))
+        .catch(() => setUdalosti([]));
 
       const response = await fetch(apiUrl(`/calendar/month/${year}/${month}`));
       
@@ -421,6 +443,43 @@ const Calendar: React.FC = () => {
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>📅</div>
               <h3>Žiadne zápasy</h3>
               <p>V tomto období nie su naplánované žiadne zápasy.</p>
+            </div>
+          )}
+
+          {/* Udalosti klubu (tréningy, akcie) vo farbe tímu */}
+          {view === 'month' && udalosti.length > 0 && (
+            <div style={{ marginTop: '24px' }}>
+              <h3 style={{ margin: '0 0 12px' }}>Udalosti klubu</h3>
+              {udalosti.map((u) => (
+                <div
+                  key={`${u.id}-${u.datum_vyskytu}`}
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    marginBottom: '8px',
+                    borderRadius: '6px',
+                    borderLeft: `4px solid ${u.farba || '#94a3b8'}`,
+                    backgroundColor: '#f8fafc',
+                  }}
+                >
+                  <div style={{ minWidth: '90px', fontWeight: 'bold' }}>
+                    {formatDate(u.datum_vyskytu)}
+                    {u.cas_od && (
+                      <div style={{ fontWeight: 'normal', color: '#666', fontSize: '14px' }}>
+                        {u.cas_od.slice(0, 5)}{u.cas_do ? `–${u.cas_do.slice(0, 5)}` : ''}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{u.nazov}</div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      {[u.tim?.nazov, u.miesto].filter(Boolean).join(' · ')}
+                    </div>
+                    {u.popis && <div style={{ fontSize: '14px', marginTop: '4px' }}>{u.popis}</div>}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
