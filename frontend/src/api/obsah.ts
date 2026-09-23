@@ -8,14 +8,22 @@ import type {
 } from './typy';
 
 export const kategorieSpravaApi = {
+  /** Administrátorský výpis - aj s počtom článkov v každej kategórii. */
   vypis: (signal?: AbortSignal) =>
-    api.ziskaj<Kategoria[]>('/categories', { signal }),
+    api.ziskaj<Kategoria[]>('/admin/categories', { signal }),
 
   vytvor: (udaje: Partial<Kategoria>) =>
     api.vytvor<Kategoria>('/admin/categories', udaje),
   uprav: (id: number, udaje: Partial<Kategoria>) =>
     api.uprav<Kategoria>(`/admin/categories/${id}`, udaje),
-  zmaz: (id: number) => api.zmaz(`/admin/categories/${id}`),
+  /**
+   * Zmaže kategóriu. Ak obsahuje články, treba povedať, kam ich presunúť -
+   * článok bez kategórie existovať nemôže.
+   */
+  zmaz: (id: number, presunutDo?: number | null) =>
+    api.zmaz(`/admin/categories/${id}`, {
+      parametre: presunutDo ? { presunut_do: presunutDo } : undefined,
+    }),
 };
 
 export const strankyApi = {

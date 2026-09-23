@@ -1,18 +1,20 @@
 // Umiestnenie: frontend/src/pages/admin/Stranky.tsx
 // Statické stránky webu (O klube, Kontakt, História…).
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  PageHeader, Button, Badge, Icon, DataTable, Modal, Input, Textarea, Switch,
+  PageHeader, Button, Badge, Icon, DataTable, Modal, Input, Textarea, Switch, Editor,
   ConfirmDialog, useToast, type Stlpec, type AkciaRiadku,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { strankyApi } from '../../api/obsah';
 import { formatujDatum } from '../../utils/datum';
 import type { Stranka } from '../../api/typy';
+import './Stranky.css';
 
 const PRAZDNA: Partial<Stranka> = {
   nazov: '',
+  slug: '',
   obsah: '',
   v_menu: false,
   poradie_menu: 10,
@@ -21,6 +23,27 @@ const PRAZDNA: Partial<Stranka> = {
   meta_description: '',
 };
 
+/** Prevedie názov na adresu (bez diakritiky, malými písmenami). */
+const naAdresu = (text: string): string =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+
+/** Text bez HTML značiek - na kontrolu, či stránka naozaj niečo obsahuje. */
+const bezZnaciek = (html: string): string => html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+
+/**
+ * Otvorí náhľad stránky v novom okne.
+ * Parameter ?nahlad povie webu, aby stránku načítal cez administrátorský
+ * endpoint - inak by nepublikovaná stránka skončila na „Stránka nenájdená".
+ */
+const otvorNahlad = (s: Partial<Stranka>) =>
+  window.open(`/${s.slug}?nahlad=${s.id}`, '_blank', 'noopener');
+
 export const Stranky: React.FC = () => {
   const { uspech, chyba: hlasChybu, varovanie } = useToast();
 
@@ -28,6 +51,8 @@ export const Stranky: React.FC = () => {
   const [naZmazanie, setNaZmazanie] = useState<Stranka | null>(null);
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
+  /** Kým používateľ adresu neupraví ručne, odvodzuje sa z názvu. */
+  const adresaUpravena = useRef(false);
 
   const stranky = useNacitanie((signal) => strankyApi.vypis(signal));
   const zoznam = stranky.data ?? [];
@@ -36,6 +61,7 @@ export const Stranky: React.FC = () => {
 
   /** Otvorí stránku na úpravu — obsah dotiahne zo servera. */
   const otvor = async (s: Stranka) => {
+    adresaUpravena.current = true; // existujúca stránka adresu už má
     setUpravovana({ ...s });
     try {
       // Výpis obsah stránky nevracia, načítame ho zvlášť
@@ -46,6 +72,19 @@ export const Stranky: React.FC = () => {
     }
   };
 
+  const novaStranka = () => {
+    adresaUpravena.current = false;
+    setUpravovana({ ...PRAZDNA });
+  };
+
+  /** Zmena názvu - pri novej stránke sa z neho odvodí aj adresa. */
+  const zmenNazov = (nazov: string) =>
+    setUpravovana((d) => ({
+      ...d!,
+      nazov,
+      slug: adresaUpravena.current ? d!.slug : naAdresu(nazov),
+    }));
+
   const uloz = async () => {
     if (!upravovana) return;
 
@@ -53,7 +92,8 @@ export const Stranky: React.FC = () => {
       varovanie('Zadajte názov stránky');
       return;
     }
-    if (!upravovana.obsah || upravovana.obsah.trim().length < 10) {
+    // Editor vracia HTML - dĺžku posudzujeme podľa textu bez značiek
+    if (bezZnaciek(upravovana.obsah ?? '').length < 10) {
       varovanie('Obsah stránky musí mať aspoň 10 znakov');
       return;
     }
@@ -62,6 +102,9 @@ export const Stranky: React.FC = () => {
     try {
       const naUlozenie = {
         ...upravovana,
+        // Prázdna adresa = server ju vygeneruje z názvu
+        slug: naAdresu(upravovana.slug ?? ''),
+        poradie_menu: Math.max(1, Number(upravovana.poradie_menu) || 10),
         meta_title: upravovana.meta_title?.trim() || null,
         meta_description: upravovana.meta_description?.trim() || null,
       };
@@ -143,9 +186,10 @@ export const Stranky: React.FC = () => {
 
   const akcieRiadku: AkciaRiadku<Stranka>[] = [
     { popis: 'Upraviť', ikona: 'upravit', onKlik: otvor },
+    { popis: 'Náhľad', ikona: 'oko', onKlik: otvorNahlad },
     {
       popis: 'Zobraziť na webe',
-      ikona: 'oko',
+      ikona: 'live',
       zobrazit: (s) => s.publikovany,
       onKlik: (s) => window.open(`/${s.slug}`, '_blank', 'noopener'),
     },
@@ -158,7 +202,7 @@ export const Stranky: React.FC = () => {
         nadpis="Stránky"
         podnadpis="Statické stránky webu ako O klube, História alebo Kontakt."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovana({ ...PRAZDNA })}>
+          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={novaStranka}>
             Nová stránka
           </Button>
         }
@@ -190,7 +234,7 @@ export const Stranky: React.FC = () => {
         onKlikNaRiadok={otvor}
         prazdnyNadpis="Zatiaľ žiadne stránky"
         prazdnyPopis="Vytvorte stránky ako O klube, História alebo Kontakt."
-        prazdnaAkcia={<Button onClick={() => setUpravovana({ ...PRAZDNA })}>Vytvoriť stránku</Button>}
+        prazdnaAkcia={<Button onClick={novaStranka}>Vytvoriť stránku</Button>}
       />
 
       <Modal
@@ -200,6 +244,16 @@ export const Stranky: React.FC = () => {
         sirka="lg"
         pata={
           <>
+            {!jeNova && upravovana?.slug && (
+              <Button
+                variant="ghost"
+                ikona={<Icon nazov="oko" velkost={15} />}
+                onClick={() => otvorNahlad(upravovana)}
+                disabled={uklada}
+              >
+                Náhľad
+              </Button>
+            )}
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
               Zrušiť
             </Button>
@@ -214,20 +268,33 @@ export const Stranky: React.FC = () => {
             <Input
               menovka="Názov stránky"
               value={upravovana.nazov ?? ''}
-              onChange={(e) => setUpravovana((d) => ({ ...d!, nazov: e.target.value }))}
+              onChange={(e) => zmenNazov(e.target.value)}
               placeholder="O klube"
               povinne
             />
 
-            <Textarea
-              menovka="Obsah"
-              value={upravovana.obsah ?? ''}
-              onChange={(e) => setUpravovana((d) => ({ ...d!, obsah: e.target.value }))}
-              placeholder="Text stránky. Môžete použiť HTML značky…"
-              rows={12}
-              povinne
+            <Input
+              menovka="Adresa stránky"
+              value={upravovana.slug ?? ''}
+              onChange={(e) => {
+                adresaUpravena.current = true;
+                setUpravovana((d) => ({ ...d!, slug: e.target.value }));
+              }}
+              onBlur={(e) => setUpravovana((d) => ({ ...d!, slug: naAdresu(e.target.value) }))}
+              placeholder="o-klube"
+              napoveda={`Na webe: /${naAdresu(upravovana.slug ?? '') || '…'} · prázdne = odvodí sa z názvu`}
             />
 
+            <div className="cw-field">
+              <span className="cw-field__label">Obsah</span>
+              <Editor
+                hodnota={upravovana.obsah ?? ''}
+                onZmena={(html) => setUpravovana((d) => ({ ...d!, obsah: html }))}
+                placeholder="Text stránky…"
+              />
+            </div>
+
+            <div className="cw-stranka__prepinace">
             <div className="cw-kat__row">
               <Switch
                 zapnute={Boolean(upravovana.v_menu)}
@@ -240,7 +307,7 @@ export const Stranky: React.FC = () => {
                 <Input
                   menovka="Poradie v menu"
                   type="number"
-                  min={0}
+                  min={1}
                   value={upravovana.poradie_menu ?? 10}
                   onChange={(e) =>
                     setUpravovana((d) => ({ ...d!, poradie_menu: Number(e.target.value) }))
@@ -255,6 +322,7 @@ export const Stranky: React.FC = () => {
               menovka="Publikovaná"
               popis="Nepublikovanú stránku návštevníci nevidia"
             />
+            </div>
 
             <Input
               menovka="Titulok pre vyhľadávače"
@@ -262,6 +330,7 @@ export const Stranky: React.FC = () => {
               onChange={(e) => setUpravovana((d) => ({ ...d!, meta_title: e.target.value }))}
               placeholder={upravovana.nazov || 'Ak nevyplníte, použije sa názov'}
               maxLength={70}
+              napoveda="Prázdne = doplní sa automaticky z názvu"
             />
 
             <Textarea
@@ -270,7 +339,8 @@ export const Stranky: React.FC = () => {
               onChange={(e) => setUpravovana((d) => ({ ...d!, meta_description: e.target.value }))}
               rows={2}
               maxLength={160}
-              napoveda={`${(upravovana.meta_description ?? '').length} / 160 znakov`}
+              placeholder="Ak nevyplníte, použije sa začiatok textu stránky"
+              napoveda={`${(upravovana.meta_description ?? '').length} / 160 znakov · prázdne = doplní sa automaticky`}
             />
           </>
         )}

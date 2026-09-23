@@ -1,0 +1,13 @@
+/* Umiestnenie: frontend/src/pages/admin/Stranky.css */
+
+/* Prepínače „Zobraziť v menu" a „Publikovaná" - bez rozostupu sa zlievali
+   do seba aj do nasledujúceho poľa */
+.cw-stranka__prepinace {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 18px;
+}
+
+.cw-stranka__prepinace .cw-kat__row {
+  align-items: center;
+}

@@ -19,6 +19,8 @@ interface Page {
   aktualizovany: string;
   url: string;
   word_count: number;
+  /** Vracia ho aj verejný endpoint; v náhľade podľa neho ukážeme upozornenie. */
+  publikovany?: boolean;
 }
 
 const PageView: React.FC = () => {
@@ -29,8 +31,13 @@ const PageView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
-  // ✅ DEBUG: Pridaný console.log pre debugging
-  console.log('PageView slug:', slug);
+  /**
+   * Náhľad z administrácie: ?nahlad=<id> načíta stránku cez administrátorský
+   * endpoint, ktorý vracia aj nepublikované. Verejný endpoint by koncept
+   * nenašiel a náhľad by skončil na „Stránka nebola nájdená".
+   */
+  const nahladId = new URLSearchParams(window.location.search).get('nahlad');
+  const jeNahlad = Boolean(nahladId);
 
   // Načítanie stránky z API
   useEffect(() => {
@@ -45,15 +52,19 @@ const PageView: React.FC = () => {
         setLoading(true);
         setError('');
         
-        console.log('Fetching page with slug:', slug); // ✅ DEBUG
-        
-        const response = await fetch(apiUrl(`/pages/${slug}`));
+        const token = localStorage.getItem('clubw_token');
+        const response = jeNahlad
+          ? await fetch(apiUrl(`/admin/pages/${nahladId}/nahlad`), {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+              credentials: 'include',
+            })
+          : await fetch(apiUrl(`/pages/${slug}`));
         const data = await response.json();
-        
-        console.log('API response:', data); // ✅ DEBUG
-        
+
         if (response.status === 404) {
           setError('Stránka nebola nájdená');
+        } else if (jeNahlad && (response.status === 401 || response.status === 403)) {
+          setError('Na náhľad nepublikovanej stránky sa musíte prihlásiť do administrácie.');
         } else if (data.success) {
           const stranka = data.data;
           setPage(stranka);
@@ -87,7 +98,7 @@ const PageView: React.FC = () => {
     };
 
     fetchPage();
-  }, [slug]);
+  }, [slug, jeNahlad, nahladId]);
 
   // Reset title pri opustení komponenty
   useEffect(() => {
@@ -185,6 +196,23 @@ const PageView: React.FC = () => {
       margin: '0 auto',
       padding: '40px 20px'
     }}>
+      {/* Pruh náhľadu - na prvý pohľad jasné, že toto ešte nemusí byť na webe */}
+      {jeNahlad && (
+        <div style={{
+          background: '#92400e',
+          color: 'white',
+          padding: '10px 16px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 600,
+          marginBottom: '20px',
+        }}>
+          Náhľad stránky — takto bude vyzerať na webe.
+          {!page.publikovany ? ' Zatiaľ nie je publikovaná, návštevníci ju nevidia.' : ''}
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <nav style={{
         marginBottom: '30px',

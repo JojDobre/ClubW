@@ -4,11 +4,10 @@
 import React, { useState } from 'react';
 import {
   PageHeader, Button, Badge, Icon, DataTable, Modal, Input, Textarea,
-  ConfirmDialog, useToast, type Stlpec, type AkciaRiadku,
+  useToast, type Stlpec, type AkciaRiadku,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { kategorieSpravaApi } from '../../api/obsah';
-import { clankyApi } from '../../api/clanky';
 import type { Kategoria } from '../../api/typy';
 import './Kategorie.css';
 
@@ -26,15 +25,26 @@ export const Kategorie: React.FC = () => {
   const [naZmazanie, setNaZmazanie] = useState<Kategoria | null>(null);
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
+  /** Kam presunúť články zmazávanej kategórie. */
+  const [presunutDo, setPresunutDo] = useState<number | null>(null);
 
   const kategorie = useNacitanie((signal) => kategorieSpravaApi.vypis(signal));
-  const clanky = useNacitanie((signal) => clankyApi.vypis({ limit: 500 }, signal));
 
   const zoznam = kategorie.data ?? [];
 
-  /** Počet článkov v kategórii — dôležité pri mazaní. */
+  /**
+   * Počet článkov v kategórii — dôležité pri mazaní.
+   * Počíta ho server; predtým sa ťahalo prvých 500 článkov a počítalo sa
+   * na klientovi, takže pri väčšom archíve čísla nesedeli.
+   */
   const pocetClankov = (id: number): number =>
-    (clanky.data?.polozky ?? []).filter((c) => c.kategoria?.id === id).length;
+    zoznam.find((k) => k.id === id)?.pocet_clankov ?? 0;
+
+  /** Otvorí potvrdenie mazania a predvyberie prvú inú kategóriu ako cieľ. */
+  const otvorMazanie = (k: Kategoria) => {
+    setNaZmazanie(k);
+    setPresunutDo(zoznam.find((x) => x.id !== k.id)?.id ?? null);
+  };
 
   const jeNova = upravovana !== null && !upravovana.id;
 
@@ -73,8 +83,14 @@ export const Kategorie: React.FC = () => {
     if (!naZmazanie) return;
     setMaze(true);
     try {
-      await kategorieSpravaApi.zmaz(naZmazanie.id);
-      uspech('Kategória bola zmazaná');
+      const maClanky = pocetClankov(naZmazanie.id) > 0;
+      if (maClanky && !presunutDo) {
+        varovanie('Vyberte kategóriu, do ktorej sa články presunú');
+        setMaze(false);
+        return;
+      }
+      await kategorieSpravaApi.zmaz(naZmazanie.id, maClanky ? presunutDo : null);
+      uspech(maClanky ? 'Kategória bola zmazaná a články presunuté' : 'Kategória bola zmazaná');
       setNaZmazanie(null);
       kategorie.obnov();
     } catch (e: any) {
@@ -139,7 +155,7 @@ export const Kategorie: React.FC = () => {
 
   const akcieRiadku: AkciaRiadku<Kategoria>[] = [
     { popis: 'Upraviť', ikona: 'upravit', onKlik: (k) => setUpravovana({ ...k }) },
-    { popis: 'Zmazať', ikona: 'zmazat', nebezpecna: true, onKlik: (k) => setNaZmazanie(k) },
+    { popis: 'Zmazať', ikona: 'zmazat', nebezpecna: true, onKlik: otvorMazanie },
   ];
 
   return (
@@ -222,27 +238,70 @@ export const Kategorie: React.FC = () => {
                 min={0}
                 value={upravovana.poradie ?? 0}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, poradie: Number(e.target.value) }))}
-                napoveda="Nižšie číslo = vyššie v menu"
+                napoveda="Nižšie číslo = vyššie v zozname"
               />
             </div>
           </>
         )}
       </Modal>
 
-      <ConfirmDialog
+      {/* Článok bez kategórie existovať nemôže - pri mazaní kategórie
+          s článkami preto treba vybrať, kam sa presunú */}
+      <Modal
         otvorene={naZmazanie !== null}
+        onZavri={() => setNaZmazanie(null)}
         nadpis="Zmazať kategóriu?"
-        sprava={
-          naZmazanie && pocetClankov(naZmazanie.id) > 0
-            ? `Kategória ${naZmazanie.nazov} obsahuje ${pocetClankov(naZmazanie.id)} článkov. Po zmazaní zostanú bez zaradenia.`
-            : `Kategória ${naZmazanie?.nazov} bude zmazaná.`
+        sirka="sm"
+        pata={
+          <>
+            <Button variant="secondary" onClick={() => setNaZmazanie(null)} disabled={maze}>
+              Zrušiť
+            </Button>
+            <Button variant="danger" onClick={zmaz} nacitava={maze}>
+              {naZmazanie && pocetClankov(naZmazanie.id) > 0 ? 'Presunúť a zmazať' : 'Zmazať'}
+            </Button>
+          </>
         }
-        potvrdit="Zmazať"
-        nebezpecne
-        nacitava={maze}
-        onPotvrd={zmaz}
-        onZrus={() => setNaZmazanie(null)}
-      />
+      >
+        {naZmazanie && pocetClankov(naZmazanie.id) > 0 ? (
+          zoznam.length > 1 ? (
+            <>
+              <p className="cw-kat__upozornenie">
+                Kategória <strong>{naZmazanie.nazov}</strong> obsahuje{' '}
+                {pocetClankov(naZmazanie.id)} článkov. Pred zmazaním ich presuňte do inej kategórie.
+              </p>
+              <div className="cw-field">
+                <label className="cw-field__label" htmlFor="kat-presun">
+                  Presunúť články do
+                </label>
+                <select
+                  id="kat-presun"
+                  className="cw-select"
+                  value={presunutDo ?? ''}
+                  onChange={(e) => setPresunutDo(e.target.value ? Number(e.target.value) : null)}
+                >
+                  {zoznam
+                    .filter((k) => k.id !== naZmazanie.id)
+                    .map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.nazov}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          ) : (
+            <p className="cw-kat__upozornenie">
+              Kategória <strong>{naZmazanie.nazov}</strong> obsahuje {pocetClankov(naZmazanie.id)} článkov
+              a inú kategóriu, kam by sa dali presunúť, zatiaľ nemáte. Najprv vytvorte novú kategóriu.
+            </p>
+          )
+        ) : (
+          <p className="cw-kat__upozornenie">
+            Kategória <strong>{naZmazanie?.nazov}</strong> bude zmazaná.
+          </p>
+        )}
+      </Modal>
     </div>
   );
 };

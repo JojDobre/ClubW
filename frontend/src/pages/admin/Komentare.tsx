@@ -157,7 +157,13 @@ export const Komentare: React.FC = () => {
                     </div>
                   </div>
 
-                  <Badge ton={stav?.ton ?? 'neutral'}>{stav?.popis ?? k.stav}</Badge>
+                  <div className="cw-kom__stitky">
+                    {/* Upravený komentár prišiel znova na schválenie - moderátor
+                        by mal vedieť, že nejde o nový, ale o zmenený text */}
+                    {k.upraveny_autorom && <Badge ton="info">Upravený autorom</Badge>}
+                    {k.rodic_id && <Badge ton="neutral">Odpoveď</Badge>}
+                    <Badge ton={stav?.ton ?? 'neutral'}>{stav?.popis ?? k.stav}</Badge>
+                  </div>
                 </div>
 
                 <p className="cw-kom__obsah">{k.obsah}</p>

@@ -46,3 +46,9 @@
   background: var(--card);
   cursor: pointer;
 }
+
+/* Text v okne mazania kategórie */
+.cw-kat__upozornenie {
+  margin: 0 0 14px;
+  line-height: 1.5;
+}

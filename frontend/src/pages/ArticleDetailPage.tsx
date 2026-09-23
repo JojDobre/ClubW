@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { sanitizeHtml } from '../utils/sanitize';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import KomentarePodClankom from '../components/KomentarePodClankom';
 
 // Interface pre článok z backend API
 interface Article {
@@ -549,6 +550,9 @@ const ArticleDetailPage: React.FC = () => {
           </button>
         </div>
       </article>
+
+      {/* Komentáre - v náhľade nie, koncept ich ešte nemôže mať */}
+      {article && !jeNahlad && <KomentarePodClankom clanokId={article.id} />}
 
       {/* Podobné články */}
       {relatedArticles.length > 0 && (

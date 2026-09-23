@@ -17,10 +17,57 @@ import {
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zistiUdajeVidea } from '../services/youtube';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 const router = Router();
 
 // ============ KOMENTÁRE ============
+
+const STAVY_KOMENTARA = ['caka', 'schvaleny', 'zamietnuty', 'spam'] as const;
+
+interface NastaveniaKomentarov {
+  /** Komentáre na celom webe zapnuté/vypnuté. */
+  povolene: boolean;
+  /** Nový komentár čaká na schválenie (inak sa zobrazí hneď). */
+  moderovat: boolean;
+  vyzadovat_email: boolean;
+  /** Dá sa odpovedať na iný komentár. */
+  povolit_odpovede: boolean;
+}
+
+/**
+ * Globálne nastavenia komentárov z Nastavení klubu.
+ *
+ * Doteraz sa ukladali, ale nič ich nečítalo - vypnutie komentárov na webe
+ * alebo vypnutie moderovania nemalo žiadny účinok.
+ */
+const nastaveniaKomentarov = async (): Promise<NastaveniaKomentarov> => {
+  const n = (await NastaveniaKlubu.nacitaj()).nastavenia_komentarov as Partial<NastaveniaKomentarov>;
+  return {
+    povolene: n?.povolene !== false,
+    moderovat: n?.moderovat !== false,
+    vyzadovat_email: n?.vyzadovat_email === true,
+    povolit_odpovede: n?.povolit_odpovede !== false,
+  };
+};
+
+/** Je článok naozaj na webe? (publikovaný a dátum publikovania už nastal) */
+const clanokJeVerejny = (clanok: Article): boolean =>
+  clanok.status === 'published' &&
+  (!clanok.publikovany_datum || new Date(clanok.publikovany_datum).getTime() <= Date.now());
+
+/** Komentár tak, ako ho smie vidieť návštevník - bez e-mailu a IP adresy. */
+const verejnyKomentar = (k: Komentar, prihlasenyId?: number) => ({
+  id: k.id,
+  rodic_id: k.rodic_id,
+  autor_meno: k.autor_meno,
+  obsah: k.obsah,
+  vytvoreny: k.vytvoreny,
+  upraveny: Boolean(k.upraveny_autorom),
+  // Vlastný komentár vidí autor aj kým čaká na schválenie a smie ho upraviť
+  moj: Boolean(prihlasenyId && k.pouzivatel_id === prihlasenyId),
+  caka_na_schvalenie: k.stav === 'caka',
+});
 
 /**
  * GET /api/comments
@@ -77,13 +124,31 @@ router.put('/comments/:id', authenticateToken, requireEditor, async (req: Reques
     }
 
     const zmeny: any = {};
-    if (req.body.stav) zmeny.stav = req.body.stav;
+    if (req.body.stav !== undefined) {
+      // Neplatný stav predtým padol až v databáze na 500
+      if (!STAVY_KOMENTARA.includes(req.body.stav)) {
+        res.status(400).json({
+          success: false,
+          message: `Neplatný stav komentára. Povolené: ${STAVY_KOMENTARA.join(', ')}`,
+        });
+        return;
+      }
+      zmeny.stav = req.body.stav;
+    }
     // Redaktor môže opraviť preklep alebo skrátiť vulgárny výraz
-    if (req.body.obsah !== undefined) zmeny.obsah = sanitizePlainText(req.body.obsah);
+    if (req.body.obsah !== undefined) zmeny.obsah = sanitizePlainText(String(req.body.obsah));
 
     await komentar.update(zmeny);
     res.json({ success: true, data: komentar, message: 'Komentár bol upravený' });
-  } catch (chyba) {
+  } catch (chyba: any) {
+    if (chyba?.name === 'SequelizeValidationError') {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné údaje',
+        errors: chyba.errors.map((e: any) => e.message),
+      });
+      return;
+    }
     console.error('Chyba pri úprave komentára:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
@@ -106,16 +171,108 @@ router.delete('/comments/:id', authenticateToken, requireEditor, async (req: Req
 });
 
 /**
+ * GET /api/comments/clanok/:clanokId
+ * Komentáre pod článkom pre návštevníka webu.
+ *
+ * Doteraz žiadny verejný výpis neexistoval - komentáre sa dali len
+ * moderovať v administrácii, ale na webe ich nikto nevidel.
+ *
+ * Vracia schválené komentáre, a prihlásenému používateľovi navyše jeho
+ * vlastné, ktoré ešte čakajú na schválenie (aby nezmizli hneď po odoslaní
+ * alebo úprave). E-mail ani IP adresa sa nevracajú nikdy.
+ */
+router.get('/comments/clanok/:clanokId', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const clanokId = Number(req.params.clanokId);
+    const clanok = Number.isInteger(clanokId) ? await Article.findByPk(clanokId) : null;
+
+    if (!clanok || !clanokJeVerejny(clanok)) {
+      res.status(404).json({ success: false, message: 'Článok sa nenašiel' });
+      return;
+    }
+
+    const nastavenia = await nastaveniaKomentarov();
+    const prihlasenyId = req.userId ?? undefined;
+
+    const kde: any = prihlasenyId
+      ? {
+          clanok_id: clanokId,
+          [Op.or]: [
+            { stav: 'schvaleny' },
+            { stav: 'caka', pouzivatel_id: prihlasenyId },
+          ],
+        }
+      : { clanok_id: clanokId, stav: 'schvaleny' };
+
+    const komentare = await Komentar.findAll({
+      where: kde,
+      order: [['vytvoreny', 'ASC']],
+      limit: 500,
+    });
+
+    res.json({
+      success: true,
+      data: komentare.map((k) => verejnyKomentar(k, prihlasenyId)),
+      // Podľa toho web ukáže alebo schová formulár
+      nastavenia: {
+        povolene: nastavenia.povolene && clanok.komentare_povolene,
+        vyzadovat_email: nastavenia.vyzadovat_email,
+        povolit_odpovede: nastavenia.povolit_odpovede,
+        moderovat: nastavenia.moderovat,
+      },
+    });
+  } catch (chyba) {
+    console.error('Chyba pri načítaní komentárov článku:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+/**
  * POST /api/comments
  * Nový komentár od návštevníka webu — bez prihlásenia.
+ *
+ * Kontroluje, či sa pod článok vôbec dá komentovať. Predtým sa dal pridať
+ * komentár aj k článku s vypnutými komentármi, aj ku konceptu, ktorý
+ * na webe ešte nie je.
  */
 router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
   try {
     const clanokId = Number(req.body?.clanok_id);
-    const clanok = await Article.findByPk(clanokId);
-    if (!clanok) {
+    const clanok = Number.isInteger(clanokId) ? await Article.findByPk(clanokId) : null;
+    if (!clanok || !clanokJeVerejny(clanok)) {
       res.status(404).json({ success: false, message: 'Článok sa nenašiel' });
       return;
+    }
+
+    const nastavenia = await nastaveniaKomentarov();
+
+    if (!nastavenia.povolene || !clanok.komentare_povolene) {
+      res.status(403).json({
+        success: false,
+        message: 'Komentáre sú pri tomto článku vypnuté.',
+      });
+      return;
+    }
+
+    const email = req.body?.autor_email ? String(req.body.autor_email).trim() : '';
+    if (nastavenia.vyzadovat_email && !email) {
+      res.status(400).json({ success: false, message: 'Zadajte e-mailovú adresu.' });
+      return;
+    }
+
+    // Odpoveď musí patriť k tomu istému článku a mieriť na schválený komentár
+    let rodicId: number | null = null;
+    if (req.body?.rodic_id) {
+      if (!nastavenia.povolit_odpovede) {
+        res.status(400).json({ success: false, message: 'Odpovede na komentáre sú vypnuté.' });
+        return;
+      }
+      const rodic = await Komentar.findByPk(Number(req.body.rodic_id));
+      if (!rodic || rodic.clanok_id !== clanokId || rodic.stav !== 'schvaleny') {
+        res.status(400).json({ success: false, message: 'Komentár, na ktorý odpovedáte, neexistuje.' });
+        return;
+      }
+      rodicId = rodic.id;
     }
 
     const komentar = await Komentar.create({
@@ -126,19 +283,21 @@ router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
       pouzivatel_id: req.userId ?? null,
       autor_meno: sanitizePlainText(
         String(req.body?.autor_meno || req.user?.meno || '')
-      ),
-      autor_email: req.body?.autor_email || null,
-      obsah: sanitizePlainText(String(req.body?.obsah || '')),
-      rodic_id: req.body?.rodic_id ? Number(req.body.rodic_id) : null,
+      ).trim(),
+      autor_email: email || null,
+      obsah: sanitizePlainText(String(req.body?.obsah || '')).trim(),
+      rodic_id: rodicId,
       ip_adresa: req.ip || null,
-      // Zámerne 'caka' — komentár sa zobrazí až po schválení
-      stav: 'caka',
+      // Pri zapnutom moderovaní sa komentár zobrazí až po schválení
+      stav: nastavenia.moderovat ? 'caka' : 'schvaleny',
     });
 
     res.status(201).json({
       success: true,
-      data: komentar.id,
-      message: 'Ďakujeme. Komentár sa zobrazí po schválení.',
+      data: verejnyKomentar(komentar, req.userId ?? undefined),
+      message: nastavenia.moderovat
+        ? 'Ďakujeme. Komentár sa zobrazí po schválení.'
+        : 'Ďakujeme za komentár.',
     });
   } catch (chyba: any) {
     if (chyba.name === 'SequelizeValidationError') {
@@ -190,17 +349,21 @@ router.put('/comments/:id/moj', authenticateToken, async (req: Request, res: Res
       return;
     }
 
+    const { moderovat } = await nastaveniaKomentarov();
+
     await komentar.update({
       obsah,
       upraveny_autorom: new Date(),
-      // Znova na schválenie
-      stav: 'caka',
+      // Pri moderovaní ide upravený komentár znova na schválenie
+      stav: moderovat ? 'caka' : komentar.stav,
     });
 
     res.json({
       success: true,
-      data: komentar,
-      message: 'Komentár bol upravený a čaká na schválenie.',
+      data: verejnyKomentar(komentar, req.userId ?? undefined),
+      message: moderovat
+        ? 'Komentár bol upravený a čaká na schválenie.'
+        : 'Komentár bol upravený.',
     });
   } catch (chyba) {
     console.error('Chyba pri úprave komentára:', chyba);

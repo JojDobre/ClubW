@@ -88,3 +88,11 @@
   border: 1px solid var(--border);
   border-radius: 14px;
 }
+
+/* Štítky v hlavičke karty (upravený, odpoveď, stav) */
+.cw-kom__stitky {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

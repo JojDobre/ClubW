@@ -62,6 +62,8 @@ export interface Kategoria {
   farba: string | null;
   ikona: string | null;
   poradie: number;
+  /** Vracia len administrátorský výpis. */
+  pocet_clankov?: number;
 }
 
 // ===== Článok =====
@@ -578,6 +580,8 @@ export interface Komentar {
   obsah: string;
   stav: StavKomentara;
   rodic_id: number | null;
+  /** Kedy autor naposledy upravil text (vtedy ide komentár znova na schválenie). */
+  upraveny_autorom?: string | null;
   vytvoreny: string;
   clanok?: { id: number; nazov: string; slug: string };
 }
