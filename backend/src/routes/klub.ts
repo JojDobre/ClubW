@@ -10,10 +10,12 @@ import { Model, ModelStatic, Op } from 'sequelize';
 import Sponzor from '../models/Sponzor';
 import Dokument from '../models/Dokument';
 import DokumentKategoria from '../models/DokumentKategoria';
+import UrovenSponzora from '../models/UrovenSponzora';
 import Anketa from '../models/Anketa';
 import Fanusik from '../models/Fanusik';
-import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
+import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 
 const router = Router();
 
@@ -30,7 +32,18 @@ interface NastaveniaEntity {
   hladatV?: string[];
   /** Popis entity do hlášok, napríklad „Sponzor" */
   nazov: string;
+  /**
+   * Kto smie čítať. 'redaktor' = len prihlásený redaktor/správca
+   * (osobné údaje fanúšikov). Predvolene verejne.
+   */
+  citanie?: 'verejne' | 'redaktor';
+  /** Podmienka pre verejné čítanie (napr. len verejné dokumenty) */
+  verejnyFilter?: Record<string, unknown> | (() => Record<string | symbol, unknown>);
 }
+
+/** Prihlásený redaktor alebo správca? */
+const jeRedaktor = (req: Request): boolean =>
+  ['admin', 'redaktor'].includes(String((req as any).user?.rola || ''));
 
 /**
  * Vytvorí sadu operácií pre jednu entitu.
@@ -39,7 +52,27 @@ interface NastaveniaEntity {
  * @param nastavenia - model a jeho pravidlá
  */
 const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
-  const { model, polia, textovePolia = [], zoradenie = [['id', 'DESC']], hladatV = [], nazov } = nastavenia;
+  const {
+    model, polia, textovePolia = [], zoradenie = [['id', 'DESC']], hladatV = [], nazov,
+    citanie = 'verejne', verejnyFilter,
+  } = nastavenia;
+
+  /**
+   * Overí právo na čítanie a vráti podmienku, ktorá sa pridá k dotazu.
+   * PREČO: čítanie bolo úplne verejné - bez prihlásenia sa dali stiahnuť
+   * neverejné dokumenty aj zoznam fanúšikov s e-mailmi a telefónmi.
+   */
+  const pravoCitat = (req: Request, res: Response): Record<string, unknown> | null => {
+    if (jeRedaktor(req)) return {};
+    if (citanie === 'redaktor') {
+      res.status((req as any).user ? 403 : 401).json({
+        success: false,
+        message: (req as any).user ? 'Prístup odmietnutý' : 'Prístup odmietnutý. Token chýba.',
+      });
+      return null;
+    }
+    return (typeof verejnyFilter === 'function' ? verejnyFilter() : verejnyFilter) ?? {};
+  };
 
   /** Vyberie z tela požiadavky len povolené polia. */
   const pripravUdaje = (telo: any): Record<string, unknown> => {
@@ -66,12 +99,14 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   };
 
   // ===== Výpis =====
-  router.get(`/${cesta}`, async (req: Request, res: Response) => {
+  router.get(`/${cesta}`, optionalAuth, async (req: Request, res: Response) => {
     try {
+      const filter = pravoCitat(req, res);
+      if (!filter) return;
       const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
       const hladane = String(req.query.search || '').trim();
 
-      const kde: any = {};
+      const kde: any = { ...filter };
 
       if (hladane && hladatV.length > 0) {
         kde[Op.or] = hladatV.map((p) => ({ [p]: { [Op.iLike]: `%${hladane}%` } }));
@@ -87,9 +122,11 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   });
 
   // ===== Detail =====
-  router.get(`/${cesta}/:id`, async (req: Request, res: Response) => {
+  router.get(`/${cesta}/:id`, optionalAuth, async (req: Request, res: Response) => {
     try {
-      const zaznam = await model.findByPk(Number(req.params.id));
+      const filter = pravoCitat(req, res);
+      if (!filter) return;
+      const zaznam = await model.findOne({ where: { id: Number(req.params.id) || 0, ...filter } });
       if (!zaznam) {
         res.status(404).json({ success: false, message: `${nazov} sa nenašiel` });
         return;
@@ -107,14 +144,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
       const zaznam = await model.create(pripravUdaje(req.body) as any);
       res.status(201).json({ success: true, data: zaznam, message: `${nazov} bol vytvorený` });
     } catch (chyba: any) {
-      if (chyba.name === 'SequelizeValidationError' || chyba.name === 'SequelizeUniqueConstraintError') {
-        res.status(400).json({
-          success: false,
-          message: 'Neplatné údaje',
-          errors: chyba.errors?.map((e: any) => e.message) ?? [chyba.message],
-        });
-        return;
-      }
+      if (odpovedzNaChybuModelu(chyba, res)) return;
       console.error(`Chyba pri vytváraní (${nazov}):`, chyba);
       res.status(500).json({ success: false, message: 'Chyba servera' });
     }
@@ -132,14 +162,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
       await zaznam.update(pripravUdaje(req.body));
       res.json({ success: true, data: zaznam, message: 'Zmeny boli uložené' });
     } catch (chyba: any) {
-      if (chyba.name === 'SequelizeValidationError' || chyba.name === 'SequelizeUniqueConstraintError') {
-        res.status(400).json({
-          success: false,
-          message: 'Neplatné údaje',
-          errors: chyba.errors?.map((e: any) => e.message) ?? [chyba.message],
-        });
-        return;
-      }
+      if (odpovedzNaChybuModelu(chyba, res)) return;
       console.error(`Chyba pri úprave (${nazov}):`, chyba);
       res.status(500).json({ success: false, message: 'Chyba servera' });
     }
@@ -167,10 +190,34 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
 vytvorOperacie('sponsors', {
   model: Sponzor,
   nazov: 'Sponzor',
-  polia: ['nazov', 'uroven', 'logo', 'web_url', 'popis', 'platny_od', 'platny_do', 'poradie', 'aktivity'],
+  polia: ['nazov', 'uroven_id', 'logo', 'web_url', 'popis', 'platny_od', 'platny_do', 'poradie', 'aktivity'],
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
+  // Na webe len zobrazení sponzori s platným partnerstvom
+  verejnyFilter: () => {
+    const dnes = new Date().toISOString().slice(0, 10);
+    return {
+      aktivity: true,
+      [Op.and]: [
+        { [Op.or]: [{ platny_od: null }, { platny_od: { [Op.lte]: dnes } }] },
+        { [Op.or]: [{ platny_do: null }, { platny_do: { [Op.gte]: dnes } }] },
+      ],
+    };
+  },
+});
+
+// ===== Úrovne partnerstva =====
+// Spravovateľný zoznam namiesto pevných štyroch úrovní. Po zmazaní
+// úrovne zostanú jej sponzori bez úrovne (ON DELETE SET NULL).
+vytvorOperacie('sponsor-levels', {
+  model: UrovenSponzora,
+  nazov: 'Úroveň partnerstva',
+  polia: ['nazov', 'popis', 'poradie', 'velkost_loga', 'aktivity'],
+  textovePolia: ['nazov', 'popis'],
+  zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
+  hladatV: ['nazov'],
+  verejnyFilter: { aktivity: true },
 });
 
 // ===== Dokumenty =====
@@ -181,6 +228,36 @@ vytvorOperacie('documents', {
   textovePolia: ['nazov', 'popis', 'kategoria'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
+  // Neverejné a skryté dokumenty vidí len administrácia
+  verejnyFilter: { verejny: true, aktivity: true },
+});
+
+/**
+ * GET /api/documents/:id/download
+ * Stiahnutie dokumentu - zvýši počítadlo a presmeruje na súbor.
+ * Neverejný dokument stiahne len administrácia.
+ */
+router.get('/documents/:id/download', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const kde: any = { id: Number(req.params.id) || 0 };
+    if (!jeRedaktor(req)) Object.assign(kde, { verejny: true, aktivity: true });
+    const dokument = await Dokument.findOne({ where: kde });
+    if (!dokument) {
+      res.status(404).json({ success: false, message: 'Dokument sa nenašiel' });
+      return;
+    }
+    await dokument.increment('pocet_stiahnuti');
+    const url = String((dokument as any).subor_url || '');
+    // Presmerovať len na nahratý súbor alebo úplnú adresu - nie kamkoľvek
+    if (!/^(\/uploads\/|https?:\/\/)/.test(url)) {
+      res.status(404).json({ success: false, message: 'Súbor dokumentu chýba' });
+      return;
+    }
+    res.redirect(302, url);
+  } catch (chyba) {
+    console.error('Chyba pri sťahovaní dokumentu:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
 });
 
 // ===== Kategórie dokumentov =====
@@ -193,6 +270,7 @@ vytvorOperacie('document-categories', {
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
+  verejnyFilter: { aktivity: true },
 });
 
 // ===== Ankety =====
@@ -203,6 +281,8 @@ vytvorOperacie('polls', {
   textovePolia: ['otazka'],
   zoradenie: [['id', 'DESC']],
   hladatV: ['otazka'],
+  // Nepublikované ankety verejne nevidno
+  verejnyFilter: { publikovana: true },
 });
 
 // ===== Fanúšikovia =====
@@ -216,6 +296,8 @@ vytvorOperacie('fans', {
   textovePolia: ['meno', 'priezvisko', 'poznamka'],
   zoradenie: [['priezvisko', 'ASC'], ['meno', 'ASC']],
   hladatV: ['meno', 'priezvisko', 'email'],
+  // Osobné údaje fanúšikov (e-mail, telefón) - len pre administráciu
+  citanie: 'redaktor',
 });
 
 /**

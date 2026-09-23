@@ -1,110 +1,404 @@
-/* Umiestnenie: frontend/src/pages/admin/Turnaje.css */
+/* Umiestnenie: frontend/src/pages/admin/Turnaje.css
+   Zoznam turnajov a editor turnaja (skupiny, pavúk). */
 
-.cw-tur__mriezka {
+/* ===== Zoznam ===== */
+.cw-turn__mriezka {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.cw-tur__karta {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 18px;
-}
-
-.cw-tur__hlava {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.cw-tur__nazvy {
-  min-width: 0;
-}
-
-.cw-tur__nazov {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--text);
-}
-
-.cw-tur__liga {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-/* ===== Číselné údaje ===== */
-.cw-tur__udaje {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.cw-tur__udaj {
-  text-align: center;
-  min-width: 0;
-}
-
-.cw-tur__udaj-cislo {
-  display: block;
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 17px;
-  color: var(--text);
-  /* Dátum je dlhší než číslo, nesmie pretiecť */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cw-tur__udaj-popis {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.cw-tur__format {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-  font-size: 12.5px;
-  color: var(--muted);
-  flex-wrap: wrap;
-}
-
-.cw-tur__format svg {
-  flex-shrink: 0;
-}
-
-.cw-tur__akcie {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.cw-tur__prazdne {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-.cw-tur__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
 }
 
-@media (max-width: 560px) {
-  .cw-tur__row {
+.cw-turn__karta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+}
+
+.cw-turn__karta:hover {
+  border-color: var(--pri);
+}
+
+.cw-turn__hlava {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cw-turn__logo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--pri-soft);
+  color: var(--pri);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cw-turn__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cw-turn__nazvy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cw-turn__nazov {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.cw-turn__format {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cw-turn__stitky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cw-turn__prazdne {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* ===== Editor ===== */
+.cw-turn__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.cw-turn__hlavne {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cw-turn__bok {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 12px;
+}
+
+.cw-turn__dva {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cw-turn .cw-zed__panel-nadpis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cw-turn__akcie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.cw-turn__postup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-turn__mini {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.cw-turn__mini--siroke {
+  flex: 1;
+  min-width: 140px;
+}
+
+.cw-turn__mini--cislo {
+  width: 64px;
+}
+
+/* ===== Zoznam tímov ===== */
+.cw-turn__skupiny-edit {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.cw-turn__skupina-edit {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.cw-turn__skupina-hlava {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.cw-turn__skupina-hlava input {
+  width: 80px;
+  font-weight: 700;
+}
+
+.cw-turn__skupina-hlava button,
+.cw-turn__timy-zoznam button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+}
+
+.cw-turn__timy-zoznam button:disabled {
+  opacity: 0.3;
+}
+
+.cw-turn__timy-nadpis {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.cw-turn__timy-zoznam {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.cw-turn__timy-zoznam li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.cw-turn__tim-meno {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-turn__nasadenie {
+  width: 22px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.cw-turn__mini-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--card2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cw-turn__mini-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cw-turn__pridat {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.cw-turn__prazdny-text {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.cw-turn__prazdny p {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ===== Skupiny - tabuľka a zápasy ===== */
+.cw-turn__skupina {
+  margin-top: 18px;
+}
+
+.cw-turn__skupina h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.cw-turn__tabulka {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.cw-turn__tabulka th,
+.cw-turn__tabulka td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.cw-turn__tabulka th:nth-child(2),
+.cw-turn__tabulka td:nth-child(2) {
+  text-align: left;
+}
+
+.cw-turn__tabulka tr.is-postup td:first-child {
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+.cw-turn__zapasy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ===== Zápas ===== */
+.cw-turn__zapas {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cw-turn__z-riadok {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 8px 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.cw-turn__z-tim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cw-turn__z-riadok .cw-turn__z-tim:first-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.cw-turn__z-tim img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.cw-turn__z-tim.is-vitaz {
+  font-weight: 700;
+  color: var(--pri);
+}
+
+.cw-turn__z-tim em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.cw-turn__skore {
+  width: 44px;
+  height: 30px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+
+.cw-turn__skore:disabled {
+  background: var(--card2);
+}
+
+.cw-turn__prepojenie {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ===== Pavúk ===== */
+.cw-turn__pavuk {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.cw-turn__kolo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 10px;
+  min-width: 300px;
+}
+
+.cw-turn__kolo-nazov {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .cw-turn__grid {
     grid-template-columns: 1fr;
+  }
+
+  .cw-turn__bok {
+    position: static;
   }
 }

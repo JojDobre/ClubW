@@ -14,6 +14,10 @@
 }
 
 .cw-rightbar__hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
   padding: 16px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -110,4 +114,16 @@
   .cw-rightbar {
     display: none;
   }
+}
+
+.cw-rightbar__vsetko {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.cw-rightbar__vsetko:hover {
+  color: var(--text);
+  text-decoration: underline;
 }

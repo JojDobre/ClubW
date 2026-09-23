@@ -171,7 +171,7 @@ export interface Stadion {
 
 // ===== Archív =====
 
-export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony';
+export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje';
 
 export interface PolozkaArchivu {
   typ: TypArchivu;
@@ -593,10 +593,37 @@ export interface MediaSubor {
   originalny_nazov: string;
   cesta: string;
   typ: 'obrazok' | 'dokument' | 'ine';
+  mime_typ?: string;
+  /** Veľkosť v bajtoch */
+  velkost?: number;
+  velkost_kb?: number;
   sirka: number | null;
   vyska: number | null;
   alt_text: string | null;
+  popis?: string | null;
+  autor_id?: number | null;
+  autor?: { id: number; meno: string } | null;
+  /** Počet článkov, v ktorých je súbor použitý (vo výpise knižnice) */
+  pocet_clankov?: number;
   vytvoreny: string;
+  aktualizovany?: string;
+}
+
+/** Kde všade je súbor použitý - detail v knižnici médií. */
+export interface PouzitieMedia {
+  clanky: number;
+  clanky_ako_hlavny_obrazok: number;
+  clanky_v_texte: number;
+  stranky: number;
+  galerie: number;
+  dokumenty: number;
+  /** Logá a fotky tímov, hráčov, sponzorov a pod. */
+  ine: number;
+  spolu: number;
+}
+
+export interface MediaDetail extends MediaSubor {
+  pouzitie: PouzitieMedia;
 }
 
 // ===== Realizačný tím =====
@@ -653,12 +680,27 @@ export type RiadokNaUlozenie = Partial<Omit<RiadokTabulky, 'id'>> & { id?: numbe
 
 // ===== Sekcia KLUB =====
 
+/** Pôvodná pevná úroveň - nahradila ju spravovateľná UrovenPartnerstva */
 export type UrovenSponzora = 'generalny' | 'hlavny' | 'partner' | 'dodavatel';
+
+export type VelkostLoga = 'velke' | 'stredne' | 'male';
+
+/** Úroveň partnerstva, ktorú si klub spravuje sám. */
+export interface UrovenPartnerstva {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  /** Poradie na webe - nižšie číslo vyššie */
+  poradie: number;
+  velkost_loga: VelkostLoga;
+  aktivity: boolean;
+}
 
 export interface Sponzor {
   id: number;
   nazov: string;
-  uroven: UrovenSponzora;
+  uroven?: UrovenSponzora | null;
+  uroven_id: number | null;
   logo: string | null;
   web_url: string | null;
   popis: string | null;
@@ -675,12 +717,22 @@ export interface Dokument {
   subor_url: string;
   typ_suboru: string | null;
   velkost_kb: number | null;
+  /** Staršia voľná kategória - nové dokumenty používajú kategoria_id */
   kategoria: string | null;
+  kategoria_id: number | null;
   verejny: boolean;
   pocet_stiahnuti: number;
   poradie: number;
   aktivity: boolean;
   vytvoreny: string;
+}
+
+export interface KategoriaDokumentu {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  poradie: number;
+  aktivity: boolean;
 }
 
 export interface MoznostAnkety {
@@ -775,8 +827,13 @@ export type StavTurnaja = 'pripravuje' | 'prebiehajuci' | 'ukonceny' | 'pozastav
 
 export interface Turnaj {
   id: number;
-  liga_id: number;
+  liga_id: number | null;
   nazov: string;
+  popis: string | null;
+  logo: string | null;
+  sezona_id: number | null;
+  /** Náš tím v turnaji */
+  tim_id: number | null;
   typ: TypTurnaja;
   pocet_timov: number;
   pocet_postupujucich: number | null;
@@ -785,7 +842,73 @@ export interface Turnaj {
   aktualna_faza: string;
   status: StavTurnaja;
   datum_start: string | null;
-  liga?: { id: number; nazov: string; sezona: string };
+  datum_koniec: string | null;
+  zobrazit_na_webe: boolean;
+  vitaz_nazov: string | null;
+  poznamky: string | null;
+  /** Len vo výpise */
+  ma_pavuka?: boolean;
+  pocet_skupin_realne?: number;
+  liga?: { id: number; nazov: string; sezona: string } | null;
+}
+
+/** Tím v turnaji - náš (tim_id) alebo klub zadaný menom. */
+export interface TimTurnaja {
+  nazov: string;
+  tim_id: number | null;
+  logo: string | null;
+}
+
+export interface ZapasPavuka {
+  kod: string;
+  domaci: TimTurnaja | null;
+  hostia: TimTurnaja | null;
+  skore_domaci: number | null;
+  skore_hostia: number | null;
+  vitaz: 'domaci' | 'hostia' | null;
+  postupuje_do: string | null;
+  zapas_id?: number | null;
+}
+
+export interface PavukTurnaja {
+  kola: Array<{ nazov: string; poradie: number; zapasy: ZapasPavuka[] }>;
+  o_tretie?: ZapasPavuka | null;
+}
+
+export interface ZapasSkupiny {
+  kod: string;
+  kolo: number;
+  domaci: number;
+  hostia: number;
+  skore_domaci: number | null;
+  skore_hostia: number | null;
+  zapas_id?: number | null;
+}
+
+export interface RiadokSkupiny {
+  poradie: number;
+  tim: TimTurnaja;
+  zapasy: number;
+  vyhry: number;
+  remizy: number;
+  prehry: number;
+  goly_za: number;
+  goly_proti: number;
+  body: number;
+  postupuje: boolean;
+}
+
+export interface SkupinaTurnaja {
+  nazov: string;
+  timy: TimTurnaja[];
+  zapasy: ZapasSkupiny[];
+  tabulka: RiadokSkupiny[];
+}
+
+/** Turnaj so skupinami a pavúkom (detail). */
+export interface TurnajDetail extends Turnaj {
+  skupiny: { postupuju: number; skupiny: SkupinaTurnaja[] };
+  pavuk: PavukTurnaja;
 }
 
 // ===== Kalendár =====
@@ -809,4 +932,46 @@ export interface UdalostKalendara {
   /** Pri výpise za obdobie: konkrétny deň výskytu opakovanej udalosti */
   datum_vyskytu?: string;
   farba?: string | null;
+}
+
+// ===== Formuláre =====
+
+export type TypPolaFormulara =
+  | 'text' | 'textarea' | 'email' | 'telefon' | 'cislo'
+  | 'datum' | 'vyber' | 'zaskrtavacie' | 'suhlas';
+
+export interface PoleFormulara {
+  /** Kľúč v uložených odpovediach - pri úprave sa nemení */
+  kod: string;
+  nazov: string;
+  typ: TypPolaFormulara;
+  popis?: string | null;
+  povinne?: boolean;
+  moznosti?: string[];
+}
+
+export interface Formular {
+  id: number;
+  nazov: string;
+  /** Adresa na webe: /formular/{slug} */
+  slug: string;
+  popis: string | null;
+  polia: PoleFormulara[];
+  sprava_po_odoslani: string | null;
+  email_pre_notifikacie?: string | null;
+  /** Vypnutý formulár sa zobrazí, ale neprijíma odpovede */
+  aktivny: boolean;
+  vytvoreny?: string;
+  aktualizovany?: string;
+  pocet_odpovedi?: number;
+  pocet_neprecitanych?: number;
+}
+
+export interface OdpovedFormulara {
+  id: number;
+  formular_id: number;
+  udaje: Record<string, string | string[] | boolean>;
+  precitane: boolean;
+  ip_adresa: string | null;
+  vytvorena: string;
 }

@@ -30,6 +30,7 @@ import Nastavenia from '../pages/admin/Nastavenia';
 import Licencia from '../pages/admin/Licencia';
 import Sezony from '../pages/admin/Sezony';
 import Stadiony from '../pages/admin/Stadiony';
+import TurnajEditor from '../pages/admin/TurnajEditor';
 import Archiv from '../pages/admin/Archiv';
 import OchranaUdajov from '../pages/admin/OchranaUdajov';
 import Kategorie from '../pages/admin/Kategorie';
@@ -47,6 +48,11 @@ import Fanusikovia from '../pages/admin/Fanusikovia';
 import Komentare from '../pages/admin/Komentare';
 import Videa from '../pages/admin/Videa';
 import Turnaje from '../pages/admin/Turnaje';
+import Formulare from '../pages/admin/Formulare';
+import FormularEditor from '../pages/admin/FormularEditor';
+import FormularOdpovede from '../pages/admin/FormularOdpovede';
+import KniznicaMedii from '../pages/admin/KniznicaMedii';
+import Logy from '../pages/admin/Logy';
 
 import '../design/global.css';
 import './App.css';
@@ -90,6 +96,7 @@ export const App: React.FC = () => (
                 <Route path="realizacny-tim" element={<RealizacnyTim />} />
                 <Route path="ligy" element={<Ligy />} />
                 <Route path="turnaje" element={<Turnaje />} />
+                <Route path="turnaje/:id" element={<TurnajEditor />} />
                 <Route path="zapasy" element={<Zapasy />} />
                 {/* "novy" musí byť pred :id, inak by sa vyhodnotilo ako identifikátor */}
                 <Route path="zapasy/novy" element={<ZapasEditor />} />
@@ -103,6 +110,12 @@ export const App: React.FC = () => (
                 {/* Sekcia KLUB */}
                 <Route path="sponzori" element={<Sponzori />} />
                 <Route path="dokumenty" element={<Dokumenty />} />
+                <Route path="formulare" element={<Formulare />} />
+                <Route path="formulare/novy" element={<FormularEditor />} />
+                <Route path="formulare/:id" element={<FormularEditor />} />
+                <Route path="formulare/:id/odpovede" element={<FormularOdpovede />} />
+                <Route path="media" element={<KniznicaMedii />} />
+                <Route path="logy" element={<Logy />} />
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
                 <Route path="profil" element={<Navigate to="/admin/pouzivatelia" replace />} />

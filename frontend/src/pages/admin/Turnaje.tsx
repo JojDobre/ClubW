@@ -1,151 +1,84 @@
 // Umiestnenie: frontend/src/pages/admin/Turnaje.tsx
-// Turnaje — pohárové súťaže a mládežnícke turnaje.
+// Zoznam turnajov. Nový turnaj sa založí s názvom a formátom, skupiny
+// a pavúk sa potom nastavujú v editore turnaja.
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  PageHeader, Button, Badge, Icon, Modal, Input, Select, Switch,
-  Skeleton, EmptyState, ErrorState, ConfirmDialog, useToast, type TonStitka,
+  PageHeader, Button, Badge, Icon, Modal, Input, Select,
+  Skeleton, EmptyState, ErrorState, useToast, type TonStitka,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { turnajeApi } from '../../api/doplnky';
-import { ligyApi } from '../../api/sport';
+import { sezonyApi } from '../../api/sprava';
+import { souborUrl } from '../../config/api';
 import { formatujDatum } from '../../utils/datum';
-import type { Turnaj, TypTurnaja, StavTurnaja } from '../../api/typy';
+import type { TypTurnaja, StavTurnaja, Turnaj } from '../../api/typy';
 import './Turnaje.css';
 
-const TYPY: Array<{ hodnota: TypTurnaja; popis: string; vysvetlenie: string }> = [
-  {
-    hodnota: 'single_elimination',
-    popis: 'Vyraďovací (jednoduchý)',
-    vysvetlenie: 'Kto prehrá, končí. Najrýchlejší formát.',
-  },
-  {
-    hodnota: 'double_elimination',
-    popis: 'Vyraďovací (dvojitý)',
-    vysvetlenie: 'Tím vypadne až po druhej prehre.',
-  },
-  {
-    hodnota: 'round_robin',
-    popis: 'Každý s každým',
-    vysvetlenie: 'Všetci odohrajú so všetkými, rozhoduje tabuľka.',
-  },
-  {
-    hodnota: 'groups_playoff',
-    popis: 'Skupiny a play-off',
-    vysvetlenie: 'Zo skupín postupujú najlepší do vyraďovacej časti.',
-  },
+export const FORMATY: Array<{ hodnota: TypTurnaja; popis: string; vysvetlenie: string }> = [
+  { hodnota: 'single_elimination', popis: 'Vyraďovací pavúk', vysvetlenie: 'Štvrťfinále, semifinále, finále - víťaz postupuje.' },
+  { hodnota: 'groups_playoff', popis: 'Skupiny + pavúk', vysvetlenie: 'Skupiny každý s každým, najlepší zo skupín postupujú do pavúka.' },
+  { hodnota: 'round_robin', popis: 'Každý s každým', vysvetlenie: 'Jedna alebo viac skupín s tabuľkou, bez pavúka.' },
 ];
 
-const STAVY: Array<{ hodnota: StavTurnaja; popis: string; ton: TonStitka }> = [
+export const STAVY_TURNAJA: Array<{ hodnota: StavTurnaja; popis: string; ton: TonStitka }> = [
   { hodnota: 'pripravuje', popis: 'Pripravuje sa', ton: 'neutral' },
   { hodnota: 'prebiehajuci', popis: 'Prebieha', ton: 'success' },
   { hodnota: 'pozastaveny', popis: 'Pozastavený', ton: 'warning' },
   { hodnota: 'ukonceny', popis: 'Ukončený', ton: 'info' },
 ];
 
-const PRAZDNY: Partial<Turnaj> = {
-  nazov: '',
-  typ: 'single_elimination',
-  pocet_timov: 8,
-  ma_tretie_miesto: false,
-  status: 'pripravuje',
-  liga_id: undefined,
-};
-
 export const Turnaje: React.FC = () => {
-  const { uspech, chyba: hlasChybu, varovanie } = useToast();
+  const navigate = useNavigate();
+  const { chyba: hlasChybu, varovanie } = useToast();
 
-  const [upravovany, setUpravovany] = useState<Partial<Turnaj> | null>(null);
-  const [naZmazanie, setNaZmazanie] = useState<Turnaj | null>(null);
+  const [novy, setNovy] = useState<{ nazov: string; typ: TypTurnaja; sezona_id: number | null; datum_start: string } | null>(null);
   const [uklada, setUklada] = useState(false);
-  const [maze, setMaze] = useState(false);
 
   const turnaje = useNacitanie((signal) => turnajeApi.vypis(signal));
-  const ligy = useNacitanie((signal) => ligyApi.vypis(signal));
-
+  const sezony = useNacitanie((signal) => sezonyApi.vypis(signal));
   const zoznam = turnaje.data ?? [];
-  const zoznamLig = ligy.data ?? [];
 
-  const jeNovy = upravovany !== null && !upravovany.id;
-
-  /** Počet kôl vo vyraďovacom pavúku. */
-  const pocetKol = (pocetTimov: number): number => Math.ceil(Math.log2(Math.max(pocetTimov, 2)));
-
-  const uloz = async () => {
-    if (!upravovany) return;
-
-    if (!upravovany.nazov?.trim()) {
-      varovanie('Zadajte názov turnaja');
+  const zaloz = async () => {
+    if (!novy) return;
+    if (novy.nazov.trim().length < 2) {
+      varovanie('Názov turnaja musí mať aspoň 2 znaky');
       return;
     }
-    if (!upravovany.liga_id) {
-      varovanie('Vyberte súťaž, pod ktorú turnaj patrí');
-      return;
-    }
-
-    const pocet = Number(upravovany.pocet_timov) || 0;
-    if (pocet < 2) {
-      varovanie('Turnaj musí mať aspoň dva tímy');
-      return;
-    }
-
-    // Pri skupinovom formáte musí byť počet skupín zmysluplný
-    if (upravovany.typ === 'groups_playoff') {
-      const skupiny = Number(upravovany.pocet_skupin) || 0;
-      if (skupiny < 2) {
-        varovanie('Formát so skupinami vyžaduje aspoň dve skupiny');
-        return;
-      }
-      if (skupiny > pocet / 2) {
-        varovanie('V každej skupine musia byť aspoň dva tímy');
-        return;
-      }
-    }
-
     setUklada(true);
     try {
-      if (jeNovy) {
-        await turnajeApi.vytvor(upravovany);
-        uspech('Turnaj bol vytvorený');
-      } else {
-        await turnajeApi.uprav(upravovany.id!, upravovany);
-        uspech('Zmeny boli uložené');
-      }
-      setUpravovany(null);
-      turnaje.obnov();
+      const vytvoreny = await turnajeApi.vytvor({
+        nazov: novy.nazov.trim(),
+        typ: novy.typ,
+        sezona_id: novy.sezona_id,
+        datum_start: novy.datum_start || null,
+      });
+      navigate(`/admin/turnaje/${vytvoreny.id}`);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Turnaj sa nepodarilo uložiť');
+      hlasChybu(e?.message || 'Turnaj sa nepodarilo založiť');
     } finally {
       setUklada(false);
     }
   };
 
-  const zmaz = async () => {
-    if (!naZmazanie) return;
-    setMaze(true);
-    try {
-      await turnajeApi.zmaz(naZmazanie.id);
-      uspech('Turnaj bol zmazaný');
-      setNaZmazanie(null);
-      turnaje.obnov();
-    } catch (e: any) {
-      hlasChybu(e?.message || 'Turnaj sa nepodarilo zmazať');
-    } finally {
-      setMaze(false);
-    }
-  };
+  const otvorNovy = () =>
+    setNovy({
+      nazov: '',
+      typ: 'groups_playoff',
+      sezona_id: (sezony.data ?? []).find((s) => s.aktualna)?.id ?? null,
+      datum_start: '',
+    });
+
+  const stav = (t: Turnaj) => STAVY_TURNAJA.find((s) => s.hodnota === t.status);
 
   return (
     <div className="cw-screen">
       <PageHeader
         nadpis="Turnaje"
-        podnadpis="Pohárové súťaže a mládežnícke turnaje."
+        podnadpis="Pohárové súťaže a mládežnícke turnaje - skupiny, pavúk a výsledky."
         akcie={
-          <Button
-            ikona={<Icon nazov="plus" velkost={17} />}
-            onClick={() => setUpravovany({ ...PRAZDNY })}
-            disabled={zoznamLig.length === 0}
-          >
+          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={otvorNovy}>
             Nový turnaj
           </Button>
         }
@@ -154,228 +87,96 @@ export const Turnaje: React.FC = () => {
       {turnaje.chyba ? (
         <ErrorState sprava="Turnaje sa nepodarilo načítať" detail={turnaje.chyba} onSkusZnova={turnaje.obnov} />
       ) : turnaje.nacitava ? (
-        <div className="cw-tur__mriezka">
-          {[0, 1].map((i) => (
-            <div key={i} className="cw-tur__karta">
-              <Skeleton riadkov={4} />
+        <div className="cw-turn__mriezka">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="cw-turn__karta">
+              <Skeleton riadkov={3} />
             </div>
           ))}
         </div>
       ) : zoznam.length === 0 ? (
-        <div className="cw-tur__prazdne">
+        <div className="cw-turn__prazdne">
           <EmptyState
             ikona={<Icon nazov="ligy" velkost={40} />}
             nadpis="Zatiaľ žiadne turnaje"
-            popis={
-              zoznamLig.length === 0
-                ? 'Turnaj patrí pod súťaž. Najprv vytvorte súťaž pridaním zápasu.'
-                : 'Vytvorte pohárovú súťaž alebo mládežnícky turnaj.'
-            }
-            akcia={
-              zoznamLig.length > 0 ? (
-                <Button onClick={() => setUpravovany({ ...PRAZDNY })}>Vytvoriť turnaj</Button>
-              ) : undefined
-            }
+            popis="Založte turnaj, pridajte tímy do skupín alebo priamo do pavúka a zapisujte výsledky."
+            akcia={<Button onClick={otvorNovy}>Založiť turnaj</Button>}
           />
         </div>
       ) : (
-        <div className="cw-tur__mriezka">
-          {zoznam.map((t) => {
-            const typ = TYPY.find((x) => x.hodnota === t.typ);
-            const stav = STAVY.find((x) => x.hodnota === t.status);
-
-            return (
-              <div key={t.id} className="cw-tur__karta">
-                <div className="cw-tur__hlava">
-                  <div className="cw-tur__nazvy">
-                    <div className="cw-tur__nazov">{t.nazov}</div>
-                    {t.liga && (
-                      <div className="cw-tur__liga">
-                        {t.liga.nazov} · {t.liga.sezona}
-                      </div>
-                    )}
-                  </div>
-
-                  <Badge ton={stav?.ton ?? 'neutral'} zivy={t.status === 'prebiehajuci'}>
-                    {stav?.popis ?? t.status}
-                  </Badge>
-                </div>
-
-                <div className="cw-tur__udaje">
-                  <div className="cw-tur__udaj">
-                    <span className="cw-tur__udaj-cislo">{t.pocet_timov}</span>
-                    <span className="cw-tur__udaj-popis">tímov</span>
-                  </div>
-
-                  {t.typ === 'groups_playoff' && t.pocet_skupin ? (
-                    <div className="cw-tur__udaj">
-                      <span className="cw-tur__udaj-cislo">{t.pocet_skupin}</span>
-                      <span className="cw-tur__udaj-popis">skupín</span>
-                    </div>
-                  ) : (
-                    <div className="cw-tur__udaj">
-                      <span className="cw-tur__udaj-cislo">{pocetKol(t.pocet_timov)}</span>
-                      <span className="cw-tur__udaj-popis">kôl</span>
-                    </div>
-                  )}
-
-                  <div className="cw-tur__udaj">
-                    <span className="cw-tur__udaj-cislo">
-                      {t.datum_start ? formatujDatum(t.datum_start) : '—'}
-                    </span>
-                    <span className="cw-tur__udaj-popis">začiatok</span>
-                  </div>
-                </div>
-
-                <div className="cw-tur__format">
-                  <Icon nazov="ligy" velkost={14} />
-                  <span>{typ?.popis ?? t.typ}</span>
-                  {t.ma_tretie_miesto && <Badge>Aj o 3. miesto</Badge>}
-                </div>
-
-                <div className="cw-tur__akcie">
-                  <Button variant="secondary" velkost="sm" onClick={() => setUpravovany({ ...t })}>
-                    Upraviť
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    velkost="sm"
-                    onClick={() => setNaZmazanie(t)}
-                    aria-label="Zmazať turnaj"
-                  >
-                    <Icon nazov="zmazat" velkost={15} />
-                  </Button>
+        <div className="cw-turn__mriezka">
+          {zoznam.map((t) => (
+            <button key={t.id} className="cw-turn__karta" onClick={() => navigate(`/admin/turnaje/${t.id}`)}>
+              <div className="cw-turn__hlava">
+                <span className="cw-turn__logo">
+                  {t.logo ? <img src={souborUrl(t.logo)} alt="" /> : <Icon nazov="ligy" velkost={22} />}
+                </span>
+                <div className="cw-turn__nazvy">
+                  <span className="cw-turn__nazov">{t.nazov}</span>
+                  <span className="cw-turn__format">
+                    {FORMATY.find((f) => f.hodnota === t.typ)?.popis ?? t.typ}
+                    {t.datum_start ? ` · ${formatujDatum(t.datum_start)}` : ''}
+                  </span>
                 </div>
               </div>
-            );
-          })}
+              <div className="cw-turn__stitky">
+                <Badge ton={stav(t)?.ton ?? 'neutral'}>{stav(t)?.popis ?? t.status}</Badge>
+                {!t.zobrazit_na_webe && <Badge>Skrytý</Badge>}
+                {t.vitaz_nazov && <Badge ton="warning">🏆 {t.vitaz_nazov}</Badge>}
+              </div>
+            </button>
+          ))}
         </div>
       )}
 
       <Modal
-        otvorene={upravovany !== null}
-        onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový turnaj' : upravovany?.nazov ?? 'Turnaj'}
+        otvorene={novy !== null}
+        onZavri={() => setNovy(null)}
+        nadpis="Nový turnaj"
+        sirka="sm"
         pata={
           <>
-            <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
+            <Button variant="secondary" onClick={() => setNovy(null)} disabled={uklada}>
               Zrušiť
             </Button>
-            <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Vytvoriť' : 'Uložiť'}
+            <Button onClick={zaloz} nacitava={uklada}>
+              Založiť a pokračovať
             </Button>
           </>
         }
       >
-        {upravovany && (
+        {novy && (
           <>
             <Input
               menovka="Názov turnaja"
-              value={upravovany.nazov ?? ''}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: Zimný turnaj prípraviek"
+              value={novy.nazov}
+              onChange={(e) => setNovy((n) => ({ ...n!, nazov: e.target.value }))}
+              placeholder="Letný turnaj U11"
               povinne
             />
-
-            <Select
-              menovka="Súťaž"
-              value={upravovany.liga_id ?? ''}
-              onChange={(e) =>
-                setUpravovany((d) => ({ ...d!, liga_id: e.target.value ? Number(e.target.value) : undefined }))
-              }
-              prazdna="Vyberte súťaž"
-              moznosti={zoznamLig.map((l) => ({ hodnota: l.id, popis: `${l.nazov} · ${l.sezona}` }))}
-              povinne
-              napoveda="Turnaj patrí pod súťaž, v ktorej sa hrá"
-            />
-
             <Select
               menovka="Formát"
-              value={upravovany.typ ?? 'single_elimination'}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, typ: e.target.value as TypTurnaja }))}
-              moznosti={TYPY.map((t) => ({ hodnota: t.hodnota, popis: t.popis }))}
-              napoveda={TYPY.find((t) => t.hodnota === upravovany.typ)?.vysvetlenie}
+              value={novy.typ}
+              onChange={(e) => setNovy((n) => ({ ...n!, typ: e.target.value as TypTurnaja }))}
+              moznosti={FORMATY.map((f) => ({ hodnota: f.hodnota, popis: f.popis }))}
+              napoveda={FORMATY.find((f) => f.hodnota === novy.typ)?.vysvetlenie}
             />
-
-            <div className="cw-tur__row">
-              <Input
-                menovka="Počet tímov"
-                type="number"
-                min={2}
-                max={128}
-                value={upravovany.pocet_timov ?? 8}
-                onChange={(e) => setUpravovany((d) => ({ ...d!, pocet_timov: Number(e.target.value) }))}
-                povinne
-              />
-
-              {/* Skupiny majú zmysel len pri skupinovom formáte */}
-              {upravovany.typ === 'groups_playoff' && (
-                <Input
-                  menovka="Počet skupín"
-                  type="number"
-                  min={2}
-                  max={16}
-                  value={upravovany.pocet_skupin ?? 2}
-                  onChange={(e) => setUpravovany((d) => ({ ...d!, pocet_skupin: Number(e.target.value) }))}
-                />
-              )}
-            </div>
-
-            {upravovany.typ === 'groups_playoff' && (
-              <Input
-                menovka="Postupujúcich zo skupiny"
-                type="number"
-                min={1}
-                value={upravovany.pocet_postupujucich ?? 2}
-                onChange={(e) =>
-                  setUpravovany((d) => ({ ...d!, pocet_postupujucich: Number(e.target.value) }))
-                }
-                napoveda={
-                  upravovany.pocet_skupin && upravovany.pocet_postupujucich
-                    ? `Do play-off postúpi ${upravovany.pocet_skupin * upravovany.pocet_postupujucich} tímov`
-                    : undefined
-                }
-              />
-            )}
-
-            <div className="cw-tur__row">
-              <Input
-                menovka="Začiatok"
-                type="date"
-                value={upravovany.datum_start?.slice(0, 10) ?? ''}
-                onChange={(e) => setUpravovany((d) => ({ ...d!, datum_start: e.target.value || null }))}
-              />
-              <Select
-                menovka="Stav"
-                value={upravovany.status ?? 'pripravuje'}
-                onChange={(e) => setUpravovany((d) => ({ ...d!, status: e.target.value as StavTurnaja }))}
-                moznosti={STAVY.map((s) => ({ hodnota: s.hodnota, popis: s.popis }))}
-              />
-            </div>
-
-            {/* Zápas o tretie miesto sa hrá len vo vyraďovacích formátoch */}
-            {upravovany.typ !== 'round_robin' && (
-              <Switch
-                zapnute={Boolean(upravovany.ma_tretie_miesto)}
-                onZmena={(v) => setUpravovany((d) => ({ ...d!, ma_tretie_miesto: v }))}
-                menovka="Zápas o tretie miesto"
-                popis="Porazení zo semifinále odohrajú zápas o bronz"
-              />
-            )}
+            <Select
+              menovka="Sezóna"
+              value={novy.sezona_id ?? ''}
+              onChange={(e) => setNovy((n) => ({ ...n!, sezona_id: e.target.value ? Number(e.target.value) : null }))}
+              prazdna="Bez sezóny"
+              moznosti={(sezony.data ?? []).map((s) => ({ hodnota: s.id, popis: s.nazov }))}
+            />
+            <Input
+              menovka="Začiatok"
+              type="date"
+              value={novy.datum_start}
+              onChange={(e) => setNovy((n) => ({ ...n!, datum_start: e.target.value }))}
+            />
           </>
         )}
       </Modal>
-
-      <ConfirmDialog
-        otvorene={naZmazanie !== null}
-        nadpis="Zmazať turnaj?"
-        sprava={`Turnaj ${naZmazanie?.nazov} bude odstránený. Zápasy, ktoré sa v ňom odohrali, zostanú zachované.`}
-        potvrdit="Zmazať"
-        nebezpecne
-        nacitava={maze}
-        onPotvrd={zmaz}
-        onZrus={() => setNaZmazanie(null)}
-      />
     </div>
   );
 };

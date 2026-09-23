@@ -2,7 +2,7 @@
 // Volania API pre komentáre, videá a turnaje.
 
 import api from '../app/apiKlient';
-import type { Komentar, Video, Turnaj, StavKomentara, ZisteneVideo } from './typy';
+import type { Komentar, Video, Turnaj, TurnajDetail, TimTurnaja, StavKomentara, ZisteneVideo } from './typy';
 
 export const komentareApi = {
   /**
@@ -45,10 +45,31 @@ export const videaApi = {
 };
 
 export const turnajeApi = {
+  /** Administrácia vidí aj skryté turnaje. */
   vypis: (signal?: AbortSignal) =>
-    api.ziskaj<Turnaj[]>('/tournaments', { signal }),
+    api.ziskaj<Turnaj[]>('/tournaments', { parametre: { vsetky: 1 }, signal }),
+  detail: (id: number, signal?: AbortSignal) => api.ziskaj<TurnajDetail>(`/tournaments/${id}`, { signal }),
 
   vytvor: (udaje: Partial<Turnaj>) => api.vytvor<Turnaj>('/tournaments', udaje),
   uprav: (id: number, udaje: Partial<Turnaj>) => api.uprav<Turnaj>(`/tournaments/${id}`, udaje),
+  /** Archivácia - turnaj sa dá obnoviť v Archíve */
   zmaz: (id: number) => api.zmaz(`/tournaments/${id}`),
+
+  /** Skupiny a rozpis zápasov. */
+  ulozSkupiny: (id: number, udaje: { postupuju: number; skupiny: Array<{ nazov: string; timy: Partial<TimTurnaja>[] }> }) =>
+    api.uprav<TurnajDetail>(`/tournaments/${id}/groups`, udaje),
+  vysledokSkupiny: (id: number, kod: string, udaje: { skore_domaci?: number | null; skore_hostia?: number | null; zapas_id?: number | null }) =>
+    api.ciastocne<TurnajDetail>(`/tournaments/${id}/groups/match/${encodeURIComponent(kod)}`, udaje),
+
+  /** Pavúk zo zoznamu tímov (poradie = nasadenie). */
+  generujPavuka: (id: number, timy: Partial<TimTurnaja>[], ma_tretie_miesto: boolean) =>
+    api.vytvor<TurnajDetail>(`/tournaments/${id}/bracket/generate`, { timy, ma_tretie_miesto }),
+  pavukZoSkupin: (id: number, aj_neodohrane = false) =>
+    api.vytvor<TurnajDetail>(`/tournaments/${id}/bracket/from-groups`, { aj_neodohrane }),
+  zrusPavuka: (id: number) => api.zmaz<TurnajDetail>(`/tournaments/${id}/bracket`),
+  vysledokPavuka: (
+    id: number,
+    kod: string,
+    udaje: { skore_domaci?: number | null; skore_hostia?: number | null; vitaz?: 'domaci' | 'hostia' | null; zapas_id?: number | null }
+  ) => api.ciastocne<TurnajDetail>(`/tournaments/${id}/bracket/match/${encodeURIComponent(kod)}`, udaje),
 };

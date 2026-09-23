@@ -18,6 +18,15 @@ import { ulozMedium, zmazMedium } from '../utils/mediaUlozisko';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zostavStrankovanie } from '../utils/odpoved';
 import GaleriaObrazok from '../models/GaleriaObrazok';
+import Dokument from '../models/Dokument';
+import Team from '../models/Team';
+import Liga from '../models/Liga';
+import LigaTurnaj from '../models/LigaTurnaj';
+import Player from '../models/Player';
+import Staff from '../models/Staff';
+import Stadion from '../models/Stadion';
+import Sponzor from '../models/Sponzor';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 /** Maximálna veľkosť jedného súboru. */
 const MAX_VELKOST = 10 * 1024 * 1024; // 10 MB
@@ -41,13 +50,23 @@ const overId = (id: string): number | null => {
 };
 
 /**
+ * Počet článkov, v ktorých je obrázok použitý - pre výpis knižnice.
+ * Hlavný obrázok aj vloženie v texte sa počítajú ako jeden článok.
+ */
+const pocetClankov = (cesta: string) =>
+  Article.count({
+    where: { [Op.or]: [{ obrazok: cesta }, { obsah: { [Op.iLike]: `%${cesta}%` } }] },
+  });
+
+/**
  * Zistí, kde všade je súbor použitý.
  *
  * @param cesta - cesta súboru, napríklad /uploads/media/2026/09/foto.jpg
  * @returns počty výskytov podľa miesta použitia
  */
 export const zistiPouzitie = async (cesta: string) => {
-  const [clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad, fotkyVGaleriach] = await Promise.all([
+  const [clanky, clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad, fotkyVGaleriach, dokumenty] = await Promise.all([
+    pocetClankov(cesta),
     // Hlavný obrázok článku
     Article.count({ where: { obrazok: cesta } }),
     // Vložený priamo v texte článku
@@ -56,9 +75,24 @@ export const zistiPouzitie = async (cesta: string) => {
     Galeria.count({ where: { nahladovy_obrazok: cesta } }),
     // Fotka v niektorej galérii (aj keď nie je titulná)
     GaleriaObrazok.count({ where: { cesta_suboru: cesta, aktivity: true } }),
+    // Súbor na stiahnutie v sekcii Dokumenty
+    Dokument.count({ where: { subor_url: cesta, aktivity: true } }),
   ]);
 
-  const clanky = clankyObrazok + clankyVObsahu;
+  // Logá a fotky (tímy, hráči, sponzori...) - zmazaním by zmizli z webu
+  const ine = (
+    await Promise.all([
+      Team.count({ where: { logo: cesta } }),
+      Liga.count({ where: { logo: cesta } }),
+      LigaTurnaj.count({ where: { logo: cesta } }),
+      Player.count({ where: { fotka: cesta } }),
+      Staff.count({ where: { fotka: cesta } }),
+      Stadion.count({ where: { fotka: cesta } }),
+      Sponzor.count({ where: { logo: cesta } }),
+      NastaveniaKlubu.count({ where: { logo: cesta } }),
+    ])
+  ).reduce((a, b) => a + b, 0);
+
   const galerie = Math.max(galerieNahlad, fotkyVGaleriach);
 
   return {
@@ -67,9 +101,13 @@ export const zistiPouzitie = async (cesta: string) => {
     clanky_v_texte: clankyVObsahu,
     stranky: strankyVObsahu,
     galerie,
-    spolu: clanky + strankyVObsahu + galerie,
+    dokumenty,
+    /** Logá a fotky tímov, hráčov, sponzorov, líg, turnajov, štadiónov a klubu */
+    ine,
+    spolu: clanky + strankyVObsahu + galerie + dokumenty + ine,
   };
 };
+
 
 /**
  * GET /api/admin/media
@@ -103,9 +141,11 @@ export const getMediaZoznam = async (req: Request, res: Response): Promise<void>
       offset,
     });
 
+    const pocty = await Promise.all(rows.map((m) => (m.typ === 'obrazok' ? pocetClankov(m.cesta) : 0)));
+
     res.json({
       success: true,
-      data: rows.map((m) => m.toSafeJSON()),
+      data: rows.map((m, i) => ({ ...m.toSafeJSON(), pocet_clankov: pocty[i] })),
       pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
@@ -284,8 +324,9 @@ export const deleteMedium = async (req: Request, res: Response): Promise<void> =
         success: false,
         message:
           `Súbor je použitý na ${pouzitie.spolu} miestach ` +
-          `(články: ${pouzitie.clanky}, stránky: ${pouzitie.stranky}, galérie: ${pouzitie.galerie}). ` +
-          'Zmazaním by tam zostal prázdny obrázok. Ak to naozaj chcete, ' +
+          `(články: ${pouzitie.clanky}, stránky: ${pouzitie.stranky}, galérie: ${pouzitie.galerie}, ` +
+          `dokumenty: ${pouzitie.dokumenty}, logá a fotky: ${pouzitie.ine}). ` +
+          'Zmazaním by tam zostal nefunkčný odkaz. Ak to naozaj chcete, ' +
           'zopakujte požiadavku s ?force=true',
         data: pouzitie,
       });

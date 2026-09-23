@@ -2,7 +2,7 @@
 // Volania API pre Media knižnicu.
 
 import api from '../app/apiKlient';
-import type { MediaSubor } from './typy';
+import type { MediaSubor, MediaDetail } from './typy';
 
 export interface FiltreMedii {
   typ?: 'obrazok' | 'dokument' | 'ine';
@@ -30,4 +30,15 @@ export const mediaApi = {
     subory.forEach((f) => data.append('subory', f));
     return api.vytvor<MediaSubor[]>('/admin/media/upload', data);
   },
+
+  /** Detail súboru aj s miestami použitia. */
+  detail: (id: number, signal?: AbortSignal) => api.ziskaj<MediaDetail>(`/admin/media/${id}`, { signal }),
+
+  /** Názov, alt text a popis. Samotný súbor sa nemení. */
+  uprav: (id: number, udaje: { nazov?: string; alt_text?: string | null; popis?: string | null }) =>
+    api.uprav<MediaSubor>(`/admin/media/${id}`, udaje),
+
+  /** Zmazanie (len administrátor). Použitý súbor vyžaduje vynutenie. */
+  zmaz: (id: number, vynutit = false) =>
+    api.zmaz(`/admin/media/${id}`, { parametre: vynutit ? { force: 'true' } : undefined }),
 };

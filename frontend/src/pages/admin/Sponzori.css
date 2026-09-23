@@ -132,3 +132,80 @@
     grid-template-columns: 1fr;
   }
 }
+
+.cw-spon__stav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ===== Úrovne partnerstva ===== */
+.cw-spon__urovne-popis {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-spon__urovne {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cw-spon__urovne > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.cw-spon__urovne > li.cw-spon__uroven-uprava {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cw-spon__urovne > li.cw-spon__urovne-prazdne {
+  justify-content: center;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.cw-spon__uroven-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cw-spon__uroven-text span {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.cw-spon__uroven-akcie {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.cw-spon__nova-uroven {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cw-spon__nova-uroven > button {
+  justify-self: start;
+}

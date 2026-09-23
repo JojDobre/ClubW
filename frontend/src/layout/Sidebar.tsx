@@ -4,11 +4,12 @@
 // Na širokej obrazovke je trvalo viditeľná a dá sa zúžiť na samotné ikony.
 // Na mobile sa vysúva sprava cez celý obsah.
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Icon } from '../ui';
 import { dostupneSekcie, jeAktivna, type Rola } from '../app/navigacia';
 import { useNastavenia } from '../context/NastaveniaContext';
+import { formulareApi, UDALOST_FORMULARE } from '../api/formulare';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -23,11 +24,42 @@ interface SidebarProps {
   aktualnaCesta: string;
 }
 
+/**
+ * Počet neprečítaných vyplnených formulárov pre odznak v menu.
+ * Obnoví sa pri prechode na inú obrazovku, raz za minútu a po zmene
+ * na obrazovke Formuláre.
+ */
+const useNeprecitaneFormulare = (rola: Rola | undefined, cesta: string): number => {
+  const [pocet, setPocet] = useState(0);
+  const smie = rola === 'admin' || rola === 'redaktor';
+
+  useEffect(() => {
+    if (!smie) return;
+    let zruseny = false;
+    const nacitaj = () =>
+      formulareApi
+        .pocetNeprecitanych()
+        .then((n) => !zruseny && setPocet(Number(n) || 0))
+        .catch(() => undefined);
+    nacitaj();
+    const casovac = window.setInterval(nacitaj, 60_000);
+    window.addEventListener(UDALOST_FORMULARE, nacitaj);
+    return () => {
+      zruseny = true;
+      window.clearInterval(casovac);
+      window.removeEventListener(UDALOST_FORMULARE, nacitaj);
+    };
+  }, [smie, cesta]);
+
+  return smie ? pocet : 0;
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({
   zuzeny, onPrepniZuzenie, mobilneOtvorene, onZavriMobilne, rola, aktualnaCesta,
 }) => {
   const { nastavenia } = useNastavenia();
   const sekcie = dostupneSekcie(rola);
+  const neprecitane = useNeprecitaneFormulare(rola, aktualnaCesta);
 
   // Znak loga: skratka z nastavení klubu, inak prvé písmeno názvu
   const znak = nastavenia.skratka || nastavenia.nazov.charAt(0).toUpperCase();
@@ -90,6 +122,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {!zuzeny && <span className="cw-sidebar__item-label">{polozka.popis}</span>}
                   {!zuzeny && polozka.pripravujeSa && (
                     <span className="cw-sidebar__soon">čoskoro</span>
+                  )}
+                  {polozka.odznak === 'formulare' && neprecitane > 0 && (
+                    <span className="cw-sidebar__count" aria-label={`${neprecitane} neprečítaných`}>
+                      {neprecitane > 99 ? '99+' : neprecitane}
+                    </span>
                   )}
                 </NavLink>
               ))}

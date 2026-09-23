@@ -7,7 +7,16 @@ import sequelize from '../config/database';
 // Interface pre atribúty LigaTurnaj
 interface LigaTurnajAttributes {
   id: number;
-  liga_id: number;                          // FK na ligu
+  /** Liga, ak turnaj patrí pod ligu; samostatný turnaj ju nemá */
+  liga_id: number | null;
+  popis?: string | null;
+  logo?: string | null;
+  sezona_id?: number | null;
+  /** Náš tím, ktorý sa turnaja zúčastňuje */
+  tim_id?: number | null;
+  zobrazit_na_webe: boolean;
+  /** Víťaz môže byť aj klub mimo našej databázy */
+  vitaz_nazov?: string | null;
   nazov: string;                            // Názov turnaja/fázy
   typ: 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff';
   
@@ -43,12 +52,19 @@ interface LigaTurnajAttributes {
 interface LigaTurnajCreationAttributes extends Optional<LigaTurnajAttributes,
   'id' | 'pocet_postupujucich' | 'pocet_skupin' | 'skupiny_struktura' | 'pavuk_struktura' |
   'datum_start' | 'datum_koniec' | 'vitaz_id' | 'druhy_id' | 'treti_id' | 'poznamky' |
-  'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+  'aktivity' | 'vytvoreny' | 'aktualizovany' | 'liga_id' | 'popis' | 'logo' | 'sezona_id' |
+  'tim_id' | 'zobrazit_na_webe' | 'vitaz_nazov' | 'aktualna_faza' | 'celkove_fazy' | 'ma_tretie_miesto' | 'status'> {}
 
 // Trieda pre model LigaTurnaj
 class LigaTurnaj extends Model<LigaTurnajAttributes, LigaTurnajCreationAttributes> implements LigaTurnajAttributes {
   public id!: number;
-  public liga_id!: number;
+  public liga_id!: number | null;
+  public popis!: string | null;
+  public logo!: string | null;
+  public sezona_id!: number | null;
+  public tim_id!: number | null;
+  public zobrazit_na_webe!: boolean;
+  public vitaz_nazov!: string | null;
   public nazov!: string;
   public typ!: 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff';
   public pocet_timov!: number;
@@ -472,7 +488,7 @@ LigaTurnaj.init(
     },
     liga_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'ligy',
         key: 'id',
@@ -480,6 +496,12 @@ LigaTurnaj.init(
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     },
+    popis: { type: DataTypes.TEXT, allowNull: true },
+    logo: { type: DataTypes.STRING(500), allowNull: true },
+    sezona_id: { type: DataTypes.INTEGER, allowNull: true },
+    tim_id: { type: DataTypes.INTEGER, allowNull: true },
+    zobrazit_na_webe: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    vitaz_nazov: { type: DataTypes.STRING(120), allowNull: true },
     nazov: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -628,28 +650,15 @@ LigaTurnaj.init(
       },
     ],
     hooks: {
-      // Validácia pred vytvorením
-      beforeCreate: async (turnaj: LigaTurnaj) => {
-        // Pre groups_playoff je počet skupín povinný
-        if (turnaj.typ === 'groups_playoff' && !turnaj.pocet_skupin) {
-          throw new Error('Pre typ "groups_playoff" je potrebné zadať počet skupín');
-        }
-        
-        // Pre groups_playoff je počet postupujúcich povinný
-        if (turnaj.typ === 'groups_playoff' && !turnaj.pocet_postupujucich) {
-          throw new Error('Pre typ "groups_playoff" je potrebné zadať počet postupujúcich zo skupiny');
-        }
-        
-        // Kontrola logických limitov
-        if (turnaj.pocet_skupin && turnaj.pocet_timov < turnaj.pocet_skupin * 2) {
-          throw new Error('Počet tímov musí byť aspoň 2x väčší ako počet skupín');
-        }
-      },
-      
+      // Pôvodný beforeCreate vyžadoval počet skupín a postupujúcich už pri
+      // založení. Skupiny sa však nastavujú až v administrácii turnaja
+      // a výnimka z hooku končila chybou 500 - preto tu už nie je.
+
       // Validácia pred uložením
       beforeSave: async (turnaj: LigaTurnaj) => {
         // Kontrola dátumov
-        if (turnaj.datum_start && turnaj.datum_koniec && turnaj.datum_start >= turnaj.datum_koniec) {
+        // Jednodňový turnaj (začiatok = koniec) je bežný - odmietame len koniec pred začiatkom
+        if (turnaj.datum_start && turnaj.datum_koniec && turnaj.datum_start > turnaj.datum_koniec) {
           throw new Error('Dátum ukončenia musí byť po dátume začiatku');
         }
       },

@@ -1,0 +1,77 @@
+/* Umiestnenie: frontend/src/pages/admin/Dokumenty.css */
+
+.cw-dok__subor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.cw-dok__subor a {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.cw-dok__kategorie {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cw-dok__kategorie > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.cw-dok__kategorie > li > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cw-dok__kategorie > li > div:first-child span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cw-dok__kategorie > li.cw-dok__kat-uprava {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cw-dok__kategorie > li.cw-dok__prazdne {
+  color: var(--muted);
+  border-style: dashed;
+  justify-content: center;
+}
+
+.cw-dok__kat-akcie {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.cw-dok__nova {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cw-dok__nova > button {
+  justify-self: start;
+}

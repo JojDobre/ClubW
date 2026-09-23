@@ -1,0 +1,25 @@
+/* Umiestnenie: frontend/src/components/FormularWeb.css - formulár na webe */
+.fw { display: flex; flex-direction: column; gap: 14px; max-width: 640px; margin: 24px 0; padding: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; color: #1e293b; font-size: 15px; line-height: 1.45; box-sizing: border-box; }
+.fw--info { color: #64748b; }
+.fw--hotovo { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.fw__nadpis { margin: 0; font-size: 1.3rem; }
+.fw__popis { margin: 0; color: #475569; white-space: pre-line; }
+.fw__upozornenie { padding: 10px 12px; border-radius: 10px; background: #fef3c7; color: #92400e; }
+.fw__pole { display: flex; flex-direction: column; gap: 4px; }
+.fw__menovka { font-weight: 600; }
+.fw__povinne { color: #dc2626; }
+.fw__napoveda { color: #64748b; font-size: 13px; }
+.fw input:not([type=checkbox]), .fw select, .fw textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; background: #fff; color: inherit; }
+.fw input:focus, .fw select:focus, .fw textarea:focus { outline: 2px solid #16a34a; outline-offset: 1px; border-color: #16a34a; }
+.fw__moznosti { display: flex; flex-direction: column; gap: 6px; }
+.fw__zaskrtnutie { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.fw__zaskrtnutie input { margin-top: 3px; width: 17px; height: 17px; accent-color: #166534; flex-shrink: 0; }
+.fw__pasca { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.fw__chyby { margin: 0; padding: 10px 12px 10px 30px; border-radius: 10px; background: #fef2f2; color: #b91c1c; }
+.fw__odoslat { align-self: flex-start; padding: 11px 22px; border: 0; border-radius: 10px; background: #166534; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.fw__odoslat:hover:not(:disabled) { background: #14532d; }
+.fw__odoslat:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 560px) {
+  .fw { padding: 16px; }
+  .fw__odoslat { align-self: stretch; }
+}

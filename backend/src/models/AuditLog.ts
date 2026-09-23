@@ -70,11 +70,13 @@ class AuditLog
     entita: string;
     entita_id?: number | null;
     popis?: string | null;
+    /** E-mail, keď požiadavka ešte nie je prihlásená (samotné prihlásenie) */
+    email?: string | null;
   }): Promise<void> {
     try {
       await AuditLog.create({
         pouzivatel_id: udaje.req?.userId ?? null,
-        pouzivatel_email: udaje.req?.user?.email ?? null,
+        pouzivatel_email: udaje.req?.user?.email ?? udaje.email ?? null,
         akcia: udaje.akcia,
         entita: udaje.entita,
         entita_id: udaje.entita_id ?? null,

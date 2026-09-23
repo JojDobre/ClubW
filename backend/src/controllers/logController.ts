@@ -123,11 +123,31 @@ export const getMoznostiFiltra = async (_req: Request, res: Response): Promise<v
       order: [['entita', 'ASC']],
     });
 
+    // Používatelia, ktorí sa v logoch objavili (aj keď už boli zmazaní)
+    const pouzivatelia = await AuditLog.findAll({
+      attributes: ['pouzivatel_id', 'pouzivatel_email'],
+      where: { pouzivatel_id: { [Op.ne]: null } },
+      group: ['pouzivatel_id', 'pouzivatel_email'],
+    });
+    const mena = await User.findAll({
+      attributes: ['id', 'meno'],
+      where: { id: [...new Set(pouzivatelia.map((p) => p.pouzivatel_id as number))] },
+    });
+
+    const zoznamPouzivatelov = new Map<number, { id: number; meno: string }>();
+    for (const p of pouzivatelia) {
+      const id = p.pouzivatel_id as number;
+      if (zoznamPouzivatelov.has(id)) continue;
+      const meno = mena.find((m) => m.id === id)?.meno || p.pouzivatel_email || `Používateľ #${id}`;
+      zoznamPouzivatelov.set(id, { id, meno });
+    }
+
     res.json({
       success: true,
       data: {
         akcie: AKCIE,
         entity: entity.map((e) => e.entita),
+        pouzivatelia: [...zoznamPouzivatelov.values()].sort((a, b) => a.meno.localeCompare(b.meno, 'sk')),
       },
     });
   } catch (error) {

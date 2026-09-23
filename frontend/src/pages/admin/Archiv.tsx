@@ -23,6 +23,7 @@ const TYPY: Array<{ hodnota: TypArchivu; popis: string }> = [
   { hodnota: 'realizacny-tim', popis: 'Realizačný tím' },
   { hodnota: 'stadiony', popis: 'Štadióny' },
   { hodnota: 'ligy', popis: 'Ligy' },
+  { hodnota: 'turnaje', popis: 'Turnaje' },
 ];
 
 export const Archiv: React.FC = () => {

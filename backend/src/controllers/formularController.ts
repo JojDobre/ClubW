@@ -11,7 +11,35 @@ import { Op } from 'sequelize';
 import Formular from '../models/Formular';
 import FormularOdpoved from '../models/FormularOdpoved';
 import { sanitizePlainText } from '../utils/sanitize';
-import { zostavStrankovanie } from '../utils/odpoved';
+import { zostavStrankovanie, odpovedzNaChybuModelu } from '../utils/odpoved';
+import { posliEmail } from '../utils/email';
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Jedinečný slug formulára. Čisto číselný slug by sa pomýlil s ID,
+ * preto dostane predponu.
+ */
+const unikatnySlug = async (zaklad: string, okremId?: number): Promise<string> => {
+  let koren = Formular.vyrobSlug(zaklad);
+  if (/^\d+$/.test(koren)) koren = `formular-${koren}`;
+  let slug = koren;
+  let pokus = 1;
+  for (;;) {
+    const zhoda = await Formular.findOne({ where: { slug } });
+    if (!zhoda || zhoda.id === okremId) return slug;
+    pokus++;
+    slug = `${koren}-${pokus}`;
+  }
+};
+
+/** Overí e-mail pre upozornenia - prázdny znamená bez upozornení. */
+const emailNotifikacie = (hodnota: unknown): { email: string | null; chyba?: string } => {
+  const email = String(hodnota ?? '').trim();
+  if (!email) return { email: null };
+  if (!EMAIL.test(email) || email.length > 255) return { email: null, chyba: 'E-mail pre upozornenia nie je platný' };
+  return { email };
+};
 
 const overId = (id: string): number | null => {
   const cislo = Number(id);
@@ -94,13 +122,14 @@ export const createFormular = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Slug musí byť jedinečný - pri zhode pridáme číslo
-    let slug = req.body.slug ? Formular.vyrobSlug(String(req.body.slug)) : Formular.vyrobSlug(nazov);
-    let pokus = 1;
-    while (await Formular.findOne({ where: { slug } })) {
-      pokus++;
-      slug = `${Formular.vyrobSlug(nazov)}-${pokus}`;
+    const notifikacie = emailNotifikacie(req.body.email_pre_notifikacie);
+    if (notifikacie.chyba) {
+      res.status(400).json({ success: false, message: notifikacie.chyba });
+      return;
     }
+
+    // Slug musí byť jedinečný - pri zhode pridáme číslo
+    const slug = await unikatnySlug(String(req.body.slug || '').trim() || nazov);
 
     const formular = await Formular.create({
       nazov,
@@ -110,7 +139,7 @@ export const createFormular = async (req: Request, res: Response): Promise<void>
       sprava_po_odoslani: req.body.sprava_po_odoslani
         ? sanitizePlainText(String(req.body.sprava_po_odoslani))
         : null,
-      email_pre_notifikacie: req.body.email_pre_notifikacie || null,
+      email_pre_notifikacie: notifikacie.email,
       aktivny: req.body.aktivny !== false,
     });
 
@@ -120,14 +149,7 @@ export const createFormular = async (req: Request, res: Response): Promise<void>
       message: `Formulár ${formular.nazov} bol vytvorený`,
     });
   } catch (error: any) {
-    if (error?.name === 'SequelizeValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: error.errors.map((e: any) => e.message),
-      });
-      return;
-    }
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri vytváraní formulára:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri vytváraní formulára' });
   }
@@ -177,7 +199,20 @@ export const updateFormular = async (req: Request, res: Response): Promise<void>
         : null;
     }
     if (req.body.email_pre_notifikacie !== undefined) {
-      udaje.email_pre_notifikacie = req.body.email_pre_notifikacie || null;
+      const notifikacie = emailNotifikacie(req.body.email_pre_notifikacie);
+      if (notifikacie.chyba) {
+        res.status(400).json({ success: false, message: notifikacie.chyba });
+        return;
+      }
+      udaje.email_pre_notifikacie = notifikacie.email;
+    }
+    if (req.body.slug !== undefined) {
+      const zelany = String(req.body.slug || '').trim();
+      if (!zelany) {
+        res.status(400).json({ success: false, message: 'Adresa formulára nesmie byť prázdna' });
+        return;
+      }
+      udaje.slug = await unikatnySlug(zelany, formular.id);
     }
     if (req.body.aktivny !== undefined) udaje.aktivny = Boolean(req.body.aktivny);
 
@@ -189,14 +224,7 @@ export const updateFormular = async (req: Request, res: Response): Promise<void>
       message: `Formulár ${formular.nazov} bol upravený`,
     });
   } catch (error: any) {
-    if (error?.name === 'SequelizeValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: error.errors.map((e: any) => e.message),
-      });
-      return;
-    }
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri úprave formulára:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri úprave formulára' });
   }
@@ -346,7 +374,8 @@ export const getVerejnyFormular = async (req: Request, res: Response): Promise<v
   try {
     const formular = await najdiFormular(req.params.kluc);
 
-    if (!formular || !formular.aktivny) {
+    // Vypnutý formulár sa zobrazí so správou, že odpovede neprijíma
+    if (!formular) {
       res.status(404).json({ success: false, message: 'Formulár nebol nájdený' });
       return;
     }
@@ -366,17 +395,41 @@ export const odosliFormular = async (req: Request, res: Response): Promise<void>
   try {
     const formular = await najdiFormular(req.params.kluc);
 
-    if (!formular || !formular.aktivny) {
+    if (!formular) {
       res.status(404).json({ success: false, message: 'Formulár nebol nájdený' });
+      return;
+    }
+    if (!formular.aktivny) {
+      res.status(409).json({ success: false, message: 'Formulár momentálne neprijíma odpovede' });
       return;
     }
 
     const vstup = req.body?.udaje ?? req.body ?? {};
+
+    // Skryté pole, ktoré človek nevidí a nevyplní - vyplnia ho len
+    // roboty. Tvárime sa, že odoslanie prešlo, ale nič neukladáme.
+    if (String((req.body ?? {})._web ?? '').trim() !== '') {
+      res.status(201).json({ success: true, data: null, message: formular.sprava_po_odoslani || 'Ďakujeme, formulár bol odoslaný.' });
+      return;
+    }
+
     const chyby: string[] = [];
     const udaje: Record<string, unknown> = {};
 
     for (const pole of formular.polia) {
-      const hodnota = (vstup as any)[pole.kod];
+      let hodnota = (vstup as any)[pole.kod];
+
+      // Zaškrtávacie polia a súhlas majú vlastné pravidlá
+      if (pole.typ === 'suhlas') {
+        const suhlasi = hodnota === true || hodnota === 'true' || hodnota === 'on' || hodnota === 1;
+        if (pole.povinne && !suhlasi) chyby.push(`Pole „${pole.nazov}" je potrebné potvrdiť`);
+        if (suhlasi) udaje[pole.kod] = true;
+        continue;
+      }
+      if (pole.typ === 'zaskrtavacie' && hodnota !== undefined && hodnota !== null && !Array.isArray(hodnota)) {
+        hodnota = [hodnota];
+      }
+
       const prazdna =
         hodnota === undefined ||
         hodnota === null ||
@@ -390,21 +443,39 @@ export const odosliFormular = async (req: Request, res: Response): Promise<void>
 
       if (prazdna) continue;
 
+      if (typeof hodnota === 'object' && !Array.isArray(hodnota)) {
+        chyby.push(`Pole „${pole.nazov}" má neplatnú hodnotu`);
+        continue;
+      }
+
       // Text z formulára ide na obrazovku administrácie, takže z neho
       // odstraňujeme značkovanie rovnako ako inde
       if (Array.isArray(hodnota)) {
-        udaje[pole.kod] = hodnota.map((h) => sanitizePlainText(String(h)).slice(0, 500));
-      } else if (typeof hodnota === 'boolean') {
-        udaje[pole.kod] = hodnota;
-      } else {
-        udaje[pole.kod] = sanitizePlainText(String(hodnota)).slice(0, 5000);
+        const vybrane = hodnota.slice(0, 50).map((h) => sanitizePlainText(String(h)).slice(0, 500));
+        if (pole.moznosti && vybrane.some((v) => !pole.moznosti!.includes(v))) {
+          chyby.push(`Pole „${pole.nazov}": zvolená možnosť nie je v zozname`);
+          continue;
+        }
+        udaje[pole.kod] = vybrane;
+        continue;
       }
 
-      if (pole.typ === 'email' && !String(hodnota).includes('@')) {
+      const text = sanitizePlainText(String(hodnota)).trim().slice(0, 5000);
+      udaje[pole.kod] = text;
+
+      if (pole.typ === 'email' && !EMAIL.test(text)) {
         chyby.push(`Pole „${pole.nazov}" musí obsahovať platný e-mail`);
       }
-
-      if (pole.typ === 'vyber' && pole.moznosti && !pole.moznosti.includes(String(hodnota))) {
+      if (pole.typ === 'telefon' && !/^[+0-9 ()/-]{6,20}$/.test(text)) {
+        chyby.push(`Pole „${pole.nazov}" musí obsahovať platné telefónne číslo`);
+      }
+      if (pole.typ === 'cislo' && !Number.isFinite(Number(text.replace(',', '.')))) {
+        chyby.push(`Pole „${pole.nazov}" musí byť číslo`);
+      }
+      if (pole.typ === 'datum' && (!/^\d{4}-\d{2}-\d{2}$/.test(text) || Number.isNaN(Date.parse(text)))) {
+        chyby.push(`Pole „${pole.nazov}" musí byť dátum`);
+      }
+      if (pole.typ === 'vyber' && pole.moznosti && !pole.moznosti.includes(text)) {
         chyby.push(`Pole „${pole.nazov}": zvolená možnosť nie je v zozname`);
       }
     }
@@ -419,6 +490,21 @@ export const odosliFormular = async (req: Request, res: Response): Promise<void>
       udaje,
       ip_adresa: req.ip ?? null,
     });
+
+    // Upozornenie e-mailom - chyba odosielania nesmie zhodiť odoslanie
+    if (formular.email_pre_notifikacie) {
+      const riadky = formular.polia
+        .filter((p) => udaje[p.kod] !== undefined)
+        .map((p) => {
+          const h = udaje[p.kod];
+          return `${p.nazov}: ${Array.isArray(h) ? h.join(', ') : h === true ? 'áno' : h}`;
+        });
+      posliEmail({
+        prijemca: formular.email_pre_notifikacie,
+        predmet: `Nový vyplnený formulár: ${formular.nazov}`,
+        text: `Prišla nová odpoveď na formulár „${formular.nazov}".\n\n${riadky.join('\n')}`,
+      }).catch((e) => console.error('Upozornenie na formulár sa nepodarilo odoslať:', e));
+    }
 
     res.status(201).json({
       success: true,

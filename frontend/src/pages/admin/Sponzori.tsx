@@ -7,21 +7,37 @@ import {
   Skeleton, EmptyState, ErrorState, ConfirmDialog, useToast, type TonStitka,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
-import { sponzoriApi } from '../../api/klub';
-import type { Sponzor, UrovenSponzora } from '../../api/typy';
+import { sponzoriApi, urovneSponzorovApi } from '../../api/klub';
+import { PoleObrazka } from '../../components/admin/PoleObrazka';
+import { souborUrl } from '../../config/api';
+import { formatujDatum } from '../../utils/datum';
+import type { Sponzor, UrovenPartnerstva, VelkostLoga } from '../../api/typy';
 import './Sponzori.css';
 
-/** Úrovne partnerstva — určujú veľkosť loga na verejnom webe. */
-const UROVNE: Array<{ hodnota: UrovenSponzora; popis: string; ton: TonStitka }> = [
-  { hodnota: 'generalny', popis: 'Generálny partner', ton: 'danger' },
-  { hodnota: 'hlavny', popis: 'Hlavný partner', ton: 'primary' },
-  { hodnota: 'partner', popis: 'Partner', ton: 'info' },
-  { hodnota: 'dodavatel', popis: 'Dodávateľ', ton: 'neutral' },
+/** 1 sponzor, 2 sponzori, 5 sponzorov */
+const pocetSponzorov = (n: number) => `${n} ${n === 1 ? 'sponzor' : n >= 2 && n <= 4 ? 'sponzori' : 'sponzorov'}`;
+
+/** Farby štítkov úrovní - podľa poradia úrovne. */
+const TONY: TonStitka[] = ['danger', 'primary', 'info', 'success', 'warning', 'neutral'];
+
+export const VELKOSTI_LOGA: Array<{ hodnota: VelkostLoga; popis: string }> = [
+  { hodnota: 'velke', popis: 'Veľké logo' },
+  { hodnota: 'stredne', popis: 'Stredné logo' },
+  { hodnota: 'male', popis: 'Malé logo' },
 ];
+
+/** Stav partnerstva podľa dátumov - na webe sa ukážu len platní sponzori. */
+export const stavPartnerstva = (s: Pick<Sponzor, 'platny_od' | 'platny_do' | 'aktivity'>) => {
+  const dnes = new Date().toISOString().slice(0, 10);
+  if (!s.aktivity) return { popis: 'Skrytý', ton: 'neutral' as TonStitka, naWebe: false };
+  if (s.platny_do && s.platny_do.slice(0, 10) < dnes) return { popis: 'Partnerstvo skončilo', ton: 'warning' as TonStitka, naWebe: false };
+  if (s.platny_od && s.platny_od.slice(0, 10) > dnes) return { popis: 'Začne ' + formatujDatum(s.platny_od), ton: 'info' as TonStitka, naWebe: false };
+  return { popis: 'Na webe', ton: 'success' as TonStitka, naWebe: true };
+};
 
 const PRAZDNY: Partial<Sponzor> = {
   nazov: '',
-  uroven: 'partner',
+  uroven_id: null,
   logo: '',
   web_url: '',
   popis: '',
@@ -39,14 +55,95 @@ export const Sponzori: React.FC = () => {
 
   const sponzori = useNacitanie((signal) => sponzoriApi.vypis(signal));
   const zoznam = sponzori.data ?? [];
+  const urovne = useNacitanie((signal) => urovneSponzorovApi.vypis(signal));
+  const zoznamUrovni = [...(urovne.data ?? [])].sort((a, b) => a.poradie - b.poradie || a.nazov.localeCompare(b.nazov, 'sk'));
+
+  // ===== Správa úrovní =====
+  const [urovneOtvorene, setUrovneOtvorene] = useState(false);
+  const [upravovanaUroven, setUpravovanaUroven] = useState<UrovenPartnerstva | null>(null);
+  const [novaUroven, setNovaUroven] = useState<{ nazov: string; popis: string; velkost_loga: VelkostLoga }>({
+    nazov: '',
+    popis: '',
+    velkost_loga: 'stredne',
+  });
+
+  const pocetVUrovni = (id: number) => zoznam.filter((s) => s.uroven_id === id).length;
+
+  const pridajUroven = async () => {
+    if (novaUroven.nazov.trim().length < 2) return varovanie('Názov úrovne musí mať aspoň 2 znaky');
+    try {
+      await urovneSponzorovApi.vytvor({
+        nazov: novaUroven.nazov.trim(),
+        popis: novaUroven.popis.trim() || null,
+        velkost_loga: novaUroven.velkost_loga,
+        poradie: (zoznamUrovni[zoznamUrovni.length - 1]?.poradie ?? 0) + 1,
+      });
+      setNovaUroven({ nazov: '', popis: '', velkost_loga: 'stredne' });
+      urovne.obnov();
+      uspech('Úroveň bola pridaná');
+    } catch (e: any) {
+      hlasChybu(e?.status === 409 || /existuje/.test(e?.message) ? 'Úroveň s takým názvom už existuje' : e?.message || 'Úroveň sa nepodarilo pridať');
+    }
+  };
+
+  const ulozUroven = async () => {
+    if (!upravovanaUroven) return;
+    if (upravovanaUroven.nazov.trim().length < 2) return varovanie('Názov úrovne musí mať aspoň 2 znaky');
+    try {
+      await urovneSponzorovApi.uprav(upravovanaUroven.id, {
+        nazov: upravovanaUroven.nazov.trim(),
+        popis: upravovanaUroven.popis?.trim() || null,
+        velkost_loga: upravovanaUroven.velkost_loga,
+      });
+      setUpravovanaUroven(null);
+      urovne.obnov();
+      uspech('Úroveň bola uložená');
+    } catch (e: any) {
+      hlasChybu(e?.message || 'Úroveň sa nepodarilo uložiť');
+    }
+  };
+
+  const presunUroven = async (index: number, smer: -1 | 1) => {
+    const a = zoznamUrovni[index];
+    const b = zoznamUrovni[index + smer];
+    if (!a || !b) return;
+    try {
+      // Poradie prečíslujeme celé, aby rovnaké čísla nerobili problém
+      const nove = [...zoznamUrovni];
+      [nove[index], nove[index + smer]] = [b, a];
+      await Promise.all(
+        nove.map((u, i) => (u.poradie !== i + 1 ? urovneSponzorovApi.uprav(u.id, { poradie: i + 1 }) : null))
+      );
+      urovne.obnov();
+    } catch (e: any) {
+      hlasChybu(e?.message || 'Poradie sa nepodarilo zmeniť');
+    }
+  };
+
+  const zmazUroven = async (u: UrovenPartnerstva) => {
+    const pocet = pocetVUrovni(u.id);
+    if (!window.confirm(pocet ? `Úroveň ${u.nazov} má ${pocet} sponzorov - zostanú bez úrovne. Zmazať?` : `Zmazať úroveň ${u.nazov}?`)) return;
+    try {
+      await urovneSponzorovApi.zmaz(u.id);
+      urovne.obnov();
+      sponzori.obnov();
+      uspech('Úroveň bola zmazaná');
+    } catch (e: any) {
+      hlasChybu(e?.message || 'Úroveň sa nepodarilo zmazať');
+    }
+  };
 
   const jeNovy = upravovany !== null && !upravovany.id;
 
   const uloz = async () => {
     if (!upravovany) return;
 
-    if (!upravovany.nazov?.trim()) {
-      varovanie('Zadajte názov sponzora');
+    if ((upravovany.nazov?.trim().length ?? 0) < 2) {
+      varovanie('Názov sponzora musí mať aspoň 2 znaky');
+      return;
+    }
+    if (upravovany.platny_od && upravovany.platny_do && upravovany.platny_od > upravovany.platny_do) {
+      varovanie('Partnerstvo nemôže skončiť skôr, ako začalo');
       return;
     }
 
@@ -91,20 +188,38 @@ export const Sponzori: React.FC = () => {
   };
 
   // Sponzorov zoskupíme podľa úrovne — tak sa zobrazujú aj na webe
-  const podlaUrovne = UROVNE.map((u) => ({
-    uroven: u,
-    sponzori: zoznam.filter((s) => s.uroven === u.hodnota),
-  })).filter((sk) => sk.sponzori.length > 0);
+  const podlaUrovne = [
+    ...zoznamUrovni.map((u, i) => ({
+      kluc: String(u.id),
+      popis: u.nazov,
+      ton: TONY[i % TONY.length],
+      sponzori: zoznam.filter((s) => s.uroven_id === u.id),
+    })),
+    {
+      kluc: 'bez',
+      popis: 'Bez úrovne',
+      ton: 'neutral' as TonStitka,
+      sponzori: zoznam.filter((s) => !s.uroven_id || !zoznamUrovni.some((u) => u.id === s.uroven_id)),
+    },
+  ].filter((sk) => sk.sponzori.length > 0);
 
   return (
     <div className="cw-screen">
       <PageHeader
         nadpis="Sponzori"
-        podnadpis="Partneri klubu zoradení podľa úrovne partnerstva."
+        podnadpis="Partneri klubu podľa úrovne partnerstva. Na webe sú na adrese /sponzori."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-            Nový sponzor
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => setUrovneOtvorene(true)}>
+              Úrovne partnerstva
+            </Button>
+            <Button
+              ikona={<Icon nazov="plus" velkost={17} />}
+              onClick={() => setUpravovany({ ...PRAZDNY, uroven_id: zoznamUrovni[zoznamUrovni.length - 1]?.id ?? null })}
+            >
+              Nový sponzor
+            </Button>
+          </>
         }
       />
 
@@ -128,20 +243,20 @@ export const Sponzori: React.FC = () => {
           />
         </div>
       ) : (
-        podlaUrovne.map(({ uroven, sponzori: skupina }) => (
-          <section key={uroven.hodnota} className="cw-spon__skupina">
+        podlaUrovne.map(({ kluc, popis, ton, sponzori: skupina }) => (
+          <section key={kluc} className="cw-spon__skupina">
             <div className="cw-spon__skupina-hlava">
-              <Badge ton={uroven.ton}>{uroven.popis}</Badge>
+              <Badge ton={ton}>{popis}</Badge>
               <span className="cw-spon__pocet">{skupina.length}</span>
             </div>
 
             <div className="cw-spon__mriezka">
               {skupina.map((s) => (
-                <div key={s.id} className={`cw-spon__karta ${!s.aktivity ? 'is-neaktivny' : ''}`}>
+                <div key={s.id} className={`cw-spon__karta ${!stavPartnerstva(s).naWebe ? 'is-neaktivny' : ''}`}>
                   <div className="cw-spon__logo">
                     {s.logo ? (
                       <img
-                        src={s.logo}
+                        src={souborUrl(s.logo)}
                         alt=""
                         onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                       />
@@ -163,7 +278,14 @@ export const Sponzori: React.FC = () => {
                         {s.web_url.replace(/^https?:\/\//, '')}
                       </a>
                     )}
-                    {!s.aktivity && <Badge>Neaktívny</Badge>}
+                    <div className="cw-spon__stav">
+                      <Badge ton={stavPartnerstva(s).ton}>{stavPartnerstva(s).popis}</Badge>
+                      {(s.platny_od || s.platny_do) && (
+                        <span>
+                          {s.platny_od ? formatujDatum(s.platny_od) : '…'} – {s.platny_do ? formatujDatum(s.platny_do) : '…'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="cw-spon__akcie">
@@ -209,24 +331,26 @@ export const Sponzori: React.FC = () => {
 
             <Select
               menovka="Úroveň partnerstva"
-              value={upravovany.uroven ?? 'partner'}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, uroven: e.target.value as UrovenSponzora }))}
-              moznosti={UROVNE.map((u) => ({ hodnota: u.hodnota, popis: u.popis }))}
-              napoveda="Určuje veľkosť loga na verejnom webe"
+              value={upravovany.uroven_id ?? ''}
+              onChange={(e) => setUpravovany((d) => ({ ...d!, uroven_id: e.target.value ? Number(e.target.value) : null }))}
+              prazdna="Bez úrovne"
+              moznosti={zoznamUrovni.map((u) => ({ hodnota: u.id, popis: u.nazov }))}
+              napoveda="Určuje poradie a veľkosť loga na webe. Úrovne spravujete tlačidlom Úrovne partnerstva."
             />
 
-            <Input
-              menovka="Adresa loga"
-              value={upravovany.logo ?? ''}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, logo: e.target.value }))}
-              placeholder="/uploads/images/sponzori/…"
+            <PoleObrazka
+              menovka="Logo"
+              hodnota={upravovany.logo}
+              onZmena={(cesta) => setUpravovany((d) => ({ ...d!, logo: cesta }))}
+              napoveda="Nahrajte nové alebo vyberte z knižnice médií"
             />
 
             <Input
               menovka="Webová stránka"
               value={upravovany.web_url ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, web_url: e.target.value }))}
-              placeholder="https://…"
+              placeholder="https://firma.sk"
+              napoveda="Stačí aj firma.sk - https:// sa doplní"
             />
 
             <Textarea
@@ -264,9 +388,67 @@ export const Sponzori: React.FC = () => {
               zapnute={Boolean(upravovany.aktivity)}
               onZmena={(v) => setUpravovany((d) => ({ ...d!, aktivity: v }))}
               menovka="Zobraziť na webe"
+              popis="Na webe sa zobrazí len počas obdobia partnerstva"
             />
           </>
         )}
+      </Modal>
+
+      {/* ===== Úrovne partnerstva ===== */}
+      <Modal otvorene={urovneOtvorene} onZavri={() => setUrovneOtvorene(false)} nadpis="Úrovne partnerstva">
+        <p className="cw-spon__urovne-popis">Poradie úrovní určuje poradie skupín na webe. Veľkosť loga platí pre všetkých sponzorov úrovne.</p>
+        <ul className="cw-spon__urovne">
+          {zoznamUrovni.length === 0 && <li className="cw-spon__urovne-prazdne">Zatiaľ žiadne úrovne.</li>}
+          {zoznamUrovni.map((u, i) =>
+            upravovanaUroven?.id === u.id ? (
+              <li key={u.id} className="cw-spon__uroven-uprava">
+                <Input menovka="Názov" value={upravovanaUroven.nazov} onChange={(e) => setUpravovanaUroven({ ...upravovanaUroven, nazov: e.target.value })} />
+                <Input menovka="Popis" value={upravovanaUroven.popis ?? ''} onChange={(e) => setUpravovanaUroven({ ...upravovanaUroven, popis: e.target.value })} />
+                <Select
+                  menovka="Veľkosť loga"
+                  value={upravovanaUroven.velkost_loga}
+                  onChange={(e) => setUpravovanaUroven({ ...upravovanaUroven, velkost_loga: e.target.value as VelkostLoga })}
+                  moznosti={VELKOSTI_LOGA}
+                />
+                <div className="cw-spon__uroven-akcie">
+                  <Button velkost="sm" variant="secondary" onClick={() => setUpravovanaUroven(null)}>Zrušiť</Button>
+                  <Button velkost="sm" onClick={ulozUroven}>Uložiť</Button>
+                </div>
+              </li>
+            ) : (
+              <li key={u.id}>
+                <div className="cw-spon__uroven-text">
+                  <strong>{u.nazov}</strong>
+                  <span>
+                    {VELKOSTI_LOGA.find((v) => v.hodnota === u.velkost_loga)?.popis} · {pocetSponzorov(pocetVUrovni(u.id))}
+                    {u.popis ? ` · ${u.popis}` : ''}
+                  </span>
+                </div>
+                <div className="cw-spon__uroven-akcie">
+                  <Button velkost="sm" variant="ghost" disabled={i === 0} onClick={() => presunUroven(i, -1)} aria-label={`Posunúť ${u.nazov} vyššie`}>↑</Button>
+                  <Button velkost="sm" variant="ghost" disabled={i === zoznamUrovni.length - 1} onClick={() => presunUroven(i, 1)} aria-label={`Posunúť ${u.nazov} nižšie`}>↓</Button>
+                  <Button velkost="sm" variant="ghost" onClick={() => setUpravovanaUroven({ ...u })} aria-label={`Upraviť ${u.nazov}`}>
+                    <Icon nazov="upravit" velkost={14} />
+                  </Button>
+                  <Button velkost="sm" variant="ghost" onClick={() => zmazUroven(u)} aria-label={`Zmazať ${u.nazov}`}>
+                    <Icon nazov="zmazat" velkost={14} />
+                  </Button>
+                </div>
+              </li>
+            )
+          )}
+        </ul>
+        <div className="cw-spon__nova-uroven">
+          <Input menovka="Nová úroveň" value={novaUroven.nazov} onChange={(e) => setNovaUroven((n) => ({ ...n, nazov: e.target.value }))} placeholder="Mediálny partner" />
+          <Input menovka="Popis úrovne" value={novaUroven.popis} onChange={(e) => setNovaUroven((n) => ({ ...n, popis: e.target.value }))} />
+          <Select
+            menovka="Veľkosť loga novej úrovne"
+            value={novaUroven.velkost_loga}
+            onChange={(e) => setNovaUroven((n) => ({ ...n, velkost_loga: e.target.value as VelkostLoga }))}
+            moznosti={VELKOSTI_LOGA}
+          />
+          <Button onClick={pridajUroven} ikona={<Icon nazov="plus" velkost={14} />}>Pridať úroveň</Button>
+        </div>
       </Modal>
 
       <ConfirmDialog

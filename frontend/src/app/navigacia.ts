@@ -20,6 +20,8 @@ export interface PolozkaMenu {
   role?: Rola[];
   /** Obrazovka zatiaľ nemá rozhranie — zobrazí sa so značkou „pripravuje sa" */
   pripravujeSa?: boolean;
+  /** Odznak s počtom nových položiek (napr. neprečítané formuláre) */
+  odznak?: 'formulare';
 }
 
 export interface SekciaMenu {
@@ -45,6 +47,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       { cesta: '/admin/stranky', popis: 'Stránky', ikona: 'stranky' },
       { cesta: '/admin/galerie', popis: 'Galérie', ikona: 'galerie' },
       { cesta: '/admin/videa', popis: 'Videá', ikona: 'videa' },
+      { cesta: '/admin/media', popis: 'Knižnica médií', ikona: 'media' },
     ],
   },
   {
@@ -65,6 +68,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
     polozky: [
       { cesta: '/admin/sponzori', popis: 'Sponzori', ikona: 'licencia' },
       { cesta: '/admin/dokumenty', popis: 'Dokumenty', ikona: 'stranky' },
+      { cesta: '/admin/formulare', popis: 'Formuláre', ikona: 'formular', odznak: 'formulare' },
       { cesta: '/admin/ankety', popis: 'Ankety', ikona: 'komentare' },
       { cesta: '/admin/fanusikovia', popis: 'Fanúšikovia', ikona: 'pouzivatelia' },
     ],
@@ -79,6 +83,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať
       { cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
       { cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
+      { cesta: '/admin/logy', popis: 'Logy', ikona: 'hodiny', role: ['admin'] },
       { cesta: '/admin/ochrana-udajov', popis: 'Ochrana údajov', ikona: 'gdpr', role: ['admin'] },
     ],
   },

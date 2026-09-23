@@ -1,0 +1,267 @@
+/* Umiestnenie: frontend/src/pages/admin/Formulare.css */
+
+.cw-form__nazov {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cw-form__nazov span {
+  font-size: 12.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.cw-form__pocty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== Editor ===== */
+.cw-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
+.cw-form__hlavne,
+.cw-form__bok {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cw-form .cw-zed__panel-nadpis {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-form__pocet {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+.cw-form__polia {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cw-form__pole {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.cw-form__pole-hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cw-form__cislo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cw-form__pole-akcie {
+  display: flex;
+  gap: 2px;
+}
+
+.cw-form__chyby {
+  margin: 0 0 12px;
+  padding: 10px 12px 10px 28px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.cw-form__znacka {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.cw-form__znacka > span {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.cw-form__znacka code {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.cw-form__znacka small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cw-form__nahlad .fw {
+  margin: 0;
+  padding: 14px;
+  font-size: 14px;
+}
+
+/* ===== Odpovede ===== */
+.cw-form__lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cw-form__odpovede {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cw-form__odpoved {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cw-form__odpoved-hlava {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cw-form__odpoved-hlava > svg {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform var(--t-fast);
+}
+
+.cw-form__odpoved.is-otvorena .cw-form__odpoved-hlava > svg {
+  transform: rotate(180deg);
+}
+
+.cw-form__bodka {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid var(--border);
+}
+
+.cw-form__odpoved.is-nova .cw-form__bodka {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.cw-form__odpoved.is-nova .cw-form__suhrn {
+  font-weight: 700;
+}
+
+.cw-form__suhrn {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cw-form__cas {
+  font-size: 12.5px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.cw-form__odpoved-telo {
+  padding: 4px 14px 14px 35px;
+  border-top: 1px solid var(--border);
+}
+
+.cw-form__odpoved-telo dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 12px 0;
+}
+
+.cw-form__odpoved-telo dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cw-form__odpoved-telo dd {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.cw-form__prazdne {
+  color: var(--muted);
+}
+
+.cw-form__odpoved-akcie {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .cw-form__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cw-form__cas {
+    display: none;
+  }
+
+  .cw-form__odpoved-telo {
+    padding-left: 14px;
+  }
+
+  .cw-form__odpoved-telo dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .cw-form__odpoved-telo dd {
+    margin-bottom: 8px;
+  }
+}

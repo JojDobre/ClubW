@@ -21,6 +21,7 @@ import Staff from '../models/Staff';
 import Liga from '../models/Liga';
 import Sezona from '../models/Sezona';
 import Stadion from '../models/Stadion';
+import LigaTurnaj from '../models/LigaTurnaj';
 
 /**
  * Popis jednej archivovateľnej entity.
@@ -105,6 +106,14 @@ const TYPY: Record<string, TypArchivu> = {
     nazovJednotne: 'Štadión',
     popis: (s: any) => s.nazov,
     detail: (s: any) => s.adresa,
+    stlpecZmeny: 'aktualizovany',
+  },
+
+  turnaje: {
+    model: LigaTurnaj,
+    nazovJednotne: 'Turnaj',
+    popis: (t: any) => t.nazov,
+    detail: (t: any) => (t.datum_start ? String(t.datum_start) : null),
     stlpecZmeny: 'aktualizovany',
   },
 
