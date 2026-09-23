@@ -18,6 +18,7 @@ import { ulozMedium, zmazMedium } from '../utils/mediaUlozisko';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zostavStrankovanie } from '../utils/odpoved';
 import GaleriaObrazok from '../models/GaleriaObrazok';
+import Dokument from '../models/Dokument';
 
 /** Maximálna veľkosť jedného súboru. */
 const MAX_VELKOST = 10 * 1024 * 1024; // 10 MB
@@ -47,7 +48,7 @@ const overId = (id: string): number | null => {
  * @returns počty výskytov podľa miesta použitia
  */
 export const zistiPouzitie = async (cesta: string) => {
-  const [clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad, fotkyVGaleriach] = await Promise.all([
+  const [clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad, fotkyVGaleriach, dokumenty] = await Promise.all([
     // Hlavný obrázok článku
     Article.count({ where: { obrazok: cesta } }),
     // Vložený priamo v texte článku
@@ -56,6 +57,8 @@ export const zistiPouzitie = async (cesta: string) => {
     Galeria.count({ where: { nahladovy_obrazok: cesta } }),
     // Fotka v niektorej galérii (aj keď nie je titulná)
     GaleriaObrazok.count({ where: { cesta_suboru: cesta, aktivity: true } }),
+    // Súbor na stiahnutie v sekcii Dokumenty
+    Dokument.count({ where: { subor_url: cesta, aktivity: true } }),
   ]);
 
   const clanky = clankyObrazok + clankyVObsahu;
@@ -67,9 +70,19 @@ export const zistiPouzitie = async (cesta: string) => {
     clanky_v_texte: clankyVObsahu,
     stranky: strankyVObsahu,
     galerie,
-    spolu: clanky + strankyVObsahu + galerie,
+    dokumenty,
+    spolu: clanky + strankyVObsahu + galerie + dokumenty,
   };
 };
+
+/**
+ * Počet článkov, v ktorých je obrázok použitý - pre výpis knižnice.
+ * Hlavný obrázok aj vloženie v texte sa počítajú ako jeden článok.
+ */
+const pocetClankov = (cesta: string) =>
+  Article.count({
+    where: { [Op.or]: [{ obrazok: cesta }, { obsah: { [Op.iLike]: `%${cesta}%` } }] },
+  });
 
 /**
  * GET /api/admin/media
@@ -103,9 +116,11 @@ export const getMediaZoznam = async (req: Request, res: Response): Promise<void>
       offset,
     });
 
+    const pocty = await Promise.all(rows.map((m) => (m.typ === 'obrazok' ? pocetClankov(m.cesta) : 0)));
+
     res.json({
       success: true,
-      data: rows.map((m) => m.toSafeJSON()),
+      data: rows.map((m, i) => ({ ...m.toSafeJSON(), pocet_clankov: pocty[i] })),
       pagination: zostavStrankovanie(count, limit, offset),
     });
   } catch (error) {
@@ -284,8 +299,9 @@ export const deleteMedium = async (req: Request, res: Response): Promise<void> =
         success: false,
         message:
           `Súbor je použitý na ${pouzitie.spolu} miestach ` +
-          `(články: ${pouzitie.clanky}, stránky: ${pouzitie.stranky}, galérie: ${pouzitie.galerie}). ` +
-          'Zmazaním by tam zostal prázdny obrázok. Ak to naozaj chcete, ' +
+          `(články: ${pouzitie.clanky}, stránky: ${pouzitie.stranky}, galérie: ${pouzitie.galerie}, ` +
+          `dokumenty: ${pouzitie.dokumenty}). ` +
+          'Zmazaním by tam zostal nefunkčný odkaz. Ak to naozaj chcete, ' +
           'zopakujte požiadavku s ?force=true',
         data: pouzitie,
       });

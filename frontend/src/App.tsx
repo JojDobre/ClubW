@@ -100,6 +100,7 @@ const Galleries = lazy(() => import('./pages/Galleries'));
 const GalleryDetail = lazy(() => import('./pages/GalleryDetail'));
 const Videos = lazy(() => import('./pages/Videos'));
 const TurnajeVerejne = lazy(() => import('./pages/Turnaje'));
+const DokumentyVerejne = lazy(() => import('./pages/Dokumenty'));
 const Stats = lazy(() => import('./pages/Stats'));
 const TestPage = lazy(() => import('./components/TestPage'));
 
@@ -377,6 +378,7 @@ const AppContent: React.FC<{
   const isGalleryDetailPage = currentPath.startsWith('/galleries/') && currentPath !== '/galleries';
   const isVideosPage = currentPath === '/videa';
   const isTurnajePage = currentPath === '/turnaje' || currentPath.startsWith('/turnaje/');
+  const isDokumentyPage = currentPath === '/dokumenty';
   const isStatsPage = currentPath === '/stats';
   const isTestPage = currentPath === '/testpage';
 
@@ -736,6 +738,16 @@ if (isTestPage) {
   );
 }
 
+
+if (isDokumentyPage) {
+  return (
+    <Suspense fallback={<PublicLayout><p style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Načítavam dokumenty...</p></PublicLayout>}>
+      <PublicLayout>
+        <DokumentyVerejne />
+      </PublicLayout>
+    </Suspense>
+  );
+}
 
 if (isTurnajePage) {
   return (

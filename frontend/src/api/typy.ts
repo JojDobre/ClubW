@@ -593,10 +593,35 @@ export interface MediaSubor {
   originalny_nazov: string;
   cesta: string;
   typ: 'obrazok' | 'dokument' | 'ine';
+  mime_typ?: string;
+  /** Veľkosť v bajtoch */
+  velkost?: number;
+  velkost_kb?: number;
   sirka: number | null;
   vyska: number | null;
   alt_text: string | null;
+  popis?: string | null;
+  autor_id?: number | null;
+  autor?: { id: number; meno: string } | null;
+  /** Počet článkov, v ktorých je súbor použitý (vo výpise knižnice) */
+  pocet_clankov?: number;
   vytvoreny: string;
+  aktualizovany?: string;
+}
+
+/** Kde všade je súbor použitý - detail v knižnici médií. */
+export interface PouzitieMedia {
+  clanky: number;
+  clanky_ako_hlavny_obrazok: number;
+  clanky_v_texte: number;
+  stranky: number;
+  galerie: number;
+  dokumenty: number;
+  spolu: number;
+}
+
+export interface MediaDetail extends MediaSubor {
+  pouzitie: PouzitieMedia;
 }
 
 // ===== Realizačný tím =====
@@ -675,12 +700,22 @@ export interface Dokument {
   subor_url: string;
   typ_suboru: string | null;
   velkost_kb: number | null;
+  /** Staršia voľná kategória - nové dokumenty používajú kategoria_id */
   kategoria: string | null;
+  kategoria_id: number | null;
   verejny: boolean;
   pocet_stiahnuti: number;
   poradie: number;
   aktivity: boolean;
   vytvoreny: string;
+}
+
+export interface KategoriaDokumentu {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  poradie: number;
+  aktivity: boolean;
 }
 
 export interface MoznostAnkety {
