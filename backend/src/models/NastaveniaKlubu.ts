@@ -183,6 +183,8 @@ class NastaveniaKlubu
         iban: this.iban,
       },
       meta_popis: this.meta_popis,
+      // Meranie návštevnosti - web ho načíta až po súhlase s cookies
+      google_analytics_id: this.google_analytics_id,
       // Web podľa nich rozhodne, či ukázať cookie lištu a či sú
       // komentáre vôbec zapnuté
       komentare: this.nastavenia_komentarov,

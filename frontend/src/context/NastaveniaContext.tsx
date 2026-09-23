@@ -37,6 +37,20 @@ export interface NastaveniaKlubu {
     x: string | null;
     tiktok?: string | null;
   };
+  google_analytics_id?: string | null;
+  gdpr?: {
+    cookie_lista?: boolean;
+    text_suhlasu?: string | null;
+    odkaz_zasad?: string | null;
+    kontakt_zodpovednej_osoby?: string | null;
+  };
+  seo?: {
+    meta_title_sablona?: string | null;
+    kluc_slova?: string | null;
+    og_obrazok?: string | null;
+    indexovat?: boolean;
+    google_search_console?: string | null;
+  };
   /** Údaje organizácie do päty webu */
   udaje?: {
     pravny_nazov: string | null;
@@ -76,6 +90,9 @@ interface HodnotaKontextu {
   obnov: () => Promise<void>;
 }
 
+/** Titulok z index.html pred načítaním nastavení. */
+const PREDVOLENY_TITULOK = typeof document !== 'undefined' ? document.title : '';
+
 const NastaveniaContext = createContext<HodnotaKontextu | undefined>(undefined);
 
 /**
@@ -112,8 +129,11 @@ export const NastaveniaProvider: React.FC<{ children: ReactNode }> = ({ children
         setNastavenia(telo.data);
         nastavFarbyDoDokumentu(telo.data.farby);
 
-        // Názov klubu v titulku okna a záložke prehliadača
-        document.title = telo.data.nazov;
+        // Názov klubu v titulku okna - len ak si ho stránka ešte
+        // nenastavila sama (inak by ho prepísal, napr. „Dokumenty")
+        if (!document.title || document.title === PREDVOLENY_TITULOK || document.title === PREDVOLENE.nazov) {
+          document.title = telo.data.nazov;
+        }
 
         if (telo.data.favicon) {
           let ikona = document.querySelector<HTMLLinkElement>("link[rel='icon']");

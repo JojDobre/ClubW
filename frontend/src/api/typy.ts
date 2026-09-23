@@ -485,6 +485,33 @@ export interface NastaveniaAdmin {
   google_analytics_id: string | null;
   /** Dodatkové farby šablóny - kľúč → #RRGGBB, v CSS ako --club-extra-<kľúč> */
   dodatkove_farby: Record<string, string>;
+  nastavenia_komentarov: NastaveniaKomentarov;
+  nastavenia_gdpr: NastaveniaGdpr;
+  nastavenia_seo: NastaveniaSeo;
+}
+
+export interface NastaveniaKomentarov {
+  povolene: boolean;
+  moderovat: boolean;
+  vyzadovat_email: boolean;
+  povolit_odpovede: boolean;
+}
+
+export interface NastaveniaGdpr {
+  cookie_lista: boolean;
+  text_suhlasu: string | null;
+  odkaz_zasad?: string | null;
+  kontakt_zodpovednej_osoby: string | null;
+  retencia_mesiacov: number;
+}
+
+export interface NastaveniaSeo {
+  /** Napríklad „%s | FK Dolina" */
+  meta_title_sablona: string | null;
+  kluc_slova: string | null;
+  og_obrazok: string | null;
+  indexovat: boolean;
+  google_search_console: string | null;
 }
 
 // ===== Sezóna =====
