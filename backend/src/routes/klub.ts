@@ -6,6 +6,8 @@
 // tu boli štyri takmer identické kópie toho istého kódu.
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import sequelize from '../config/database';
 import { Model, ModelStatic, Op } from 'sequelize';
 import Sponzor from '../models/Sponzor';
 import Dokument from '../models/Dokument';
@@ -32,6 +34,8 @@ interface NastaveniaEntity {
   hladatV?: string[];
   /** Popis entity do hlášok, napríklad „Sponzor" */
   nazov: string;
+  /** Rod názvu do hlášok („Anketa bola vytvorená"), predvolene mužský */
+  zensky?: boolean;
   /**
    * Kto smie čítať. 'redaktor' = len prihlásený redaktor/správca
    * (osobné údaje fanúšikov). Predvolene verejne.
@@ -50,8 +54,10 @@ interface NastaveniaEntity {
 const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   const {
     model, polia, textovePolia = [], zoradenie = [['id', 'DESC']], hladatV = [], nazov,
-    citanie = 'verejne', verejnyFilter,
+    citanie = 'verejne', verejnyFilter, zensky = false,
   } = nastavenia;
+  const koncovka = zensky ? 'a' : '';
+  const nenasiel = `${nazov} sa nenaš${zensky ? 'la' : 'iel'}`;
 
   /**
    * Overí právo na čítanie a vráti podmienku, ktorá sa pridá k dotazu.
@@ -125,7 +131,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
       if (!filter) return;
       const zaznam = await model.findOne({ where: { id: Number(req.params.id) || 0, ...filter } });
       if (!zaznam) {
-        res.status(404).json({ success: false, message: `${nazov} sa nenašiel` });
+        res.status(404).json({ success: false, message: nenasiel });
         return;
       }
       res.json({ success: true, data: zaznam });
@@ -139,7 +145,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   router.post(`/${cesta}`, authenticateToken, requireEditor, async (req: Request, res: Response) => {
     try {
       const zaznam = await model.create(pripravUdaje(req.body) as any);
-      res.status(201).json({ success: true, data: zaznam, message: `${nazov} bol vytvorený` });
+      res.status(201).json({ success: true, data: zaznam, message: `${nazov} bol${koncovka} vytvoren${zensky ? 'á' : 'ý'}` });
     } catch (chyba: any) {
       if (odpovedzNaChybuModelu(chyba, res)) return;
       console.error(`Chyba pri vytváraní (${nazov}):`, chyba);
@@ -152,7 +158,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
     try {
       const zaznam = await model.findByPk(Number(req.params.id));
       if (!zaznam) {
-        res.status(404).json({ success: false, message: `${nazov} sa nenašiel` });
+        res.status(404).json({ success: false, message: nenasiel });
         return;
       }
 
@@ -170,12 +176,12 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
     try {
       const zaznam = await model.findByPk(Number(req.params.id));
       if (!zaznam) {
-        res.status(404).json({ success: false, message: `${nazov} sa nenašiel` });
+        res.status(404).json({ success: false, message: nenasiel });
         return;
       }
 
       await zaznam.destroy();
-      res.json({ success: true, message: `${nazov} bol zmazaný` });
+      res.json({ success: true, message: `${nazov} bol${koncovka} zmazan${zensky ? 'á' : 'ý'}` });
     } catch (chyba) {
       console.error(`Chyba pri mazaní (${nazov}):`, chyba);
       res.status(500).json({ success: false, message: 'Chyba servera' });
@@ -210,6 +216,7 @@ vytvorOperacie('sponsors', {
 vytvorOperacie('sponsor-levels', {
   model: UrovenSponzora,
   nazov: 'Úroveň partnerstva',
+  zensky: true,
   polia: ['nazov', 'popis', 'poradie', 'velkost_loga', 'aktivity'],
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
@@ -263,6 +270,7 @@ router.get('/documents/:id/download', optionalAuth, async (req: Request, res: Re
 vytvorOperacie('document-categories', {
   model: DokumentKategoria,
   nazov: 'Kategória dokumentov',
+  zensky: true,
   polia: ['nazov', 'popis', 'poradie', 'aktivity'],
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
@@ -274,6 +282,7 @@ vytvorOperacie('document-categories', {
 vytvorOperacie('polls', {
   model: Anketa,
   nazov: 'Anketa',
+  zensky: true,
   polia: ['otazka', 'moznosti', 'otvorena', 'publikovana', 'platna_od', 'platna_do'],
   textovePolia: ['otazka'],
   zoradenie: [['id', 'DESC']],
@@ -301,36 +310,53 @@ vytvorOperacie('fans', {
  * POST /api/polls/:id/vote
  * Hlasovanie v ankete — používa ho verejný web.
  */
-router.post('/polls/:id/vote', async (req: Request, res: Response) => {
+/**
+ * Obmedzenie hlasovania: z jednej adresy najviac 3 hlasy v jednej ankete
+ * za deň (rodina na jednej Wi-Fi), inak by skript vedel anketu zmanipulovať.
+ */
+const hlasovanieLimit = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => `${req.ip}:${req.params.id}`,
+  message: { success: false, message: 'Z tohto zariadenia ste už v ankete hlasovali.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.post('/polls/:id/vote', hlasovanieLimit, async (req: Request, res: Response) => {
   try {
-    const anketa = await Anketa.findByPk(Number(req.params.id));
-    if (!anketa) {
-      res.status(404).json({ success: false, message: 'Anketa sa nenašla' });
-      return;
-    }
+    const dnes = new Date().toISOString().slice(0, 10);
+    // Hlas započítame v transakcii so zámkom riadku - pri súbežných
+    // hlasoch by sa inak navzájom prepísali
+    const vysledok = await sequelize.transaction(async (t) => {
+      const anketa = await Anketa.findByPk(Number(req.params.id), { transaction: t, lock: t.LOCK.UPDATE });
+      if (!anketa || !anketa.publikovana) return { stav: 404, sprava: 'Anketa sa nenašla' };
+      if (
+        !anketa.otvorena ||
+        (anketa.platna_od && String(anketa.platna_od) > dnes) ||
+        (anketa.platna_do && String(anketa.platna_do) < dnes)
+      ) {
+        return { stav: 409, sprava: 'Anketa je uzavretá' };
+      }
 
-    if (!anketa.otvorena) {
-      res.status(409).json({ success: false, message: 'Anketa je uzavretá' });
-      return;
-    }
+      const idMoznosti = String(req.body?.moznost || '');
+      const moznosti = [...(anketa.moznosti ?? [])];
+      const index = moznosti.findIndex((m) => m.id === idMoznosti);
+      if (index === -1) return { stav: 400, sprava: 'Neplatná možnosť' };
 
-    const idMoznosti = String(req.body?.moznost || '');
-    const moznosti = [...(anketa.moznosti ?? [])];
-    const index = moznosti.findIndex((m) => m.id === idMoznosti);
-
-    if (index === -1) {
-      res.status(400).json({ success: false, message: 'Neplatná možnosť' });
-      return;
-    }
-
-    moznosti[index] = { ...moznosti[index], hlasy: (moznosti[index].hlasy || 0) + 1 };
-
-    await anketa.update({
-      moznosti,
-      celkom_hlasov: moznosti.reduce((s, m) => s + (m.hlasy || 0), 0),
+      moznosti[index] = { ...moznosti[index], hlasy: (moznosti[index].hlasy || 0) + 1 };
+      await anketa.update(
+        { moznosti, celkom_hlasov: moznosti.reduce((s, m) => s + (m.hlasy || 0), 0) },
+        { transaction: t }
+      );
+      return { stav: 200, anketa };
     });
 
-    res.json({ success: true, data: anketa, message: 'Hlas bol zaznamenaný' });
+    if (vysledok.stav !== 200) {
+      res.status(vysledok.stav).json({ success: false, message: vysledok.sprava });
+      return;
+    }
+    res.json({ success: true, data: vysledok.anketa, message: 'Hlas bol zaznamenaný' });
   } catch (chyba) {
     console.error('Chyba pri hlasovaní:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });

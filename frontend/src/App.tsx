@@ -8,6 +8,21 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import PublicLayout from './components/PublicLayout';
 import PageView from './components/PageView';
 import NenajdenaStranka from './components/NenajdenaStranka';
+import AnketaWeb from './components/AnketaWeb';
+import { useNastavenia } from './context/NastaveniaContext';
+
+/** Nadpis úvodnej stránky z nastavení klubu (predtým natvrdo „ClubW"). */
+const UvodKlubu: React.FC = () => {
+  const { nastavenia } = useNastavenia();
+  return (
+    <>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#1a202c' }}>Vitajte v klube {nastavenia.nazov}</h1>
+      {(nastavenia.slogan || nastavenia.meta_popis) && (
+        <p style={{ fontSize: '1.2rem', color: '#4a5568', marginBottom: '30px' }}>{nastavenia.slogan || nastavenia.meta_popis}</p>
+      )}
+    </>
+  );
+};
 
 // PRIDANÉ - Nový layout system
 import { RouterProvider, useRouter } from './context/RouterContext';
@@ -402,12 +417,9 @@ const AppContent: React.FC<{
           maxWidth: '800px',
           margin: '0 auto'
         }}>
-          <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#1a202c' }}>
-            🏆 Vitajte v ClubW
-          </h1>
-          <p style={{ fontSize: '1.2rem', color: '#4a5568', marginBottom: '30px' }}>
-            Moderná platforma pre správu športových klubov
-          </p>
+          <UvodKlubu />
+          {/* Najnovšia otvorená anketa (ak nejaká je) */}
+          <AnketaWeb najnovsia />
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',

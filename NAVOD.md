@@ -386,7 +386,11 @@ DB_PASSWORD=...
 JWT_SECRET=...
 CORS_ORIGIN=https://vasklub.sk
 FRONTEND_URL=https://vasklub.sk
+# ak backend beží za nginx (odporúčané):
+TRUST_PROXY=1
 ```
+
+`TRUST_PROXY` povie serveru, že skutočnú adresu návštevníka posiela proxy. Bez neho by limity podľa IP adresy (pokusy o prihlásenie, hlasovanie v anketách, odosielanie formulárov) platili pre všetkých návštevníkov spolu.
 
 ### 9.2 Odosielanie e-mailov
 

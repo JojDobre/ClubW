@@ -22,7 +22,7 @@
   background: #1e293b; color: #f1f5f9; border-radius: 14px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, .35); font-size: 14px;
 }
-.web-cookies p { margin: 0; flex: 1 1 320px; line-height: 1.45; }
+.web-cookies p { margin: 0; flex: 1 1 320px; line-height: 1.45; color: #f1f5f9; }
 .web-cookies a { color: #93c5fd; }
 .web-cookies__tlacidla { display: flex; gap: 8px; flex-shrink: 0; }
 .web-cookies button { border: 0; border-radius: 8px; padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; background: #22c55e; color: #052e16; }

@@ -24,7 +24,11 @@ over "Endpoint dostupný verejne" "True" \
 over "Predvolená primárna farba" "#1B5E20" \
   "$(echo "$ODP" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['farby']['primarna'])" 2>/dev/null)"
 over "Prevádzkové údaje NIE sú vo verejnej odpovedi" "True" \
-  "$(echo "$ODP" | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print('ico' not in d and 'google_analytics_id' not in d)" 2>/dev/null)"
+  "$(echo "$ODP" | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print('ico' not in d and 'id' not in d and 'updated_at' not in d)" 2>/dev/null)"
+# Meracie ID Google Analytics web potrebuje, aby po súhlase načítal meranie
+# (v kóde stránky je viditeľné tak či tak)
+over "Meracie ID Analytics je verejné" "True" \
+  "$(echo "$ODP" | python3 -c "import sys,json; print('google_analytics_id' in json.load(sys.stdin)['data'])" 2>/dev/null)"
 
 echo ""
 echo "═══ TEST 2: CSS s farbami klubu ═══"

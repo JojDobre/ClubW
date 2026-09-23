@@ -1,0 +1,14 @@
+/* Umiestnenie: frontend/src/components/AnketaWeb.css - anketa na webe */
+.aw { max-width: 520px; margin: 24px auto; padding: 18px 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; text-align: left; color: #1e293b; box-sizing: border-box; }
+.aw__stitok { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #166534; background: #dcfce7; border-radius: 6px; padding: 3px 8px; }
+.aw__otazka { margin: 10px 0 14px; font-size: 1.15rem; }
+.aw__moznost { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+.aw__moznost input { width: 17px; height: 17px; accent-color: #166534; }
+.aw__hlasovat { margin-top: 6px; padding: 10px 20px; border: 0; border-radius: 10px; background: #166534; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.aw__hlasovat:disabled { opacity: .6; }
+.aw__chyba { color: #b91c1c; margin: 4px 0; font-size: 14px; }
+.aw__vysledky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.aw__riadok { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; margin-bottom: 4px; }
+.aw__pruh { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.aw__pruh span { display: block; height: 100%; background: #22c55e; border-radius: 4px; }
+.aw__spolu { font-size: 13px; color: #64748b; }

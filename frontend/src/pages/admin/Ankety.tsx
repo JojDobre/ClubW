@@ -100,6 +100,16 @@ export const Ankety: React.FC = () => {
     }
   };
 
+  const kopirujZnacku = async (id: number) => {
+    const znacka = `[anketa ${id}]`;
+    try {
+      await navigator.clipboard.writeText(znacka);
+      uspech(`Značka ${znacka} je skopírovaná - vložte ju do obsahu stránky`);
+    } catch {
+      uspech(`Vložte do obsahu stránky značku ${znacka}`);
+    }
+  };
+
   const zmaz = async () => {
     if (!naZmazanie) return;
     setMaze(true);
@@ -119,7 +129,7 @@ export const Ankety: React.FC = () => {
     <div className="cw-screen">
       <PageHeader
         nadpis="Ankety"
-        podnadpis="Otázky pre návštevníkov webu a ich výsledky."
+        podnadpis="Otázky pre návštevníkov webu a ich výsledky. Najnovšia otvorená anketa sa zobrazí na úvodnej stránke, konkrétnu vložíte do stránky značkou [anketa ID]."
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovana(prazdnaAnketa())}>
             Nová anketa
@@ -161,6 +171,9 @@ export const Ankety: React.FC = () => {
                 </div>
 
                 <div className="cw-ank__akcie">
+                  <button onClick={() => kopirujZnacku(a.id)} aria-label="Kopírovať značku na vloženie" title={`[anketa ${a.id}]`}>
+                    <Icon nazov="odkaz" velkost={15} />
+                  </button>
                   <button onClick={() => setUpravovana({ ...a })} aria-label="Upraviť anketu">
                     <Icon nazov="upravit" velkost={15} />
                   </button>
