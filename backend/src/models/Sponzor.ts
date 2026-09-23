@@ -10,7 +10,10 @@ export type UrovenSponzora = 'generalny' | 'hlavny' | 'partner' | 'dodavatel';
 interface SponzorAttributes {
   id: number;
   nazov: string;
-  uroven: UrovenSponzora;
+  /** Pôvodná pevná úroveň - ponechaná kvôli návratu migrácie */
+  uroven: UrovenSponzora | null;
+  /** Úroveň partnerstva zo spravovateľného zoznamu */
+  uroven_id: number | null;
   logo: string | null;
   web_url: string | null;
   popis: string | null;
@@ -26,14 +29,15 @@ interface SponzorAttributes {
 interface SponzorCreationAttributes
   extends Optional<
     SponzorAttributes,
-    'id' | 'logo' | 'web_url' | 'popis' | 'platny_od' | 'platny_do'
+    'id' | 'uroven' | 'uroven_id' | 'logo' | 'web_url' | 'popis' | 'platny_od' | 'platny_do'
     | 'poradie' | 'aktivity' | 'vytvoreny' | 'aktualizovany'
   > {}
 
 class Sponzor extends Model<SponzorAttributes, SponzorCreationAttributes> implements SponzorAttributes {
   public id!: number;
   public nazov!: string;
-  public uroven!: UrovenSponzora;
+  public uroven!: UrovenSponzora | null;
+  public uroven_id!: number | null;
   public logo!: string | null;
   public web_url!: string | null;
   public popis!: string | null;
@@ -55,8 +59,12 @@ Sponzor.init(
     },
     uroven: {
       type: DataTypes.ENUM('generalny', 'hlavny', 'partner', 'dodavatel'),
-      allowNull: false,
-      defaultValue: 'partner',
+      allowNull: true,
+    },
+    uroven_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'urovne_sponzorov', key: 'id' },
     },
     logo: { type: DataTypes.STRING(255), allowNull: true },
     web_url: {

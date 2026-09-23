@@ -10,6 +10,7 @@ import { Model, ModelStatic, Op } from 'sequelize';
 import Sponzor from '../models/Sponzor';
 import Dokument from '../models/Dokument';
 import DokumentKategoria from '../models/DokumentKategoria';
+import UrovenSponzora from '../models/UrovenSponzora';
 import Anketa from '../models/Anketa';
 import Fanusik from '../models/Fanusik';
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
@@ -189,7 +190,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
 vytvorOperacie('sponsors', {
   model: Sponzor,
   nazov: 'Sponzor',
-  polia: ['nazov', 'uroven', 'logo', 'web_url', 'popis', 'platny_od', 'platny_do', 'poradie', 'aktivity'],
+  polia: ['nazov', 'uroven_id', 'logo', 'web_url', 'popis', 'platny_od', 'platny_do', 'poradie', 'aktivity'],
   textovePolia: ['nazov', 'popis'],
   zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
   hladatV: ['nazov', 'popis'],
@@ -204,6 +205,19 @@ vytvorOperacie('sponsors', {
       ],
     };
   },
+});
+
+// ===== Úrovne partnerstva =====
+// Spravovateľný zoznam namiesto pevných štyroch úrovní. Po zmazaní
+// úrovne zostanú jej sponzori bez úrovne (ON DELETE SET NULL).
+vytvorOperacie('sponsor-levels', {
+  model: UrovenSponzora,
+  nazov: 'Úroveň partnerstva',
+  polia: ['nazov', 'popis', 'poradie', 'velkost_loga', 'aktivity'],
+  textovePolia: ['nazov', 'popis'],
+  zoradenie: [['poradie', 'ASC'], ['nazov', 'ASC']],
+  hladatV: ['nazov'],
+  verejnyFilter: { aktivity: true },
 });
 
 // ===== Dokumenty =====

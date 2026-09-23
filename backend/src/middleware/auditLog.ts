@@ -40,6 +40,7 @@ const ENTITY: Record<string, string> = {
   seasons: 'Sezóna',
   rosters: 'Súpiska',
   sponsors: 'Sponzor',
+  'sponsor-levels': 'Úroveň partnerstva',
   documents: 'Dokument',
   'document-categories': 'Kategória dokumentov',
   comments: 'Komentár',

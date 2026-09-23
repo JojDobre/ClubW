@@ -38,6 +38,7 @@ import AuditLog from './AuditLog';
 import Sponzor from './Sponzor';
 import Dokument from './Dokument';
 import DokumentKategoria from './DokumentKategoria';
+import UrovenSponzora from './UrovenSponzora';
 import Anketa from './Anketa';
 import Fanusik from './Fanusik';
 // Komentáre a videá
@@ -135,6 +136,10 @@ Media.belongsTo(User, {
   as: 'autor',
   constraints: false,
 });
+
+// Sponzor -> UrovenSponzora (N:1)
+Sponzor.belongsTo(UrovenSponzora, { foreignKey: 'uroven_id', as: 'uroven_obj', constraints: false });
+UrovenSponzora.hasMany(Sponzor, { foreignKey: 'uroven_id', as: 'sponzori', constraints: false });
 
 // Dokument -> DokumentKategoria (N:1)
 Dokument.belongsTo(DokumentKategoria, {
@@ -554,6 +559,7 @@ export default {
   Sponzor,
   Dokument,
   DokumentKategoria,
+  UrovenSponzora,
   Anketa,
   Fanusik,
   Komentar,

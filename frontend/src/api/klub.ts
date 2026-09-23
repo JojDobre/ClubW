@@ -2,7 +2,7 @@
 // Volania API sekcie KLUB.
 
 import api from '../app/apiKlient';
-import type { Sponzor, Dokument, Anketa, Fanusik, KategoriaDokumentu } from './typy';
+import type { Sponzor, Dokument, Anketa, Fanusik, KategoriaDokumentu, UrovenPartnerstva } from './typy';
 
 /**
  * Vytvorí sadu volaní pre jednu entitu.
@@ -18,6 +18,7 @@ const operacie = <T>(cesta: string) => ({
 });
 
 export const sponzoriApi = operacie<Sponzor>('sponsors');
+export const urovneSponzorovApi = operacie<UrovenPartnerstva>('sponsor-levels');
 export const dokumentyApi = operacie<Dokument>('documents');
 export const kategorieDokumentovApi = operacie<KategoriaDokumentu>('document-categories');
 export const anketyApi = operacie<Anketa>('polls');

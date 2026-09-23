@@ -680,12 +680,27 @@ export type RiadokNaUlozenie = Partial<Omit<RiadokTabulky, 'id'>> & { id?: numbe
 
 // ===== Sekcia KLUB =====
 
+/** Pôvodná pevná úroveň - nahradila ju spravovateľná UrovenPartnerstva */
 export type UrovenSponzora = 'generalny' | 'hlavny' | 'partner' | 'dodavatel';
+
+export type VelkostLoga = 'velke' | 'stredne' | 'male';
+
+/** Úroveň partnerstva, ktorú si klub spravuje sám. */
+export interface UrovenPartnerstva {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  /** Poradie na webe - nižšie číslo vyššie */
+  poradie: number;
+  velkost_loga: VelkostLoga;
+  aktivity: boolean;
+}
 
 export interface Sponzor {
   id: number;
   nazov: string;
-  uroven: UrovenSponzora;
+  uroven?: UrovenSponzora | null;
+  uroven_id: number | null;
   logo: string | null;
   web_url: string | null;
   popis: string | null;
