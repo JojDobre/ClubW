@@ -48,6 +48,10 @@ import Fanusikovia from '../pages/admin/Fanusikovia';
 import Komentare from '../pages/admin/Komentare';
 import Videa from '../pages/admin/Videa';
 import Turnaje from '../pages/admin/Turnaje';
+import Formulare from '../pages/admin/Formulare';
+import FormularEditor from '../pages/admin/FormularEditor';
+import FormularOdpovede from '../pages/admin/FormularOdpovede';
+import KniznicaMedii from '../pages/admin/KniznicaMedii';
 
 import '../design/global.css';
 import './App.css';
@@ -105,6 +109,11 @@ export const App: React.FC = () => (
                 {/* Sekcia KLUB */}
                 <Route path="sponzori" element={<Sponzori />} />
                 <Route path="dokumenty" element={<Dokumenty />} />
+                <Route path="formulare" element={<Formulare />} />
+                <Route path="formulare/novy" element={<FormularEditor />} />
+                <Route path="formulare/:id" element={<FormularEditor />} />
+                <Route path="formulare/:id/odpovede" element={<FormularOdpovede />} />
+                <Route path="media" element={<KniznicaMedii />} />
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
                 <Route path="profil" element={<Navigate to="/admin/pouzivatelia" replace />} />

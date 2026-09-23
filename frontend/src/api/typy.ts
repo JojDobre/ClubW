@@ -617,6 +617,8 @@ export interface PouzitieMedia {
   stranky: number;
   galerie: number;
   dokumenty: number;
+  /** Logá a fotky tímov, hráčov, sponzorov a pod. */
+  ine: number;
   spolu: number;
 }
 
@@ -915,4 +917,46 @@ export interface UdalostKalendara {
   /** Pri výpise za obdobie: konkrétny deň výskytu opakovanej udalosti */
   datum_vyskytu?: string;
   farba?: string | null;
+}
+
+// ===== Formuláre =====
+
+export type TypPolaFormulara =
+  | 'text' | 'textarea' | 'email' | 'telefon' | 'cislo'
+  | 'datum' | 'vyber' | 'zaskrtavacie' | 'suhlas';
+
+export interface PoleFormulara {
+  /** Kľúč v uložených odpovediach - pri úprave sa nemení */
+  kod: string;
+  nazov: string;
+  typ: TypPolaFormulara;
+  popis?: string | null;
+  povinne?: boolean;
+  moznosti?: string[];
+}
+
+export interface Formular {
+  id: number;
+  nazov: string;
+  /** Adresa na webe: /formular/{slug} */
+  slug: string;
+  popis: string | null;
+  polia: PoleFormulara[];
+  sprava_po_odoslani: string | null;
+  email_pre_notifikacie?: string | null;
+  /** Vypnutý formulár sa zobrazí, ale neprijíma odpovede */
+  aktivny: boolean;
+  vytvoreny?: string;
+  aktualizovany?: string;
+  pocet_odpovedi?: number;
+  pocet_neprecitanych?: number;
+}
+
+export interface OdpovedFormulara {
+  id: number;
+  formular_id: number;
+  udaje: Record<string, string | string[] | boolean>;
+  precitane: boolean;
+  ip_adresa: string | null;
+  vytvorena: string;
 }

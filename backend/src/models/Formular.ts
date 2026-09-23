@@ -143,12 +143,18 @@ class Formular
 
       // Kód slúži ako kľúč v uložených odpovediach. Keď ho klient
       // nepošle, odvodíme ho z názvu, aby odpovede boli čitateľné.
-      let kod = String(pole?.kod || Formular.vyrobSlug(nazov)).replace(/[^a-z0-9_-]/gi, '');
+      const zadanyKod = String(pole?.kod || '').replace(/[^a-z0-9_-]/gi, '');
+      let kod = zadanyKod || Formular.vyrobSlug(nazov).slice(0, 60);
       if (!kod) kod = `pole_${poradie}`;
-
       if (pouziteKody.has(kod)) {
-        chyby.push(`Pole ${poradie}: kód „${kod}" je použitý viackrát`);
-        return;
+        if (zadanyKod) {
+          chyby.push(`Pole ${poradie}: kód „${kod}" je použitý viackrát`);
+          return;
+        }
+        // Dve polia s rovnakým názvom - odvodený kód dostane číslo
+        let cislo = 2;
+        while (pouziteKody.has(`${kod}-${cislo}`)) cislo++;
+        kod = `${kod}-${cislo}`;
       }
       pouziteKody.add(kod);
 

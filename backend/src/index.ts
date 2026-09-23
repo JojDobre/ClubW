@@ -170,6 +170,17 @@ const komentarLimiter = rateLimit({
   },
 });
 
+// Rate limit pre verejné formuláre (prihlášky, kontakt) - rovnaký dôvod
+// ako pri komentároch: odoslať sa dá bez prihlásenia.
+const formularLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: 'Odoslali ste priveľa formulárov naraz. Skúste to o chvíľu znova.'
+  },
+});
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -234,6 +245,7 @@ app.get('/api/status', (req, res) => {
 // Auth routes s rate limitom
 app.use('/api/auth/login', loginLimiter);
 app.post('/api/comments', komentarLimiter);
+app.post('/api/forms/:kluc/submit', formularLimiter);
 // Kontrola licencie - musí byť pred API routes.
 // Čítanie necháva prejsť vždy, blokuje len zmeny obsahu.
 app.use(kontrolaLicencie);

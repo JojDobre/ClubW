@@ -7,6 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { sanitizeHtml } from '../utils/sanitize';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import { ObsahSFormularmi } from './FormularWeb';
 
 interface Page {
   id: number;
@@ -265,13 +266,14 @@ const PageView: React.FC = () => {
       </header>
 
       {/* Obsah stránky */}
-      <div 
+      {/* Značka [formular slug] v obsahu vloží formulár */}
+      <ObsahSFormularmi
         style={{
           fontSize: '1.1rem',
           lineHeight: '1.7',
           color: '#2d3748'
         }}
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.obsah) }}
+        html={sanitizeHtml(page.obsah)}
       />
 
       {/* Footer informácie */}
