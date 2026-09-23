@@ -407,11 +407,31 @@ export interface StatistikyZapasu {
 
 export type RolaPouzivatela = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
 
+export type AkciaOpravnenia = 'citat' | 'pisat' | 'mazat';
+export type MapaOpravneni = Record<string, Partial<Record<AkciaOpravnenia, boolean>>>;
+
+/** Rola z tabuľky rolí - názov a oprávnenia po moduloch. */
+export interface RolaSOpravneniami {
+  id: number;
+  nazov: string;
+  kod: string;
+  popis: string | null;
+  opravnenia: MapaOpravneni;
+  je_systemova: boolean;
+  poradie: number;
+  pocet_pouzivatelov?: number;
+}
+
 export interface Pouzivatel {
   id: number;
   meno: string;
+  priezvisko?: string | null;
   email: string;
   rola: RolaPouzivatela;
+  rola_id?: number | null;
+  /** Oprávnenia roly - posiela ich /auth/me a prihlásenie */
+  opravnenia?: MapaOpravneni;
+  rola_nazov?: string;
   tim_id: number | null;
   aktivity: boolean;
   posledne_prihlasenie: string | null;

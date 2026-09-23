@@ -57,3 +57,156 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.cw-pouzivatelia__karty {
+  margin-bottom: 14px;
+}
+
+.cw-pouzivatelia__riadok {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+/* ===== Roly a oprávnenia ===== */
+.cw-roly__lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.cw-roly__lista p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-roly__mriezka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.cw-roly__karta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.cw-roly__hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-roly__popis,
+.cw-roly__suhrn {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-roly__suhrn {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cw-roly__pata {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.cw-roly__pata > div {
+  display: flex;
+  gap: 4px;
+}
+
+.cw-roly__poznamka {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 13px;
+}
+
+.cw-roly__tabulka {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: auto;
+  max-height: 50vh;
+}
+
+.cw-roly__tabulka table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.cw-roly__tabulka th,
+.cw-roly__tabulka td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.cw-roly__tabulka th:first-child,
+.cw-roly__tabulka td:first-child {
+  text-align: left;
+}
+
+.cw-roly__tabulka thead th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  font-size: 12px;
+  color: var(--muted);
+  z-index: 1;
+}
+
+.cw-roly__tabulka input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--pri);
+  cursor: pointer;
+}
+
+.cw-roly__vsetko {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.cw-roly__vsetko button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--pri);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .cw-roly__lista {
+    flex-direction: column;
+  }
+
+  .cw-pouzivatelia__riadok {
+    grid-template-columns: 1fr;
+  }
+}

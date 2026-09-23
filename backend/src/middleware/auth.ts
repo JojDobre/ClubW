@@ -96,15 +96,118 @@ export const authenticateToken = async (
   }
 };
 
-// Middleware pre kontrolu role
+/**
+ * Modul administrácie podľa adresy požiadavky.
+ *
+ * Kľúč je prvý úsek cesty za /api (prípadne za /api/admin). Cesty,
+ * ktoré tu nie sú (GDPR, menu, ankety...), sa posudzujú len podľa
+ * pevnej roly.
+ */
+const MODUL_PODLA_CESTY: Record<string, string> = {
+  articles: 'clanky',
+  categories: 'rubriky',
+  comments: 'komentare',
+  pages: 'stranky',
+  galleries: 'galerie',
+  videos: 'videa',
+  media: 'media',
+  upload: 'media',
+  stadiums: 'stadiony',
+  seasons: 'sezony',
+  rosters: 'sezony',
+  teams: 'timy',
+  players: 'hraci',
+  staff: 'realizacny_tim',
+  leagues: 'ligy',
+  tournaments: 'turnaje',
+  matches: 'zapasy',
+  calendar: 'kalendar',
+  sponsors: 'sponzori',
+  'sponsor-levels': 'sponzori',
+  documents: 'dokumenty',
+  'document-categories': 'dokumenty',
+  forms: 'formulare',
+  users: 'pouzivatelia',
+  roles: 'pouzivatelia',
+  archive: 'archiv',
+  settings: 'nastavenia',
+  logs: 'logy',
+  license: 'licencia',
+};
+
+export const modulZCesty = (cesta: string): string | null => {
+  const useky = cesta.split('?')[0].split('/').filter(Boolean);
+  const bezApi = useky[0] === 'api' ? useky.slice(1) : useky;
+  const bezAdmin = bezApi[0] === 'admin' ? bezApi.slice(1) : bezApi;
+  return MODUL_PODLA_CESTY[bezAdmin[0] ?? ''] ?? null;
+};
+
+/** Akcia podľa HTTP metódy: čítanie, zápis alebo mazanie. */
+export const akciaZMetody = (metoda: string): 'citat' | 'pisat' | 'mazat' =>
+  metoda === 'GET' || metoda === 'HEAD' ? 'citat' : metoda === 'DELETE' ? 'mazat' : 'pisat';
+
+/**
+ * Smie prihlásený používateľ v module danú akciu? Pre miesta, kde sa
+ * rozhoduje v kóde (napr. či ukázať aj neverejné záznamy).
+ */
+export const smieVModule = async (req: Request, modul: string | null, akcia: 'citat' | 'pisat' | 'mazat'): Promise<boolean> => {
+  const user: any = (req as any).user;
+  if (!user) return false;
+  if (user.rola === 'admin') return true;
+  if (modul && user.rola_id) {
+    const rola = await Rola.findOne({ where: { id: user.rola_id, aktivity: true } });
+    if (rola) return rola.smie(modul, akcia);
+  }
+  return user.rola === 'redaktor';
+};
+
+/**
+ * Middleware pre kontrolu role.
+ *
+ * Používateľ s rolou z tabuľky rolí sa posudzuje podľa JEJ oprávnení
+ * pre modul, ktorého sa požiadavka týka (čítať/písať/mazať podľa
+ * metódy). Tak platia aj vlastné roly vytvorené v administrácii, nielen
+ * pevné admin/redaktor/tréner. Správca smie vždy všetko; cesty mimo
+ * modulov a používatelia bez roly sa posudzujú podľa pevnej roly.
+ */
 export const requireRole = (allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user) {
       res.status(401).json({ 
         success: false, 
         message: 'Autentifikácia je potrebná.' 
       });
       return;
+    }
+
+    if (req.user.rola === 'admin') {
+      next();
+      return;
+    }
+
+    const rolaId = (req.user as any).rola_id;
+    const modul = modulZCesty(req.originalUrl);
+    if (rolaId && modul) {
+      try {
+        const rola = await Rola.findOne({ where: { id: rolaId, aktivity: true } });
+        if (rola) {
+          const akcia = akciaZMetody(req.method);
+          if (rola.smie(modul, akcia)) {
+            next();
+            return;
+          }
+          const popisAkcie = { citat: 'čítať', pisat: 'upravovať', mazat: 'mazať' }[akcia];
+          res.status(403).json({
+            success: false,
+            message: `Vaša rola „${rola.nazov}" nemá právo ${popisAkcie} v tejto sekcii.`,
+          });
+          return;
+        }
+      } catch (chyba) {
+        console.error('Chyba pri overovaní oprávnení roly:', chyba);
+        res.status(500).json({ success: false, message: 'Serverová chyba pri overovaní oprávnení.' });
+        return;
+      }
     }
 
     if (!allowedRoles.includes(req.user.rola)) {

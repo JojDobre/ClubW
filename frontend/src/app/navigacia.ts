@@ -20,6 +20,8 @@ export interface PolozkaMenu {
   role?: Rola[];
   /** Obrazovka zatiaľ nemá rozhranie — zobrazí sa so značkou „pripravuje sa" */
   pripravujeSa?: boolean;
+  /** Modul oprávnení - položku uvidí, kto smie modul čítať */
+  modul?: string;
   /** Odznak s počtom nových položiek (napr. neprečítané formuláre) */
   odznak?: 'formulare';
 }
@@ -41,49 +43,49 @@ export const SEKCIE_MENU: SekciaMenu[] = [
     nazov: 'OBSAH',
     polozky: [
       { cesta: '/admin', popis: 'Dashboard', ikona: 'dashboard' },
-      { cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
-      { cesta: '/admin/kategorie', popis: 'Kategórie', ikona: 'kategorie' },
-      { cesta: '/admin/komentare', popis: 'Komentáre', ikona: 'komentare' },
-      { cesta: '/admin/stranky', popis: 'Stránky', ikona: 'stranky' },
-      { cesta: '/admin/galerie', popis: 'Galérie', ikona: 'galerie' },
-      { cesta: '/admin/videa', popis: 'Videá', ikona: 'videa' },
-      { cesta: '/admin/media', popis: 'Knižnica médií', ikona: 'media' },
+      { modul: 'clanky', cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
+      { modul: 'rubriky', cesta: '/admin/kategorie', popis: 'Kategórie', ikona: 'kategorie' },
+      { modul: 'komentare', cesta: '/admin/komentare', popis: 'Komentáre', ikona: 'komentare' },
+      { modul: 'stranky', cesta: '/admin/stranky', popis: 'Stránky', ikona: 'stranky' },
+      { modul: 'galerie', cesta: '/admin/galerie', popis: 'Galérie', ikona: 'galerie' },
+      { modul: 'videa', cesta: '/admin/videa', popis: 'Videá', ikona: 'videa' },
+      { modul: 'media', cesta: '/admin/media', popis: 'Knižnica médií', ikona: 'media' },
     ],
   },
   {
     nazov: 'ŠPORT',
     polozky: [
-      { cesta: '/admin/timy', popis: 'Tímy', ikona: 'timy' },
-      { cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
-      { cesta: '/admin/realizacny-tim', popis: 'Realizačný tím', ikona: 'pouzivatelia' },
-      { cesta: '/admin/stadiony', popis: 'Štadióny', ikona: 'stadion' },
-      { cesta: '/admin/ligy', popis: 'Ligy a tabuľky', ikona: 'ligy' },
-      { cesta: '/admin/turnaje', popis: 'Turnaje', ikona: 'ligy' },
-      { cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
-      { cesta: '/admin/kalendar', popis: 'Kalendár', ikona: 'kalendar' },
+      { modul: 'timy', cesta: '/admin/timy', popis: 'Tímy', ikona: 'timy' },
+      { modul: 'hraci', cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
+      { modul: 'realizacny_tim', cesta: '/admin/realizacny-tim', popis: 'Realizačný tím', ikona: 'pouzivatelia' },
+      { modul: 'stadiony', cesta: '/admin/stadiony', popis: 'Štadióny', ikona: 'stadion' },
+      { modul: 'ligy', cesta: '/admin/ligy', popis: 'Ligy a tabuľky', ikona: 'ligy' },
+      { modul: 'turnaje', cesta: '/admin/turnaje', popis: 'Turnaje', ikona: 'ligy' },
+      { modul: 'zapasy', cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
+      { modul: 'kalendar', cesta: '/admin/kalendar', popis: 'Kalendár', ikona: 'kalendar' },
     ],
   },
   {
     nazov: 'KLUB',
     polozky: [
-      { cesta: '/admin/sponzori', popis: 'Sponzori', ikona: 'licencia' },
-      { cesta: '/admin/dokumenty', popis: 'Dokumenty', ikona: 'stranky' },
-      { cesta: '/admin/formulare', popis: 'Formuláre', ikona: 'formular', odznak: 'formulare' },
-      { cesta: '/admin/ankety', popis: 'Ankety', ikona: 'komentare' },
-      { cesta: '/admin/fanusikovia', popis: 'Fanúšikovia', ikona: 'pouzivatelia' },
+      { modul: 'sponzori', cesta: '/admin/sponzori', popis: 'Sponzori', ikona: 'licencia' },
+      { modul: 'dokumenty', cesta: '/admin/dokumenty', popis: 'Dokumenty', ikona: 'stranky' },
+      { modul: 'formulare', cesta: '/admin/formulare', popis: 'Formuláre', ikona: 'formular', odznak: 'formulare' },
+      { cesta: '/admin/ankety', popis: 'Ankety', ikona: 'komentare', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/fanusikovia', popis: 'Fanúšikovia', ikona: 'pouzivatelia', role: ['admin', 'redaktor'] },
     ],
   },
   {
     nazov: 'SYSTÉM',
     polozky: [
-      { cesta: '/admin/pouzivatelia', popis: 'Používatelia', ikona: 'pouzivatelia', role: ['admin'] },
-      { cesta: '/admin/nastavenia', popis: 'Nastavenia', ikona: 'nastavenia', role: ['admin'] },
-      { cesta: '/admin/licencia', popis: 'Licencia', ikona: 'licencia', role: ['admin'] },
+      { modul: 'pouzivatelia', cesta: '/admin/pouzivatelia', popis: 'Používatelia', ikona: 'pouzivatelia', role: ['admin'] },
+      { modul: 'nastavenia', cesta: '/admin/nastavenia', popis: 'Nastavenia', ikona: 'nastavenia', role: ['admin'] },
+      { modul: 'licencia', cesta: '/admin/licencia', popis: 'Licencia', ikona: 'licencia', role: ['admin'] },
       // Doplnené nad rámec návrhu — backend má funkčné rozhranie
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať
-      { cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
-      { cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
-      { cesta: '/admin/logy', popis: 'Logy', ikona: 'hodiny', role: ['admin'] },
+      { modul: 'sezony', cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
+      { modul: 'archiv', cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
+      { modul: 'logy', cesta: '/admin/logy', popis: 'Logy', ikona: 'hodiny', role: ['admin'] },
       { cesta: '/admin/ochrana-udajov', popis: 'Ochrana údajov', ikona: 'gdpr', role: ['admin'] },
     ],
   },
@@ -95,9 +97,9 @@ export const SEKCIE_MENU: SekciaMenu[] = [
  */
 export const MOBILNA_NAVIGACIA: PolozkaMenu[] = [
   { cesta: '/admin', popis: 'Prehľad', ikona: 'dashboard' },
-  { cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
-  { cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
-  { cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
+  { modul: 'clanky', cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
+  { modul: 'zapasy', cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
+  { modul: 'hraci', cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
 ];
 
 /**
@@ -140,13 +142,19 @@ export const jeAktivna = (cestaPolozky: string, aktualnaCesta: string): boolean 
  * ktorý pri každej požiadavke overuje rolu. Skryté menu je pohodlie,
  * nie bezpečnostné opatrenie.
  */
-export const dostupneSekcie = (rola: Rola | undefined): SekciaMenu[] =>
+export const dostupneSekcie = (
+  rola: Rola | undefined,
+  smie?: (modul: string) => boolean
+): SekciaMenu[] =>
   SEKCIE_MENU
     .map((sekcia) => ({
       ...sekcia,
-      polozky: sekcia.polozky.filter(
-        (p) => !p.role || (rola !== undefined && p.role.includes(rola))
-      ),
+      polozky: sekcia.polozky.filter((p) => {
+        if (rola === 'admin') return true;
+        // Podľa oprávnení roly - aj vlastné roly vidia len svoje sekcie
+        if (p.modul && smie) return smie(p.modul);
+        return !p.role || (rola !== undefined && p.role.includes(rola));
+      }),
     }))
     // Sekcia bez položiek sa nezobrazuje
     .filter((sekcia) => sekcia.polozky.length > 0);

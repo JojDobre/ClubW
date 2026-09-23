@@ -124,7 +124,7 @@ export const App: React.FC = () => (
                 <Route
                   path="pouzivatelia"
                   element={
-                    <ChranenaCesta role={['admin']}>
+                    <ChranenaCesta modul="pouzivatelia">
                       <Pouzivatelia />
                     </ChranenaCesta>
                   }
@@ -140,7 +140,7 @@ export const App: React.FC = () => (
                 <Route
                   path="nastavenia"
                   element={
-                    <ChranenaCesta role={['admin']}>
+                    <ChranenaCesta modul="nastavenia">
                       <Nastavenia />
                     </ChranenaCesta>
                   }

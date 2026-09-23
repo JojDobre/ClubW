@@ -13,7 +13,7 @@ import DokumentKategoria from '../models/DokumentKategoria';
 import UrovenSponzora from '../models/UrovenSponzora';
 import Anketa from '../models/Anketa';
 import Fanusik from '../models/Fanusik';
-import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
+import { authenticateToken, optionalAuth, requireEditor, requireAdmin, smieVModule, modulZCesty } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
 
@@ -41,10 +41,6 @@ interface NastaveniaEntity {
   verejnyFilter?: Record<string, unknown> | (() => Record<string | symbol, unknown>);
 }
 
-/** Prihlásený redaktor alebo správca? */
-const jeRedaktor = (req: Request): boolean =>
-  ['admin', 'redaktor'].includes(String((req as any).user?.rola || ''));
-
 /**
  * Vytvorí sadu operácií pre jednu entitu.
  *
@@ -62,8 +58,9 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
    * PREČO: čítanie bolo úplne verejné - bez prihlásenia sa dali stiahnuť
    * neverejné dokumenty aj zoznam fanúšikov s e-mailmi a telefónmi.
    */
-  const pravoCitat = (req: Request, res: Response): Record<string, unknown> | null => {
-    if (jeRedaktor(req)) return {};
+  const pravoCitat = async (req: Request, res: Response): Promise<Record<string | symbol, unknown> | null> => {
+    // Kto smie modul čítať v administrácii, vidí aj neverejné záznamy
+    if (await smieVModule(req, modulZCesty(req.originalUrl), 'citat')) return {};
     if (citanie === 'redaktor') {
       res.status((req as any).user ? 403 : 401).json({
         success: false,
@@ -101,7 +98,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   // ===== Výpis =====
   router.get(`/${cesta}`, optionalAuth, async (req: Request, res: Response) => {
     try {
-      const filter = pravoCitat(req, res);
+      const filter = await pravoCitat(req, res);
       if (!filter) return;
       const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
       const hladane = String(req.query.search || '').trim();
@@ -124,7 +121,7 @@ const vytvorOperacie = (cesta: string, nastavenia: NastaveniaEntity) => {
   // ===== Detail =====
   router.get(`/${cesta}/:id`, optionalAuth, async (req: Request, res: Response) => {
     try {
-      const filter = pravoCitat(req, res);
+      const filter = await pravoCitat(req, res);
       if (!filter) return;
       const zaznam = await model.findOne({ where: { id: Number(req.params.id) || 0, ...filter } });
       if (!zaznam) {
@@ -240,7 +237,7 @@ vytvorOperacie('documents', {
 router.get('/documents/:id/download', optionalAuth, async (req: Request, res: Response) => {
   try {
     const kde: any = { id: Number(req.params.id) || 0 };
-    if (!jeRedaktor(req)) Object.assign(kde, { verejny: true, aktivity: true });
+    if (!(await smieVModule(req, 'dokumenty', 'citat'))) Object.assign(kde, { verejny: true, aktivity: true });
     const dokument = await Dokument.findOne({ where: kde });
     if (!dokument) {
       res.status(404).json({ success: false, message: 'Dokument sa nenašiel' });

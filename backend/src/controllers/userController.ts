@@ -10,6 +10,48 @@ import Rola from '../models/Rola';
 import { overSiluHesla } from '../utils/heslo';
 import { zostavStrankovanie } from '../utils/odpoved';
 
+type PevnaRola = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
+const PEVNE_ROLY: PevnaRola[] = ['admin', 'redaktor', 'trener', 'uzivatel'];
+
+/**
+ * Určí rolu používateľa: záznam z tabuľky rolí a k nemu pevnú rolu.
+ *
+ * Pevná rola (enum) zostáva kvôli spätnej kompatibilite. Pri systémovej
+ * role je to jej kód, pri vlastnej sa odvodí z oprávnení - rozhoduje
+ * však vždy tabuľka rolí (middleware requireRole).
+ */
+const urciRolu = async (
+  rolaId: unknown,
+  kod: unknown
+): Promise<{ rola?: Rola; pevna?: PevnaRola; chyba?: string }> => {
+  let rola: Rola | null = null;
+  if (rolaId !== undefined && rolaId !== null && rolaId !== '') {
+    rola = await Rola.findOne({ where: { id: Number(rolaId), aktivity: true } });
+    if (!rola) return { chyba: `Rola s ID ${rolaId} neexistuje` };
+  } else if (kod) {
+    rola = await Rola.findOne({ where: { kod: String(kod), aktivity: true } });
+  }
+  if (!rola) {
+    return PEVNE_ROLY.includes(kod as PevnaRola) ? { pevna: kod as PevnaRola } : {};
+  }
+  if (PEVNE_ROLY.includes(rola.kod as PevnaRola)) return { rola, pevna: rola.kod as PevnaRola };
+  const prava = Object.values(rola.opravnenia || {});
+  // Vlastná rola dostane najviac pevnú rolu tréner - sekcie mimo modulov
+  // (fanúšikovia, ankety, GDPR) tak ostanú len správcovi a redaktorovi
+  const pevna: PevnaRola = prava.some((p: any) => p?.citat) ? 'trener' : 'uzivatel';
+  return { rola, pevna };
+};
+
+/** Je používateľ (alebo nová rola) správca? */
+const jeSpravca = (pevna?: string | null) => pevna === 'admin';
+
+/**
+ * Zostane v systéme aspoň jeden aktívny správca, ak sa tento
+ * používateľ zmení/zmaže? Bez neho by sa klub zamkol mimo nastavení.
+ */
+const zostaneSpravca = async (okremId: number): Promise<boolean> =>
+  (await User.count({ where: { rola: 'admin', aktivity: true, id: { [Op.ne]: okremId } } })) > 0;
+
 // Validácia pre vytvorenie používateľa
 export const validateCreateUser = [
   body('meno')
@@ -35,7 +77,7 @@ export const validateCreateUser = [
     .withMessage('Priezvisko môže mať najviac 100 znakov')
     .trim(),
   body('rola')
-    .optional()
+    .optional({ values: 'null' })
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])
     .withMessage('Neplatná rola'),
   body('rola_id')
@@ -43,7 +85,7 @@ export const validateCreateUser = [
     .isInt({ min: 1 })
     .withMessage('Rola musí byť platné ID'),
   body('tim_id')
-    .optional()
+    .optional({ values: 'null' })
     .isInt({ min: 1 })
     .withMessage('Tim_id musí byť kladné číslo'),
 ];
@@ -51,17 +93,17 @@ export const validateCreateUser = [
 // Validácia pre úpravu používateľa
 export const validateUpdateUser = [
   body('meno')
-    .optional()
+    .optional({ values: 'null' })
     .isLength({ min: 2, max: 100 })
     .withMessage('Meno musí mať 2-100 znakov')
     .trim(),
   body('email')
-    .optional()
+    .optional({ values: 'null' })
     .isEmail()
     .withMessage('Neplatný email formát')
     .normalizeEmail(),
   body('heslo')
-    .optional()
+    .optional({ values: 'null' })
     .custom((hodnota, { req }) => {
       const chyby = overSiluHesla(hodnota, { meno: req.body?.meno, email: req.body?.email });
       if (chyby.length > 0) {
@@ -75,7 +117,7 @@ export const validateUpdateUser = [
     .withMessage('Priezvisko môže mať najviac 100 znakov')
     .trim(),
   body('rola')
-    .optional()
+    .optional({ values: 'null' })
     .isIn(['admin', 'redaktor', 'trener', 'uzivatel'])
     .withMessage('Neplatná rola'),
   body('rola_id')
@@ -83,11 +125,11 @@ export const validateUpdateUser = [
     .isInt({ min: 1 })
     .withMessage('Rola musí byť platné ID'),
   body('tim_id')
-    .optional()
+    .optional({ values: 'null' })
     .isInt({ min: 1 })
     .withMessage('Tim_id musí byť kladné číslo'),
   body('aktivity')
-    .optional()
+    .optional({ values: 'null' })
     .isBoolean()
     .withMessage('Aktivity musí byť boolean'),
 ];
@@ -188,7 +230,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     if (!errors.isEmpty()) {
       res.status(400).json({
         success: false,
-        message: 'Chybné vstupné údaje',
+        message: String(errors.array()[0]?.msg || 'Chybné vstupné údaje'),
         errors: errors.array(),
       });
       return;
@@ -212,18 +254,18 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     // Vytvorenie nového používateľa
     // Rola z tabuľky rolí má prednosť. Keď ju klient neposlal, doplníme
     // ju podľa pôvodného enumu, aby mal používateľ vždy platné práva.
-    let rolaId = req.body.rola_id ? Number(req.body.rola_id) : null;
-    const kodRoly = rola || 'uzivatel';
+    const urcena = await urciRolu(req.body.rola_id, rola || 'uzivatel');
+    if (urcena.chyba) {
+      res.status(400).json({ success: false, message: urcena.chyba });
+      return;
+    }
+    const rolaId = urcena.rola?.id ?? null;
+    const kodRoly = urcena.pevna ?? 'uzivatel';
 
-    if (rolaId) {
-      const zvolena = await Rola.findOne({ where: { id: rolaId, aktivity: true } });
-      if (!zvolena) {
-        res.status(400).json({ success: false, message: `Rola s ID ${rolaId} neexistuje` });
-        return;
-      }
-    } else {
-      const podlaKodu = await Rola.findOne({ where: { kod: kodRoly, aktivity: true } });
-      rolaId = podlaKodu ? podlaKodu.id : null;
+    // Správcu smie vytvoriť len správca
+    if (jeSpravca(kodRoly) && req.user?.rola !== 'admin') {
+      res.status(403).json({ success: false, message: 'Rolu Správca smie prideliť len správca' });
+      return;
     }
 
     const newUser = await User.create({
@@ -259,14 +301,13 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (!errors.isEmpty()) {
       res.status(400).json({
         success: false,
-        message: 'Chybné vstupné údaje',
+        message: String(errors.array()[0]?.msg || 'Chybné vstupné údaje'),
         errors: errors.array(),
       });
       return;
     }
 
     const { id } = req.params;
-    const updateData = req.body;
 
     // Nájdenie používateľa
     const user = await User.findByPk(id);
@@ -275,6 +316,49 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
         success: false,
         message: 'Používateľ nebol nájdený',
       });
+      return;
+    }
+
+    // Len povolené polia - predtým sa ukladalo celé telo požiadavky
+    const POLIA = ['meno', 'priezvisko', 'email', 'heslo', 'tim_id', 'aktivity'];
+    const updateData: Record<string, any> = {};
+    for (const pole of POLIA) {
+      if (req.body[pole] !== undefined) updateData[pole] = req.body[pole];
+    }
+    if (updateData.heslo === '' || updateData.heslo === null) delete updateData.heslo;
+    if (updateData.priezvisko !== undefined) {
+      updateData.priezvisko = updateData.priezvisko ? String(updateData.priezvisko).trim() : null;
+    }
+
+    const upravujeSpravcu = jeSpravca(user.rola);
+    if (upravujeSpravcu && req.user?.rola !== 'admin') {
+      res.status(403).json({ success: false, message: 'Účet správcu smie upravovať len správca' });
+      return;
+    }
+
+    if (req.body.rola_id !== undefined || req.body.rola !== undefined) {
+      const urcena = await urciRolu(req.body.rola_id, req.body.rola);
+      if (urcena.chyba) {
+        res.status(400).json({ success: false, message: urcena.chyba });
+        return;
+      }
+      if (jeSpravca(urcena.pevna) && req.user?.rola !== 'admin') {
+        res.status(403).json({ success: false, message: 'Rolu Správca smie prideliť len správca' });
+        return;
+      }
+      if (urcena.pevna) updateData.rola = urcena.pevna;
+      updateData.rola_id = urcena.rola?.id ?? null;
+    }
+
+    // Posledného aktívneho správcu nejde zosadiť ani vypnúť
+    const prestaneBytSpravcom =
+      upravujeSpravcu && ((updateData.rola && updateData.rola !== 'admin') || updateData.aktivity === false);
+    if (prestaneBytSpravcom && !(await zostaneSpravca(user.id))) {
+      res.status(400).json({ success: false, message: 'Klub musí mať aspoň jedného aktívneho správcu' });
+      return;
+    }
+    if (prestaneBytSpravcom && Number(id) === req.userId) {
+      res.status(400).json({ success: false, message: 'Sám sebe nemôžete odobrať rolu správcu' });
       return;
     }
 
@@ -340,6 +424,15 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     }
 
     // Vymazanie používateľa
+    if (jeSpravca(user.rola) && req.user?.rola !== 'admin') {
+      res.status(403).json({ success: false, message: 'Účet správcu smie meniť len správca' });
+      return;
+    }
+    if (jeSpravca(user.rola) && user.aktivity && !(await zostaneSpravca(user.id))) {
+      res.status(400).json({ success: false, message: 'Klub musí mať aspoň jedného aktívneho správcu' });
+      return;
+    }
+
     await user.destroy();
 
     res.json({
@@ -376,6 +469,15 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
         success: false,
         message: 'Používateľ nebol nájdený',
       });
+      return;
+    }
+
+    if (jeSpravca(user.rola) && req.user?.rola !== 'admin') {
+      res.status(403).json({ success: false, message: 'Účet správcu smie meniť len správca' });
+      return;
+    }
+    if (jeSpravca(user.rola) && user.aktivity && !(await zostaneSpravca(user.id))) {
+      res.status(400).json({ success: false, message: 'Klub musí mať aspoň jedného aktívneho správcu' });
       return;
     }
 
@@ -426,8 +528,22 @@ export const bulkDeleteUsers = async (req: Request, res: Response): Promise<void
           [Op.in]: ids
         }
       },
-      attributes: ['id', 'meno', 'email']
+      attributes: ['id', 'meno', 'email', 'rola', 'aktivity']
     });
+
+    // Správcov smie mazať len správca a aspoň jeden aktívny musí zostať
+    const spravcovia = users.filter((u) => u.rola === 'admin');
+    if (spravcovia.length > 0 && req.user?.rola !== 'admin') {
+      res.status(403).json({ success: false, message: 'Účty správcov smie mazať len správca' });
+      return;
+    }
+    if (spravcovia.length > 0) {
+      const ostatni = await User.count({ where: { rola: 'admin', aktivity: true, id: { [Op.notIn]: ids } } });
+      if (ostatni === 0) {
+        res.status(400).json({ success: false, message: 'Klub musí mať aspoň jedného aktívneho správcu' });
+        return;
+      }
+    }
 
     if (users.length === 0) {
       res.status(404).json({

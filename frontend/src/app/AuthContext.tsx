@@ -26,6 +26,11 @@ export interface Pouzivatel {
   rola: Rola;
   tim_id: number | null;
   posledne_prihlasenie?: string | null;
+  priezvisko?: string | null;
+  rola_id?: number | null;
+  rola_nazov?: string;
+  /** Oprávnenia roly po moduloch - posiela ich server */
+  opravnenia?: Record<string, { citat?: boolean; pisat?: boolean; mazat?: boolean }>;
 }
 
 interface HodnotaKontextu {
@@ -37,6 +42,8 @@ interface HodnotaKontextu {
   odhlas: () => Promise<void>;
   /** Má používateľ aspoň jednu zo zadaných rolí? */
   maRolu: (...role: Rola[]) => boolean;
+  /** Smie používateľ v module danú akciu? Správca smie všetko. */
+  smie: (modul: string, akcia?: 'citat' | 'pisat' | 'mazat') => boolean;
 }
 
 const AuthContext = createContext<HodnotaKontextu | undefined>(undefined);
@@ -177,6 +184,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setPouzivatel(null);
   }, []);
 
+  const smie = useCallback(
+    (modul: string, akcia: 'citat' | 'pisat' | 'mazat' = 'citat') => {
+      if (!pouzivatel) return false;
+      if (pouzivatel.rola === 'admin') return true;
+      if (pouzivatel.opravnenia) return Boolean(pouzivatel.opravnenia[modul]?.[akcia]);
+      // Starší server bez oprávnení - podľa pevnej roly
+      return akcia === 'citat' ? pouzivatel.rola !== 'uzivatel' : pouzivatel.rola === 'redaktor';
+    },
+    [pouzivatel]
+  );
+
   const maRolu = useCallback(
     (...role: Rola[]) => (pouzivatel ? role.includes(pouzivatel.rola) : false),
     [pouzivatel]
@@ -191,6 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         prihlas,
         odhlas,
         maRolu,
+        smie,
       }}
     >
       {children}

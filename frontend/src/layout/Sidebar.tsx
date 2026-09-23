@@ -10,6 +10,7 @@ import { Icon } from '../ui';
 import { dostupneSekcie, jeAktivna, type Rola } from '../app/navigacia';
 import { useNastavenia } from '../context/NastaveniaContext';
 import { formulareApi, UDALOST_FORMULARE } from '../api/formulare';
+import { useAuth } from '../app/AuthContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -31,7 +32,8 @@ interface SidebarProps {
  */
 const useNeprecitaneFormulare = (rola: Rola | undefined, cesta: string): number => {
   const [pocet, setPocet] = useState(0);
-  const smie = rola === 'admin' || rola === 'redaktor';
+  const { smie: smieModul } = useAuth();
+  const smie = smieModul('formulare');
 
   useEffect(() => {
     if (!smie) return;
@@ -58,7 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   zuzeny, onPrepniZuzenie, mobilneOtvorene, onZavriMobilne, rola, aktualnaCesta,
 }) => {
   const { nastavenia } = useNastavenia();
-  const sekcie = dostupneSekcie(rola);
+  const { smie } = useAuth();
+  const sekcie = dostupneSekcie(rola, smie);
   const neprecitane = useNeprecitaneFormulare(rola, aktualnaCesta);
 
   // Znak loga: skratka z nastavení klubu, inak prvé písmeno názvu
