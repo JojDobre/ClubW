@@ -131,6 +131,7 @@ const MODUL_PODLA_CESTY: Record<string, string> = {
   roles: 'pouzivatelia',
   archive: 'archiv',
   settings: 'nastavenia',
+  sablony: 'sablony',
   logs: 'logy',
   license: 'licencia',
 };

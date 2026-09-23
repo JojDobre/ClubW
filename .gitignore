@@ -108,6 +108,9 @@ Thumbs.db
 # Application specific
 uploads/
 */uploads/
+
+# Šablóny nahraté v administrácii (dodané so systémom sú v /sablony)
+backend/sablony/
 temp/
 */temp/
 logs/
@@ -157,3 +160,6 @@ coverage/
 
 # Vyrovnávacia pamäť stavu licencie - vzniká za behu, nepatrí do gitu
 .license-cache.json
+
+# Balíky šablón na nahratie (npm run sablony -- <slug> --balik)
+sablony/_balicky/

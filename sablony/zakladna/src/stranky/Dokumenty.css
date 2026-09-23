@@ -1,0 +1,20 @@
+/* sablony/zakladna/src/stranky/Dokumenty.css - verejné dokumenty */
+.dp { max-width: 900px; margin: 0 auto; padding: 32px 16px 48px; color: #1e293b; }
+.dp h1 { font-size: 2rem; margin: 0 0 4px; }
+.dp__uvod { color: #64748b; margin: 0 0 20px; }
+.dp__stav { color: #64748b; text-align: center; padding: 40px 0; }
+.dp__hladat { width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 15px; margin-bottom: 8px; }
+.dp__skupina h2 { font-size: 1.25rem; margin: 28px 0 4px; }
+.dp__popis-kat { color: #64748b; margin: 0 0 10px; font-size: 14px; }
+.dp__skupina ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dp__skupina li { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(15,23,42,.07); }
+.dp__typ { flex-shrink: 0; min-width: 44px; text-align: center; font-size: 11px; font-weight: 700; color: #166534; background: #dcfce7; border-radius: 6px; padding: 6px 4px; }
+.dp__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.dp__text strong { overflow-wrap: anywhere; }
+.dp__text span { color: #64748b; font-size: 14px; }
+.dp__stiahnut { flex-shrink: 0; color: #fff; background: #166534; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; white-space: nowrap; }
+.dp__stiahnut:hover { background: #14532d; }
+@media (max-width: 560px) {
+  .dp__skupina li { flex-wrap: wrap; }
+  .dp__stiahnut { width: 100%; text-align: center; }
+}

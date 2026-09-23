@@ -19,7 +19,13 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
 
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+
+    "paths": {
+      "@clubw/jadro": ["./src/web/jadro.ts"],
+      "@clubw/zakladna": ["../sablony/zakladna/src/index.ts"],
+      "@sablony/*": ["../sablony/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../sablony/*/src"]
 }

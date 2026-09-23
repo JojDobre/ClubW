@@ -53,6 +53,7 @@ const ENTITY: Record<string, string> = {
   roles: 'Rola',
   menu: 'Menu',
   redirects: 'Presmerovanie',
+  sablony: 'Šablóna webu',
   settings: 'Nastavenia',
   archive: 'Archív',
   auth: 'Prihlásenie',

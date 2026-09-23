@@ -1,16 +1,10 @@
 // Umiestnenie: frontend/src/index.tsx
 // Vstupný bod aplikácie.
 //
-// SÚBEŽNÁ PREVÁDZKA DVOCH ADMINISTRÁCIÍ: nová administrácia sa stavia
-// postupne po obrazovkách. Aby klub medzitým nezostal bez použiteľného
-// rozhrania, obe verzie bežia vedľa seba a rozhodne sa podľa adresy:
+// Podľa adresy sa načíta jedna z dvoch aplikácií:
 //
-//   /admin/*, /prihlasenie   → nová administrácia (app/App.tsx)
-//   všetko ostatné           → pôvodná administrácia (App.tsx)
-//
-// Cesty sa nekrížia — pôvodná používa /articles, /teams, /players,
-// nová má všetko pod /admin. Po dokončení všetkých obrazoviek sa
-// tento prepínač aj pôvodná verzia odstránia.
+//   /admin/*, /prihlasenie...  → administrácia (app/App.tsx)
+//   všetko ostatné             → verejný web v aktívnej šablóne (web/WebApp.tsx)
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -26,10 +20,8 @@ const jeNovaAdministracia = (): boolean => {
 const koren = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 /**
- * Načítanie príslušnej verzie.
- *
- * Dynamický import zabezpečí, že sa do balíka pre danú adresu nedostane
- * kód druhej verzie — nová administrácia tak nenesie starú a naopak.
+ * Dynamický import zabezpečí, že návštevník webu nesťahuje kód
+ * administrácie a naopak.
  */
 if (jeNovaAdministracia()) {
   void import('./app/App').then(({ default: App }) => {
@@ -40,13 +32,11 @@ if (jeNovaAdministracia()) {
     );
   });
 } else {
-  void Promise.all([import('./App'), import('./index.css')]).then(
-    ([{ default: StaraApp }]) => {
-      koren.render(
-        <React.StrictMode>
-          <StaraApp />
-        </React.StrictMode>
-      );
-    }
-  );
+  void import('./web/WebApp').then(({ default: WebApp }) => {
+    koren.render(
+      <React.StrictMode>
+        <WebApp />
+      </React.StrictMode>
+    );
+  });
 }
