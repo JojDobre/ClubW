@@ -75,8 +75,8 @@ const Stats: React.FC = () => {
   }, []);
 
   // Formátovanie čísiel
-  const formatNumber = (num: number) => {
-    return num.toLocaleString('sk-SK');
+  const formatNumber = (num: number | null | undefined) => {
+    return Number(num ?? 0).toLocaleString('sk-SK');
   };
 
   // Formátovanie dátumu

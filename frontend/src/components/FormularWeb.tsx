@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { apiUrl } from '../config/api';
 import type { Formular, PoleFormulara } from '../api/typy';
 import './FormularWeb.css';
+import AnketaWeb from './AnketaWeb';
 
 type Hodnoty = Record<string, string | string[] | boolean>;
 
@@ -202,8 +203,8 @@ export const FormularWeb: React.FC<Props> = ({ kluc, formular: zadany, nahlad = 
   );
 };
 
-/** Značka na vloženie formulára do obsahu: [formular slug] */
-const ZNACKA = /(?:<p[^>]*>\s*)?\[formul[aá]r[:\s]+([a-z0-9-]+)\](?:\s*<\/p>)?/gi;
+/** Značky na vloženie do obsahu: [formular slug] a [anketa 3] */
+const ZNACKA = /(?:<p[^>]*>\s*)?\[(formul[aá]r|anketa)[:\s]+([a-z0-9-]+)\](?:\s*<\/p>)?/gi;
 
 /**
  * Vykreslí HTML obsah a na miesto značiek [formular slug] vloží
@@ -214,24 +215,31 @@ export const ObsahSFormularmi: React.FC<{ html: string; className?: string; styl
   className,
   style,
 }) => {
-  const casti: Array<{ html?: string; formular?: string }> = [];
+  const casti: Array<{ html?: string; formular?: string; anketa?: number }> = [];
   let posledny = 0;
   for (const zhoda of html.matchAll(ZNACKA)) {
     const index = zhoda.index ?? 0;
     if (index > posledny) casti.push({ html: html.slice(posledny, index) });
-    casti.push({ formular: zhoda[1].toLowerCase() });
+    if (zhoda[1].toLowerCase() === 'anketa') casti.push({ anketa: Number(zhoda[2]) || undefined });
+    else casti.push({ formular: zhoda[2].toLowerCase() });
     posledny = index + zhoda[0].length;
   }
   if (posledny < html.length) casti.push({ html: html.slice(posledny) });
 
-  if (!casti.some((c) => c.formular)) {
+  if (!casti.some((c) => c.formular || c.anketa)) {
     return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
   return (
     <div className={className} style={style}>
       {casti.map((c, i) =>
-        c.formular ? <FormularWeb key={i} kluc={c.formular} /> : <div key={i} dangerouslySetInnerHTML={{ __html: c.html ?? '' }} />
+        c.formular ? (
+          <FormularWeb key={i} kluc={c.formular} />
+        ) : c.anketa ? (
+          <AnketaWeb key={i} id={c.anketa} />
+        ) : (
+          <div key={i} dangerouslySetInnerHTML={{ __html: c.html ?? '' }} />
+        )
       )}
     </div>
   );

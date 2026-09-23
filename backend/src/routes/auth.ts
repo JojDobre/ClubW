@@ -7,8 +7,7 @@ import {
   logout,
   getCurrentUser,
   refreshToken,
-  validateLogin,
-} from '../controllers/authController';
+  validateLogin, upravProfil } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 // Obnovovacie tokeny a správa hesiel
 import {
@@ -57,5 +56,8 @@ router.post('/zmena-hesla', authenticateToken, zmenHeslo);
  * @access Private
  */
 router.post('/odhlas-vsade', authenticateToken, odhlasVsade);
+
+// PUT /api/auth/profil - vlastné meno a priezvisko
+router.put('/profil', authenticateToken, upravProfil);
 
 export default router;

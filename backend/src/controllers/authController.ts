@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/user';
+import { sanitizePlainText } from '../utils/sanitize';
 import Rola, { MODULY } from '../models/Rola';
 
 /**
@@ -247,5 +248,34 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       success: false,
       message: 'Serverová chyba pri obnovovaní tokenu',
     });
+  }
+};
+
+/**
+ * PUT /api/auth/profil
+ * Vlastné meno a priezvisko - každý prihlásený, aj bez práva
+ * spravovať používateľov (e-mail a rolu mení správca).
+ */
+export const upravProfil = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Používateľ nie je prihlásený' });
+      return;
+    }
+    const meno = sanitizePlainText(String(req.body?.meno ?? '')).trim();
+    const priezvisko = req.body?.priezvisko ? sanitizePlainText(String(req.body.priezvisko)).trim() : null;
+    if (meno.length < 2 || meno.length > 100) {
+      res.status(400).json({ success: false, message: 'Meno musí mať 2-100 znakov' });
+      return;
+    }
+    if (priezvisko && priezvisko.length > 100) {
+      res.status(400).json({ success: false, message: 'Priezvisko môže mať najviac 100 znakov' });
+      return;
+    }
+    await req.user.update({ meno, priezvisko });
+    res.json({ success: true, data: await sOpravneniami(req.user), message: 'Profil bol uložený' });
+  } catch (error) {
+    console.error('Chyba pri úprave profilu:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri úprave profilu' });
   }
 };

@@ -8,6 +8,7 @@ import { sanitizeHtml } from '../utils/sanitize';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
 import { ObsahSFormularmi } from './FormularWeb';
+import { skusPresmerovat } from '../utils/presmerovanie';
 
 interface Page {
   id: number;
@@ -63,6 +64,8 @@ const PageView: React.FC = () => {
         const data = await response.json();
 
         if (response.status === 404) {
+          // Stará adresa môže mať nastavené presmerovanie
+          if (!jeNahlad && (await skusPresmerovat())) return;
           setError('Stránka nebola nájdená');
         } else if (jeNahlad && (response.status === 401 || response.status === 403)) {
           setError('Na náhľad nepublikovanej stránky sa musíte prihlásiť do administrácie.');

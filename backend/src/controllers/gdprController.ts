@@ -18,6 +18,7 @@ import AuditLog from '../models/AuditLog';
 import SupiskaSezony from '../models/SupiskaSezony';
 import ZapasStatistika from '../models/ZapasStatistika';
 import { sanitizePlainText } from '../utils/sanitize';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 // Po koľkých rokoch od poslednej aktivity sa má hráč anonymizovať.
 // Tri roky zodpovedajú bežnej praxi športových klubov - dovtedy môžu byť
@@ -298,7 +299,10 @@ export const anonymizuj = async (req: Request, res: Response): Promise<void> => 
 export const prehladRetencie = async (req: Request, res: Response): Promise<void> => {
   try {
     const hranica = new Date();
-    hranica.setFullYear(hranica.getFullYear() - ROKY_RETENCIE);
+    // Doba uchovávania z Nastavení (GDPR), predvolene 3 roky
+    const nastaveniaGdpr = ((await NastaveniaKlubu.nacitaj()).nastavenia_gdpr ?? {}) as any;
+    const mesiacov = Number(nastaveniaGdpr.retencia_mesiacov) || ROKY_RETENCIE * 12;
+    hranica.setMonth(hranica.getMonth() - mesiacov);
 
     // Neaktívni hráči, ktorí od hranice nemajú žiadny zápis na súpiske
     const neaktivni = await Player.findAll({
@@ -323,7 +327,8 @@ export const prehladRetencie = async (req: Request, res: Response): Promise<void
     res.json({
       success: true,
       data: {
-        doba_uchovavania_rokov: ROKY_RETENCIE,
+        doba_uchovavania_rokov: Math.round((mesiacov / 12) * 10) / 10,
+        doba_uchovavania_mesiacov: mesiacov,
         hranica: hranica.toISOString().slice(0, 10),
         na_posudenie: neaktivni,
         pocet_na_posudenie: neaktivni.length,

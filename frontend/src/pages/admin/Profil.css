@@ -1,0 +1,60 @@
+/* Umiestnenie: frontend/src/pages/admin/Profil.css */
+
+.cw-profil__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.cw-profil__riadok {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.cw-profil__rola {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cw-profil__nic {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.cw-profil__moduly {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+  font-size: 13.5px;
+}
+
+.cw-profil__moduly li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 4px;
+}
+
+.cw-profil__moduly small {
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .cw-profil__grid,
+  .cw-profil__riadok,
+  .cw-profil__moduly {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

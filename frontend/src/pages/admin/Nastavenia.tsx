@@ -7,14 +7,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, useToast,
+  PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, Switch, useToast,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { nastaveniaApi } from '../../api/sprava';
 import { useNastavenia } from '../../context/NastaveniaContext';
 import { ApiChyba } from '../../app/apiKlient';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
-import type { NastaveniaAdmin } from '../../api/typy';
+import type { NastaveniaAdmin, NastaveniaKomentarov, NastaveniaGdpr, NastaveniaSeo } from '../../api/typy';
 import './Nastavenia.css';
 
 export const Nastavenia: React.FC = () => {
@@ -35,6 +35,23 @@ export const Nastavenia: React.FC = () => {
   const zmen = <K extends keyof NastaveniaAdmin>(pole: K, hodnota: NastaveniaAdmin[K]) => {
     setFormular((d) => ({ ...d, [pole]: hodnota }));
   };
+
+  // Globálne nastavenia (komentáre, GDPR, SEO) - vnorené objekty
+  const komentare: NastaveniaKomentarov = {
+    povolene: true, moderovat: true, vyzadovat_email: false, povolit_odpovede: true,
+    ...(formular.nastavenia_komentarov ?? {}),
+  };
+  const gdpr: NastaveniaGdpr = {
+    cookie_lista: true, text_suhlasu: null, odkaz_zasad: null, kontakt_zodpovednej_osoby: null, retencia_mesiacov: 36,
+    ...(formular.nastavenia_gdpr ?? {}),
+  };
+  const seo: NastaveniaSeo = {
+    meta_title_sablona: null, kluc_slova: null, og_obrazok: null, indexovat: true, google_search_console: null,
+    ...(formular.nastavenia_seo ?? {}),
+  };
+  const zmenKomentare = (z: Partial<NastaveniaKomentarov>) => zmen('nastavenia_komentarov', { ...komentare, ...z });
+  const zmenGdpr = (z: Partial<NastaveniaGdpr>) => zmen('nastavenia_gdpr', { ...gdpr, ...z });
+  const zmenSeo = (z: Partial<NastaveniaSeo>) => zmen('nastavenia_seo', { ...seo, ...z });
 
   // Dodatkové farby držíme ako zoznam, aby sa dal premenovať kľúč
   // bez toho, aby riadok v zozname „preskočil"
@@ -462,10 +479,106 @@ export const Nastavenia: React.FC = () => {
               napoveda={`${(formular.meta_popis ?? '').length} / 300 znakov`}
             />
             <Input
+              menovka="Šablóna titulku stránok"
+              value={seo.meta_title_sablona ?? ''}
+              onChange={(e) => zmenSeo({ meta_title_sablona: e.target.value })}
+              placeholder={`%s | ${formular.nazov || 'Názov klubu'}`}
+              napoveda="%s sa nahradí názvom stránky, napríklad „Zápasy | FK Dolina“"
+            />
+            <Input
+              menovka="Kľúčové slová"
+              value={seo.kluc_slova ?? ''}
+              onChange={(e) => zmenSeo({ kluc_slova: e.target.value })}
+              placeholder="futbal, mládež, Dolina"
+            />
+            <PoleObrazka
+              menovka="Obrázok pre sociálne siete"
+              hodnota={seo.og_obrazok}
+              onZmena={(cesta) => zmenSeo({ og_obrazok: cesta })}
+              tvar="siroky"
+              napoveda="Zobrazí sa pri zdieľaní odkazu na Facebooku a pod. (ideálne 1200 × 630 px)"
+            />
+            <Switch
+              zapnute={seo.indexovat}
+              onZmena={(v) => zmenSeo({ indexovat: v })}
+              menovka="Zobrazovať vo vyhľadávačoch"
+              popis={seo.indexovat ? 'Google a ďalšie vyhľadávače môžu web indexovať' : 'Web je skrytý pred vyhľadávačmi (noindex)'}
+            />
+            <Input
+              menovka="Google Search Console - kód overenia"
+              value={seo.google_search_console ?? ''}
+              onChange={(e) => zmenSeo({ google_search_console: e.target.value })}
+              placeholder="hodnota content z meta značky google-site-verification"
+            />
+            <Input
               menovka="Google Analytics"
               value={formular.google_analytics_id ?? ''}
               onChange={(e) => zmen('google_analytics_id', e.target.value)}
               placeholder="G-XXXXXXXXXX"
+              napoveda="Meranie sa spustí až po súhlase návštevníka s cookies"
+            />
+          </Card>
+
+          <Card nadpis="Komentáre" podnadpis="Platí pre všetky články - komentáre sa dajú vypnúť aj pri jednotlivom článku">
+            <Switch
+              zapnute={komentare.povolene}
+              onZmena={(v) => zmenKomentare({ povolene: v })}
+              menovka="Komentáre na webe"
+              popis={komentare.povolene ? 'Návštevníci môžu komentovať články' : 'Nové komentáre sú vypnuté na celom webe'}
+            />
+            <Switch
+              zapnute={komentare.moderovat}
+              onZmena={(v) => zmenKomentare({ moderovat: v })}
+              menovka="Schvaľovať pred zverejnením"
+              popis="Nový komentár sa zobrazí až po schválení v sekcii Komentáre"
+            />
+            <Switch
+              zapnute={komentare.vyzadovat_email}
+              onZmena={(v) => zmenKomentare({ vyzadovat_email: v })}
+              menovka="Vyžadovať e-mail"
+            />
+            <Switch
+              zapnute={komentare.povolit_odpovede}
+              onZmena={(v) => zmenKomentare({ povolit_odpovede: v })}
+              menovka="Povoliť odpovede na komentáre"
+            />
+          </Card>
+
+          <Card nadpis="Ochrana súkromia (GDPR)">
+            <Switch
+              zapnute={gdpr.cookie_lista}
+              onZmena={(v) => zmenGdpr({ cookie_lista: v })}
+              menovka="Lišta so súhlasom s cookies"
+              popis="Kým návštevník nesúhlasí, meranie návštevnosti sa nespustí"
+            />
+            <Textarea
+              menovka="Text lišty"
+              value={gdpr.text_suhlasu ?? ''}
+              onChange={(e) => zmenGdpr({ text_suhlasu: e.target.value })}
+              rows={2}
+              placeholder="Používame cookies na meranie návštevnosti. Nevyhnutné cookies sú vždy zapnuté."
+            />
+            <Input
+              menovka="Odkaz na zásady ochrany údajov"
+              value={gdpr.odkaz_zasad ?? ''}
+              onChange={(e) => zmenGdpr({ odkaz_zasad: e.target.value })}
+              placeholder="/ochrana-osobnych-udajov"
+              napoveda="Stránka s podrobnosťami - zobrazí sa v lište a v päte webu"
+            />
+            <Input
+              menovka="Kontakt zodpovednej osoby"
+              value={gdpr.kontakt_zodpovednej_osoby ?? ''}
+              onChange={(e) => zmenGdpr({ kontakt_zodpovednej_osoby: e.target.value })}
+              placeholder="gdpr@vasklub.sk"
+            />
+            <Input
+              menovka="Doba uchovávania údajov (mesiace)"
+              type="number"
+              min={1}
+              max={240}
+              value={gdpr.retencia_mesiacov}
+              onChange={(e) => zmenGdpr({ retencia_mesiacov: Number(e.target.value) })}
+              napoveda="Po tejto dobe ukáže Ochrana údajov neaktívnych hráčov na anonymizáciu"
             />
           </Card>
         </div>

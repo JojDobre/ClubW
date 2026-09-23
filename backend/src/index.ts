@@ -67,6 +67,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Za reverznou proxy (nginx) vidí server ako adresu každého návštevníka
+// adresu proxy - limity podľa IP (prihlásenie, hlasovanie v ankete) by
+// potom platili pre všetkých naraz. TRUST_PROXY=1 = jedna proxy pred nami.
+if (process.env.TRUST_PROXY) {
+  const hodnota = process.env.TRUST_PROXY;
+  app.set('trust proxy', /^\d+$/.test(hodnota) ? Number(hodnota) : hodnota === 'true' ? true : hodnota);
+}
+
 // Vytvorenie predvoleného avatara pri štarte servera.
 // POZOR: ukladáme ho ako PNG, nie SVG - SVG súbory sa z priečinka uploads
 // servujú len ako príloha (ochrana pred XSS), takže by sa nezobrazili.
@@ -139,7 +147,10 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minút
-  max: 500, // max 500 requestov na IP za 15 minút
+  // Jedna obrazovka administrácie spraví 8-15 požiadaviek a viac ľudí
+  // v klubovni býva za jednou IP adresou - 500 sa vyčerpalo bežnou prácou.
+  // Prihlásenie, komentáre a formuláre majú vlastné prísne limity.
+  max: 3000, // max 3000 requestov na IP za 15 minút
   message: {
     success: false,
     message: 'Príliš veľa requestov, skúste neskôr.'
@@ -341,7 +352,7 @@ app.use('/api/admin/logs', logRoutes);
 app.get('/api/stats', async (req, res, next) => {
   try {
     // Modely sú načítané hore pri štarte, netreba ich doťahovať znova
-    const { Article, User, Team, Player, Staff, Liga, Zapas } = models as any;
+    const { Article, User, Team, Player, Staff, Liga, Zapas, ZapasStatistika } = models as any;
 
     // Všetky počty naraz cez Promise.all - jediný roundtrip čas namiesto sekvenčného čakania
     const [
@@ -368,6 +379,17 @@ app.get('/api/stats', async (req, res, next) => {
       Zapas.count({ where: { aktivity: true, status: 'naplanovany' } }),
     ]);
 
+    // Doplnkové čísla pre verejnú stránku štatistík - stránka ich
+    // zobrazovala, ale server ich neposielal a stránka padala
+    const [totalViews, golyDomaci, golyHostia, totalCards] = await Promise.all([
+      Article.sum('views', { where: { status: 'published' } }),
+      Zapas.sum('goly_domaci', { where: { aktivity: true, status: 'ukonceny' } }),
+      Zapas.sum('goly_hostia', { where: { aktivity: true, status: 'ukonceny' } }),
+      ZapasStatistika
+        ? ZapasStatistika.count({ where: { typ: ['zlta_karta', 'cervena_karta'] } })
+        : Promise.resolve(0),
+    ]);
+
     res.json({
       success: true,
       data: {
@@ -381,6 +403,9 @@ app.get('/api/stats', async (req, res, next) => {
         totalMatches,
         finishedMatches,
         upcomingMatches,
+        totalViews: Number(totalViews) || 0,
+        totalGoals: (Number(golyDomaci) || 0) + (Number(golyHostia) || 0),
+        totalCards: Number(totalCards) || 0,
         lastUpdate: new Date().toISOString(),
       },
       message: 'Štatistiky načítané z databázy',

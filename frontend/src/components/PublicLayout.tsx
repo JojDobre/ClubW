@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { apiUrl, souborUrl } from '../config/api';
 import { useNastavenia } from '../context/NastaveniaContext';
 import './PublicLayout.css';
+import WebDoplnky from './WebDoplnky';
 // Link namiesto <a href> - bez neho každý klik znovu načíta celú aplikáciu
 import { Link } from 'react-router-dom';
 // Sledovanie šírky obrazovky tak, aby React reagoval na zmenu veľkosti okna
@@ -319,6 +320,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
         </div>
       </header>
 
+      <WebDoplnky />
       {/* Main Content */}
       <main style={{ minHeight: 'calc(100vh - 140px)' }}>
         {children}
@@ -417,6 +419,25 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             fontSize: '14px'
           }}>
             <p>&copy; {new Date().getFullYear()} {nastavenia.nazov}. Všetky práva vyhradené.</p>
+            {(nastavenia.gdpr?.odkaz_zasad || nastavenia.gdpr?.kontakt_zodpovednej_osoby) && (
+              <p>
+                {nastavenia.gdpr?.odkaz_zasad && (
+                  <a href={nastavenia.gdpr.odkaz_zasad} style={{ color: 'inherit' }}>Ochrana osobných údajov</a>
+                )}
+                {nastavenia.gdpr?.odkaz_zasad && nastavenia.gdpr?.kontakt_zodpovednej_osoby && ' · '}
+                {nastavenia.gdpr?.kontakt_zodpovednej_osoby && <>Zodpovedná osoba: {nastavenia.gdpr.kontakt_zodpovednej_osoby}</>}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                try { localStorage.removeItem('clubw_cookies'); } catch { /* nič */ }
+                window.location.reload();
+              }}
+              style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}
+            >
+              Nastavenia cookies
+            </button>
           </div>
         </div>
       </footer>

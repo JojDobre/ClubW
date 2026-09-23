@@ -29,6 +29,69 @@ const JSONOVE_POLIA = [
 // Sem sa nikdy nemá dostať značkovanie - hodnoty sa vypisujú do stránky.
 const TEXTOVE_POLIA = ['nazov', 'skratka', 'slogan', 'adresa', 'meta_popis', 'pravny_nazov', 'ico', 'dic', 'ic_dph'];
 
+const text = (v: unknown, max: number): string | null => {
+  if (v === undefined || v === null) return null;
+  const t = sanitizePlainText(String(v)).trim().slice(0, max);
+  return t || null;
+};
+
+/**
+ * Globálne nastavenia (komentáre, GDPR, SEO) - len známe kľúče so
+ * správnym typom. Predtým sa uložil akýkoľvek objekt tak, ako prišiel.
+ */
+const OCISTI_JSON: Record<string, (v: any) => { data?: Record<string, unknown>; chyba?: string }> = {
+  nastavenia_komentarov: (v) => ({
+    data: {
+      povolene: v.povolene !== false,
+      moderovat: v.moderovat !== false,
+      vyzadovat_email: v.vyzadovat_email === true,
+      povolit_odpovede: v.povolit_odpovede !== false,
+    },
+  }),
+  nastavenia_gdpr: (v) => {
+    const mesiace = v.retencia_mesiacov === undefined || v.retencia_mesiacov === null ? 36 : Number(v.retencia_mesiacov);
+    if (!Number.isInteger(mesiace) || mesiace < 1 || mesiace > 240) {
+      return { chyba: 'Doba uchovávania údajov musí byť 1 až 240 mesiacov' };
+    }
+    const odkaz = text(v.odkaz_zasad, 300);
+    if (odkaz && !/^(\/(?!\/)|https?:\/\/)/i.test(odkaz)) {
+      return { chyba: 'Odkaz na zásady ochrany údajov musí začínať / alebo https://' };
+    }
+    return {
+      data: {
+        cookie_lista: v.cookie_lista !== false,
+        text_suhlasu: text(v.text_suhlasu, 1000),
+        odkaz_zasad: odkaz,
+        kontakt_zodpovednej_osoby: text(v.kontakt_zodpovednej_osoby, 255),
+        retencia_mesiacov: mesiace,
+      },
+    };
+  },
+  nastavenia_seo: (v) => {
+    const sablona = text(v.meta_title_sablona, 120);
+    if (sablona && !sablona.includes('%s')) {
+      return { chyba: 'Šablóna titulku musí obsahovať %s (miesto pre názov stránky), napríklad „%s | FK Dolina"' };
+    }
+    const og = text(v.og_obrazok, 500);
+    if (og && !/^(\/(?!\/)|https?:\/\/)/i.test(og)) {
+      return { chyba: 'Obrázok pre sociálne siete musí byť nahratý súbor alebo https:// adresa' };
+    }
+    const overenie = text(v.google_search_console, 120);
+    if (overenie && !/^[A-Za-z0-9_-]+$/.test(overenie)) {
+      return { chyba: 'Kód overenia Google Search Console obsahuje len písmená, čísla, - a _ (hodnota content z meta značky)' };
+    }
+    return {
+      data: {
+        meta_title_sablona: sablona,
+        kluc_slova: text(v.kluc_slova, 300),
+        og_obrazok: og,
+        indexovat: v.indexovat !== false,
+        google_search_console: overenie,
+      },
+    };
+  },
+};
+
 /** Kľúč dodatkovej farby - použije sa v CSS ako --club-extra-<kluc>. */
 const VZOR_KLUCA_FARBY = /^[a-z][a-z0-9-]{0,30}$/;
 
@@ -159,6 +222,14 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
           });
           return;
         }
+        if (OCISTI_JSON[pole]) {
+          const { data, chyba } = OCISTI_JSON[pole](hodnota);
+          if (chyba) {
+            res.status(400).json({ success: false, message: chyba });
+            return;
+          }
+          hodnota = data;
+        }
         if (pole === 'dodatkove_farby') {
           const { farby, chyba } = overDodatkoveFarby(hodnota);
           if (chyba) {
@@ -200,6 +271,11 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
           });
           return;
         }
+      }
+
+      if (pole === 'google_analytics_id' && hodnota !== null && !/^(G|GT|UA|AW)-[A-Z0-9-]{4,24}$/i.test(String(hodnota).trim())) {
+        res.status(400).json({ success: false, message: 'Google Analytics ID má tvar G-XXXXXXXXXX' });
+        return;
       }
 
       // IBAN ľudia píšu s medzerami - ukladáme bez nich

@@ -10,6 +10,7 @@ import { Op } from 'sequelize';
 // Sanitizácia HTML obsahu stránok pred uložením do DB
 import { sanitizeContent } from '../utils/sanitize';
 import { zostavStrankovanie } from '../utils/odpoved';
+import { presmerujStaruAdresu } from '../utils/automatickePresmerovanie';
 
 const router: Router = Router();
 
@@ -465,6 +466,8 @@ adminPageRouter.put('/:id', [
       }
     }
 
+    const staraAdresa = page.publikovany ? `/${page.slug}` : null;
+
     // Aktualizácia
     await page.update({
       nazov,
@@ -476,6 +479,9 @@ adminPageRouter.put('/:id', [
       meta_title: meta_title !== undefined ? meta_title : page.meta_title,
       meta_description: meta_description !== undefined ? meta_description : page.meta_description
     });
+
+    // Publikovaná stránka so zmenenou adresou - stará adresa presmeruje na novú
+    if (staraAdresa) await presmerujStaruAdresu(staraAdresa, `/${page.slug}`);
 
     res.json({
       success: true,

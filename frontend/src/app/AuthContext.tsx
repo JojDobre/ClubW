@@ -42,6 +42,8 @@ interface HodnotaKontextu {
   odhlas: () => Promise<void>;
   /** Má používateľ aspoň jednu zo zadaných rolí? */
   maRolu: (...role: Rola[]) => boolean;
+  /** Po zmene profilu alebo hesla - nové údaje (a tokeny) prihláseného. */
+  aktualizuj: (udaje: { pouzivatel?: Pouzivatel; token?: string; refreshToken?: string }) => void;
   /** Smie používateľ v module danú akciu? Správca smie všetko. */
   smie: (modul: string, akcia?: 'citat' | 'pisat' | 'mazat') => boolean;
 }
@@ -210,6 +212,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         odhlas,
         maRolu,
         smie,
+        aktualizuj: ({ pouzivatel: novy, token, refreshToken }) => {
+          if (token) ulozTokeny(token, refreshToken);
+          if (novy) setPouzivatel(novy);
+        },
       }}
     >
       {children}

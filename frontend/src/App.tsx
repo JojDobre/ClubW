@@ -7,6 +7,22 @@ import { NastaveniaProvider } from './context/NastaveniaContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import PublicLayout from './components/PublicLayout';
 import PageView from './components/PageView';
+import NenajdenaStranka from './components/NenajdenaStranka';
+import AnketaWeb from './components/AnketaWeb';
+import { useNastavenia } from './context/NastaveniaContext';
+
+/** Nadpis úvodnej stránky z nastavení klubu (predtým natvrdo „ClubW"). */
+const UvodKlubu: React.FC = () => {
+  const { nastavenia } = useNastavenia();
+  return (
+    <>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#1a202c' }}>Vitajte v klube {nastavenia.nazov}</h1>
+      {(nastavenia.slogan || nastavenia.meta_popis) && (
+        <p style={{ fontSize: '1.2rem', color: '#4a5568', marginBottom: '30px' }}>{nastavenia.slogan || nastavenia.meta_popis}</p>
+      )}
+    </>
+  );
+};
 
 // PRIDANÉ - Nový layout system
 import { RouterProvider, useRouter } from './context/RouterContext';
@@ -401,12 +417,9 @@ const AppContent: React.FC<{
           maxWidth: '800px',
           margin: '0 auto'
         }}>
-          <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#1a202c' }}>
-            🏆 Vitajte v ClubW
-          </h1>
-          <p style={{ fontSize: '1.2rem', color: '#4a5568', marginBottom: '30px' }}>
-            Moderná platforma pre správu športových klubov
-          </p>
+          <UvodKlubu />
+          {/* Najnovšia otvorená anketa (ak nejaká je) */}
+          <AnketaWeb najnovsia />
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -1149,34 +1162,8 @@ if (isStatsPage) {
       } />
       <Route path="*" element={
         <PublicLayout>
-          <div style={{ 
-            padding: '60px 20px', 
-            textAlign: 'center',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            <h1 style={{ fontSize: '4rem', marginBottom: '20px' }}>🔍</h1>
-            <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: '#2d3748' }}>
-              Stránka nenájdená
-            </h2>
-            <p style={{ fontSize: '1.1rem', color: '#718096', marginBottom: '30px' }}>
-              Ľutujeme, ale stránka ktorú hľadáte neexistuje alebo bola presunutá.
-            </p>
-            <a 
-              href="/" 
-              style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                background: '#3182ce',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '6px',
-                fontSize: '16px'
-              }}
-            >
-              ← Späť na domovskú stránku
-            </a>
-          </div>
+          {/* Nenájdená adresa - najprv skúsi presmerovanie starého odkazu */}
+          <NenajdenaStranka />
         </PublicLayout>
       } />
     </Routes>
