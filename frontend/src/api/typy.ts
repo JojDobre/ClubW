@@ -213,11 +213,18 @@ export interface Hrac {
 
 // ===== Liga =====
 
+export type RezimTabulky = 'plna' | 'len_body';
+
 export interface Liga {
   id: number;
   nazov: string;
+  /** Názov sezóny, napr. "2026/2027" */
   sezona: string;
-  typ: string;
+  sezona_id: number | null;
+  /** Náš tím, ktorého sa súťaž týka */
+  tim_id: number | null;
+  typ: 'sutaz' | 'pohar' | 'priatelska' | string;
+  popis: string | null;
   format: string;
   status: string;
   farba: string | null;
@@ -225,7 +232,10 @@ export interface Liga {
   pocet_timov: number | null;
   body_za_vitazstvo: number;
   body_za_remizy: number;
+  body_za_prehru: number;
   auto_update_tabulka: boolean;
+  zobrazit_formu: boolean;
+  rezim_tabulky: RezimTabulky;
   datum_start: string | null;
   datum_koniec: string | null;
   aktivity: boolean;
@@ -266,8 +276,20 @@ export interface Zapas {
   pocet_divakov: number | null;
   poznamky: string | null;
   video_url: string | null;
+  /** Kde sa hrá - pri „doma" sa miesto doplní zo štadióna tímu */
+  typ_zapasu?: TypZapasu;
+  stadion_id?: number | null;
+  rozhodca?: string | null;
+  /** Logo súpera, ktorý nie je náš tím */
+  supier_logo?: string | null;
+  fotogaleria_id?: number | null;
+  clanok_id?: number | null;
+  /** Stav určil človek - automatika ho nemení */
+  stav_rucne?: boolean;
   aktivity: boolean;
 }
+
+export type TypZapasu = 'doma' | 'vonku' | 'neutralne';
 
 /** Údaje pri vytváraní a úprave zápasu. */
 export interface ZapasNaUlozenie {
@@ -287,17 +309,30 @@ export interface ZapasNaUlozenie {
   pocet_divakov?: number | null;
   poznamky?: string | null;
   video_url?: string | null;
+  typ_zapasu?: TypZapasu;
+  stadion_id?: number | null;
+  rozhodca?: string | null;
+  supier_logo?: string | null;
+  fotogaleria_id?: number | null;
+  stav_rucne?: boolean;
 }
 
 // ===== Štatistika zápasu =====
 
-export type TypUdalosti = 'gol' | 'vlastny_gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta';
+export type TypUdalosti =
+  | 'gol' | 'vlastny_gol' | 'asistencia' | 'zlta_karta' | 'cervena_karta' | 'striedanie';
 
 export interface UdalostZapasu {
   id: number;
   zapas_id: number;
-  hrac_id: number;
+  /** Náš hráč; pri hosťujúcom hráčovi null a platí meno nižšie */
+  hrac_id: number | null;
+  hostujuci_hrac_meno?: string | null;
+  hostujuci_hrac_cislo?: number | null;
   typ: TypUdalosti;
+  /** Pri striedaní: hráč, ktorý odchádza z ihriska */
+  striedany_hrac_id?: number | null;
+  striedany_hrac_meno?: string | null;
   minuta: number | null;
   poznamka: string | null;
   hrac?: {
@@ -306,15 +341,53 @@ export interface UdalostZapasu {
     priezvisko: string;
     cislo_dresu: number | null;
     tim_id?: number;
-  };
+  } | null;
 }
 
 /** Udalosť pri odosielaní na server. */
 export interface UdalostNaUlozenie {
-  hrac_id: number;
+  hrac_id: number | null;
+  hostujuci_hrac_meno?: string | null;
+  hostujuci_hrac_cislo?: number | null;
   typ: TypUdalosti;
+  striedany_hrac_id?: number | null;
+  striedany_hrac_meno?: string | null;
   minuta?: number | null;
   poznamka?: string | null;
+}
+
+/** Uložená udalosť v tvare na opätovné odoslanie - zachová aj hosťa a striedanie. */
+export const udalostNaUlozenie = (u: UdalostZapasu | UdalostNaUlozenie): UdalostNaUlozenie => ({
+  hrac_id: u.hrac_id ?? null,
+  hostujuci_hrac_meno: u.hostujuci_hrac_meno ?? null,
+  hostujuci_hrac_cislo: u.hostujuci_hrac_cislo ?? null,
+  typ: u.typ,
+  striedany_hrac_id: u.striedany_hrac_id ?? null,
+  striedany_hrac_meno: u.striedany_hrac_meno ?? null,
+  minuta: u.minuta ?? null,
+  poznamka: u.poznamka ?? null,
+});
+
+/** Hráč v zostave zápasu. */
+export interface HracZostavy {
+  id?: number;
+  strana: 'domaci' | 'hostia';
+  hrac_id: number | null;
+  hostujuci_hrac_meno?: string | null;
+  hostujuci_hrac_cislo?: number | null;
+  zaradenie: 'zakladna' | 'lavicka';
+  odohrane_minuty?: number | null;
+  kapitan?: boolean;
+  poznamka?: string | null;
+  hrac?: { id: number; meno: string; priezvisko: string; cislo_dresu: number | null } | null;
+}
+
+/** Voľná textová udalosť priebehu zápasu. */
+export interface TextovaUdalost {
+  id?: number;
+  minuta: number | null;
+  text: string;
+  poradie?: number;
 }
 
 export interface StatistikyZapasu {
@@ -554,8 +627,13 @@ export interface RiadokTabulky {
   liga_id: number;
   tim_id: number | null;
   custom_tim_nazov: string | null;
+  custom_tim_logo: string | null;
+  /** Názov a logo tímu - z nášho tímu alebo zadané ručne */
+  tim_nazov?: string | null;
+  tim_logo?: string | null;
   pozicia: number;
   body: number;
+  skutocne_body?: number;
   zapasy: number;
   vitazstva: number;
   remizy: number;
@@ -565,9 +643,13 @@ export interface RiadokTabulky {
   goly_rozdiel: number;
   forma: string | null;
   penalizacne_body: number;
+  bonus_body?: number;
   manualne_upravene: boolean;
   tim?: { id: number; nazov: string; logo: string | null };
 }
+
+/** Riadok tabuľky pri úprave - nový riadok má dočasné id "temp-…" */
+export type RiadokNaUlozenie = Partial<Omit<RiadokTabulky, 'id'>> & { id?: number | string };
 
 // ===== Sekcia KLUB =====
 
@@ -704,4 +786,27 @@ export interface Turnaj {
   status: StavTurnaja;
   datum_start: string | null;
   liga?: { id: number; nazov: string; sezona: string };
+}
+
+// ===== Kalendár =====
+
+export type TypOpakovania = 'ziadne' | 'denne' | 'tyzdenne' | 'dvojtyzdenne' | 'mesacne';
+
+/** Vlastná udalosť kalendára (tréning, stretnutie…). */
+export interface UdalostKalendara {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  tim_id: number | null;
+  /** Dátum prvého výskytu (RRRR-MM-DD) */
+  datum: string;
+  cas_od: string | null;
+  cas_do: string | null;
+  miesto: string | null;
+  opakovanie: TypOpakovania;
+  opakovanie_do: string | null;
+  tim?: { id: number; nazov: string; farba: string | null } | null;
+  /** Pri výpise za obdobie: konkrétny deň výskytu opakovanej udalosti */
+  datum_vyskytu?: string;
+  farba?: string | null;
 }

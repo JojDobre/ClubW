@@ -17,6 +17,7 @@ import {
 import { zapasyApi, hraciApi } from '../../api/sport';
 import { formatujCas } from '../../utils/datum';
 import { TYPY_UDALOSTI } from './ZapasEditor';
+import { udalostNaUlozenie } from '../../api/typy';
 import type {
   Zapas, Hrac, UdalostZapasu, TypUdalosti, UdalostNaUlozenie,
 } from '../../api/typy';
@@ -150,13 +151,9 @@ export const ZapasLive: React.FC = () => {
     }
   };
 
-  const naUlozenie = (): UdalostNaUlozenie[] =>
-    udalosti.map((u) => ({
-      hrac_id: u.hrac_id,
-      typ: u.typ,
-      minuta: u.minuta,
-      poznamka: u.poznamka,
-    }));
+  // Prenesieme všetky polia - aj hosťujúcich hráčov a striedania,
+  // inak by pridanie udalosti v živom režime ostatné údaje zmazalo
+  const naUlozenie = (): UdalostNaUlozenie[] => udalosti.map(udalostNaUlozenie);
 
   const pridaj = async () => {
     if (!hracId) {
@@ -184,7 +181,7 @@ export const ZapasLive: React.FC = () => {
   const odober = async (udalost: UdalostZapasu) => {
     const zvysne = udalosti
       .filter((u) => u.id !== udalost.id)
-      .map((u) => ({ hrac_id: u.hrac_id, typ: u.typ, minuta: u.minuta, poznamka: u.poznamka }));
+      .map(udalostNaUlozenie);
 
     const ok = await ulozUdalosti(zvysne);
     if (ok) uspech('Udalosť bola odobratá');
@@ -394,7 +391,11 @@ export const ZapasLive: React.FC = () => {
                   {TYPY_UDALOSTI[u.typ].symbol}
                 </span>
                 <span className="cw-live__popis">
-                  <strong>{u.hrac ? `${u.hrac.meno} ${u.hrac.priezvisko}` : menovkaHraca(u.hrac_id)}</strong>
+                  <strong>{u.hrac
+                    ? `${u.hrac.meno} ${u.hrac.priezvisko}`
+                    : u.hostujuci_hrac_meno
+                      ? `${u.hostujuci_hrac_meno}${u.hostujuci_hrac_cislo != null ? ` (${u.hostujuci_hrac_cislo})` : ''}`
+                      : menovkaHraca(u.hrac_id ?? 0)}</strong>
                   <span className="cw-live__typ">{TYPY_UDALOSTI[u.typ].popis}</span>
                 </span>
                 <button

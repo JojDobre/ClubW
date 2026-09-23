@@ -2,6 +2,7 @@
 // Controller pre správu zápasov - FÁZA 4
 
 import { Request, Response } from 'express';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { Op } from 'sequelize';
 import Zapas from '../models/Zapas';
 import ZapasStatistika from '../models/ZapasStatistika';
@@ -168,7 +169,7 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
 
     // Paginácia
     const pageNum = parseInt(page as string) || 1;
-    const limitNum = parseInt(limit as string) || 20;
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 500);
     const offset = (pageNum - 1) * limitNum;
 
     // Include podmienky
@@ -184,12 +185,12 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
         {
           model: Team,
           as: 'domaci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria']
+          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
         },
         {
           model: Team,
           as: 'hostujuci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria']
+          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
         }
       );
     }
@@ -255,12 +256,12 @@ export const getMatch = async (req: Request, res: Response): Promise<void> => {
         {
           model: Team,
           as: 'domaci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria']
+          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
         },
         {
           model: Team,
           as: 'hostujuci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria']
+          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
         },
         {
           model: Article,
@@ -301,9 +302,15 @@ export const getMatch = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Logá našich tímov - verejný detail ich zobrazuje pri názvoch
+    const tim = (t: any) => (t ? { id: t.id, nazov: t.nazov, logo: t.logo ?? null } : null);
     res.json({
       success: true,
-      data: zapas.toSafeJSON(),
+      data: {
+        ...zapas.toSafeJSON(),
+        domaci_tim: tim((zapas as any).domaci_tim),
+        hostujuci_tim: tim((zapas as any).hostujuci_tim),
+      },
       message: 'Zápas úspešne načítaný'
     });
 
@@ -353,6 +360,21 @@ const prepocitajTabulkuAkTreba = async (ligaId: number | null | undefined): Prom
   }
 };
 
+
+/** Ručne určený stav zápasu? Zrušený a odložený sú ručné vždy. */
+const urciStavRucne = (telo: any, poslalStav: boolean): boolean => {
+  if (telo.status === 'zruseny' || telo.status === 'odlozeny') return true;
+  if (telo.stav_rucne !== undefined) return telo.stav_rucne === true || telo.stav_rucne === 'true';
+  return poslalStav;
+};
+
+/** Stav podľa času zápasu - rovnaké pravidlo ako plánovač (Zapas.getAutoStatus). */
+const automatickyStav = (datumCas: any): 'naplanovany' | 'prebieha' | 'ukonceny' => {
+  const zaciatok = new Date(datumCas).getTime();
+  const teraz = Date.now();
+  if (Number.isNaN(zaciatok) || zaciatok > teraz) return 'naplanovany';
+  return teraz <= zaciatok + 2 * 60 * 60 * 1000 ? 'prebieha' : 'ukonceny';
+};
 
 /** Povolené hodnoty miesta konania zápasu. */
 const TYPY_ZAPASU = ['doma', 'vonku', 'neutralne'];
@@ -443,6 +465,13 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
       datum_cas: req.body.datum_cas,
       status: req.body.status || 'naplanovany'
     };
+
+    // Stav: výslovne zadaný = ručný (plánovač ho neprepíše), inak podľa času.
+    // Klient môže poslať stav_rucne: false a nechať stav na automatike.
+    createData.stav_rucne = urciStavRucne(req.body, Boolean(req.body.status));
+    if (!createData.stav_rucne) {
+      createData.status = automatickyStav(req.body.datum_cas);
+    }
 
     // Liga handling - KONTROLA LEN AK JE ZADANÉ DB ID
     if (req.body.liga_id && req.body.liga_id > 0) {
@@ -619,6 +648,7 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri vytváraní zápasu:', error);
     res.status(500).json({
       success: false,
@@ -684,6 +714,18 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
     }
     if (req.body.status !== undefined) {
       updateData.status = req.body.status;
+    }
+
+    // Ručný / automatický stav. Poslaný stav bez príznaku sa berie ako ručný
+    // (tak sa API správalo doteraz - klient stav určil sám).
+    if (req.body.stav_rucne !== undefined || req.body.status !== undefined) {
+      updateData.stav_rucne = urciStavRucne(req.body, req.body.status !== undefined);
+      if (!updateData.stav_rucne) {
+        updateData.status = automatickyStav(req.body.datum_cas ?? zapas.datum_cas);
+      }
+    } else if (req.body.datum_cas !== undefined && !(zapas as any).stav_rucne) {
+      // Zmena termínu pri automatike - stav sa hneď prispôsobí
+      updateData.status = automatickyStav(req.body.datum_cas);
     }
 
     // Ligu meníme len vtedy, keď klient poslal liga_id alebo liga_nazov.
@@ -874,6 +916,7 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri aktualizácii zápasu:', error);
     res.status(500).json({
       success: false,
@@ -937,6 +980,8 @@ export const updateMatchStatuses = async (req: Request, res: Response): Promise<
     const zapasy = await Zapas.findAll({
       where: {
         aktivity: true,
+        // Ručne určený stav sa nemení - rovnako ako v plánovači
+        stav_rucne: false,
         status: {
           [Op.notIn]: ['zruseny', 'odlozeny'] // Nevyber zrušené/odložené
         }
@@ -944,6 +989,7 @@ export const updateMatchStatuses = async (req: Request, res: Response): Promise<
     });
 
     let updatedCount = 0;
+    const ligyNaPrepocet = new Set<number>();
     const updates = [];
 
     for (const zapas of zapasy) {
@@ -953,6 +999,7 @@ export const updateMatchStatuses = async (req: Request, res: Response): Promise<
       if (zapas.status !== currentAutoStatus) {
         await zapas.update({ status: currentAutoStatus });
         updatedCount++;
+        if (currentAutoStatus === 'ukonceny' && zapas.liga_id) ligyNaPrepocet.add(zapas.liga_id);
         
         updates.push({
           id: zapas.id,
@@ -962,6 +1009,10 @@ export const updateMatchStatuses = async (req: Request, res: Response): Promise<
           datum_cas: zapas.datum_cas
         });
       }
+    }
+
+    for (const ligaId of ligyNaPrepocet) {
+      await prepocitajTabulkuAkTreba(ligaId);
     }
 
     res.json({

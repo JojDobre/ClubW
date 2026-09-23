@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
-import { apiUrl } from '../config/api';
+import { apiUrl, souborUrl } from '../config/api';
+import ZapasPriebeh from '../components/ZapasPriebeh';
 
 interface Match {
   id: number;
@@ -39,6 +40,10 @@ interface Match {
   };
   goly_domaci?: number;
   goly_hostia?: number;
+  /** Logo súpera mimo databázy */
+  supier_logo?: string | null;
+  rozhodca?: string | null;
+  actual_status?: Match['status'];
   status: 'naplanovany' | 'prebieha' | 'ukonceny' | 'odlozeny' | 'zruseny';
   pocet_divakov?: number;
   poznamky?: string;
@@ -49,20 +54,6 @@ interface Match {
   aktualizovany: string;
 }
 
-interface MatchStats {
-  domaci_golyAttempts?: number;
-  hostia_golyAttempts?: number;
-  domaci_possessionPercent?: number;
-  hostia_possessionPercent?: number;
-  domaci_corners?: number;
-  hostia_corners?: number;
-  domaci_yellowCards?: number;
-  hostia_yellowCards?: number;
-  domaci_redCards?: number;
-  hostia_redCards?: number;
-  domaci_offsides?: number;
-  hostia_offsides?: number;
-}
 
 const MatchDetail: React.FC = () => {
   // Manuálne parsovanie URL pre získanie ID zápasu
@@ -73,7 +64,6 @@ const MatchDetail: React.FC = () => {
   console.log('🔍 Match ID z URL:', id);
 
   const [match, setMatch] = useState<Match | null>(null);
-  const [stats, setStats] = useState<MatchStats>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,10 +100,6 @@ const MatchDetail: React.FC = () => {
         setMatch(data.data);
         console.log('✅ Match nastavený:', data.data);
         
-        // Generovanie mock štatistík pre ukončené zápasy
-        if (data.data.status === 'ukonceny') {
-          generateMockStats();
-        }
       } else {
         throw new Error(data.message || 'Chyba pri načítaní zápasu');
       }
@@ -125,27 +111,17 @@ const MatchDetail: React.FC = () => {
     }
   };
 
-  // Generovanie mock štatistík
-  const generateMockStats = () => {
-    setStats({
-      domaci_golyAttempts: Math.floor(Math.random() * 10) + 5,
-      hostia_golyAttempts: Math.floor(Math.random() * 10) + 5,
-      domaci_possessionPercent: Math.floor(Math.random() * 40) + 30,
-      hostia_possessionPercent: Math.floor(Math.random() * 40) + 30,
-      domaci_corners: Math.floor(Math.random() * 8) + 2,
-      hostia_corners: Math.floor(Math.random() * 8) + 2,
-      domaci_yellowCards: Math.floor(Math.random() * 4),
-      hostia_yellowCards: Math.floor(Math.random() * 4),
-      domaci_redCards: Math.floor(Math.random() * 2),
-      hostia_redCards: Math.floor(Math.random() * 2),
-      domaci_offsides: Math.floor(Math.random() * 5),
-      hostia_offsides: Math.floor(Math.random() * 5),
-    });
-  };
-
   useEffect(() => {
     fetchMatchData();
   }, [id]);
+
+  /** Logo tímu: náš tím má logo pri sebe, súper mimo databázy v zápase. */
+  const logoTimu = (timId?: number | null, logo?: string | null) => {
+    const cesta = timId ? logo : match?.supier_logo;
+    return cesta ? (
+      <img src={souborUrl(cesta)} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+    ) : null;
+  };
 
   // Helper funkcie
   const formatDateTime = (dateTimeStr: string) => {
@@ -190,7 +166,7 @@ const MatchDetail: React.FC = () => {
     switch (status) {
       case 'naplanovany': return 'Naplánovaný';
       case 'prebieha': return 'Prebieha';
-      case 'ukonceny': return 'Ukončený';
+      case 'ukonceny': return 'Odohraný';
       case 'odlozeny': return 'Odložený';
       case 'zruseny': return 'Zrušený';
       default: return status;
@@ -198,7 +174,7 @@ const MatchDetail: React.FC = () => {
   };
 
   const isMatchFinished = () => {
-    return match?.status === 'ukonceny';
+    return (match?.actual_status ?? match?.status) === 'ukonceny';
   };
 
   const isMatchLive = () => {
@@ -342,7 +318,10 @@ const MatchDetail: React.FC = () => {
                 color: '#1e293b',
                 marginBottom: '8px'
               }}>
-                {match.domaci_tim_nazov || 'Domáci tím'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                  {match.domaci_tim_nazov || 'Domáci tím'}
+                  {logoTimu(match.domaci_tim_id, match.domaci_tim?.logo)}
+                </span>
               </div>
               <div style={{ color: '#64748b', fontSize: '14px' }}>
                 DOMÁCI
@@ -383,14 +362,14 @@ const MatchDetail: React.FC = () => {
               <div style={{
                 marginTop: '12px',
                 padding: '6px 12px',
-                backgroundColor: getStatusColor(match.status),
+                backgroundColor: getStatusColor(match.actual_status ?? match.status),
                 color: 'white',
                 borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '500',
                 display: 'inline-block'
               }}>
-                {getStatusIcon(match.status)} {getStatusText(match.status)}
+                {getStatusIcon(match.actual_status ?? match.status)} {getStatusText(match.actual_status ?? match.status)}
               </div>
             </div>
 
@@ -402,7 +381,10 @@ const MatchDetail: React.FC = () => {
                 color: '#1e293b',
                 marginBottom: '8px'
               }}>
-                {match.hostujuci_tim_nazov || 'Hosťujúci tím'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                  {logoTimu(match.hostujuci_tim_id, match.hostujuci_tim?.logo)}
+                  {match.hostujuci_tim_nazov || 'Hosťujúci tím'}
+                </span>
               </div>
               <div style={{ color: '#64748b', fontSize: '14px' }}>
                 HOSTIA
@@ -429,7 +411,18 @@ const MatchDetail: React.FC = () => {
               </div>
             )}
 
-            {match.pocet_divakov && (
+            {match.rozhodca && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>
+                  🧑‍⚖️ Rozhodca
+                </div>
+                <div style={{ fontWeight: '500', color: '#1e293b' }}>
+                  {match.rozhodca}
+                </div>
+              </div>
+            )}
+
+            {match.pocet_divakov != null && match.pocet_divakov > 0 && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>
                   👥 Diváci
@@ -461,228 +454,12 @@ const MatchDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Match Statistics */}
-      {isMatchFinished() && Object.keys(stats).length > 0 && (
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          overflow: 'hidden',
-          marginBottom: '32px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #e2e8f0',
-            backgroundColor: '#f8fafc'
-          }}>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: '#1e293b',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              📊 Štatistiky zápasu
-            </h2>
-          </div>
-
-          <div style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              
-              {/* Pokusy na bránu */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.domaci_golyAttempts || 0}
-                  </span>
-                </div>
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  fontWeight: '500'
-                }}>
-                  Pokusy na bránu
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.hostia_golyAttempts || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* Držanie lopty */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.domaci_possessionPercent || 0}%
-                  </span>
-                </div>
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  fontWeight: '500'
-                }}>
-                  Držanie lopty
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.hostia_possessionPercent || 0}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Rohové kopy */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.domaci_corners || 0}
-                  </span>
-                </div>
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  fontWeight: '500'
-                }}>
-                  Rohové kopy
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.hostia_corners || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* Karty */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: '18px',
-                    color: '#f59e0b',
-                    marginRight: '8px'
-                  }}>
-                    🟨 {stats.domaci_yellowCards || 0}
-                  </span>
-                  <span style={{
-                    fontSize: '18px',
-                    color: '#ef4444'
-                  }}>
-                    🟥 {stats.domaci_redCards || 0}
-                  </span>
-                </div>
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  fontWeight: '500'
-                }}>
-                  Karty
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{
-                    fontSize: '18px',
-                    color: '#f59e0b',
-                    marginRight: '8px'
-                  }}>
-                    🟨 {stats.hostia_yellowCards || 0}
-                  </span>
-                  <span style={{
-                    fontSize: '18px',
-                    color: '#ef4444'
-                  }}>
-                    🟥 {stats.hostia_redCards || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* Ofsajdy */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto 1fr',
-                alignItems: 'center',
-                gap: '16px'
-              }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.domaci_offsides || 0}
-                  </span>
-                </div>
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  fontWeight: '500'
-                }}>
-                  Ofsajdy
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#1e293b'
-                  }}>
-                    {stats.hostia_offsides || 0}
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Priebeh a zostava - skutočné údaje zo zápisu zápasu */}
+      <ZapasPriebeh
+        zapasId={match.id}
+        domaci={match.domaci_tim_nazov || 'Domáci'}
+        hostia={match.hostujuci_tim_nazov || 'Hostia'}
+      />
 
       {/* Additional Info */}
       <div style={{

@@ -4,7 +4,7 @@
 
 import api from '../app/apiKlient';
 import type {
-  Kategoria, Stranka, Galeria, GaleriaObrazok, ClenRealizacnehoTimu, RiadokTabulky, Liga,
+  Kategoria, Stranka, Galeria, GaleriaObrazok, ClenRealizacnehoTimu, RiadokTabulky, RiadokNaUlozenie, Liga,
 } from './typy';
 
 export const kategorieSpravaApi = {
@@ -123,7 +123,19 @@ export const tabulkyApi = {
   /** Vynúti prepočet tabuľky zo zápasov. */
   prepocitaj: (ligaId: number) => api.vytvor(`/leagues/${ligaId}/table/recalculate`, {}),
 
+  /** Uloží upravené a nové riadky tabuľky naraz. */
+  ulozTabulku: (ligaId: number, riadky: RiadokNaUlozenie[]) =>
+    api.uprav<RiadokTabulky[]>(`/leagues/${ligaId}/table`, { tabulka_data: riadky }),
+
+  zmazRiadok: (ligaId: number, riadokId: number) =>
+    api.zmaz<RiadokTabulky[]>(`/leagues/${ligaId}/table/${riadokId}`),
+
   vytvorLigu: (udaje: Partial<Liga>) => api.vytvor<Liga>('/leagues', udaje),
   upravLigu: (id: number, udaje: Partial<Liga>) => api.uprav<Liga>(`/leagues/${id}`, udaje),
+  /** Archivácia - liga sa dá obnoviť v Archíve */
   zmazLigu: (id: number) => api.zmaz(`/leagues/${id}`),
+
+  /** Kópia ligy pre novú sezónu - iba tímy, alebo aj body. */
+  duplikuj: (id: number, udaje: { sezona_id: number; zachovat_body: boolean }) =>
+    api.vytvor<{ liga: Liga; tabulka: RiadokTabulky[] }>(`/leagues/${id}/duplicate`, udaje),
 };

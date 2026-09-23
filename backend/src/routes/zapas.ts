@@ -109,7 +109,7 @@ router.put('/:id', authenticateToken, requireEditor, updateMatch);
  * @param id - ID zápasu  
  * @access Private (Admin)
  */
-router.delete('/:id', authenticateToken, requireAdmin, deleteMatch);
+router.delete('/:id', authenticateToken, requireEditor, deleteMatch);
 
 
 export default router;
