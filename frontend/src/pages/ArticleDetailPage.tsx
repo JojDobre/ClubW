@@ -7,6 +7,7 @@ import { sanitizeHtml } from '../utils/sanitize';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
 import KomentarePodClankom from '../components/KomentarePodClankom';
+import { skusPresmerovat } from '../utils/presmerovanie';
 
 // Interface pre článok z backend API
 interface Article {
@@ -92,6 +93,8 @@ const ArticleDetailPage: React.FC = () => {
 
       if (!response.ok) {
         if (response.status === 404) {
+          // Premenovaný článok môže mať presmerovanie zo starej adresy
+          if (await skusPresmerovat()) return;
           setError('Článok nebol nájdený');
         } else if (jeNahlad && (response.status === 401 || response.status === 403)) {
           setError('Na náhľad nepublikovaného článku sa musíte prihlásiť do administrácie.');

@@ -32,6 +32,30 @@ const obnovKopiu = async (): Promise<void> => {
   nacitaneO = Date.now();
 };
 
+/**
+ * Nájde presmerovanie pre cestu a zapíše jeho použitie.
+ *
+ * Web beží ako samostatná aplikácia (Vite / statický build), takže
+ * požiadavky na stránky na backend neprídu a middleware nižšie ich
+ * nevidí. Web sa preto pri nenájdenej stránke spýta cez
+ * GET /api/redirects/resolve, či pre ňu nie je presmerovanie.
+ */
+export const najdiPresmerovanie = async (povodna: string): Promise<{ novy: string; kod: number } | null> => {
+  if (Date.now() - nacitaneO > PLATNOST_MS) {
+    await obnovKopiu();
+  }
+  const ciel = kopia.get(Presmerovanie.normalizuj(povodna));
+  if (!ciel) return null;
+  void Presmerovanie.update(
+    {
+      pocet_pouziti: (Presmerovanie.sequelize as any).literal('"pocet_pouziti" + 1'),
+      posledne_pouzite: new Date(),
+    },
+    { where: { id: ciel.id }, silent: true }
+  ).catch((chyba) => console.error('Nepodarilo sa zapísať použitie presmerovania:', chyba));
+  return { novy: ciel.novy, kod: ciel.kod };
+};
+
 /** Zahodí kópiu, aby sa načítala znova. Volá sa po zmene v administrácii. */
 export const zrusKopiuPresmerovani = (): void => {
   nacitaneO = 0;

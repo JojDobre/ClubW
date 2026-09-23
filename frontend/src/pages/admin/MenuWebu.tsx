@@ -7,8 +7,9 @@
 import React, { useState } from 'react';
 import {
   PageHeader, Button, Badge, Icon, Modal, Input, Select, Switch, Skeleton, ErrorState, EmptyState,
-  ConfirmDialog, useToast,
+  ConfirmDialog, FilterChips, useToast,
 } from '../../ui';
+import { Presmerovania } from './Presmerovania';
 import { useNacitanie } from '../../app/useNacitanie';
 import { menuApi } from '../../api/menu';
 import { strankyApi, kategorieSpravaApi } from '../../api/obsah';
@@ -87,6 +88,9 @@ export const MenuWebu: React.FC = () => {
   const stranky = useNacitanie((signal) => strankyApi.vypis(signal));
   const rubriky = useNacitanie((signal) => kategorieSpravaApi.vypis(signal));
 
+  const [karta, setKarta] = useState<'menu' | 'presmerovania'>(
+    () => (window.location.hash === '#presmerovania' ? 'presmerovania' : 'menu')
+  );
   const [upravovana, setUpravovana] = useState<Formular | null>(null);
   const [naZmazanie, setNaZmazanie] = useState<PolozkaMenuWebu | null>(null);
   const [uklada, setUklada] = useState(false);
@@ -242,14 +246,33 @@ export const MenuWebu: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Menu webu"
-        podnadpis="Položky hlavného menu verejného webu - poradie, podmenu a kam vedú."
+        nadpis="Menu a odkazy"
+        podnadpis="Hlavné menu verejného webu a presmerovanie starých odkazov."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={16} />} onClick={() => setUpravovana({ ...PRAZDNY, nazov: 'Články' })}>
-            Pridať položku
-          </Button>
+          karta === 'menu' ? (
+            <Button ikona={<Icon nazov="plus" velkost={16} />} onClick={() => setUpravovana({ ...PRAZDNY, nazov: 'Články' })}>
+              Pridať položku
+            </Button>
+          ) : undefined
         }
       />
+
+      <div className="cw-menu__karty">
+        <FilterChips
+          popisSkupiny="Časť obrazovky"
+          moznosti={[
+            { hodnota: 'menu', popis: 'Menu webu' },
+            { hodnota: 'presmerovania', popis: 'Presmerovania' },
+          ]}
+          zvolena={karta}
+          onZmena={(h) => setKarta(h as 'menu' | 'presmerovania')}
+        />
+      </div>
+
+      {karta === 'presmerovania' ? (
+        <Presmerovania />
+      ) : (
+      <>
 
       {menu.chyba ? (
         <ErrorState sprava="Menu sa nepodarilo načítať" detail={menu.chyba} onSkusZnova={menu.obnov} />
@@ -272,6 +295,9 @@ export const MenuWebu: React.FC = () => {
             <Riadok key={p.id} p={p} uroven={strom} index={i} />
           ))}
         </ul>
+      )}
+
+      </>
       )}
 
       <Modal

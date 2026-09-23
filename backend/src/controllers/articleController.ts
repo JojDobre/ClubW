@@ -15,6 +15,7 @@ import fs from 'fs/promises';
 import { sanitizeContent, sanitizePlainText } from '../utils/sanitize';
 import path from 'path';
 import { zostavStrankovanie } from '../utils/odpoved';
+import { presmerujStaruAdresu } from '../utils/automatickePresmerovanie';
 
 // Validácia pre VYTVORENIE článku - povinné polia musia prísť.
 export const validateArticle = [
@@ -648,7 +649,10 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     });
 
     // Aktualizácia článku
+    const staryOdkaz = article.status === 'published' ? `/clanek/${article.slug}` : null;
     await article.update(updateData);
+    // Publikovaný článok so zmenenou adresou - stará adresa presmeruje na novú
+    if (staryOdkaz) await presmerujStaruAdresu(staryOdkaz, `/clanek/${article.slug}`);
 
     // Načítanie aktualizovaného článku s vzťahmi
     const updatedArticle = await Article.findByPk(id, {

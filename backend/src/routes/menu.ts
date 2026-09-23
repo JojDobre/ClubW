@@ -18,7 +18,7 @@ import {
   deletePresmerovanie,
 } from '../controllers/menuController';
 import { authenticateToken, requirePermission } from '../middleware/auth';
-import { zrusKopiuPresmerovani } from '../middleware/presmerovania';
+import { zrusKopiuPresmerovani, najdiPresmerovanie } from '../middleware/presmerovania';
 
 const router = Router();
 
@@ -52,6 +52,29 @@ router.put('/admin/menu/:id', authenticateToken, requirePermission('nastavenia',
 router.delete('/admin/menu/:id', authenticateToken, requirePermission('nastavenia', 'mazat'), deleteMenuPolozka);
 
 // ===== PRESMEROVANIA =====
+
+/**
+ * @route GET /api/redirects/resolve?cesta=/stara-adresa
+ * Verejné - web sa pýta pri nenájdenej stránke, kam presmerovať.
+ */
+router.get('/redirects/resolve', async (req, res) => {
+  try {
+    const cesta = String(req.query.cesta || '').split('?')[0];
+    if (!cesta.startsWith('/') || cesta.length > 500) {
+      res.status(400).json({ success: false, message: 'Neplatná cesta' });
+      return;
+    }
+    const ciel = await najdiPresmerovanie(cesta);
+    if (!ciel) {
+      res.status(404).json({ success: false, message: 'Presmerovanie neexistuje' });
+      return;
+    }
+    res.json({ success: true, data: ciel });
+  } catch (chyba) {
+    console.error('Chyba pri hľadaní presmerovania:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
 
 /** @route GET /api/admin/redirects */
 router.get('/admin/redirects', authenticateToken, requirePermission('nastavenia', 'citat'), getPresmerovania);

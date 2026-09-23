@@ -1024,3 +1024,15 @@ export interface PolozkaMenuWebu {
   aktivity: boolean;
   deti?: PolozkaMenuWebu[];
 }
+
+export interface PresmerovanieOdkazu {
+  id: number;
+  stary_odkaz: string;
+  novy_odkaz: string;
+  /** 301 trvalé, 302 dočasné (307/308 zachovávajú metódu) */
+  kod: number;
+  poznamka: string | null;
+  pocet_pouziti: number;
+  posledne_pouzite: string | null;
+  aktivity: boolean;
+}

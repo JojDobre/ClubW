@@ -14,6 +14,19 @@ import Page from '../models/Page';
 import Category from '../models/Category';
 import { sanitizePlainText } from '../utils/sanitize';
 
+/**
+ * Starý odkaz musí byť adresa na tomto webe - nie iný web, API ani
+ * administrácia (presmerovaním by sa dala zamknúť).
+ */
+const overStaryOdkaz = (stary: string): string | null => {
+  if (!stary.startsWith('/')) return 'Starý odkaz musí byť adresa na tomto webe (začína /)';
+  if (/^\/(api|admin|uploads|prihlasenie)(\/|$)/i.test(stary)) {
+    return 'Adresy administrácie, prihlásenia, API a súborov sa presmerovať nedajú';
+  }
+  if (stary === '/') return 'Úvodnú stránku nie je možné presmerovať';
+  return null;
+};
+
 const overId = (id: string): number | null => {
   const cislo = Number(id);
   return Number.isInteger(cislo) && cislo > 0 ? cislo : null;
@@ -337,6 +350,11 @@ export const createPresmerovanie = async (req: Request, res: Response): Promise<
       res.status(400).json({ success: false, message: 'Starý aj nový odkaz sú povinné' });
       return;
     }
+    const chybaStareho = overStaryOdkaz(stary);
+    if (chybaStareho) {
+      res.status(400).json({ success: false, message: chybaStareho });
+      return;
+    }
 
     const existujuce = await Presmerovanie.findOne({ where: { stary_odkaz: stary } });
     if (existujuce) {
@@ -392,6 +410,11 @@ export const updatePresmerovanie = async (req: Request, res: Response): Promise<
     const udaje: any = {};
     if (req.body.stary_odkaz !== undefined) {
       udaje.stary_odkaz = Presmerovanie.normalizuj(String(req.body.stary_odkaz));
+      const chybaStareho = overStaryOdkaz(udaje.stary_odkaz as string);
+      if (chybaStareho) {
+        res.status(400).json({ success: false, message: chybaStareho });
+        return;
+      }
     }
     if (req.body.novy_odkaz !== undefined) {
       udaje.novy_odkaz = Presmerovanie.normalizuj(String(req.body.novy_odkaz));
