@@ -12,10 +12,18 @@ import Category from '../models/Category';
 import Zapas from '../models/Zapas';
 import {
   getPavuk,
+  getTurnaj,
   generujPavuka,
   ulozPavuka,
   zapisVysledok,
+  nastavSkupiny,
+  zapisVysledokSkupiny,
+  pavukZoSkupin,
+  zmazPavuka,
 } from '../controllers/turnajController';
+import Team from '../models/Team';
+import Sezona from '../models/Sezona';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zistiUdajeVidea } from '../services/youtube';
@@ -666,54 +674,118 @@ router.delete('/videos/:id', authenticateToken, requireEditor, async (req: Reque
 });
 
 // ============ TURNAJE ============
+//
+// Turnaj je samostatná súťaž: vlastný názov, sezóna, logo, popis a náš tím.
+// Väzba na ligu je voliteľná (liga s formátom „turnaj" si ho zakladá sama).
+
+/** Polia turnaja, ktoré smie klient nastaviť. */
+const pripravTurnaj = async (telo: any, jeNovy: boolean): Promise<{ polia: any } | { chyba: string }> => {
+  const polia: any = {};
+  const volitelneId = async (pole: string, model: any, popis: string) => {
+    if (telo[pole] === undefined) return null;
+    if (telo[pole] === null || telo[pole] === '') { polia[pole] = null; return null; }
+    const id = Number(telo[pole]);
+    if (!Number.isInteger(id) || id < 1 || !(await model.findByPk(id))) return `${popis} neexistuje`;
+    polia[pole] = id;
+    return null;
+  };
+
+  if (telo.nazov !== undefined || jeNovy) {
+    const nazov = sanitizePlainText(String(telo.nazov || '')).trim();
+    if (nazov.length < 2 || nazov.length > 100) return { chyba: 'Názov turnaja musí mať 2 – 100 znakov' };
+    polia.nazov = nazov;
+  }
+  if (telo.popis !== undefined) polia.popis = telo.popis ? sanitizePlainText(String(telo.popis)) : null;
+  if (telo.poznamky !== undefined) polia.poznamky = telo.poznamky ? sanitizePlainText(String(telo.poznamky)) : null;
+  if (telo.logo !== undefined) {
+    const logo = telo.logo ? String(telo.logo) : null;
+    if (logo && !/^(\/uploads\/|https?:\/\/)/.test(logo)) return { chyba: 'Logo musí byť nahratý obrázok alebo adresa' };
+    polia.logo = logo;
+  }
+  if (telo.typ !== undefined || jeNovy) {
+    const typ = telo.typ || 'single_elimination';
+    if (!['single_elimination', 'groups_playoff', 'round_robin'].includes(typ)) {
+      return { chyba: 'Formát musí byť pavúk, skupiny + pavúk, alebo každý s každým' };
+    }
+    polia.typ = typ;
+  }
+  if (telo.status !== undefined) {
+    if (!['pripravuje', 'prebiehajuci', 'ukonceny', 'pozastaveny'].includes(telo.status)) return { chyba: 'Neplatný stav turnaja' };
+    polia.status = telo.status;
+  }
+  for (const pole of ['datum_start', 'datum_koniec']) {
+    if (telo[pole] === undefined) continue;
+    if (telo[pole] && !/^\d{4}-\d{2}-\d{2}$/.test(String(telo[pole]))) return { chyba: 'Dátum musí byť v tvare RRRR-MM-DD' };
+    polia[pole] = telo[pole] || null;
+  }
+  const zaciatok = polia.datum_start ?? telo._povodny_start;
+  const koniec = polia.datum_koniec ?? telo._povodny_koniec;
+  if (zaciatok && koniec && koniec < zaciatok) return { chyba: 'Koniec turnaja nemôže byť pred začiatkom' };
+  if (telo.ma_tretie_miesto !== undefined) polia.ma_tretie_miesto = Boolean(telo.ma_tretie_miesto);
+  if (telo.zobrazit_na_webe !== undefined) polia.zobrazit_na_webe = Boolean(telo.zobrazit_na_webe);
+
+  const chyba =
+    (await volitelneId('tim_id', Team, 'Zvolený tím')) ||
+    (await volitelneId('sezona_id', Sezona, 'Zvolená sezóna')) ||
+    (await volitelneId('liga_id', Liga, 'Zvolená liga'));
+  if (chyba) return { chyba };
+
+  if (jeNovy) {
+    polia.pocet_timov = 2;
+    polia.status = polia.status || 'pripravuje';
+    polia.aktualna_faza = 'priprava';
+    polia.celkove_fazy = [];
+  }
+  return { polia };
+};
 
 /**
  * GET /api/tournaments
- * Turnaje aj s ligou, do ktorej patria.
- *
- * Model LigaTurnaj existoval už predtým, ale nemal žiadne rozhranie —
- * turnaje sa nedali spravovať.
+ * Verejne len zverejnené turnaje; administrácia s ?vsetky=1 aj skryté.
  */
-router.get('/tournaments', async (_req: Request, res: Response) => {
+router.get('/tournaments', optionalAuth, async (req: Request, res: Response) => {
   try {
+    const kde: any = { aktivity: true };
+    const redaktor = ['admin', 'redaktor'].includes(String((req as any).user?.rola || ''));
+    if (!(req.query.vsetky === '1' && redaktor)) kde.zobrazit_na_webe = true;
+
     const turnaje = await LigaTurnaj.findAll({
+      where: kde,
       include: [{ model: Liga, as: 'liga', attributes: ['id', 'nazov', 'sezona'], required: false }],
-      order: [['id', 'DESC']],
+      order: [['datum_start', 'DESC NULLS LAST'], ['id', 'DESC']],
       limit: 200,
     });
 
-    res.json({ success: true, data: turnaje });
+    // Do zoznamu netreba celé štruktúry - len prehľad
+    const data = turnaje.map((t) => {
+      const { pavuk_struktura, skupiny_struktura, ...zvysok } = t.toJSON() as any;
+      let pocetSkupin = 0;
+      try { pocetSkupin = JSON.parse(skupiny_struktura || '{}').skupiny?.length ?? 0; } catch { /* nič */ }
+      return { ...zvysok, ma_pavuka: Boolean(pavuk_struktura), pocet_skupin_realne: pocetSkupin };
+    });
+
+    res.json({ success: true, data });
   } catch (chyba) {
     console.error('Chyba pri načítaní turnajov:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
+/** GET /api/tournaments/:id - turnaj so skupinami a pavúkom */
+router.get('/tournaments/:id', optionalAuth, getTurnaj);
+
 /** POST /api/tournaments */
 router.post('/tournaments', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const turnaj = await LigaTurnaj.create({
-      liga_id: Number(req.body?.liga_id),
-      nazov: sanitizePlainText(String(req.body?.nazov || '')),
-      typ: req.body?.typ || 'single_elimination',
-      pocet_timov: Number(req.body?.pocet_timov) || 8,
-      pocet_postupujucich: req.body?.pocet_postupujucich ?? null,
-      pocet_skupin: req.body?.pocet_skupin ?? null,
-      ma_tretie_miesto: Boolean(req.body?.ma_tretie_miesto),
-      status: req.body?.status || 'pripravuje',
-      datum_start: req.body?.datum_start || null,
-    } as any);
-
-    res.status(201).json({ success: true, data: turnaj, message: 'Turnaj bol vytvorený' });
-  } catch (chyba: any) {
-    if (chyba.name === 'SequelizeValidationError' || chyba.name === 'SequelizeUniqueConstraintError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: chyba.errors?.map((e: any) => e.message) ?? [chyba.message],
-      });
+    const pripravene = await pripravTurnaj(req.body || {}, true);
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
       return;
     }
+    const turnaj = await LigaTurnaj.create(pripravene.polia);
+    res.status(201).json({ success: true, data: turnaj, message: 'Turnaj bol vytvorený' });
+  } catch (chyba: any) {
+    if (odpovedzNaChybuModelu(chyba, res)) return;
     console.error('Chyba pri vytváraní turnaja:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
@@ -722,52 +794,53 @@ router.post('/tournaments', authenticateToken, requireEditor, async (req: Reques
 /** PUT /api/tournaments/:id */
 router.put('/tournaments/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const turnaj = await LigaTurnaj.findByPk(Number(req.params.id));
+    const turnaj = await LigaTurnaj.findOne({ where: { id: Number(req.params.id) || 0, aktivity: true } });
     if (!turnaj) {
       res.status(404).json({ success: false, message: 'Turnaj sa nenašiel' });
       return;
     }
 
-    const polia = [
-      'nazov', 'typ', 'pocet_timov', 'pocet_postupujucich', 'pocet_skupin',
-      'ma_tretie_miesto', 'status', 'datum_start', 'aktualna_faza',
-    ];
-    const zmeny: any = {};
-
-    for (const pole of polia) {
-      if (req.body[pole] === undefined) continue;
-      zmeny[pole] = pole === 'nazov' ? sanitizePlainText(req.body[pole]) : req.body[pole];
+    const pripravene = await pripravTurnaj(
+      { ...req.body, _povodny_start: turnaj.datum_start, _povodny_koniec: turnaj.datum_koniec },
+      false
+    );
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
+      return;
     }
 
-    await turnaj.update(zmeny);
+    await turnaj.update(pripravene.polia);
     res.json({ success: true, data: turnaj, message: 'Zmeny boli uložené' });
-  } catch (chyba) {
+  } catch (chyba: any) {
+    if (odpovedzNaChybuModelu(chyba, res)) return;
     console.error('Chyba pri úprave turnaja:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
-/** DELETE /api/tournaments/:id */
-router.delete('/tournaments/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+/** DELETE /api/tournaments/:id - archivácia, turnaj sa dá obnoviť v Archíve */
+router.delete('/tournaments/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const turnaj = await LigaTurnaj.findByPk(Number(req.params.id));
+    const turnaj = await LigaTurnaj.findOne({ where: { id: Number(req.params.id) || 0, aktivity: true } });
     if (!turnaj) {
       res.status(404).json({ success: false, message: 'Turnaj sa nenašiel' });
       return;
     }
-    await turnaj.destroy();
-    res.json({ success: true, message: 'Turnaj bol zmazaný' });
+    await turnaj.update({ aktivity: false });
+    res.json({ success: true, message: `Turnaj ${turnaj.nazov} bol presunutý do archívu` });
   } catch (chyba) {
-    console.error('Chyba pri mazaní turnaja:', chyba);
+    console.error('Chyba pri archivácii turnaja:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
-// ===== PAVÚK TURNAJA =====
-//
-// Pole pavuk_struktura na modeli existovalo, ale bol to len textový
-// JSON blob bez obsluhy - nedal sa vygenerovať pavúk, zapísať výsledok
-// ani posunúť tím do ďalšieho kola.
+// ===== SKUPINY A PAVÚK =====
+
+/** @route PUT /api/tournaments/:id/groups - skupiny a rozpis zápasov */
+router.put('/tournaments/:id/groups', authenticateToken, requireEditor, nastavSkupiny);
+
+/** @route PATCH /api/tournaments/:id/groups/match/:kod - výsledok v skupine */
+router.patch('/tournaments/:id/groups/match/:kod', authenticateToken, requireEditor, zapisVysledokSkupiny);
 
 /** @route GET /api/tournaments/:id/bracket */
 router.get('/tournaments/:id/bracket', getPavuk);
@@ -775,8 +848,14 @@ router.get('/tournaments/:id/bracket', getPavuk);
 /** @route POST /api/tournaments/:id/bracket/generate - telo: { timy: [...] } */
 router.post('/tournaments/:id/bracket/generate', authenticateToken, requireEditor, generujPavuka);
 
+/** @route POST /api/tournaments/:id/bracket/from-groups - pavúk z postupujúcich */
+router.post('/tournaments/:id/bracket/from-groups', authenticateToken, requireEditor, pavukZoSkupin);
+
 /** @route PUT /api/tournaments/:id/bracket - ručná úprava celého pavúka */
 router.put('/tournaments/:id/bracket', authenticateToken, requireEditor, ulozPavuka);
+
+/** @route DELETE /api/tournaments/:id/bracket - zrušenie pavúka */
+router.delete('/tournaments/:id/bracket', authenticateToken, requireEditor, zmazPavuka);
 
 /** @route PATCH /api/tournaments/:id/bracket/match/:kod - výsledok a postup */
 router.patch('/tournaments/:id/bracket/match/:kod', authenticateToken, requireEditor, zapisVysledok);

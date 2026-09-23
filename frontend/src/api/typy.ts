@@ -171,7 +171,7 @@ export interface Stadion {
 
 // ===== Archív =====
 
-export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony';
+export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje';
 
 export interface PolozkaArchivu {
   typ: TypArchivu;
@@ -775,8 +775,13 @@ export type StavTurnaja = 'pripravuje' | 'prebiehajuci' | 'ukonceny' | 'pozastav
 
 export interface Turnaj {
   id: number;
-  liga_id: number;
+  liga_id: number | null;
   nazov: string;
+  popis: string | null;
+  logo: string | null;
+  sezona_id: number | null;
+  /** Náš tím v turnaji */
+  tim_id: number | null;
   typ: TypTurnaja;
   pocet_timov: number;
   pocet_postupujucich: number | null;
@@ -785,7 +790,73 @@ export interface Turnaj {
   aktualna_faza: string;
   status: StavTurnaja;
   datum_start: string | null;
-  liga?: { id: number; nazov: string; sezona: string };
+  datum_koniec: string | null;
+  zobrazit_na_webe: boolean;
+  vitaz_nazov: string | null;
+  poznamky: string | null;
+  /** Len vo výpise */
+  ma_pavuka?: boolean;
+  pocet_skupin_realne?: number;
+  liga?: { id: number; nazov: string; sezona: string } | null;
+}
+
+/** Tím v turnaji - náš (tim_id) alebo klub zadaný menom. */
+export interface TimTurnaja {
+  nazov: string;
+  tim_id: number | null;
+  logo: string | null;
+}
+
+export interface ZapasPavuka {
+  kod: string;
+  domaci: TimTurnaja | null;
+  hostia: TimTurnaja | null;
+  skore_domaci: number | null;
+  skore_hostia: number | null;
+  vitaz: 'domaci' | 'hostia' | null;
+  postupuje_do: string | null;
+  zapas_id?: number | null;
+}
+
+export interface PavukTurnaja {
+  kola: Array<{ nazov: string; poradie: number; zapasy: ZapasPavuka[] }>;
+  o_tretie?: ZapasPavuka | null;
+}
+
+export interface ZapasSkupiny {
+  kod: string;
+  kolo: number;
+  domaci: number;
+  hostia: number;
+  skore_domaci: number | null;
+  skore_hostia: number | null;
+  zapas_id?: number | null;
+}
+
+export interface RiadokSkupiny {
+  poradie: number;
+  tim: TimTurnaja;
+  zapasy: number;
+  vyhry: number;
+  remizy: number;
+  prehry: number;
+  goly_za: number;
+  goly_proti: number;
+  body: number;
+  postupuje: boolean;
+}
+
+export interface SkupinaTurnaja {
+  nazov: string;
+  timy: TimTurnaja[];
+  zapasy: ZapasSkupiny[];
+  tabulka: RiadokSkupiny[];
+}
+
+/** Turnaj so skupinami a pavúkom (detail). */
+export interface TurnajDetail extends Turnaj {
+  skupiny: { postupuju: number; skupiny: SkupinaTurnaja[] };
+  pavuk: PavukTurnaja;
 }
 
 // ===== Kalendár =====

@@ -30,6 +30,7 @@ import Nastavenia from '../pages/admin/Nastavenia';
 import Licencia from '../pages/admin/Licencia';
 import Sezony from '../pages/admin/Sezony';
 import Stadiony from '../pages/admin/Stadiony';
+import TurnajEditor from '../pages/admin/TurnajEditor';
 import Archiv from '../pages/admin/Archiv';
 import OchranaUdajov from '../pages/admin/OchranaUdajov';
 import Kategorie from '../pages/admin/Kategorie';
@@ -90,6 +91,7 @@ export const App: React.FC = () => (
                 <Route path="realizacny-tim" element={<RealizacnyTim />} />
                 <Route path="ligy" element={<Ligy />} />
                 <Route path="turnaje" element={<Turnaje />} />
+                <Route path="turnaje/:id" element={<TurnajEditor />} />
                 <Route path="zapasy" element={<Zapasy />} />
                 {/* "novy" musí byť pred :id, inak by sa vyhodnotilo ako identifikátor */}
                 <Route path="zapasy/novy" element={<ZapasEditor />} />

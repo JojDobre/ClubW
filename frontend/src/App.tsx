@@ -99,6 +99,7 @@ const Calendar = lazy(() => import('./pages/CalendarPage')); //nefunguje uplne
 const Galleries = lazy(() => import('./pages/Galleries'));
 const GalleryDetail = lazy(() => import('./pages/GalleryDetail'));
 const Videos = lazy(() => import('./pages/Videos'));
+const TurnajeVerejne = lazy(() => import('./pages/Turnaje'));
 const Stats = lazy(() => import('./pages/Stats'));
 const TestPage = lazy(() => import('./components/TestPage'));
 
@@ -375,6 +376,7 @@ const AppContent: React.FC<{
   const isGalleriesPage = currentPath === '/galleries'; 
   const isGalleryDetailPage = currentPath.startsWith('/galleries/') && currentPath !== '/galleries';
   const isVideosPage = currentPath === '/videa';
+  const isTurnajePage = currentPath === '/turnaje' || currentPath.startsWith('/turnaje/');
   const isStatsPage = currentPath === '/stats';
   const isTestPage = currentPath === '/testpage';
 
@@ -734,6 +736,16 @@ if (isTestPage) {
   );
 }
 
+
+if (isTurnajePage) {
+  return (
+    <Suspense fallback={<PublicLayout><p style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Načítavam turnaje...</p></PublicLayout>}>
+      <PublicLayout>
+        <TurnajeVerejne />
+      </PublicLayout>
+    </Suspense>
+  );
+}
 
 if (isVideosPage) {
   return (
