@@ -1,0 +1,9 @@
+{
+  "slug": "zakladna",
+  "nazov": "Základná",
+  "verzia": "1.0.0",
+  "autor": "ClubW",
+  "popis": "Predvolený vzhľad webu klubu - svetlá hlavička s menu, úvodná stránka s aktualitami, zápasmi a anketou. Farby a logo berie z Nastavení klubu. Ostatné šablóny z nej preberajú všetko, čo samy nenahradia.",
+  "api": 1,
+  "nahlad": "nahlad.svg"
+}

@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { souborUrl } from '../config/api';
 import { useNastavenia } from '../context/NastaveniaContext';
+import './WebDoplnky.css';
 
 const KLUC_SUHLASU = 'clubw_cookies';
 type Suhlas = 'vsetko' | 'nevyhnutne' | null;

@@ -72,6 +72,12 @@ interface NastaveniaKlubuAttributes {
   /** SEO nad rámec meta_popis */
   nastavenia_seo: Record<string, unknown>;
 
+  // ===== Šablóna verejného webu =====
+  /** Priečinok (slug) aktívnej šablóny */
+  aktivna_sablona: string;
+  /** Hodnoty nastavení šablón: {"stadion": {"akcent": "#f59e0b"}} */
+  nastavenia_sablon: Record<string, Record<string, unknown>>;
+
   vytvoreny: Date;
   aktualizovany: Date;
 }
@@ -86,7 +92,7 @@ interface NastaveniaKlubuCreationAttributes
     | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url' | 'tiktok_url'
     | 'meta_popis' | 'google_analytics_id'
     | 'dodatkove_farby' | 'nastavenia_komentarov'
-    | 'nastavenia_gdpr' | 'nastavenia_seo'
+    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'aktivna_sablona' | 'nastavenia_sablon'
     | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -125,6 +131,8 @@ class NastaveniaKlubu
   public nastavenia_komentarov!: Record<string, unknown>;
   public nastavenia_gdpr!: Record<string, unknown>;
   public nastavenia_seo!: Record<string, unknown>;
+  public aktivna_sablona!: string;
+  public nastavenia_sablon!: Record<string, Record<string, unknown>>;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
 
@@ -142,8 +150,8 @@ class NastaveniaKlubu
   /**
    * Údaje pre verejný web.
    *
-   * Zámerne bez IČO, DIČ a identifikátora analytiky - to sú prevádzkové
-   * údaje, ktoré nemusia byť v odpovedi verejného rozhrania.
+   * Aktívnu šablónu a jej nastavenia web číta zvlášť cez
+   * /api/sablony/aktivna (s adresami jej súborov).
    */
   public verejneUdaje() {
     return {
@@ -341,6 +349,17 @@ NastaveniaKlubu.init(
         indexovat: true,
         google_search_console: null,
       },
+    },
+
+    aktivna_sablona: {
+      type: DataTypes.STRING(60),
+      allowNull: false,
+      defaultValue: 'zakladna',
+    },
+    nastavenia_sablon: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
     },
 
     vytvoreny: {

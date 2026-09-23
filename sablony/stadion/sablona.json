@@ -1,0 +1,30 @@
+{
+  "slug": "stadion",
+  "nazov": "Štadión",
+  "verzia": "1.0.0",
+  "autor": "ClubW",
+  "popis": "Tmavý športový vzhľad s veľkou úvodnou fotkou, odpočtom do najbližšieho zápasu a pásom partnerov. Nahrádza hlavičku, pätičku a úvodnú stránku, ostatné stránky preberá zo základnej šablóny.",
+  "api": 1,
+  "nahlad": "nahlad.svg",
+  "styl": "styl.css",
+  "skript": "sablona.js",
+  "nastavenia": [
+    { "kluc": "akcent", "typ": "farba", "menovka": "Farba zvýraznenia", "napoveda": "Tlačidlá, podčiarknutia a odpočet.", "predvolene": "#F59E0B" },
+    {
+      "kluc": "farba_hlavicky",
+      "typ": "vyber",
+      "menovka": "Farba hlavičky a pätičky",
+      "moznosti": [
+        { "hodnota": "tmava", "popis": "Tmavá" },
+        { "hodnota": "klub", "popis": "Hlavná farba klubu" }
+      ],
+      "predvolene": "tmava"
+    },
+    { "kluc": "uvodna_fotka", "typ": "obrazok", "menovka": "Fotka na úvodnej stránke", "napoveda": "Široká fotka (napr. štadión alebo tím), aspoň 1600 px." },
+    { "kluc": "titulok_uvodu", "typ": "text", "menovka": "Veľký nadpis na úvode", "napoveda": "Prázdne = názov klubu." },
+    { "kluc": "podtitulok_uvodu", "typ": "text", "menovka": "Text pod nadpisom", "napoveda": "Prázdne = slogan klubu." },
+    { "kluc": "pocet_clankov", "typ": "cislo", "menovka": "Počet článkov na úvode", "min": 2, "max": 9, "predvolene": 4 },
+    { "kluc": "ukazat_partnerov", "typ": "prepinac", "menovka": "Pás partnerov na úvode", "predvolene": true },
+    { "kluc": "ukazat_anketu", "typ": "prepinac", "menovka": "Anketa na úvode", "predvolene": true }
+  ]
+}

@@ -46,6 +46,8 @@ import ligaRoutes from './routes/liga';
 import zapasRoutes from './routes/zapas';
 import kalendarRoutes from './routes/kalendar';
 import pagesRoutes, { adminPageRouter } from './routes/pages'; 
+import { verejneSablonyRouter, adminSablonyRouter } from './routes/sablony';
+import { suborSablony, TYPY_SUBOROV } from './services/sablony';
 import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
 import uploadRoutes from './routes/upload';
@@ -132,6 +134,22 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 
 // Kompressia odpovedí
 app.use(compression());
+
+// Súbory šablón webu (štýl, skript, obrázky) - len povolené typy
+// z priečinka šablóny, nikdy nie zdrojové ani skryté súbory
+app.get('/sablony/:slug/*', async (req: express.Request, res: express.Response) => {
+  const relativna = (req.params as any)[0] as string;
+  const plna = await suborSablony(req.params.slug, relativna);
+  if (!plna) {
+    res.status(404).type('text/plain').send('Súbor šablóny sa nenašiel');
+    return;
+  }
+  res.setHeader('Content-Type', TYPY_SUBOROV[path.extname(plna).toLowerCase()]);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Adresy z /api/sablony/aktivna nesú ?v=verzia, po aktualizácii sa zmenia
+  res.setHeader('Cache-Control', req.query.v ? 'public, max-age=604800' : 'public, max-age=300');
+  res.sendFile(plna, { dotfiles: 'deny' });
+});
 
 // Logging
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
@@ -337,6 +355,10 @@ app.use('/api/admin/roles', rolaRoutes);
 
 // Menu a presmerovania
 app.use('/api', menuRoutes);
+
+// Šablóny verejného webu
+app.use('/api', verejneSablonyRouter);
+app.use('/api/admin/sablony', adminSablonyRouter);
 
 // Formuláre - verejné vyplnenie aj správa vyplnených
 app.use('/api', formularRoutes);

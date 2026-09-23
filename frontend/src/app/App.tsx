@@ -54,6 +54,7 @@ import FormularOdpovede from '../pages/admin/FormularOdpovede';
 import KniznicaMedii from '../pages/admin/KniznicaMedii';
 import Logy from '../pages/admin/Logy';
 import MenuWebu from '../pages/admin/MenuWebu';
+import Sablony from '../pages/admin/Sablony';
 import Profil from '../pages/admin/Profil';
 import { ZabudnuteHeslo, ObnovaHesla } from '../pages/ObnovaHesla';
 
@@ -126,6 +127,14 @@ export const App: React.FC = () => (
                   element={
                     <ChranenaCesta modul="nastavenia">
                       <MenuWebu />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="sablony"
+                  element={
+                    <ChranenaCesta modul="sablony">
+                      <Sablony />
                     </ChranenaCesta>
                   }
                 />

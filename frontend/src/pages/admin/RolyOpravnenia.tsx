@@ -37,6 +37,7 @@ export const NAZVY_MODULOV: Record<string, string> = {
   pouzivatelia: 'Používatelia',
   archiv: 'Archív',
   nastavenia: 'Nastavenia',
+  sablony: 'Šablóny webu',
   logy: 'Logy',
   licencia: 'Licencia',
 };

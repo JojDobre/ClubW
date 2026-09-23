@@ -17,7 +17,7 @@ export const MODULY = [
   'clanky', 'rubriky', 'komentare', 'stranky', 'galerie', 'videa',
   'media', 'stadiony', 'sezony', 'timy', 'hraci', 'realizacny_tim',
   'ligy', 'turnaje', 'zapasy', 'kalendar', 'sponzori', 'dokumenty',
-  'formulare', 'pouzivatelia', 'archiv', 'nastavenia', 'logy', 'licencia',
+  'formulare', 'pouzivatelia', 'archiv', 'nastavenia', 'sablony', 'logy', 'licencia',
 ] as const;
 
 export type Modul = (typeof MODULY)[number];

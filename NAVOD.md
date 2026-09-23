@@ -242,19 +242,29 @@ Určené na zapisovanie udalostí priamo počas zápasu na štadióne:
 
 Prepína sa v hornej lište. Voľba sa uloží; ak si používateľ nič nezvolil, prevezme sa nastavenie operačného systému.
 
-### Štruktúra nového kódu
+### Šablóny webu
+
+Vzhľad verejného webu určuje **šablóna** (ako téma vo WordPresse). V `/admin/sablony` správca vyberie aktívnu šablónu, pozrie si náhľad inej (vidí ho len on), upraví jej nastavenia (farba, fotka na úvode...) a nahrá novú šablónu ako balík `.zip`.
+
+Šablóny sú v samostatnom priečinku `sablony/` (dodané so systémom: **Základná** a **Štadión**), nahraté šablóny v `backend/sablony/`. Ako šablónu vytvoriť, zostaviť a zabaliť, popisuje `sablony/README.md`.
+
+### Štruktúra kódu
 
 ```
+sablony/
+  zakladna/     celý verejný web - stránky, rozloženie, úvod
+  stadion/      druhá šablóna (styl.css + sablona.js zo src/)
+  README.md     ako vytvoriť šablónu
 frontend/src/
+  web/          jadro webu: adresy → časti šablóny, načítanie šablóny, @clubw/jadro
+  components/   súčasti webu (formuláre, ankety, komentáre, SEO a cookies)
   design/       tokens.css, global.css      dizajnové tokeny a globálne štýly
-  ui/           9 komponentov + 36 ikon     Button, Field, Card, Modal, Toast, DataTable
+  ui/           komponenty rozhrania        Button, Field, Card, Modal, Toast, DataTable
   layout/       AppShell, Sidebar, Topbar   rámec administrácie
   app/          App, AuthContext, apiKlient routovanie, prihlásenie, volania API
-  api/          typy.ts + 4 služby          typované volania backendu
-  pages/admin/  14 obrazoviek
+  api/          typované volania backendu
+  pages/admin/  obrazovky administrácie
 ```
-
-Pôvodná API vrstva (`src/services/`) zostáva, je odladená a funkčná. Nové obrazovky používajú `src/api/`, ktorá má typované odpovede a spoločné spracovanie chýb.
 
 ---
 
@@ -422,11 +432,18 @@ cd backend && NODE_ENV=production npm start
 
 Obsah `frontend/build/` nahrajte na webserver alebo ho servujte cez nginx.
 
+Na backend musia smerovať adresy `/api`, `/uploads` **a `/sablony`** (súbory šablón webu). Príklad pre nginx:
+
+```nginx
+location ~ ^/(api|uploads|sablony)/ { proxy_pass http://127.0.0.1:3000; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }
+location / { root /cesta/k/frontend/build; try_files $uri /index.html; }
+```
+
 ### 9.4 Čo nezabudnúť
 
 - **HTTPS je nutnosť** — prihlasovacie cookies sa v produkcii posielajú len cez zabezpečené spojenie
 - **Zálohy databázy** — `pg_dump` v cron úlohe
-- **Priečinok `backend/uploads/`** zálohujte tiež, sú tam fotky
+- **Priečinky `backend/uploads/` a `backend/sablony/`** zálohujte tiež, sú tam fotky a nahraté šablóny
 - Súbory `.env` **nikdy necommitujte** do gitu
 
 ---

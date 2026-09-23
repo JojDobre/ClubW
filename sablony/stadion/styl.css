@@ -1,0 +1,176 @@
+/* Umiestnenie: sablony/stadion/styl.css
+   Šablóna Štadión. Nastavenia z administrácie prichádzajú ako CSS
+   premenné --sablona-* (napr. --sablona-akcent), farby klubu ako --club-*. */
+
+:root[data-sablona='stadion'] {
+  --st-akcent: var(--sablona-akcent, #f59e0b);
+  --st-tmava: #0b1220;
+  --st-tmava-2: #111a2e;
+  --st-text: #0f172a;
+}
+
+/* Ostatné stránky ostávajú zo základnej šablóny - len tmavšie pozadie */
+[data-sablona='stadion'] .zk { background: #eef1f5; }
+[data-sablona='stadion'] .zk-obsah a:not([class]) { color: inherit; }
+
+/* ===== Hlavička ===== */
+.st-hlavicka { position: sticky; top: 0; z-index: 1000; color: #fff; border-bottom: 4px solid var(--st-akcent); }
+.st-hlavicka--tmava { background: var(--st-tmava); }
+.st-hlavicka--klub { background: var(--club-primary, #1b5e20); color: var(--club-primary-contrast, #fff); }
+.st-hlavicka__vnutro {
+  max-width: 1240px; margin: 0 auto; padding: 0 20px; min-height: 76px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+.st-logo { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 0; }
+.st-logo img { width: 48px; height: 48px; object-fit: contain; }
+.st-logo__znak {
+  width: 48px; height: 48px; display: grid; place-items: center; flex-shrink: 0;
+  background: var(--st-akcent); color: var(--st-tmava); font-weight: 900; font-size: 16px;
+  clip-path: polygon(50% 0, 100% 20%, 100% 70%, 50% 100%, 0 70%, 0 20%);
+}
+.st-logo__text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.st-logo__text strong { font-size: 1.2rem; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-logo__text small { font-size: 12px; opacity: .7; letter-spacing: .08em; text-transform: uppercase; }
+
+.st-menu { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.st-menu__polozka { position: relative; }
+.st-menu__odkaz {
+  display: block; padding: 10px 12px; color: inherit; text-decoration: none; opacity: .85;
+  font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+}
+.st-menu__odkaz:hover, .st-menu__odkaz.is-aktivny { opacity: 1; box-shadow: inset 0 -3px 0 var(--st-akcent); }
+.st-menu__podmenu {
+  position: absolute; top: 100%; left: 0; min-width: 210px; padding: 6px 0; display: none; flex-direction: column;
+  background: var(--st-tmava-2); border-top: 3px solid var(--st-akcent); box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+}
+.st-menu__podmenu a { padding: 9px 16px; color: #e2e8f0; text-decoration: none; font-size: 14px; }
+.st-menu__podmenu a:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.st-menu__polozka:hover .st-menu__podmenu, .st-menu__polozka:focus-within .st-menu__podmenu { display: flex; }
+.st-menu__admin {
+  margin-left: 8px; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 700;
+  background: var(--st-akcent); color: var(--st-tmava);
+}
+.st-menu-tlacidlo {
+  display: none; padding: 8px 14px; border: 2px solid currentColor; border-radius: 4px; background: none; color: inherit;
+  font: inherit; font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: .06em; cursor: pointer;
+}
+@media (max-width: 900px) {
+  .st-menu-tlacidlo { display: block; }
+  .st-menu {
+    display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch;
+    padding: 8px 20px 18px; background: var(--st-tmava); border-bottom: 4px solid var(--st-akcent);
+  }
+  .st-hlavicka--klub .st-menu { background: var(--club-primary, #1b5e20); }
+  .st-menu.is-otvorene { display: flex; }
+  .st-menu__odkaz { padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+  .st-menu__odkaz:hover, .st-menu__odkaz.is-aktivny { box-shadow: none; color: var(--st-akcent); }
+  .st-menu__podmenu { position: static; display: flex; box-shadow: none; border: 0; background: none; padding-left: 14px; }
+  .st-menu__admin { margin: 12px 0 0; text-align: center; }
+}
+
+/* ===== Úvod ===== */
+.st-uvod { color: var(--st-text); }
+.st-stitok {
+  display: inline-block; align-self: flex-start; padding: 3px 8px; border-radius: 3px;
+  background: var(--st-akcent); color: var(--st-tmava);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+}
+
+.st-hero {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr); gap: 32px; align-items: end;
+  padding: 90px max(20px, calc((100vw - 1200px) / 2)) 56px; color: #fff; overflow: hidden;
+  background:
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--st-akcent) 35%, transparent), transparent 55%),
+    linear-gradient(135deg, var(--st-tmava) 0%, color-mix(in srgb, var(--club-primary, #1b5e20) 70%, var(--st-tmava)) 100%);
+}
+.st-hero--fotka { background-size: cover; background-position: center; }
+.st-hero--fotka::before { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8, 12, 22, .92) 0%, rgba(8, 12, 22, .35) 70%); }
+.st-hero > * { position: relative; }
+.st-hero h1 {
+  margin: 0 0 14px; font-size: clamp(2.2rem, 6vw, 4.4rem); line-height: .98; color: #fff;
+  font-family: inherit; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em;
+}
+.st-hero p { margin: 0; font-size: 1.2rem; color: #cbd5e1; max-width: 560px; }
+
+.st-zapas-karta {
+  display: flex; flex-direction: column; gap: 8px; padding: 22px; border-radius: 8px; text-decoration: none; color: #fff;
+  background: rgba(15, 23, 42, .72); border: 1px solid rgba(255, 255, 255, .12); backdrop-filter: blur(6px);
+}
+.st-zapas-karta:hover { border-color: var(--st-akcent); }
+.st-zapas-karta__timy { font-size: 1.35rem; font-weight: 800; text-transform: uppercase; }
+.st-zapas-karta__timy em { font-style: normal; color: var(--st-akcent); font-size: .9rem; margin: 0 6px; }
+.st-zapas-karta__info { color: #cbd5e1; font-size: 14px; }
+.st-odpocet { display: flex; gap: 10px; margin-top: 6px; }
+.st-odpocet span { flex: 1; text-align: center; padding: 10px 4px; border-radius: 6px; background: rgba(255, 255, 255, .06); }
+.st-odpocet strong { display: block; font-size: 1.9rem; line-height: 1; color: var(--st-akcent); font-variant-numeric: tabular-nums; }
+.st-odpocet small { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #94a3b8; }
+
+.st-vysledok {
+  max-width: 1200px; margin: -26px auto 0; position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px 24px;
+  padding: 18px 24px; background: #fff; border-radius: 8px; text-decoration: none; color: var(--st-text);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12); border-left: 6px solid var(--st-akcent);
+}
+.st-vysledok > .st-stitok { grid-column: 1 / -1; justify-self: center; }
+.st-vysledok__tim { font-weight: 800; text-transform: uppercase; font-size: 1.05rem; text-align: right; }
+.st-vysledok__tim:last-of-type { text-align: left; }
+.st-vysledok__skore { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.st-vysledok__datum { grid-column: 1 / -1; text-align: center; color: #64748b; font-size: 13px; }
+@media (max-width: 800px) {
+  .st-hero { grid-template-columns: 1fr; padding-top: 56px; }
+  .st-vysledok { margin: 16px 16px 0; gap: 8px 14px; }
+  .st-vysledok__skore { font-size: 1.6rem; }
+}
+
+.st-sekcia { max-width: 1200px; margin: 44px auto 0; padding: 0 20px; }
+.st-sekcia__hlava { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; border-bottom: 3px solid var(--st-text); padding-bottom: 8px; }
+.st-uvod h2 { margin: 0; font-family: inherit; font-size: 1.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; color: var(--st-text); }
+.st-sekcia__hlava a { color: var(--st-text); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.st-prazdne { color: #64748b; }
+
+.st-clanky { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; }
+@media (max-width: 860px) { .st-clanky { grid-template-columns: 1fr; } }
+.st-clanky__zoznam { display: flex; flex-direction: column; gap: 14px; }
+.st-clanok { display: flex; gap: 14px; background: #fff; border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; box-shadow: 0 2px 8px rgba(15, 23, 42, .06); }
+.st-clanok:hover h3 { color: color-mix(in srgb, var(--st-akcent) 70%, #000); }
+.st-clanok img, .st-clanok__nahrada { width: 120px; flex-shrink: 0; object-fit: cover; background: linear-gradient(135deg, var(--st-tmava), var(--club-primary, #1b5e20)); }
+.st-clanok__text { padding: 14px 16px 14px 0; display: flex; flex-direction: column; gap: 6px; }
+.st-clanok h3 { margin: 0; font-family: inherit; font-size: 1.05rem; line-height: 1.3; color: var(--st-text); }
+.st-clanok p { margin: 0; color: #475569; font-size: 15px; }
+.st-clanok small { color: #64748b; font-size: 12px; }
+.st-clanok--hlavny { flex-direction: column; gap: 0; }
+.st-clanok--hlavny img { width: 100%; aspect-ratio: 16 / 9; }
+.st-clanok--hlavny .st-clanok__text { padding: 18px 20px 22px; }
+.st-clanok--hlavny h3 { font-size: 1.6rem; font-weight: 900; }
+
+.st-sekcia--anketa { max-width: 720px; }
+
+.st-partneri { margin-top: 56px; padding: 40px 20px; background: #fff; text-align: center; }
+.st-partneri h2 { margin-bottom: 20px !important; font-size: 1.1rem !important; color: #64748b !important; }
+.st-partneri__loga { max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 28px 44px; }
+.st-partneri__loga a, .st-partneri__loga span { color: #334155; font-weight: 700; text-decoration: none; }
+.st-partneri__loga img { max-height: 54px; max-width: 150px; object-fit: contain; filter: grayscale(1); opacity: .75; transition: filter .15s, opacity .15s; }
+.st-partneri__loga a:hover img { filter: none; opacity: 1; }
+.st-partneri__odkaz { display: inline-block; margin-top: 22px; color: var(--st-text); font-weight: 700; font-size: 14px; }
+
+/* ===== Pätička ===== */
+.st-paticka { margin-top: 0; color: #cbd5e1; }
+.st-paticka--tmava { background: var(--st-tmava); }
+.st-paticka--klub { background: color-mix(in srgb, var(--club-primary, #1b5e20) 85%, #000); }
+.st-paticka__vnutro {
+  max-width: 1200px; margin: 0 auto; padding: 44px 20px 28px; display: grid; gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 4px solid var(--st-akcent);
+}
+.st-paticka strong { color: #fff; font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; }
+.st-paticka p { margin: 6px 0 0; color: #94a3b8; font-size: 14px; }
+.st-paticka a { color: #e2e8f0; }
+.st-paticka__siete { display: flex; flex-wrap: wrap; gap: 10px; align-content: start; }
+.st-paticka__siete a {
+  padding: 6px 12px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 700;
+}
+.st-paticka__siete a:hover { border-color: var(--st-akcent); color: var(--st-akcent); }
+.st-paticka__spodok {
+  max-width: 1200px; margin: 0 auto; padding: 16px 20px 24px; display: flex; flex-wrap: wrap; gap: 8px 20px;
+  border-top: 1px solid rgba(255, 255, 255, .08); font-size: 13px; color: #64748b;
+}
+.st-paticka__spodok button { margin-left: auto; background: none; border: 0; padding: 0; color: #94a3b8; font: inherit; text-decoration: underline; cursor: pointer; }

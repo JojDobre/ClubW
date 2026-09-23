@@ -1,0 +1,49 @@
+/* Umiestnenie: frontend/src/pages/admin/Sablony.css - šablóny webu */
+
+.cw-sab__mriezka { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+
+.cw-sab__karta {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+}
+.cw-sab__karta.is-aktivna { border-color: var(--pri); box-shadow: 0 0 0 2px var(--pri-soft); }
+.cw-sab__karta.is-poskodena { opacity: .85; }
+
+.cw-sab__nahlad { position: relative; aspect-ratio: 3 / 2; background: var(--card2); border-bottom: 1px solid var(--border); }
+.cw-sab__nahlad img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cw-sab__bez-nahladu { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+.cw-sab__aktivna-znacka {
+  position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 999px;
+  background: var(--pri); color: #fff; font-size: var(--fs-xs); font-weight: 700;
+}
+
+.cw-sab__telo { flex: 1; padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.cw-sab__hlava { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cw-sab__hlava h3 { margin: 0; font-family: var(--font-head); font-size: var(--fs-md); color: var(--text); }
+.cw-sab__verzia { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.cw-sab__stitky { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.cw-sab__popis, .cw-sab__autor { margin: 0 0 6px; color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; }
+.cw-sab__autor a { color: var(--pri); }
+.cw-sab__chyba { margin: 0; color: var(--danger); font-size: var(--fs-sm); }
+
+.cw-sab__akcie { display: flex; flex-wrap: wrap; gap: 8px; padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+
+.cw-sab__navod { margin: var(--sp-5) 0 0; color: var(--muted); font-size: var(--fs-sm); line-height: 1.5; }
+.cw-sab__navod code { background: var(--card2); padding: 1px 5px; border-radius: 4px; }
+
+.cw-sab__formular { display: flex; flex-direction: column; gap: var(--sp-4); }
+.cw-sab__farba { display: flex; flex-direction: column; gap: 6px; }
+.cw-sab__farba label { font-weight: 600; font-size: var(--fs-sm); color: var(--text); }
+.cw-sab__farba small { color: var(--muted); font-size: var(--fs-xs); }
+.cw-sab__farba-riadok { display: flex; align-items: center; gap: 10px; }
+.cw-sab__farba-riadok input[type='color'] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); cursor: pointer; }
+.cw-sab__farba-riadok .cw-input { max-width: 140px; font-family: ui-monospace, monospace; }
+
+.cw-sab__upload {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  padding: 28px 16px; border: 2px dashed var(--border); border-radius: 12px; color: var(--muted);
+}
+.cw-sab__upload.is-tahanie { border-color: var(--pri); background: var(--pri-softer); }
+.cw-sab__upload p { margin: 0; }
+.cw-sab__upload strong { color: var(--text); }
+.cw-sab__upozornenie { margin: 14px 0 0; color: var(--muted); font-size: var(--fs-xs); }
