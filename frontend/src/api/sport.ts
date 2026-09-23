@@ -3,7 +3,7 @@
 
 import api from '../app/apiKlient';
 import type {
-  Zapas, ZapasNaUlozenie, Tim, Hrac, Liga,
+  Zapas, ZapasNaUlozenie, Tim, Hrac, Liga, Stadion, PolozkaArchivu, TypArchivu,
   StatistikyZapasu, UdalostNaUlozenie,
 } from './typy';
 
@@ -50,4 +50,18 @@ export const hraciApi = {
 export const ligyApi = {
   vypis: (signal?: AbortSignal) =>
     api.ziskaj<Liga[]>('/leagues', { parametre: { limit: 200 }, signal }),
+};
+
+export const stadionyApi = {
+  vypis: (signal?: AbortSignal) => api.ziskaj<Stadion[]>('/stadiums', { signal }),
+  vytvor: (udaje: Partial<Stadion>) => api.vytvor<Stadion>('/stadiums', udaje),
+  uprav: (id: number, udaje: Partial<Stadion>) => api.uprav<Stadion>(`/stadiums/${id}`, udaje),
+  /** Archivácia - štadión sa dá obnoviť v Archíve */
+  zmaz: (id: number) => api.zmaz(`/stadiums/${id}`),
+};
+
+export const archivApi = {
+  vypis: (signal?: AbortSignal) => api.ziskaj<PolozkaArchivu[]>('/admin/archive', { signal }),
+  obnov: (typ: TypArchivu, id: number) => api.vytvor(`/admin/archive/${typ}/${id}/restore`, {}),
+  zmazTrvalo: (typ: TypArchivu, id: number) => api.zmaz(`/admin/archive/${typ}/${id}`),
 };

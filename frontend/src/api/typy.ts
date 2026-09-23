@@ -148,11 +148,38 @@ export interface Tim {
   typ: string;
   vekova_kategoria: string;
   popis: string | null;
+  stadion_id: number | null;
+  sezona_id: number | null;
   logo: string | null;
   farba_prva: string | null;
   farba_druha: string | null;
   poradie: number;
   aktivity: boolean;
+}
+
+// ===== Štadión =====
+
+export interface Stadion {
+  id: number;
+  nazov: string;
+  adresa: string | null;
+  fotka: string | null;
+  kapacita: number | null;
+  poznamka: string | null;
+  aktivity: boolean;
+}
+
+// ===== Archív =====
+
+export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony';
+
+export interface PolozkaArchivu {
+  typ: TypArchivu;
+  typ_nazov: string;
+  id: number;
+  nazov: string;
+  detail: string | null;
+  archivovane: string | null;
 }
 
 // ===== Hráč =====
@@ -174,6 +201,9 @@ export interface Hrac {
   vaha: number | null;
   fotka: string | null;
   tim_id: number;
+  datum_pripojenia: string | null;
+  datum_odpojenia: string | null;
+  stav: 'aktivny' | 'neaktivny';
   poznamky: string | null;
   aktivity: boolean;
   /** Príznaky z filtrovania osobných údajov detí */
@@ -365,6 +395,8 @@ export interface Sezona {
   aktualna: boolean;
   uzavreta: boolean;
   poznamka: string | null;
+  /** Odvodený stav, ktorý dopĺňa server */
+  stav?: 'aktivna' | 'neaktivna' | 'archivovana';
 }
 
 export interface ZaznamSupisky {
@@ -504,6 +536,12 @@ export interface ClenRealizacnehoTimu {
   tim_id: number | null;
   email: string | null;
   telefon: string | null;
+  datum_narodenia: string | null;
+  narodnost: string | null;
+  datum_pripojenia: string | null;
+  datum_odpojenia: string | null;
+  sezona_id: number | null;
+  kvalifikacia: string | null;
   fotka: string | null;
   poradie: number;
   aktivity: boolean;

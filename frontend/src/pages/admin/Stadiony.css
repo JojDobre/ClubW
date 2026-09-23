@@ -1,0 +1,67 @@
+/* Umiestnenie: frontend/src/pages/admin/Stadiony.css */
+
+.cw-stad__mriezka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.cw-stad__karta {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.cw-stad__foto {
+  height: 140px;
+  background: var(--bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cw-stad__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cw-stad__telo {
+  padding: 14px 16px;
+}
+
+.cw-stad__nazov {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cw-stad__adresa {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.cw-stad__udaje {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cw-stad__tlacidla {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.cw-stad__prazdne {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}

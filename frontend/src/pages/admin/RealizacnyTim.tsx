@@ -9,40 +9,69 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { realizacnyTimApi } from '../../api/obsah';
 import { timyApi } from '../../api/sport';
+import { sezonyApi } from '../../api/sprava';
+import { PoleObrazka } from '../../components/admin/PoleObrazka';
+import { souborUrl } from '../../config/api';
 import type { ClenRealizacnehoTimu, Tim } from '../../api/typy';
 
+/**
+ * Funkcie ukladáme čitateľne (rovnako ich pozná backend aj verejný web).
+ * Staršie záznamy s kódom (hlavny_trener) sa zobrazia cez STARE_KODY.
+ */
 const FUNKCIE = [
-  { hodnota: 'hlavny_trener', popis: 'Hlavný tréner' },
-  { hodnota: 'asistent', popis: 'Asistent trénera' },
-  { hodnota: 'trener_brankarov', popis: 'Tréner brankárov' },
-  { hodnota: 'kondicny_trener', popis: 'Kondičný tréner' },
-  { hodnota: 'veduci_muzstva', popis: 'Vedúci mužstva' },
-  { hodnota: 'masér', popis: 'Masér' },
-  { hodnota: 'lekar', popis: 'Lekár' },
-  { hodnota: 'funkcionar', popis: 'Funkcionár' },
-];
+  'hlavný tréner', 'asistent trénera', 'tréner brankárov', 'kondičný tréner',
+  'vedúci mužstva', 'fyzioterapeut', 'lekár', 'masér', 'manažér', 'sekretár',
+  'skaut', 'mentálny kouč', 'funkcionár', 'ostatné',
+].map((f) => ({ hodnota: f, popis: f.charAt(0).toUpperCase() + f.slice(1) }));
 
-const PRAZDNY: Partial<ClenRealizacnehoTimu> = {
+const STARE_KODY: Record<string, string> = {
+  hlavny_trener: 'hlavný tréner',
+  asistent: 'asistent trénera',
+  trener_brankarov: 'tréner brankárov',
+  kondicny_trener: 'kondičný tréner',
+  veduci_muzstva: 'vedúci mužstva',
+  'masér': 'masér',
+  lekar: 'lekár',
+  funkcionar: 'funkcionár',
+};
+
+/** Normalizovaná funkcia - starý kód prevedie na text. */
+const funkciaText = (f: string | null | undefined): string => (f ? STARE_KODY[f] ?? f : '');
+const funkciaPopis = (f: string | null | undefined): string => {
+  const text = funkciaText(f);
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+};
+
+/** Člen vo formulári - dátumy ako text pre pole typu date. */
+type FormularClena = Partial<ClenRealizacnehoTimu>;
+
+const PRAZDNY: FormularClena = {
   meno: '',
   priezvisko: '',
-  funkcia: 'hlavny_trener',
+  funkcia: 'hlavný tréner',
   tim_id: null,
   email: '',
   telefon: '',
-  fotka: '',
+  fotka: null,
+  datum_narodenia: '',
+  narodnost: '',
+  datum_pripojenia: '',
+  datum_odpojenia: '',
+  sezona_id: null,
   poradie: 0,
 };
 
 export const RealizacnyTim: React.FC = () => {
   const { uspech, chyba: hlasChybu, varovanie } = useToast();
 
-  const [upravovany, setUpravovany] = useState<Partial<ClenRealizacnehoTimu> | null>(null);
+  const [upravovany, setUpravovany] = useState<FormularClena | null>(null);
   const [naZmazanie, setNaZmazanie] = useState<ClenRealizacnehoTimu | null>(null);
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
 
   const clenovia = useNacitanie((signal) => realizacnyTimApi.vypis(signal));
   const timy = useNacitanie((signal) => timyApi.vypis(signal));
+  const sezony = useNacitanie((signal) => sezonyApi.vypis(signal));
 
   const zoznam = clenovia.data ?? [];
   const zoznamTimov = timy.data ?? [];
@@ -55,6 +84,15 @@ export const RealizacnyTim: React.FC = () => {
 
   const jeNovy = upravovany !== null && !upravovany.id;
 
+  const otvor = (c: FormularClena) =>
+    setUpravovany({
+      ...c,
+      funkcia: funkciaText(c.funkcia) || 'hlavný tréner',
+      datum_narodenia: c.datum_narodenia?.slice(0, 10) ?? '',
+      datum_pripojenia: c.datum_pripojenia?.slice(0, 10) ?? '',
+      datum_odpojenia: c.datum_odpojenia?.slice(0, 10) ?? '',
+    });
+
   const uloz = async () => {
     if (!upravovany) return;
 
@@ -63,13 +101,30 @@ export const RealizacnyTim: React.FC = () => {
       return;
     }
 
+    if (
+      upravovany.datum_pripojenia && upravovany.datum_odpojenia &&
+      upravovany.datum_odpojenia < upravovany.datum_pripojenia
+    ) {
+      varovanie('Dátum odchodu nemôže byť skôr než dátum príchodu');
+      return;
+    }
+
     setUklada(true);
     try {
-      const naUlozenie = {
-        ...upravovany,
+      // Len polia formulára, prázdne ako null
+      const naUlozenie: FormularClena = {
+        meno: upravovany.meno.trim(),
+        priezvisko: upravovany.priezvisko.trim(),
+        funkcia: funkciaText(upravovany.funkcia) || 'ostatné',
+        tim_id: upravovany.tim_id ?? null,
         email: upravovany.email?.trim() || null,
         telefon: upravovany.telefon?.trim() || null,
-        fotka: upravovany.fotka?.trim() || null,
+        fotka: upravovany.fotka || null,
+        datum_narodenia: upravovany.datum_narodenia || null,
+        narodnost: upravovany.narodnost?.trim() || null,
+        datum_pripojenia: upravovany.datum_pripojenia || null,
+        datum_odpojenia: upravovany.datum_odpojenia || null,
+        sezona_id: upravovany.sezona_id ?? null,
       };
 
       if (jeNovy) {
@@ -93,7 +148,7 @@ export const RealizacnyTim: React.FC = () => {
     setMaze(true);
     try {
       await realizacnyTimApi.zmaz(naZmazanie.id);
-      uspech('Člen bol odstránený');
+      uspech('Člen bol presunutý do archívu');
       setNaZmazanie(null);
       clenovia.obnov();
     } catch (e: any) {
@@ -111,7 +166,7 @@ export const RealizacnyTim: React.FC = () => {
         <div className="cw-hraci__hrac">
           <div className="cw-hraci__avatar" aria-hidden="true">
             {c.fotka ? (
-              <img src={c.fotka} alt="" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+              <img src={souborUrl(c.fotka)} alt="" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
             ) : (
               <span>{c.priezvisko.charAt(0).toUpperCase()}</span>
             )}
@@ -128,7 +183,7 @@ export const RealizacnyTim: React.FC = () => {
       popis: 'Funkcia',
       obsah: (c) => (
         <Badge ton="primary">
-          {FUNKCIE.find((f) => f.hodnota === c.funkcia)?.popis ?? c.funkcia}
+          {funkciaPopis(c.funkcia)}
         </Badge>
       ),
       hodnotaNaZoradenie: (c) => c.funkcia,
@@ -158,8 +213,8 @@ export const RealizacnyTim: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<ClenRealizacnehoTimu>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (c) => setUpravovany({ ...c }) },
-    { popis: 'Odstrániť', ikona: 'zmazat', nebezpecna: true, onKlik: (c) => setNaZmazanie(c) },
+    { popis: 'Upraviť', ikona: 'upravit', onKlik: (c) => otvor(c) },
+    { popis: 'Archivovať', ikona: 'archiv', nebezpecna: true, onKlik: (c) => setNaZmazanie(c) },
   ];
 
   return (
@@ -168,7 +223,7 @@ export const RealizacnyTim: React.FC = () => {
         nadpis="Realizačný tím"
         podnadpis="Tréneri, asistenti a ďalší členovia klubu."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
+          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => otvor(PRAZDNY)}>
             Pridať člena
           </Button>
         }
@@ -192,15 +247,15 @@ export const RealizacnyTim: React.FC = () => {
           },
         ]}
         filtrujZaznam={(c, kluc, hodnota) => {
-          if (kluc === 'funkcia') return c.funkcia === hodnota;
+          if (kluc === 'funkcia') return funkciaText(c.funkcia) === hodnota;
           if (kluc === 'tim') return String(c.tim_id ?? '') === hodnota;
           return true;
         }}
         akcieRiadku={akcieRiadku}
-        onKlikNaRiadok={(c) => setUpravovany({ ...c })}
+        onKlikNaRiadok={(c) => otvor(c)}
         prazdnyNadpis="Zatiaľ žiadni členovia"
         prazdnyPopis="Pridajte trénerov a ďalších členov realizačného tímu."
-        prazdnaAkcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>Pridať prvého člena</Button>}
+        prazdnaAkcia={<Button onClick={() => otvor(PRAZDNY)}>Pridať prvého člena</Button>}
       />
 
       <Modal
@@ -238,7 +293,7 @@ export const RealizacnyTim: React.FC = () => {
             <div className="cw-hraci__row">
               <Select
                 menovka="Funkcia"
-                value={upravovany.funkcia ?? 'hlavny_trener'}
+                value={funkciaText(upravovany.funkcia) || 'hlavný tréner'}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, funkcia: e.target.value }))}
                 moznosti={FUNKCIE}
               />
@@ -253,8 +308,52 @@ export const RealizacnyTim: React.FC = () => {
                   hodnota: t.id,
                   popis: `${t.nazov} (${t.vekova_kategoria})`,
                 }))}
+                napoveda="Zmenou tímu člena presuniete k inému mužstvu"
               />
             </div>
+
+            <div className="cw-hraci__row">
+              <Input
+                menovka="Dátum narodenia"
+                type="date"
+                value={upravovany.datum_narodenia?.slice(0, 10) ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, datum_narodenia: e.target.value }))}
+              />
+              <Input
+                menovka="Národnosť"
+                value={upravovany.narodnost ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, narodnost: e.target.value }))}
+                placeholder="Slovensko"
+              />
+            </div>
+
+            <div className="cw-hraci__row">
+              <Input
+                menovka="V klube od"
+                type="date"
+                value={upravovany.datum_pripojenia?.slice(0, 10) ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, datum_pripojenia: e.target.value }))}
+              />
+              <Input
+                menovka="Odchod z klubu"
+                type="date"
+                value={upravovany.datum_odpojenia?.slice(0, 10) ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, datum_odpojenia: e.target.value }))}
+              />
+            </div>
+
+            <Select
+              menovka="Sezóna"
+              value={upravovany.sezona_id ?? ''}
+              onChange={(e) =>
+                setUpravovany((d) => ({ ...d!, sezona_id: e.target.value ? Number(e.target.value) : null }))
+              }
+              prazdna="Bez sezóny"
+              moznosti={(sezony.data ?? []).map((se) => ({
+                hodnota: se.id,
+                popis: `${se.nazov}${se.aktualna ? ' (aktuálna)' : ''}`,
+              }))}
+            />
 
             <div className="cw-hraci__row">
               <Input
@@ -270,11 +369,11 @@ export const RealizacnyTim: React.FC = () => {
               />
             </div>
 
-            <Input
-              menovka="Adresa fotky"
-              value={upravovany.fotka ?? ''}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, fotka: e.target.value }))}
-              placeholder="/uploads/images/staff/…"
+            <PoleObrazka
+              menovka="Fotka"
+              tvar="kruh"
+              hodnota={upravovany.fotka}
+              onZmena={(cesta) => setUpravovany((d) => ({ ...d!, fotka: cesta }))}
             />
           </>
         )}
@@ -282,9 +381,9 @@ export const RealizacnyTim: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Odstrániť člena?"
-        sprava={`${naZmazanie?.meno} ${naZmazanie?.priezvisko} bude odstránený z realizačného tímu.`}
-        potvrdit="Odstrániť"
+        nadpis="Archivovať člena?"
+        sprava={`${naZmazanie?.meno} ${naZmazanie?.priezvisko} sa presunie do archívu, odkiaľ ho môžete obnoviť.`}
+        potvrdit="Archivovať"
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

@@ -29,6 +29,8 @@ import Pouzivatelia from '../pages/admin/Pouzivatelia';
 import Nastavenia from '../pages/admin/Nastavenia';
 import Licencia from '../pages/admin/Licencia';
 import Sezony from '../pages/admin/Sezony';
+import Stadiony from '../pages/admin/Stadiony';
+import Archiv from '../pages/admin/Archiv';
 import OchranaUdajov from '../pages/admin/OchranaUdajov';
 import Kategorie from '../pages/admin/Kategorie';
 import Stranky from '../pages/admin/Stranky';
@@ -95,6 +97,8 @@ export const App: React.FC = () => (
                 <Route path="zapasy/:id/live" element={<ZapasLive />} />
                 <Route path="kalendar" element={<Kalendar />} />
                 <Route path="sezony" element={<Sezony />} />
+                <Route path="stadiony" element={<Stadiony />} />
+                <Route path="archiv" element={<Archiv />} />
 
                 {/* Sekcia KLUB */}
                 <Route path="sponzori" element={<Sponzori />} />

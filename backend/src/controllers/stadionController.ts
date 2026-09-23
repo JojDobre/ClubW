@@ -44,6 +44,12 @@ const pripravUdaje = (telo: any): Record<string, unknown> => {
   return udaje;
 };
 
+/** Kapacita je prázdna, alebo celé nezáporné číslo (inak by padla databáza). */
+const jePlatnaKapacita = (udaje: Record<string, unknown>): boolean =>
+  udaje.kapacita === undefined ||
+  udaje.kapacita === null ||
+  (Number.isInteger(udaje.kapacita) && (udaje.kapacita as number) >= 0);
+
 /**
  * GET /api/stadiums
  * Zoznam aktívnych štadiónov. Čítanie je verejné - adresa štadióna
@@ -120,6 +126,11 @@ export const createStadion = async (req: Request, res: Response): Promise<void> 
   try {
     const udaje = pripravUdaje(req.body);
 
+    if (!jePlatnaKapacita(udaje)) {
+      res.status(400).json({ success: false, message: 'Kapacita musí byť celé nezáporné číslo' });
+      return;
+    }
+
     if (!udaje.nazov || String(udaje.nazov).length < 2) {
       res.status(400).json({ success: false, message: 'Názov štadióna musí mať aspoň 2 znaky' });
       return;
@@ -164,6 +175,10 @@ export const updateStadion = async (req: Request, res: Response): Promise<void> 
     }
 
     const udaje = pripravUdaje(req.body);
+    if (!jePlatnaKapacita(udaje)) {
+      res.status(400).json({ success: false, message: 'Kapacita musí byť celé nezáporné číslo' });
+      return;
+    }
     if (udaje.nazov !== undefined && String(udaje.nazov).length < 2) {
       res.status(400).json({ success: false, message: 'Názov štadióna musí mať aspoň 2 znaky' });
       return;

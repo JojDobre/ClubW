@@ -23,4 +23,11 @@ export const mediaApi = {
       },
       signal,
     }),
+
+  /** Nahrá súbory do knižnice (pole "subory"), vráti uložené záznamy. */
+  nahraj: (subory: File[]) => {
+    const data = new FormData();
+    subory.forEach((f) => data.append('subory', f));
+    return api.vytvor<MediaSubor[]>('/admin/media/upload', data);
+  },
 };
