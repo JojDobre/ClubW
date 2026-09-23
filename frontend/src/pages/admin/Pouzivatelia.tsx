@@ -7,19 +7,17 @@ import {
   ConfirmDialog, useToast, type Stlpec, type AkciaRiadku, type TonStitka,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
-import { pouzivateliaApi } from '../../api/sprava';
+import { pouzivateliaApi, rolyApi } from '../../api/sprava';
+import { FilterChips } from '../../ui';
+import { RolyOpravnenia } from './RolyOpravnenia';
 import { timyApi } from '../../api/sport';
 import { formatujDatumCas } from '../../utils/datum';
 import { useAuth } from '../../app/AuthContext';
-import type { Pouzivatel, RolaPouzivatela } from '../../api/typy';
+import type { Pouzivatel, RolaSOpravneniami } from '../../api/typy';
 import './Pouzivatelia.css';
 
-const ROLE: Array<{ hodnota: RolaPouzivatela; popis: string; ton: TonStitka; vysvetlenie: string }> = [
-  { hodnota: 'admin', popis: 'Administrátor', ton: 'danger', vysvetlenie: 'Plný prístup vrátane nastavení a používateľov' },
-  { hodnota: 'redaktor', popis: 'Redaktor', ton: 'primary', vysvetlenie: 'Články, zápasy, hráči a tímy' },
-  { hodnota: 'trener', popis: 'Tréner', ton: 'info', vysvetlenie: 'Zápasy a súpiska vlastného tímu' },
-  { hodnota: 'uzivatel', popis: 'Používateľ', ton: 'neutral', vysvetlenie: 'Iba čítanie' },
-];
+/** Farba štítku podľa kódu roly; vlastné roly sú neutrálne. */
+const TON_ROLY: Record<string, TonStitka> = { admin: 'danger', redaktor: 'primary', trener: 'info', uzivatel: 'neutral' };
 
 interface FormularPouzivatela extends Partial<Pouzivatel> {
   heslo?: string;
@@ -27,8 +25,9 @@ interface FormularPouzivatela extends Partial<Pouzivatel> {
 
 const PRAZDNY: FormularPouzivatela = {
   meno: '',
+  priezvisko: '',
   email: '',
-  rola: 'redaktor',
+  rola_id: null,
   tim_id: null,
   aktivity: true,
   heslo: '',
@@ -43,7 +42,18 @@ export const Pouzivatelia: React.FC = () => {
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
 
+  const [karta, setKarta] = useState<'pouzivatelia' | 'roly'>('pouzivatelia');
   const pouzivatelia = useNacitanie((signal) => pouzivateliaApi.vypis(signal));
+  const roly = useNacitanie((signal) => rolyApi.vypis(signal));
+  const zoznamRol: RolaSOpravneniami[] = roly.data?.roly ?? [];
+  const jeSpravca = prihlaseny?.rola === 'admin';
+  // Rolu Správca smie prideliť len správca
+  const ponukaRol = zoznamRol.filter((r) => jeSpravca || r.kod !== 'admin');
+  const rolaPouzivatela = (u: Pick<Pouzivatel, 'rola' | 'rola_id'>) =>
+    zoznamRol.find((r) => r.id === u.rola_id) ?? zoznamRol.find((r) => r.kod === u.rola);
+  const zvolenaRola = upravovany ? zoznamRol.find((r) => r.id === upravovany.rola_id) : undefined;
+  // Tím má zmysel pri trénerských roliach (vidia tímy, ale nie všetko)
+  const ukazTim = Boolean(zvolenaRola && zvolenaRola.kod !== 'admin' && zvolenaRola.opravnenia?.timy?.citat);
   const timy = useNacitanie((signal) => timyApi.vypis(signal));
 
   const zoznam = pouzivatelia.data ?? [];
@@ -56,6 +66,10 @@ export const Pouzivatelia: React.FC = () => {
 
     if (!upravovany.meno?.trim()) {
       varovanie('Zadajte meno');
+      return;
+    }
+    if (!upravovany.rola_id) {
+      varovanie('Vyberte rolu');
       return;
     }
     if (!upravovany.email?.trim()) {
@@ -73,18 +87,20 @@ export const Pouzivatelia: React.FC = () => {
     try {
       if (jeNovy) {
         await pouzivateliaApi.vytvor({
-          meno: upravovany.meno,
+          meno: upravovany.meno.trim(),
+          priezvisko: upravovany.priezvisko?.trim() || null,
           email: upravovany.email,
-          rola: upravovany.rola,
+          rola_id: upravovany.rola_id,
           tim_id: upravovany.tim_id ?? null,
           heslo: upravovany.heslo!,
         });
         uspech('Používateľ bol vytvorený');
       } else {
         const zmeny: FormularPouzivatela = {
-          meno: upravovany.meno,
+          meno: upravovany.meno.trim(),
+          priezvisko: upravovany.priezvisko?.trim() || null,
           email: upravovany.email,
-          rola: upravovany.rola,
+          rola_id: upravovany.rola_id,
           tim_id: upravovany.tim_id ?? null,
           aktivity: upravovany.aktivity,
         };
@@ -96,6 +112,7 @@ export const Pouzivatelia: React.FC = () => {
       }
       setUpravovany(null);
       pouzivatelia.obnov();
+      roly.obnov();
     } catch (e: any) {
       hlasChybu(e?.message || 'Používateľa sa nepodarilo uložiť');
     } finally {
@@ -125,11 +142,11 @@ export const Pouzivatelia: React.FC = () => {
       obsah: (u) => (
         <div className="cw-pouzivatelia__osoba">
           <span className="cw-pouzivatelia__avatar" aria-hidden="true">
-            {u.meno.split(' ').map((c) => c.charAt(0)).slice(0, 2).join('').toUpperCase()}
+            {`${u.meno} ${u.priezvisko ?? ''}`.trim().split(/\s+/).map((c) => c.charAt(0)).slice(0, 2).join('').toUpperCase()}
           </span>
           <span className="cw-pouzivatelia__udaje">
             <span className="cw-pouzivatelia__meno">
-              {u.meno}
+              {u.meno} {u.priezvisko ?? ''}
               {/* Vlastný účet zvýrazníme — pomáha vyhnúť sa omylom */}
               {u.id === prihlaseny?.id && <span className="cw-pouzivatelia__ja">vy</span>}
             </span>
@@ -137,16 +154,16 @@ export const Pouzivatelia: React.FC = () => {
           </span>
         </div>
       ),
-      hodnotaNaZoradenie: (u) => u.meno,
+      hodnotaNaZoradenie: (u) => `${u.priezvisko ?? ''} ${u.meno}`,
     },
     {
       kluc: 'rola',
       popis: 'Rola',
       obsah: (u) => {
-        const r = ROLE.find((x) => x.hodnota === u.rola);
-        return <Badge ton={r?.ton ?? 'neutral'}>{r?.popis ?? u.rola}</Badge>;
+        const r = rolaPouzivatela(u);
+        return <Badge ton={TON_ROLY[r?.kod ?? u.rola] ?? 'neutral'}>{r?.nazov ?? u.rola}</Badge>;
       },
-      hodnotaNaZoradenie: (u) => u.rola,
+      hodnotaNaZoradenie: (u) => rolaPouzivatela(u)?.nazov ?? u.rola,
       sirka: '150px',
     },
     {
@@ -198,13 +215,35 @@ export const Pouzivatelia: React.FC = () => {
     <>
       <PageHeader
         nadpis="Používatelia"
-        podnadpis="Účty s prístupom do administrácie."
+        podnadpis="Účty s prístupom do administrácie a roly s oprávneniami."
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-            Nový používateľ
-          </Button>
+          karta === 'pouzivatelia' ? (
+            <Button
+              ikona={<Icon nazov="plus" velkost={15} />}
+              onClick={() => setUpravovany({ ...PRAZDNY, rola_id: zoznamRol.find((r) => r.kod === 'redaktor')?.id ?? null })}
+            >
+              Nový používateľ
+            </Button>
+          ) : undefined
         }
       />
+
+      <div className="cw-pouzivatelia__karty">
+        <FilterChips
+          popisSkupiny="Časť obrazovky"
+          moznosti={[
+            { hodnota: 'pouzivatelia', popis: 'Používatelia', pocet: zoznam.length },
+            { hodnota: 'roly', popis: 'Roly a oprávnenia', pocet: zoznamRol.length },
+          ]}
+          zvolena={karta}
+          onZmena={(h) => setKarta(h as 'pouzivatelia' | 'roly')}
+        />
+      </div>
+
+      {karta === 'roly' ? (
+        <RolyOpravnenia smieUpravovat={jeSpravca} onZmena={() => { roly.obnov(); pouzivatelia.obnov(); }} />
+      ) : (
+      <>
 
       <DataTable<Pouzivatel>
         data={zoznam}
@@ -213,10 +252,10 @@ export const Pouzivatelia: React.FC = () => {
         nacitava={pouzivatelia.nacitava}
         chyba={pouzivatelia.chyba}
         onSkusZnova={pouzivatelia.obnov}
-        hladatV={(u) => `${u.meno} ${u.email}`}
+        hladatV={(u) => `${u.meno} ${u.priezvisko ?? ''} ${u.email}`}
         hladatPlaceholder="Hľadať podľa mena alebo e-mailu…"
         filtre={[
-          { kluc: 'rola', popis: 'Všetky role', moznosti: ROLE.map((r) => ({ hodnota: r.hodnota, popis: r.popis })) },
+          { kluc: 'rola', popis: 'Všetky roly', moznosti: zoznamRol.map((r) => ({ hodnota: String(r.id), popis: r.nazov })) },
           {
             kluc: 'stav',
             popis: 'Všetky stavy',
@@ -227,7 +266,7 @@ export const Pouzivatelia: React.FC = () => {
           },
         ]}
         filtrujZaznam={(u, kluc, hodnota) => {
-          if (kluc === 'rola') return u.rola === hodnota;
+          if (kluc === 'rola') return String(rolaPouzivatela(u)?.id) === hodnota;
           if (kluc === 'stav') return hodnota === 'aktivny' ? u.aktivity : !u.aktivity;
           return true;
         }}
@@ -235,11 +274,13 @@ export const Pouzivatelia: React.FC = () => {
         onKlikNaRiadok={(u) => setUpravovany({ ...u, heslo: '' })}
         prazdnyNadpis="Žiadni používatelia"
       />
+      </>
+      )}
 
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový používateľ' : upravovany?.meno ?? 'Používateľ'}
+        nadpis={jeNovy ? 'Nový používateľ' : `${upravovany?.meno ?? ''} ${upravovany?.priezvisko ?? ''}`.trim() || 'Používateľ'}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
@@ -253,12 +294,19 @@ export const Pouzivatelia: React.FC = () => {
       >
         {upravovany && (
           <>
-            <Input
-              menovka="Meno a priezvisko"
-              value={upravovany.meno ?? ''}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, meno: e.target.value }))}
-              povinne
-            />
+            <div className="cw-pouzivatelia__riadok">
+              <Input
+                menovka="Meno"
+                value={upravovany.meno ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, meno: e.target.value }))}
+                povinne
+              />
+              <Input
+                menovka="Priezvisko"
+                value={upravovany.priezvisko ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, priezvisko: e.target.value }))}
+              />
+            </div>
 
             <Input
               menovka="E-mail"
@@ -285,14 +333,17 @@ export const Pouzivatelia: React.FC = () => {
 
             <Select
               menovka="Rola"
-              value={upravovany.rola ?? 'redaktor'}
-              onChange={(e) => setUpravovany((d) => ({ ...d!, rola: e.target.value as RolaPouzivatela }))}
-              moznosti={ROLE.map((r) => ({ hodnota: r.hodnota, popis: r.popis }))}
-              napoveda={ROLE.find((r) => r.hodnota === upravovany.rola)?.vysvetlenie}
+              value={upravovany.rola_id ?? ''}
+              onChange={(e) => setUpravovany((d) => ({ ...d!, rola_id: e.target.value ? Number(e.target.value) : null }))}
+              prazdna="Vyberte rolu"
+              moznosti={ponukaRol.map((r) => ({ hodnota: r.id, popis: r.nazov }))}
+              napoveda={zvolenaRola?.popis ?? 'Oprávnenia rolí nastavíte v časti Roly a oprávnenia'}
+              povinne
+              disabled={!jeSpravca && upravovany.rola === 'admin'}
             />
 
-            {/* Tím má zmysel len pri trénerovi */}
-            {upravovany.rola === 'trener' && (
+            {/* Tím má zmysel pri trénerských roliach */}
+            {ukazTim && (
               <Select
                 menovka="Tím trénera"
                 value={upravovany.tim_id ?? ''}
@@ -324,7 +375,7 @@ export const Pouzivatelia: React.FC = () => {
       <ConfirmDialog
         otvorene={naZmazanie !== null}
         nadpis="Vymazať používateľa?"
-        sprava={`Účet ${naZmazanie?.meno} (${naZmazanie?.email}) bude odstránený. Články, ktoré napísal, zostanú zachované.`}
+        sprava={`Účet ${naZmazanie?.meno} ${naZmazanie?.priezvisko ?? ''} (${naZmazanie?.email}) bude odstránený. Články, ktoré napísal, zostanú zachované.`}
         potvrdit="Vymazať"
         nebezpecne
         nacitava={maze}

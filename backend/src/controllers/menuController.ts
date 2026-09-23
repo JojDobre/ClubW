@@ -126,6 +126,18 @@ export const createMenuPolozka = async (req: Request, res: Response): Promise<vo
       res.status(400).json({ success: false, message: 'Názov položky je povinný' });
       return;
     }
+    if (udaje.rodic_id) {
+      const rodic = await MenuPolozka.findByPk(Number(udaje.rodic_id));
+      if (!rodic || rodic.rodic_id) {
+        res.status(400).json({ success: false, message: rodic ? 'Menu má najviac dve úrovne' : 'Nadradená položka neexistuje' });
+        return;
+      }
+    }
+    // Nová položka ide na koniec svojej úrovne
+    if (udaje.poradie === undefined) {
+      const posledne = (await MenuPolozka.max('poradie', { where: { rodic_id: (udaje.rodic_id as number) ?? null } })) as number | null;
+      udaje.poradie = (posledne ?? 0) + 1;
+    }
 
     const polozka = await MenuPolozka.create(udaje as any);
 
@@ -136,11 +148,12 @@ export const createMenuPolozka = async (req: Request, res: Response): Promise<vo
     });
   } catch (error: any) {
     if (error?.name === 'SequelizeValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: error.errors.map((e: any) => e.message),
-      });
+      const spravy = error.errors.map((e: any) => e.message);
+      res.status(400).json({ success: false, message: spravy[0] || 'Neplatné údaje', errors: spravy });
+      return;
+    }
+    if (error?.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ success: false, message: 'Zvolená stránka alebo rubrika neexistuje' });
       return;
     }
     console.error('Chyba pri vytváraní položky menu:', error);
@@ -172,6 +185,23 @@ export const updateMenuPolozka = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    // Menu má dve úrovne - pod položku s podmenu sa nedá vnoriť ďalšia
+    if (udaje.rodic_id) {
+      const rodic = await MenuPolozka.findByPk(Number(udaje.rodic_id));
+      if (!rodic) {
+        res.status(400).json({ success: false, message: 'Nadradená položka neexistuje' });
+        return;
+      }
+      if (rodic.rodic_id) {
+        res.status(400).json({ success: false, message: 'Menu má najviac dve úrovne' });
+        return;
+      }
+      if (await MenuPolozka.count({ where: { rodic_id: id } })) {
+        res.status(400).json({ success: false, message: 'Položka má vlastné podmenu - nedá sa vnoriť' });
+        return;
+      }
+    }
+
     await polozka.update(udaje);
 
     res.json({
@@ -181,11 +211,12 @@ export const updateMenuPolozka = async (req: Request, res: Response): Promise<vo
     });
   } catch (error: any) {
     if (error?.name === 'SequelizeValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: error.errors.map((e: any) => e.message),
-      });
+      const spravy = error.errors.map((e: any) => e.message);
+      res.status(400).json({ success: false, message: spravy[0] || 'Neplatné údaje', errors: spravy });
+      return;
+    }
+    if (error?.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ success: false, message: 'Zvolená stránka alebo rubrika neexistuje' });
       return;
     }
     console.error('Chyba pri úprave položky menu:', error);
@@ -330,11 +361,12 @@ export const createPresmerovanie = async (req: Request, res: Response): Promise<
     });
   } catch (error: any) {
     if (error?.name === 'SequelizeValidationError') {
-      res.status(400).json({
-        success: false,
-        message: 'Neplatné údaje',
-        errors: error.errors.map((e: any) => e.message),
-      });
+      const spravy = error.errors.map((e: any) => e.message);
+      res.status(400).json({ success: false, message: spravy[0] || 'Neplatné údaje', errors: spravy });
+      return;
+    }
+    if (error?.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ success: false, message: 'Zvolená stránka alebo rubrika neexistuje' });
       return;
     }
     console.error('Chyba pri vytváraní presmerovania:', error);

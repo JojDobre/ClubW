@@ -5,6 +5,7 @@
 // webe, pretože obe berú hodnoty z toho istého endpointu (/api/settings.css).
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, useToast,
 } from '../../ui';
@@ -12,12 +13,14 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { nastaveniaApi } from '../../api/sprava';
 import { useNastavenia } from '../../context/NastaveniaContext';
 import { ApiChyba } from '../../app/apiKlient';
+import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import type { NastaveniaAdmin } from '../../api/typy';
 import './Nastavenia.css';
 
 export const Nastavenia: React.FC = () => {
   const { uspech, chyba: hlasChybu } = useToast();
   const { obnov: obnovNastaveniaAplikacie } = useNastavenia();
+  const navigate = useNavigate();
 
   const [formular, setFormular] = useState<Partial<NastaveniaAdmin>>({});
   const [chybyPoli, setChybyPoli] = useState<string[]>([]);
@@ -33,12 +36,48 @@ export const Nastavenia: React.FC = () => {
     setFormular((d) => ({ ...d, [pole]: hodnota }));
   };
 
+  // Dodatkové farby držíme ako zoznam, aby sa dal premenovať kľúč
+  // bez toho, aby riadok v zozname „preskočil"
+  const [dodatkove, setDodatkove] = useState<Array<{ kluc: string; farba: string }>>([]);
+  useEffect(() => {
+    if (nastavenia.data) {
+      setDodatkove(
+        Object.entries(nastavenia.data.dodatkove_farby ?? {}).map(([kluc, farba]) => ({ kluc, farba }))
+      );
+    }
+  }, [nastavenia.data]);
+
+  /** Názov farby do CSS: malé písmená bez diakritiky, medzery na pomlčky. */
+  const naKluc = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/^-+/, '')
+      .slice(0, 31);
+
   const uloz = async () => {
     setChybyPoli([]);
     setUklada(true);
 
+    const kluce = dodatkove.map((d) => d.kluc.replace(/-+$/, ''));
+    if (kluce.some((k) => !/^[a-z]/.test(k))) {
+      hlasChybu('Každá dodatková farba potrebuje názov začínajúci písmenom');
+      setUklada(false);
+      return;
+    }
+    if (new Set(kluce).size !== kluce.length) {
+      hlasChybu('Dodatkové farby musia mať rôzne názvy');
+      setUklada(false);
+      return;
+    }
+
     try {
-      await nastaveniaApi.uloz(formular);
+      await nastaveniaApi.uloz({
+        ...formular,
+        dodatkove_farby: Object.fromEntries(dodatkove.map((d, i) => [kluce[i], d.farba])),
+      });
       uspech('Nastavenia boli uložené');
 
       // Obnovíme nastavenia v celej aplikácii, aby sa nové farby
@@ -77,7 +116,15 @@ export const Nastavenia: React.FC = () => {
 
   return (
     <div className="cw-nastavenia">
-      <PageHeader nadpis="Nastavenia klubu" podnadpis="Identita, farby a kontaktné údaje." />
+      <PageHeader
+        nadpis="Nastavenia klubu"
+        podnadpis="Identita, farby a kontaktné údaje."
+        akcie={
+          <Button variant="secondary" ikona={<Icon nazov="menu" velkost={15} />} onClick={() => navigate('/admin/menu')}>
+            Menu webu
+          </Button>
+        }
+      />
 
       <div className="cw-nastavenia__bar">
         <p className="cw-nastavenia__info">
@@ -139,20 +186,20 @@ export const Nastavenia: React.FC = () => {
               placeholder="Srdcom pre futbal"
             />
 
-            <Input
-              menovka="Adresa loga"
-              value={formular.logo ?? ''}
-              onChange={(e) => zmen('logo', e.target.value)}
-              placeholder="/uploads/images/logo.png"
-            />
-
-            <Input
-              menovka="Adresa ikony stránky"
-              value={formular.favicon ?? ''}
-              onChange={(e) => zmen('favicon', e.target.value)}
-              placeholder="/uploads/images/favicon.png"
-              napoveda="Malá ikona v záložke prehliadača"
-            />
+            <div className="cw-nastavenia__row">
+              <PoleObrazka
+                menovka="Logo"
+                hodnota={formular.logo}
+                onZmena={(cesta) => zmen('logo', cesta)}
+                napoveda="Ideálne štvorcové PNG s priehľadným pozadím"
+              />
+              <PoleObrazka
+                menovka="Ikona stránky (favicon)"
+                hodnota={formular.favicon}
+                onZmena={(cesta) => zmen('favicon', cesta)}
+                napoveda="Malá ikona v záložke prehliadača, štvorcový obrázok"
+              />
+            </div>
           </Card>
 
           <Card
@@ -220,6 +267,60 @@ export const Nastavenia: React.FC = () => {
               </div>
             </div>
 
+            {/* Dodatkové farby podľa šablóny */}
+            <div className="cw-nastavenia__dodatkove">
+              <span className="cw-nastavenia__farba-label">Dodatkové farby</span>
+              <span className="cw-nastavenia__farba-popis">
+                Ďalšie farby, ktoré používa šablóna webu (napr. farba domácich, pozadie päty). V CSS sú ako
+                <code> --club-extra-názov</code>.
+              </span>
+              {dodatkove.map((d, i) => (
+                <div key={i} className="cw-nastavenia__dodatkova">
+                  <input
+                    type="color"
+                    value={/^#[0-9A-Fa-f]{6}$/.test(d.farba) ? d.farba : '#000000'}
+                    onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, farba: e.target.value } : x)))}
+                    className="cw-nastavenia__farba-vyber"
+                    aria-label={`Dodatková farba ${d.kluc || i + 1}`}
+                  />
+                  <input
+                    type="text"
+                    className="cw-input"
+                    value={d.kluc}
+                    placeholder="nazov-farby"
+                    onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, kluc: naKluc(e.target.value) } : x)))}
+                    aria-label={`Názov dodatkovej farby ${i + 1}`}
+                  />
+                  <input
+                    type="text"
+                    className="cw-input cw-nastavenia__farba-kod"
+                    value={d.farba}
+                    maxLength={7}
+                    onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, farba: e.target.value } : x)))}
+                    aria-label={`Kód dodatkovej farby ${i + 1}`}
+                  />
+                  <Button
+                    variant="ghost"
+                    velkost="sm"
+                    onClick={() => setDodatkove((z) => z.filter((_, j) => j !== i))}
+                    aria-label={`Odstrániť dodatkovú farbu ${d.kluc || i + 1}`}
+                  >
+                    <Icon nazov="zmazat" velkost={14} />
+                  </Button>
+                </div>
+              ))}
+              {dodatkove.length < 12 && (
+                <Button
+                  variant="secondary"
+                  velkost="sm"
+                  ikona={<Icon nazov="plus" velkost={14} />}
+                  onClick={() => setDodatkove((z) => [...z, { kluc: '', farba: '#888888' }])}
+                >
+                  Pridať farbu
+                </Button>
+              )}
+            </div>
+
             {/* Ukážka, ako budú farby pôsobiť spolu */}
             <div className="cw-nastavenia__ukazka">
               <span className="cw-nastavenia__ukazka-label">Ukážka</span>
@@ -280,6 +381,15 @@ export const Nastavenia: React.FC = () => {
               onChange={(e) => zmen('adresa', e.target.value)}
               placeholder="Športová 1, 000 01 Mesto"
             />
+          </Card>
+
+          <Card nadpis="Údaje organizácie" podnadpis="Zobrazujú sa v päte webu a na dokladoch">
+            <Input
+              menovka="Oficiálny názov organizácie"
+              value={formular.pravny_nazov ?? ''}
+              onChange={(e) => zmen('pravny_nazov', e.target.value)}
+              placeholder="Futbalový klub Dolina, o. z."
+            />
             <div className="cw-nastavenia__row">
               <Input
                 menovka="IČO"
@@ -290,6 +400,21 @@ export const Nastavenia: React.FC = () => {
                 menovka="DIČ"
                 value={formular.dic ?? ''}
                 onChange={(e) => zmen('dic', e.target.value)}
+              />
+            </div>
+            <div className="cw-nastavenia__row">
+              <Input
+                menovka="IČ DPH"
+                value={formular.ic_dph ?? ''}
+                onChange={(e) => zmen('ic_dph', e.target.value)}
+                placeholder="SK2020000000"
+              />
+              <Input
+                menovka="IBAN"
+                value={formular.iban ?? ''}
+                onChange={(e) => zmen('iban', e.target.value)}
+                placeholder="SK31 1200 0000 1987 4263 7541"
+                napoveda="Účet na príspevky a členské"
               />
             </div>
           </Card>
@@ -318,6 +443,12 @@ export const Nastavenia: React.FC = () => {
               value={formular.x_url ?? ''}
               onChange={(e) => zmen('x_url', e.target.value)}
               placeholder="https://x.com/vasklub"
+            />
+            <Input
+              menovka="TikTok"
+              value={formular.tiktok_url ?? ''}
+              onChange={(e) => zmen('tiktok_url', e.target.value)}
+              placeholder="https://tiktok.com/@vasklub"
             />
           </Card>
 

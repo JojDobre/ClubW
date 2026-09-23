@@ -11,8 +11,8 @@ const UPRAVITELNE_POLIA = [
   'nazov', 'skratka', 'slogan', 'rok_zalozenia', 'logo', 'favicon',
   'farba_primarna', 'farba_sekundarna', 'farba_akcent',
   'farba_primarna_kontrast', 'farba_akcent_kontrast',
-  'email', 'telefon', 'adresa', 'ico', 'dic',
-  'facebook_url', 'instagram_url', 'youtube_url', 'x_url',
+  'email', 'telefon', 'adresa', 'ico', 'dic', 'pravny_nazov', 'ic_dph', 'iban',
+  'facebook_url', 'instagram_url', 'youtube_url', 'x_url', 'tiktok_url',
   'meta_popis', 'google_analytics_id',
   // Sady nastavení ako JSON: dodatkové farby podľa šablóny, globálne
   // nastavenia komentárov, GDPR a širšie SEO. Doteraz z nich bol
@@ -27,7 +27,30 @@ const JSONOVE_POLIA = [
 
 // Textové polia, ktoré prechádzajú odstránením HTML.
 // Sem sa nikdy nemá dostať značkovanie - hodnoty sa vypisujú do stránky.
-const TEXTOVE_POLIA = ['nazov', 'skratka', 'slogan', 'adresa', 'meta_popis'];
+const TEXTOVE_POLIA = ['nazov', 'skratka', 'slogan', 'adresa', 'meta_popis', 'pravny_nazov', 'ico', 'dic', 'ic_dph'];
+
+/** Kľúč dodatkovej farby - použije sa v CSS ako --club-extra-<kluc>. */
+const VZOR_KLUCA_FARBY = /^[a-z][a-z0-9-]{0,30}$/;
+
+/**
+ * Overí dodatkové farby šablóny: najviac 12, kľúč malými písmenami,
+ * hodnota #RRGGBB. Vráti chybu alebo očistený objekt.
+ */
+const overDodatkoveFarby = (vstup: Record<string, unknown>): { farby?: Record<string, string>; chyba?: string } => {
+  const zaznamy = Object.entries(vstup);
+  if (zaznamy.length > 12) return { chyba: 'Dodatkových farieb môže byť najviac 12' };
+  const farby: Record<string, string> = {};
+  for (const [kluc, hodnota] of zaznamy) {
+    if (!VZOR_KLUCA_FARBY.test(kluc)) {
+      return { chyba: `Názov farby „${kluc}" smie obsahovať len malé písmená bez diakritiky, číslice a pomlčku` };
+    }
+    if (typeof hodnota !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(hodnota)) {
+      return { chyba: `Farba „${kluc}" musí byť v tvare #RRGGBB` };
+    }
+    farby[kluc] = hodnota;
+  }
+  return { farby };
+};
 
 /**
  * GET /api/settings
@@ -74,6 +97,10 @@ export const getNastaveniaCss = async (_req: Request, res: Response): Promise<vo
   --club-primary-tint: color-mix(in srgb, var(--club-primary) 20%, #fff);
   --club-primary-line: color-mix(in srgb, var(--club-primary) 30%, #fff);
   --accent-soft: color-mix(in srgb, var(--club-accent) 30%, #fff);
+${Object.entries(n.dodatkove_farby || {})
+  .filter(([k, v]) => VZOR_KLUCA_FARBY.test(k) && /^#[0-9A-Fa-f]{6}$/.test(String(v)))
+  .map(([k, v]) => `  --club-extra-${k}: ${v};`)
+  .join('\n')}
 }
 `;
 
@@ -132,6 +159,14 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
           });
           return;
         }
+        if (pole === 'dodatkove_farby') {
+          const { farby, chyba } = overDodatkoveFarby(hodnota);
+          if (chyba) {
+            res.status(400).json({ success: false, message: chyba });
+            return;
+          }
+          hodnota = farby;
+        }
         zmeny[pole] = hodnota;
         continue;
       }
@@ -167,6 +202,11 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
         }
       }
 
+      // IBAN ľudia píšu s medzerami - ukladáme bez nich
+      if (pole === 'iban' && hodnota !== null) {
+        hodnota = String(hodnota).replace(/\s+/g, '').toUpperCase();
+      }
+
       zmeny[pole] = hodnota;
     }
 
@@ -186,7 +226,7 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
       if (chyba.name === 'SequelizeValidationError') {
         res.status(400).json({
           success: false,
-          message: 'Neplatné hodnoty nastavení',
+          message: chyba.errors?.[0]?.message || 'Neplatné hodnoty nastavení',
           errors: chyba.errors.map((e: any) => `${e.path}: ${e.message}`),
         });
         return;

@@ -9,10 +9,12 @@ interface ChranenaCestaProps {
   children: React.ReactNode;
   /** Ak je uvedené, prístup majú len tieto role */
   role?: Rola[];
+  /** Ak je uvedené, prístup má ten, koho rola smie modul čítať */
+  modul?: string;
 }
 
-export const ChranenaCesta: React.FC<ChranenaCestaProps> = ({ children, role }) => {
-  const { prihlaseny, nacitava, pouzivatel } = useAuth();
+export const ChranenaCesta: React.FC<ChranenaCestaProps> = ({ children, role, modul }) => {
+  const { prihlaseny, nacitava, pouzivatel, smie } = useAuth();
   const location = useLocation();
 
   // Kým prebieha overenie uloženej relácie, nesmieme presmerovať —
@@ -32,7 +34,9 @@ export const ChranenaCesta: React.FC<ChranenaCestaProps> = ({ children, role }) 
     return <Navigate to="/prihlasenie" state={{ odkial: location.pathname }} replace />;
   }
 
-  if (role && pouzivatel && !role.includes(pouzivatel.rola)) {
+  if (modul && pouzivatel) {
+    if (!smie(modul)) return <Navigate to="/admin" replace />;
+  } else if (role && pouzivatel && !role.includes(pouzivatel.rola)) {
     return <Navigate to="/admin" replace />;
   }
 

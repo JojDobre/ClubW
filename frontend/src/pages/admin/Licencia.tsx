@@ -1,8 +1,8 @@
 // Umiestnenie: frontend/src/pages/admin/Licencia.tsx
 // Stav licencie klubu.
 
-import React from 'react';
-import { PageHeader, Card, Badge, Button, Icon, Skeleton, ErrorState, StatCard } from '../../ui';
+import React, { useState } from 'react';
+import { PageHeader, Card, Badge, Button, Icon, Skeleton, ErrorState, StatCard, useToast } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { licenciaApi } from '../../api/sprava';
 import { formatujDatum, formatujDatumCas } from '../../utils/datum';
@@ -19,6 +19,12 @@ const VYSVETLENIE: Record<string, { popis: string; ton: 'success' | 'warning' | 
   nespravna_domena: { popis: 'Licencia je vydaná na inú doménu', ton: 'danger' },
   nezistene: { popis: 'Stav licencie sa zisťuje', ton: 'neutral' },
   chyba_ochranna_lehota_vyprsala: { popis: 'Ochranná lehota vypršala — spojte sa s dodávateľom', ton: 'danger' },
+  ochranna_lehota_vyprsala: { popis: 'Ochranná lehota vypršala — spojte sa s dodávateľom', ton: 'danger' },
+  licencia_zrusena: { popis: 'Licencia bola zrušená', ton: 'danger' },
+  chybajuca_konfiguracia: {
+    popis: 'Chýba licenčný kľúč alebo adresa licenčného servera (LICENSE_KEY, LICENSE_SERVER_URL v .env)',
+    ton: 'danger',
+  },
 };
 
 /** Popisné názvy funkcií podľa plánu. */
@@ -36,7 +42,31 @@ const NAZVY_FUNKCII: Record<string, string> = {
 
 export const Licencia: React.FC = () => {
   const licencia = useNacitanie((signal) => licenciaApi.stav(signal));
+  const verzia = useNacitanie((signal) => licenciaApi.verzia(signal));
+  const { uspech, chyba: hlasChybu } = useToast();
+  const [overuje, setOveruje] = useState(false);
   const l = licencia.data;
+  const v = verzia.data;
+
+  const overTeraz = async () => {
+    setOveruje(true);
+    try {
+      await licenciaApi.over();
+      licencia.obnov();
+      verzia.obnov();
+      uspech('Licencia bola overená');
+    } catch (e: any) {
+      hlasChybu(e?.message || 'Licenciu sa nepodarilo overiť');
+    } finally {
+      setOveruje(false);
+    }
+  };
+
+  const behDni = (sekundy: number) => {
+    const dni = Math.floor(sekundy / 86400);
+    const hodiny = Math.floor((sekundy % 86400) / 3600);
+    return dni > 0 ? `${dni} d ${hodiny} h` : `${hodiny} h ${Math.floor((sekundy % 3600) / 60)} min`;
+  };
 
   if (licencia.chyba) {
     return (
@@ -58,7 +88,12 @@ export const Licencia: React.FC = () => {
 
   if (!l) return null;
 
-  const stav = VYSVETLENIE[l.dovod] ?? { popis: l.dovod, ton: 'neutral' as const };
+  // Server posiela ochrannú lehotu aj so zostávajúcimi dňami (ochranna_lehota_3_dni)
+  const lehota = /^ochranna_lehota_(\d+)_dni$/.exec(l.dovod);
+  const dovod = lehota ? 'ochranna_lehota' : l.dovod;
+  const stav = lehota
+    ? { popis: `Licenčný server je nedostupný — ochranná lehota ešte ${lehota[1]} ${Number(lehota[1]) === 1 ? 'deň' : Number(lehota[1]) < 5 ? 'dni' : 'dní'}`, ton: 'warning' as const }
+    : VYSVETLENIE[dovod] ?? { popis: l.dovod, ton: 'neutral' as const };
 
   return (
     <div className="cw-licencia">
@@ -86,7 +121,7 @@ export const Licencia: React.FC = () => {
             <p className="cw-licencia__popis">{stav.popis}</p>
           </div>
 
-          <Button variant="secondary" onClick={licencia.obnov} ikona={<Icon nazov="live" velkost={15} />}>
+          <Button variant="secondary" onClick={overTeraz} nacitava={overuje} ikona={<Icon nazov="live" velkost={15} />}>
             Overiť teraz
           </Button>
         </div>
@@ -105,7 +140,7 @@ export const Licencia: React.FC = () => {
 
         {/* Vysvetlenie ochrannej lehoty — používateľ musí vedieť, že
             systém funguje, ale spojenie so serverom chýba */}
-        {l.dovod === 'ochranna_lehota' && (
+        {dovod === 'ochranna_lehota' && (
           <div className="cw-licencia__upozornenie is-warning">
             <Icon nazov="hodiny" velkost={16} />
             <span>
@@ -116,7 +151,7 @@ export const Licencia: React.FC = () => {
           </div>
         )}
 
-        {!l.povolene && l.dovod !== 'ochranna_lehota' && (
+        {!l.povolene && dovod !== 'ochranna_lehota' && (
           <div className="cw-licencia__upozornenie is-danger">
             <Icon nazov="licencia" velkost={16} />
             <span>
@@ -173,6 +208,51 @@ export const Licencia: React.FC = () => {
               </li>
             ))}
           </ul>
+        )}
+      </Card>
+
+      {/* ===== Verzia systému a aktualizácie ===== */}
+      <Card nadpis="Verzia systému" podnadpis="Aplikácia a stav databázy">
+        {verzia.chyba ? (
+          <p className="cw-licencia__prazdne">{verzia.chyba}</p>
+        ) : !v ? (
+          <Skeleton riadkov={3} />
+        ) : (
+          <>
+            <dl className="cw-licencia__verzia">
+              <dt>Verzia aplikácie</dt>
+              <dd>{v.verzia_aplikacie}</dd>
+              <dt>Databáza</dt>
+              <dd>
+                {v.schema.pocet_migracii} migrácií
+                {v.schema.posledna_migracia && <span> · posledná {v.schema.posledna_migracia.replace(/\.js$/, '')}</span>}
+              </dd>
+              <dt>Prostredie</dt>
+              <dd>
+                {v.prostredie === 'production' ? 'Produkcia' : 'Vývoj'} · Node {v.node}
+              </dd>
+              <dt>Server beží</dt>
+              <dd>{behDni(v.bezi_sekund)}</dd>
+            </dl>
+            {v.schema.cakajuce_migracie.length > 0 ? (
+              <div className="cw-licencia__upozornenie is-warning">
+                <Icon nazov="obnovit" velkost={16} />
+                <span>
+                  Databáza nie je aktuálna - čaká {v.schema.cakajuce_migracie.length} migrácií
+                  ({v.schema.cakajuce_migracie.map((m) => m.replace(/\.js$/, '')).join(', ')}). Spustite v priečinku backend
+                  príkaz <code>npm run db:migrate</code> a reštartujte server.
+                </span>
+              </div>
+            ) : (
+              <p className="cw-licencia__aktualne">
+                <Badge ton="success">Aktuálne</Badge> Databáza zodpovedá verzii aplikácie.
+              </p>
+            )}
+            <p className="cw-licencia__poznamka">
+              Aktualizácia systému: stiahnite novú verziu (git pull), spustite <code>npm install</code> a{' '}
+              <code>npm run db:migrate</code>, potom reštartujte backend.
+            </p>
+          </>
         )}
       </Card>
 

@@ -5,8 +5,19 @@
 import api from '../app/apiKlient';
 import type {
   Pouzivatel, StavLicencie, NastaveniaAdmin, Sezona, ZaznamSupisky,
-  PrehladSuhlasov, AuditnyZaznam, DruhSuhlasu, Hrac,
+  PrehladSuhlasov, AuditnyZaznam, DruhSuhlasu, Hrac, RolaSOpravneniami,
 } from './typy';
+
+export const rolyApi = {
+  /** Roly aj so zoznamom modulov pre tabuľku oprávnení. */
+  vypis: async (signal?: AbortSignal) => {
+    const obalka = await api.ziskajObalku<RolaSOpravneniami[]>('/admin/roles', { signal });
+    return { roly: obalka.data ?? [], moduly: ((obalka as any).moduly ?? []) as string[] };
+  },
+  vytvor: (udaje: Partial<RolaSOpravneniami>) => api.vytvor<RolaSOpravneniami>('/admin/roles', udaje),
+  uprav: (id: number, udaje: Partial<RolaSOpravneniami>) => api.uprav<RolaSOpravneniami>(`/admin/roles/${id}`, udaje),
+  zmaz: (id: number) => api.zmaz(`/admin/roles/${id}`),
+};
 
 export const pouzivateliaApi = {
   vypis: (signal?: AbortSignal) =>
@@ -21,8 +32,19 @@ export const pouzivateliaApi = {
   zmaz: (id: number) => api.zmaz(`/users/${id}`),
 };
 
+export interface VerziaSystemu {
+  verzia_aplikacie: string;
+  node: string;
+  prostredie: string;
+  schema: { posledna_migracia: string | null; pocet_migracii: number; cakajuce_migracie: string[] };
+  bezi_sekund: number;
+}
+
 export const licenciaApi = {
   stav: (signal?: AbortSignal) => api.ziskaj<StavLicencie>('/license/status', { signal }),
+  /** Overí licenciu na licenčnom serveri hneď teraz. */
+  over: () => api.vytvor<StavLicencie>('/license/check', {}),
+  verzia: (signal?: AbortSignal) => api.ziskaj<VerziaSystemu>('/license/version', { signal }),
 };
 
 export const nastaveniaApi = {

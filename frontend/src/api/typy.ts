@@ -171,7 +171,9 @@ export interface Stadion {
 
 // ===== Archív =====
 
-export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje';
+export type TypArchivu =
+  | 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony' | 'turnaje'
+  | 'galerie' | 'zapasy' | 'udalosti' | 'formulare';
 
 export interface PolozkaArchivu {
   typ: TypArchivu;
@@ -407,11 +409,31 @@ export interface StatistikyZapasu {
 
 export type RolaPouzivatela = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
 
+export type AkciaOpravnenia = 'citat' | 'pisat' | 'mazat';
+export type MapaOpravneni = Record<string, Partial<Record<AkciaOpravnenia, boolean>>>;
+
+/** Rola z tabuľky rolí - názov a oprávnenia po moduloch. */
+export interface RolaSOpravneniami {
+  id: number;
+  nazov: string;
+  kod: string;
+  popis: string | null;
+  opravnenia: MapaOpravneni;
+  je_systemova: boolean;
+  poradie: number;
+  pocet_pouzivatelov?: number;
+}
+
 export interface Pouzivatel {
   id: number;
   meno: string;
+  priezvisko?: string | null;
   email: string;
   rola: RolaPouzivatela;
+  rola_id?: number | null;
+  /** Oprávnenia roly - posiela ich /auth/me a prihlásenie */
+  opravnenia?: MapaOpravneni;
+  rola_nazov?: string;
   tim_id: number | null;
   aktivity: boolean;
   posledne_prihlasenie: string | null;
@@ -450,12 +472,19 @@ export interface NastaveniaAdmin {
   adresa: string | null;
   ico: string | null;
   dic: string | null;
+  /** Oficiálny názov organizácie (napr. občianske združenie) */
+  pravny_nazov: string | null;
+  ic_dph: string | null;
+  iban: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
   x_url: string | null;
+  tiktok_url: string | null;
   meta_popis: string | null;
   google_analytics_id: string | null;
+  /** Dodatkové farby šablóny - kľúč → #RRGGBB, v CSS ako --club-extra-<kľúč> */
+  dodatkove_farby: Record<string, string>;
 }
 
 // ===== Sezóna =====
@@ -974,4 +1003,24 @@ export interface OdpovedFormulara {
   precitane: boolean;
   ip_adresa: string | null;
   vytvorena: string;
+}
+
+// ===== Menu webu =====
+
+export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url';
+
+export interface PolozkaMenuWebu {
+  id: number;
+  nazov: string;
+  typ: TypPolozkyMenu;
+  stranka_id: number | null;
+  rubrika_id: number | null;
+  url: string | null;
+  /** Adresa, kam položka vedie (dopočíta server) */
+  odkaz: string | null;
+  rodic_id: number | null;
+  poradie: number;
+  otvorit_v_novom: boolean;
+  aktivity: boolean;
+  deti?: PolozkaMenuWebu[];
 }

@@ -293,8 +293,9 @@ export const kontrolaLicencie = (req: Request, res: Response, next: NextFunction
     return;
   }
 
-  // Prihlásenie musí fungovať, aby sa admin dostal dnu a videl upozornenie
-  if (req.path.startsWith('/api/auth/')) {
+  // Prihlásenie musí fungovať, aby sa admin dostal dnu a videl upozornenie;
+  // opätovné overenie licencie je cesta, ako blokovanie zrušiť
+  if (req.path.startsWith('/api/auth/') || req.path === '/api/license/check') {
     next();
     return;
   }
@@ -348,7 +349,12 @@ export const spustiKontroluLicencie = (): (() => void) => {
  * Aktuálny stav licencie pre zobrazenie v admin rozhraní.
  */
 export const stavLicencie = () => {
-  const { povolene, dovod } = jeLicenciaPouzitelna();
+  // Pri vypnutej kontrole (vývoj, testy) sa zmeny neblokujú - stav to
+  // má povedať, nie ukazovať „neaktívna" pre chýbajúci kľúč
+  const { povolene, dovod } =
+    process.env.LICENSE_CHECK_DISABLED === 'true'
+      ? { povolene: true, dovod: 'vypnuta_kontrola' }
+      : jeLicenciaPouzitelna();
   return {
     povolene,
     dovod,

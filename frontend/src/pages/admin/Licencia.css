@@ -139,3 +139,45 @@
 .cw-licencia__poznamka {
   text-align: center;
 }
+
+/* ===== Verzia systému ===== */
+.cw-licencia__verzia {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0 0 14px;
+  font-size: 14px;
+}
+
+.cw-licencia__verzia dt {
+  color: var(--muted);
+}
+
+.cw-licencia__verzia dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cw-licencia__verzia dd span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.cw-licencia__aktualne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+@media (max-width: 560px) {
+  .cw-licencia__verzia {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .cw-licencia__verzia dd {
+    margin-bottom: 8px;
+  }
+}

@@ -5,6 +5,32 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/user';
+import Rola, { MODULY } from '../models/Rola';
+
+/**
+ * Používateľ aj s oprávneniami jeho roly - administrácia podľa nich
+ * skryje sekcie, do ktorých nesmie. Skutočnú kontrolu robí server.
+ */
+export const sOpravneniami = async (user: User) => {
+  const data: any = user.toSafeJSON();
+  const vsetko = (citat: boolean, pisat: boolean, mazat: boolean) =>
+    Object.fromEntries(MODULY.map((m) => [m, { citat, pisat, mazat }]));
+
+  if (user.rola === 'admin') {
+    data.opravnenia = vsetko(true, true, true);
+  } else {
+    const rola = user.rola_id ? await Rola.findOne({ where: { id: user.rola_id, aktivity: true } }) : null;
+    if (rola) {
+      data.opravnenia = rola.opravnenia;
+      data.rola_nazov = rola.nazov;
+    } else {
+      // Bez roly z tabuľky - podľa pevnej roly
+      data.opravnenia =
+        user.rola === 'redaktor' ? vsetko(true, true, false) : user.rola === 'trener' ? vsetko(true, false, false) : vsetko(false, false, false);
+    }
+  }
+  return data;
+};
 // Vytvorenie dlhodobého obnovovacieho tokenu pri prihlásení
 import { vytvorObnovovaciToken } from './hesloController';
 
@@ -129,7 +155,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       data: {
         token,
         refreshToken: obnovovaciToken,
-        user: user.toSafeJSON(),
+        user: await sOpravneniami(user),
       },
     });
 
@@ -174,7 +200,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
     res.json({
       success: true,
-      data: req.user.toSafeJSON(),
+      data: await sOpravneniami(req.user),
     });
   } catch (error) {
     console.error('Chyba pri získavaní používateľa:', error);
@@ -212,7 +238,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       message: 'Token obnovený',
       data: {
         token: newToken,
-        user: req.user.toSafeJSON(),
+        user: await sOpravneniami(req.user),
       },
     });
   } catch (error) {
