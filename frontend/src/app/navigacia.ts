@@ -53,6 +53,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       { cesta: '/admin/timy', popis: 'Tímy', ikona: 'timy' },
       { cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
       { cesta: '/admin/realizacny-tim', popis: 'Realizačný tím', ikona: 'pouzivatelia' },
+      { cesta: '/admin/stadiony', popis: 'Štadióny', ikona: 'stadion' },
       { cesta: '/admin/ligy', popis: 'Ligy a tabuľky', ikona: 'ligy' },
       { cesta: '/admin/turnaje', popis: 'Turnaje', ikona: 'ligy' },
       { cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
@@ -77,6 +78,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       // Doplnené nad rámec návrhu — backend má funkčné rozhranie
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať
       { cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
+      { cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
       { cesta: '/admin/ochrana-udajov', popis: 'Ochrana údajov', ikona: 'gdpr', role: ['admin'] },
     ],
   },

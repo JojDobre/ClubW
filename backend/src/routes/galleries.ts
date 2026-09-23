@@ -7,11 +7,12 @@ import {
   getPublicGallery,
   getGalleriesByTypeEndpoint,
   getAdminGalleries,
+  getAdminGallery,
   createGallery,
   updateGallery,
   deleteGallery
 } from '../controllers/galeriaController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireEditor } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -35,10 +36,15 @@ router.get('/:id', getPublicGallery);
 export const adminGalleryRouter = express.Router();
 
 // Middleware pre autentifikáciu na všetky admin routes
-adminGalleryRouter.use(authenticateToken);
+// Správa galérií patrí redaktorovi - samotné prihlásenie nestačí, inak by
+// galérie menil aj bežný používateľ bez prístupu do administrácie
+adminGalleryRouter.use(authenticateToken, requireEditor);
 
 // GET /api/admin/galleries - Zoznam všetkých galérií pre admin (vrátane neaktívnych)
 adminGalleryRouter.get('/', getAdminGalleries);
+
+// GET /api/admin/galleries/:id - Detail pre editor (aj skrytá galéria)
+adminGalleryRouter.get('/:id', getAdminGallery);
 
 // POST /api/admin/galleries - Vytvorenie novej galérie
 adminGalleryRouter.post('/', createGallery);

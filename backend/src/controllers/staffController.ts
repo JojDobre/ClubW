@@ -2,6 +2,7 @@
 // Controller pre CRUD operácie realizačného tímu - FÁZA 3
 
 import { Request, Response } from 'express';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import Staff from '../models/Staff';
 import Sezona from '../models/Sezona';
 import Team from '../models/Team';
@@ -305,6 +306,7 @@ export const createStaff = async (req: Request, res: Response): Promise<void> =>
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri vytváraní člena realizačného tímu:', error);
     res.status(500).json({
       success: false,
@@ -330,8 +332,12 @@ export const updateStaff = async (req: Request, res: Response): Promise<void> =>
 
     const staffId = validation.id!;
 
-    // Pre UPDATE validujeme len polia, ktoré sa posielajú
-    const updateData = req.body;
+    // Pre UPDATE validujeme len polia, ktoré sa posielajú.
+    // Prázdny reťazec z formulára znamená „bez hodnoty".
+    const updateData: Record<string, any> = {};
+    for (const [kluc, hodnota] of Object.entries(req.body || {})) {
+      updateData[kluc] = hodnota === '' ? null : hodnota;
+    }
 
     const chybaClenstva = await overClenstvoStaff(updateData);
     if (chybaClenstva) {
@@ -444,6 +450,11 @@ export const updateStaff = async (req: Request, res: Response): Promise<void> =>
       kvalifikacia: updateData.kvalifikacia !== undefined ? updateData.kvalifikacia : (existingStaff as any).kvalifikacia,
       fotka: updateData.fotka !== undefined ? updateData.fotka : (existingStaff as any).fotka,
       tim_id: updateData.tim_id !== undefined ? updateData.tim_id : (existingStaff as any).tim_id,
+      // Tieto polia sa pri úprave predtým vôbec neukladali
+      narodnost: updateData.narodnost !== undefined ? updateData.narodnost : (existingStaff as any).narodnost,
+      sezona_id: updateData.sezona_id !== undefined ? updateData.sezona_id : (existingStaff as any).sezona_id,
+      datum_pripojenia: updateData.datum_pripojenia !== undefined ? updateData.datum_pripojenia : (existingStaff as any).datum_pripojenia,
+      datum_odpojenia: updateData.datum_odpojenia !== undefined ? updateData.datum_odpojenia : (existingStaff as any).datum_odpojenia,
       poznamky: updateData.poznamky !== undefined ? updateData.poznamky : (existingStaff as any).poznamky,
       poradie: updateData.poradie !== undefined ? updateData.poradie : (existingStaff as any).poradie
     });
@@ -457,6 +468,7 @@ export const updateStaff = async (req: Request, res: Response): Promise<void> =>
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri aktualizácii člena realizačného tímu:', error);
     res.status(500).json({
       success: false,

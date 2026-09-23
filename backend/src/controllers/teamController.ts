@@ -2,6 +2,7 @@
 // OPRAVENÝ Controller pre REST API tímov - BEZ express-validator
 
 import { Request, Response } from 'express';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { overObrazkovySubor } from '../utils/obrazokValidator';
 import Team from '../models/Team';
 import Stadion from '../models/Stadion';
@@ -406,6 +407,7 @@ export const createTeam = async (req: Request, res: Response): Promise<void> => 
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri vytváraní tímu:', error);
     res.status(500).json({
       success: false,
@@ -430,7 +432,6 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
     }
 
     const teamId = validation.id!;
-    const updateData = req.body;
 
     const team = await Team.findOne({
       where: { id: teamId, aktivity: true }
@@ -441,6 +442,25 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
         success: false,
         message: 'Tím nebol nájdený'
       });
+      return;
+    }
+
+    // Meniť sa smú len tieto polia - pôvodne sa do update() posielalo
+    // celé telo požiadavky, takže sa dalo prepísať aj aktivity či slug
+    const POLIA = [
+      'nazov', 'typ', 'vekova_kategoria', 'popis', 'stadion_id', 'sezona_id',
+      'logo', 'farba_prva', 'farba_druha', 'poradie',
+    ];
+    const updateData: Record<string, any> = {};
+    for (const pole of POLIA) {
+      if (req.body[pole] === undefined) continue;
+      updateData[pole] = req.body[pole] === '' ? null : req.body[pole];
+    }
+
+    // Kontrola celého výsledného tímu (aj polí, ktoré sa nemenili)
+    const chybyUdajov = validateTeamData({ ...team.toSafeJSON(), ...updateData });
+    if (chybyUdajov.length > 0) {
+      res.status(400).json({ success: false, message: chybyUdajov[0], errors: chybyUdajov });
       return;
     }
 
@@ -462,6 +482,7 @@ export const updateTeam = async (req: Request, res: Response): Promise<void> => 
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri aktualizácii tímu:', error);
     res.status(500).json({
       success: false,
@@ -510,7 +531,7 @@ export const deleteTeam = async (req: Request, res: Response): Promise<void> => 
     if (playersCount > 0 || staffCount > 0) {
       res.status(409).json({
         success: false,
-        message: `Nemožno vymazať tím ${team.getFullName()}. Má priradených ${playersCount} hráčov a ${staffCount} členov realizačného tímu.`,
+        message: `Tím ${team.nazov} nemožno archivovať - má ${playersCount} hráčov a ${staffCount} členov realizačného tímu. Najprv ich presuňte do iného tímu.`,
         data: {
           pocet_hracov: playersCount,
           pocet_realizacny_tim: staffCount

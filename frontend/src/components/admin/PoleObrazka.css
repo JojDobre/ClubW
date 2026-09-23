@@ -1,0 +1,45 @@
+/* Umiestnenie: frontend/src/components/admin/PoleObrazka.css */
+
+.cw-pole-obr__riadok {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cw-pole-obr__nahlad {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cw-pole-obr__nahlad--kruh {
+  border-radius: 50%;
+}
+
+.cw-pole-obr__nahlad--siroky {
+  width: 128px;
+}
+
+.cw-pole-obr__nahlad img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cw-pole-obr__nahlad--stvorec img {
+  object-fit: contain;
+}
+
+.cw-pole-obr__akcie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

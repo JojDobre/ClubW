@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { sanitizeHtml } from '../utils/sanitize';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '../config/api';
+import KomentarePodClankom from '../components/KomentarePodClankom';
 
 // Interface pre článok z backend API
 interface Article {
@@ -31,6 +32,8 @@ interface Article {
   };
   tags: string[];
   komentare_povolene: boolean;
+  /** Vracia ho náhľad z administrácie, verejný výpis nie. */
+  status?: string;
   meta_title?: string;
   meta_description?: string;
   vytvoreny: string;
@@ -58,6 +61,17 @@ const ArticleDetailPage: React.FC = () => {
 
   const slug = getSlugFromUrl();
 
+  /**
+   * Náhľad z administrácie.
+   *
+   * Verejný endpoint vracia len publikované články, takže koncept by tu
+   * skončil na „Článok nebol nájdený" - teda práve vtedy, keď náhľad
+   * najviac treba. Editor preto pridá ?nahlad=<id> a my článok načítame
+   * cez administrátorský endpoint, ktorý vracia aj nepublikované.
+   */
+  const nahladId = new URLSearchParams(window.location.search).get('nahlad');
+  const jeNahlad = Boolean(nahladId);
+
   // Načítanie článku z API
   const fetchArticle = async () => {
     if (!slug) {
@@ -68,11 +82,19 @@ const ArticleDetailPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(apiUrl(`/articles/${slug}`));
-      
+      const token = localStorage.getItem('clubw_token');
+      const response = jeNahlad
+        ? await fetch(apiUrl(`/admin/articles/${nahladId}/preview`), {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            credentials: 'include',
+          })
+        : await fetch(apiUrl(`/articles/${slug}`));
+
       if (!response.ok) {
         if (response.status === 404) {
           setError('Článok nebol nájdený');
+        } else if (jeNahlad && (response.status === 401 || response.status === 403)) {
+          setError('Na náhľad nepublikovaného článku sa musíte prihlásiť do administrácie.');
         } else {
           throw new Error(`HTTP chyba: ${response.status}`);
         }
@@ -85,8 +107,10 @@ const ArticleDetailPage: React.FC = () => {
         setArticle(data.data);
         setError('');
         
-        // Načítanie podobných článkov z tej istej kategórie
-        fetchRelatedArticles(data.data.kategoria.slug, data.data.id);
+        // Podobné články v náhľade nepotrebujeme - ide o kontrolu obsahu
+        if (!jeNahlad && data.data.kategoria?.slug) {
+          fetchRelatedArticles(data.data.kategoria.slug, data.data.id);
+        }
       } else {
         setError(data.message || 'Chyba pri načítavaní článku');
       }
@@ -259,6 +283,24 @@ const ArticleDetailPage: React.FC = () => {
       lineHeight: '1.6',
       color: '#1e293b'
     }}>
+      {/* Pruh náhľadu - aby bolo na prvý pohľad jasné, že toto ešte nie je
+          na webe a že takto článok uvidia návštevníci až po publikovaní */}
+      {jeNahlad && (
+        <div style={{
+          background: '#92400e',
+          color: 'white',
+          padding: '10px 20px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 600,
+        }}>
+          Náhľad článku — takto bude vyzerať na webe.
+          {article?.status && article.status !== 'published'
+            ? ' Zatiaľ nie je publikovaný, návštevníci ho nevidia.'
+            : ''}
+        </div>
+      )}
+
       {/* Navigačná lišta */}
       <nav style={{
         background: 'white',
@@ -508,6 +550,9 @@ const ArticleDetailPage: React.FC = () => {
           </button>
         </div>
       </article>
+
+      {/* Komentáre - v náhľade nie, koncept ich ešte nemôže mať */}
+      {article && !jeNahlad && <KomentarePodClankom clanokId={article.id} />}
 
       {/* Podobné články */}
       {relatedArticles.length > 0 && (

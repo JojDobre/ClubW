@@ -1198,7 +1198,8 @@ export const getGalleryWithImages = async (galeriaId: number) => {
 };
 
 export const getGalleriesByType = async (typ: 'tim' | 'clanok' | 'zapas' | 'volna', objectId?: number) => {
-  const whereClause: any = { aktivity: true };
+  // Verejný výber - len nezmazané a zobrazené na webe
+  const whereClause: any = { aktivity: true, zobrazit_na_webe: true };
   
   if (typ === 'volna') {
     whereClause.tim_id = null;

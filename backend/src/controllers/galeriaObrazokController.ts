@@ -200,6 +200,25 @@ export const uploadGalleryImages = async (req: Request, res: Response) => {
           await galeria.update({ nahladovy_obrazok: ulozeny.nahladStredny });
         }
 
+        // Fotku zaevidujeme aj do Media knižnice - inak by sa nedala znovu
+        // použiť v inej galérii alebo článku a v knižnici by chýbala.
+        // Chyba pri evidencii nesmie zhodiť samotné nahratie.
+        try {
+          await Media.create({
+            nazov: file.originalname.replace(/\.[^.]+$/, ''),
+            originalny_nazov: file.originalname,
+            cesta: ulozeny.cesta,
+            typ: 'obrazok',
+            mime_typ: 'image/jpeg',
+            velkost: ulozeny.velkost,
+            sirka: ulozeny.sirka,
+            vyska: ulozeny.vyska,
+            autor_id: (req as any).userId ?? null,
+          } as any);
+        } catch (chybaEvidencie) {
+          console.warn('Fotku sa nepodarilo zaevidovať do knižnice:', chybaEvidencie);
+        }
+
         uploadedImages.push(obrazok.toJSON());
         console.log(`✅ Obrázok ${i + 1} úspešne spracovaný (ID: ${obrazok.id})`);
         
@@ -223,11 +242,16 @@ export const uploadGalleryImages = async (req: Request, res: Response) => {
     await galeria.update({ pocet_obrazkov: newCount });
 
     // Nastavenie náhľadového obrázka galérie ak ešte nie je nastavený
+    // (prvá nahratá fotka sa stane titulnou - označí sa aj pri samotnom obrázku)
     if (!galeria.nahladovy_obrazok && uploadedImages.length > 0) {
-      const firstImage = uploadedImages[0] as any; // Type assertion pre toJSON() výsledok
-      await galeria.update({ 
-        nahladovy_obrazok: firstImage.nahladovy_maly || firstImage.cesta_suboru 
-      });
+      const prvy = await GaleriaObrazok.findByPk((uploadedImages[0] as any).id);
+      if (prvy) {
+        await prvy.update({ je_nahladovy: true });
+        await galeria.update({
+          nahladovy_obrazok: prvy.nahladovy_stredny || prvy.cesta_suboru,
+        });
+        (uploadedImages[0] as any).je_nahladovy = true;
+      }
     }
 
     res.status(201).json({
@@ -268,7 +292,8 @@ export const getGalleryImages = async (req: Request, res: Response) => {
 
     // Validácia paginácie
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 20));
+    // Editor galérie potrebuje vidieť všetky fotky naraz, nie po 50
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit as string, 10) || 20));
     const offset = (pageNum - 1) * limitNum;
 
     // Overenie existencie galérie
@@ -410,16 +435,36 @@ export const deleteGalleryImage = async (req: Request, res: Response) => {
     }
 
     // Soft delete obrázka
-    await obrazok.update({ aktivity: false });
+    const bolTitulny = obrazok.je_nahladovy;
+    await obrazok.update({ aktivity: false, je_nahladovy: false });
 
     // Aktualizácia počtu obrázkov v galérii
     const newCount = await GaleriaObrazok.count({
       where: { galeria_id: galeriaId, aktivity: true }
     });
-    
+
     const galeria = await Galeria.findByPk(galeriaId);
     if (galeria) {
-      await galeria.update({ pocet_obrazkov: newCount });
+      const zmeny: any = { pocet_obrazkov: newCount };
+
+      // Zmazaný obrázok bol titulný - inak by galéria ďalej ukazovala na
+      // zmazanú fotku. Titulnou sa stane prvá zostávajúca (podľa poradia),
+      // a ak žiadna nezostala, galéria titulný obrázok nemá.
+      const titulnaCesta = [obrazok.cesta_suboru, obrazok.nahladovy_stredny, obrazok.nahladovy_maly];
+      if (bolTitulny || titulnaCesta.includes(galeria.nahladovy_obrazok as string)) {
+        const dalsi = await GaleriaObrazok.findOne({
+          where: { galeria_id: galeriaId, aktivity: true },
+          order: [['poradie', 'ASC'], ['vytvoreny', 'ASC']],
+        });
+        if (dalsi) {
+          await dalsi.update({ je_nahladovy: true });
+          zmeny.nahladovy_obrazok = dalsi.nahladovy_stredny || dalsi.cesta_suboru;
+        } else {
+          zmeny.nahladovy_obrazok = null;
+        }
+      }
+
+      await galeria.update(zmeny);
     }
 
     // TODO: V produkcii by sme mohli skutočne vymazať súbory z disku

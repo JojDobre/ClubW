@@ -26,7 +26,7 @@ export const validateArticle = [
     .isLength({ min: 10, max: 50000 })
     .withMessage('Obsah musí mať 10-50000 znakov'),
   body('excerpt')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 500 })
     .withMessage('Excerpt môže mať maximálne 500 znakov')
     .trim(),
@@ -40,20 +40,24 @@ export const validateArticle = [
   body('status')
     .isIn(['draft', 'published', 'scheduled', 'archived'])
     .withMessage('Neplatný status článku'),
+  // Pozor na .optional() bez nullable: express-validator ním preskočí len
+  // undefined, nie null. Editor pri koncepte posiela publikovany_datum: null
+  // (a rovnako prázdne SEO polia), takže by validácia spadla na
+  // „Neplatný dátum publikovania" a koncept by sa vôbec nedal uložiť.
   body('publikovany_datum')
-    .optional()
+    .optional({ nullable: true })
     .isISO8601()
     .withMessage('Neplatný dátum publikovania'),
   body('meta_title')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 70 })
     .withMessage('Meta title môže mať maximálne 70 znakov'),
   body('meta_description')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 160 })
     .withMessage('Meta description môže mať maximálne 160 znakov'),
   body('tags')
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage('Tagy musia byť pole'),
 ];
@@ -109,7 +113,7 @@ export const validateArticleUpdate = [
     .isLength({ max: 160 })
     .withMessage('Meta description môže mať maximálne 160 znakov'),
   body('tags')
-    .optional()
+    .optional({ nullable: true })
     .isArray()
     .withMessage('Tagy musia byť pole'),
 ];
@@ -492,7 +496,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       meta_title: meta_title?.trim() || null,
       meta_description: meta_description?.trim() || null,
       featured: featured || false,
-      komentare_povolene: komentare_povolene !== false,
+      // Komentáre sú vypnuté, kým ich niekto vedome nezapne
+      komentare_povolene: komentare_povolene === true,
     });
 
     // Nastavenie tagov
@@ -805,35 +810,36 @@ export const previewArticle = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // `data` je samotný článok, rovnako ako pri verejnom detaile - stránka
+    // náhľadu tak použije ten istý kód a líši sa len adresou, z ktorej číta.
     res.json({
       success: true,
       data: {
-        article: {
-          id: article.id,
-          nazov: article.nazov,
-          slug: article.slug,
-          obsah: article.obsah,
-          excerpt: article.excerpt,
-          obrazok: article.obrazok,
-          publikovany_datum: article.publikovany_datum,
-          views: article.views,
-          autor: (article as any).autor,
-          kategoria: (article as any).kategoria,
-          tim_id: article.tim_id,
-          tags: article.getTagsArray(),
-          featured: article.featured,
-          komentare_povolene: article.komentare_povolene,
-          meta_title: article.meta_title,
-          meta_description: article.meta_description,
-          vytvoreny: article.vytvoreny,
-        },
-        // Frontend podľa toho môže zobraziť pruh "toto je náhľad,
-        // článok ešte nie je zverejnený"
-        nahlad: {
-          status: article.status,
-          publikovany: article.status === 'published',
-          planovane_na: article.status === 'scheduled' ? article.publikovany_datum : null,
-        },
+        id: article.id,
+        nazov: article.nazov,
+        slug: article.slug,
+        obsah: article.obsah,
+        excerpt: article.excerpt,
+        obrazok: article.obrazok,
+        publikovany_datum: article.publikovany_datum,
+        views: article.views,
+        autor: (article as any).autor,
+        kategoria: (article as any).kategoria,
+        tim_id: article.tim_id,
+        tags: article.getTagsArray(),
+        featured: article.featured,
+        komentare_povolene: article.komentare_povolene,
+        meta_title: article.meta_title,
+        meta_description: article.meta_description,
+        status: article.status,
+        vytvoreny: article.vytvoreny,
+      },
+      // Podľa toho vie stránka zobraziť pruh „toto je náhľad,
+      // článok ešte nie je zverejnený"
+      nahlad: {
+        status: article.status,
+        publikovany: article.status === 'published',
+        planovane_na: article.status === 'scheduled' ? article.publikovany_datum : null,
       },
     });
   } catch (error) {

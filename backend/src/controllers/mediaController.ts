@@ -17,6 +17,7 @@ import User from '../models/user';
 import { ulozMedium, zmazMedium } from '../utils/mediaUlozisko';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zostavStrankovanie } from '../utils/odpoved';
+import GaleriaObrazok from '../models/GaleriaObrazok';
 
 /** Maximálna veľkosť jedného súboru. */
 const MAX_VELKOST = 10 * 1024 * 1024; // 10 MB
@@ -46,24 +47,27 @@ const overId = (id: string): number | null => {
  * @returns počty výskytov podľa miesta použitia
  */
 export const zistiPouzitie = async (cesta: string) => {
-  const [clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad] = await Promise.all([
+  const [clankyObrazok, clankyVObsahu, strankyVObsahu, galerieNahlad, fotkyVGaleriach] = await Promise.all([
     // Hlavný obrázok článku
     Article.count({ where: { obrazok: cesta } }),
     // Vložený priamo v texte článku
     Article.count({ where: { obsah: { [Op.iLike]: `%${cesta}%` } } }),
     Page.count({ where: { obsah: { [Op.iLike]: `%${cesta}%` } } }),
     Galeria.count({ where: { nahladovy_obrazok: cesta } }),
+    // Fotka v niektorej galérii (aj keď nie je titulná)
+    GaleriaObrazok.count({ where: { cesta_suboru: cesta, aktivity: true } }),
   ]);
 
   const clanky = clankyObrazok + clankyVObsahu;
+  const galerie = Math.max(galerieNahlad, fotkyVGaleriach);
 
   return {
     clanky,
     clanky_ako_hlavny_obrazok: clankyObrazok,
     clanky_v_texte: clankyVObsahu,
     stranky: strankyVObsahu,
-    galerie: galerieNahlad,
-    spolu: clanky + strankyVObsahu + galerieNahlad,
+    galerie,
+    spolu: clanky + strankyVObsahu + galerie,
   };
 };
 

@@ -13,24 +13,56 @@ export const validateCategory = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Názov musí mať 2-100 znakov')
     .trim(),
+  // nullable: formulár posiela prázdne pole ako null a .optional() bez
+  // nullable preskočí len undefined - null by prešiel do validátora
   body('popis')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 500 })
     .withMessage('Popis môže mať maximálne 500 znakov')
     .trim(),
   body('farba')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .matches(/^#[0-9A-F]{6}$/i)
     .withMessage('Farba musí byť v hex formáte (#RRGGBB)'),
   body('ikona')
-    .optional()
+    .optional({ nullable: true })
     .isLength({ max: 50 })
     .withMessage('Ikona môže mať maximálne 50 znakov'),
   body('poradie')
-    .optional()
+    .optional({ nullable: true })
     .isInt({ min: 0 })
     .withMessage('Poradie musí byť nezáporné číslo'),
 ];
+
+/**
+ * Vytvorí adresu rubriky, ktorá ešte neexistuje.
+ *
+ * PREČO: rôzne názvy môžu dať rovnakú adresu („Mládež" aj „Mladez" dajú
+ * "mladez") a stĺpec slug je unikátny - server potom spadol na 500.
+ * Názov zložený len zo znakov, ktoré sa do adresy nedostanú („!!!"),
+ * dal prázdnu adresu a tiež 500. Pridáme číslo alebo náhradný základ.
+ */
+const unikatnaAdresa = async (nazov: string, okremId?: number): Promise<string> => {
+  const zaklad = Category.generateSlug(nazov) || 'rubrika';
+  let kandidat = zaklad;
+  let cislo = 2;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const kde: any = { slug: kandidat };
+    if (okremId) kde.id = { [Op.ne]: okremId };
+    const existuje = await Category.findOne({ where: kde, attributes: ['id'] });
+    if (!existuje) return kandidat;
+    kandidat = `${zaklad}-${cislo++}`;
+  }
+};
+
+/** Názov už používa iná rubrika? Bez ohľadu na veľké a malé písmená. */
+const nazovJeObsadeny = async (nazov: string, okremId?: number): Promise<boolean> => {
+  const kde: any = { nazov: { [Op.iLike]: nazov } };
+  if (okremId) kde.id = { [Op.ne]: okremId };
+  return Boolean(await Category.findOne({ where: kde, attributes: ['id'] }));
+};
 
 // GET /api/categories - Zoznam kategórií (verejné API)
 export const getCategories = async (req: Request, res: Response): Promise<void> => {
@@ -182,14 +214,8 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
 
     const { nazov, popis, farba, ikona, poradie } = req.body;
 
-    console.log('Vytváram kategóriu s údajmi:', { nazov, popis, farba, ikona, poradie });
-
     // Kontrola duplicitného názvu
-    const existingCategory = await Category.findOne({
-      where: { nazov: nazov.trim() },
-    });
-
-    if (existingCategory) {
+    if (await nazovJeObsadeny(nazov.trim())) {
       res.status(400).json({
         success: false,
         message: 'Kategória s týmto názvom už existuje',
@@ -204,9 +230,7 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
       finalPoradie = (maxPoradie || 0) + 1;
     }
 
-    // KĽÚČOVÁ OPRAVA: Vygenerujeme slug EXPLICITNE pred vytvorením
-    const generatedSlug = Category.generateSlug(nazov.trim());
-    console.log('Vygenerovaný slug pred vytvorením:', generatedSlug);
+    const generatedSlug = await unikatnaAdresa(nazov.trim());
 
     // Vytvorenie kategórie s explicitne nastaveným slug
     const newCategory = await Category.create({
@@ -218,8 +242,6 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
       poradie: finalPoradie,
       aktivity: true,
     });
-
-    console.log('Kategória úspešne vytvorená:', newCategory.toSafeJSON());
 
     res.status(201).json({
       success: true,
@@ -250,7 +272,6 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
     }
 
     const { id } = req.params;
-    const updateData = req.body;
 
     // Nájdenie kategórie
     const category = await Category.findByPk(id);
@@ -262,16 +283,16 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Kontrola duplicitného názvu (okrem seba)
-    if (updateData.nazov) {
-      const existingCategory = await Category.findOne({
-        where: { 
-          nazov: updateData.nazov.trim(),
-          id: { [Op.ne]: id }
-        },
-      });
+    // Len polia, ktoré formulár naozaj mení. Predtým sa do update posielalo
+    // celé telo požiadavky, takže sa dala nastaviť napr. aktivity: false -
+    // rubrika potom zmizla z webu a v administrácii ju nebolo ako vrátiť.
+    const updateData: Record<string, unknown> = {};
+    const { nazov, popis, farba, ikona, poradie } = req.body;
 
-      if (existingCategory) {
+    if (nazov !== undefined) {
+      const novyNazov = String(nazov).trim();
+
+      if (await nazovJeObsadeny(novyNazov, category.id)) {
         res.status(400).json({
           success: false,
           message: 'Kategória s týmto názvom už existuje',
@@ -279,19 +300,18 @@ export const updateCategory = async (req: Request, res: Response): Promise<void>
         return;
       }
 
-      updateData.nazov = updateData.nazov.trim();
-      
-      // OPRAVA: Ak sa mení názov, vygeneruj nový slug
-      if (updateData.nazov !== category.nazov) {
-        updateData.slug = Category.generateSlug(updateData.nazov);
-        console.log('Nový slug pre aktualizáciu:', updateData.slug);
+      updateData.nazov = novyNazov;
+
+      // Pri zmene názvu sa mení aj adresa - vždy na takú, ktorá je voľná
+      if (novyNazov !== category.nazov) {
+        updateData.slug = await unikatnaAdresa(novyNazov, category.id);
       }
     }
 
-    // Čistenie prázdnych stringov
-    if (updateData.popis === '') updateData.popis = null;
-    if (updateData.farba === '') updateData.farba = null;
-    if (updateData.ikona === '') updateData.ikona = null;
+    if (popis !== undefined) updateData.popis = popis ? String(popis).trim() || null : null;
+    if (farba !== undefined) updateData.farba = farba || null;
+    if (ikona !== undefined) updateData.ikona = ikona ? String(ikona).trim() || null : null;
+    if (poradie !== undefined && poradie !== null) updateData.poradie = Number(poradie);
 
     // Aktualizácia kategórie
     await category.update(updateData);
@@ -325,25 +345,60 @@ export const deleteCategory = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Kontrola či kategória nemá články
+    // Článok bez rubriky byť nemôže (kategoria_id je povinné), takže rubriku
+    // s článkami nejde len tak zmazať. Dá sa ale povedať, kam ich presunúť:
+    //   DELETE /api/admin/categories/:id?presunut_do=<id inej rubriky>
     const articlesCount = await Article.count({
       where: { kategoria_id: id },
     });
 
-    if (articlesCount > 0) {
+    const presunutDo = req.query.presunut_do ? Number(req.query.presunut_do) : null;
+
+    if (articlesCount > 0 && !presunutDo) {
       res.status(400).json({
         success: false,
-        message: `Nemožno vymazať kategóriu, ktorá obsahuje ${articlesCount} článkov. Najprv presuňte alebo vymažte články.`,
+        message: `Kategória obsahuje ${articlesCount} článkov. Vyberte, do ktorej kategórie ich presunúť.`,
       });
       return;
     }
 
-    // Vymazanie kategórie
-    await category.destroy();
+    if (articlesCount > 0 && presunutDo) {
+      if (presunutDo === category.id) {
+        res.status(400).json({
+          success: false,
+          message: 'Články nemožno presunúť do tej istej kategórie, ktorá sa maže.',
+        });
+        return;
+      }
+
+      const ciel = await Category.findByPk(presunutDo);
+      if (!ciel) {
+        res.status(400).json({
+          success: false,
+          message: 'Kategória, do ktorej sa majú články presunúť, neexistuje.',
+        });
+        return;
+      }
+    }
+
+    // Presun aj zmazanie naraz - aby nevznikol stav, keď sú články
+    // presunuté, ale rubrika zostala, alebo naopak
+    await Category.sequelize!.transaction(async (t) => {
+      if (articlesCount > 0 && presunutDo) {
+        await Article.update(
+          { kategoria_id: presunutDo },
+          { where: { kategoria_id: category.id }, transaction: t }
+        );
+      }
+      await category.destroy({ transaction: t });
+    });
 
     res.json({
       success: true,
-      message: 'Kategória úspešne vymazaná',
+      message:
+        articlesCount > 0
+          ? `Kategória bola vymazaná, ${articlesCount} článkov bolo presunutých.`
+          : 'Kategória úspešne vymazaná',
     });
   } catch (error) {
     console.error('Chyba pri vymazávaní kategórie:', error);

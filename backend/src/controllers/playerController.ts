@@ -2,12 +2,20 @@
 // Controller pre CRUD operácie hráčov - FÁZA 3
 
 import { Request, Response } from 'express';
+import { odpovedzNaChybuModelu } from '../utils/odpoved';
+import { Op } from 'sequelize';
 import Player from '../models/Player';
 import Team from '../models/Team';
+import Sezona from '../models/Sezona';
+import SupiskaSezony from '../models/SupiskaSezony';
 // Filtrovanie osobných údajov maloletých pre verejné rozhranie
 import { filtrujZoznamHracov, filtrujJednehoHraca } from '../utils/gdprFilter';
 
 // ===== HELPER FUNCTIONS =====
+
+/** Prihlásený člen vedenia klubu vidí údaje hráčov bez GDPR orezania. */
+const smieVidietOsobneUdaje = (req: Request): boolean =>
+  ['admin', 'redaktor', 'trener'].includes(String((req as any).user?.rola || ''));
 
 // Validácia hráčskych dát
 const validatePlayerData = (data: any) => {
@@ -66,6 +74,45 @@ const validatePlayerData = (data: any) => {
   }
   
   return errors;
+};
+
+/**
+ * Zapíše hráča na súpisku sezóny (predvolene aktuálnej).
+ *
+ * Hráč tak patrí k sezóne - požiadavka „sezóna" pri hráčovi. Pri presune
+ * do iného tímu sa starý záznam v tej istej sezóne označí ako neaktívny,
+ * takže história prestupov zostane zachovaná.
+ *
+ * Uzavretú sezónu nemeníme. Chyba súpisky nesmie zhodiť uloženie hráča.
+ */
+const zapisNaSupiskuSezony = async (
+  hrac: any,
+  sezonaId: number | null | undefined,
+  povodnyTimId?: number | null
+): Promise<void> => {
+  try {
+    const sezona = sezonaId
+      ? await Sezona.findOne({ where: { id: sezonaId, aktivity: true } })
+      : await Sezona.findOne({ where: { aktualna: true, aktivity: true } });
+    if (!sezona || (sezona as any).uzavreta) return;
+
+    if (povodnyTimId && povodnyTimId !== hrac.tim_id) {
+      await SupiskaSezony.update(
+        { aktivny: false } as any,
+        { where: { sezona_id: sezona.id, tim_id: povodnyTimId, hrac_id: hrac.id } }
+      );
+    }
+
+    await SupiskaSezony.zapisHraca({
+      sezona_id: sezona.id,
+      tim_id: hrac.tim_id,
+      hrac_id: hrac.id,
+      cislo_dresu: hrac.cislo_dresu ?? null,
+      pozicia: hrac.pozicia ?? null,
+    });
+  } catch (chyba) {
+    console.warn('Hráča sa nepodarilo zapísať na súpisku sezóny:', chyba);
+  }
 };
 
 const validatePlayerId = (id: string) => {
@@ -132,7 +179,11 @@ export const getPlayers = async (req: Request, res: Response): Promise<void> => 
 
     // Pri maloletých hráčoch odstránime údaje, na ktoré chýba súhlas
     // zákonného zástupcu (fotka, plné meno, presný dátum narodenia)
-    result = await filtrujZoznamHracov(result);
+    // Administrácia (redaktor, správca, tréner) potrebuje úplné údaje -
+    // inak by pri uložení prepísala meno maloletého skratkou „J."
+    if (!smieVidietOsobneUdaje(req)) {
+      result = await filtrujZoznamHracov(result);
+    }
 
     res.json({
       success: true,
@@ -186,7 +237,7 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
     }
 
     // Rovnaké filtrovanie ako pri výpise
-    const verejneUdaje = await filtrujJednehoHraca(playerData);
+    const verejneUdaje = smieVidietOsobneUdaje(req) ? playerData : await filtrujJednehoHraca(playerData);
 
     res.json({
       success: true,
@@ -314,6 +365,11 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
 
     console.log('Player created successfully:', newPlayer.id);
 
+    // Keď administrácia zvolila sezónu, hráč sa zapíše na jej súpisku
+    if (playerData.sezona_id) {
+      await zapisNaSupiskuSezony(newPlayer, Number(playerData.sezona_id));
+    }
+
     res.status(201).json({
       success: true,
       data: (newPlayer as any).toSafeJSON(),
@@ -321,6 +377,7 @@ export const createPlayer = async (req: Request, res: Response): Promise<void> =
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri vytváraní hráča:', error);
     res.status(500).json({
       success: false,
@@ -345,12 +402,17 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
     }
 
     const playerId = validation.id!;
-    const updateData = req.body;
 
-    const chybaDatumov = overDatumyClenstva(updateData);
-    if (chybaDatumov) {
-      res.status(400).json({ success: false, message: chybaDatumov });
-      return;
+    // Meniť sa smú len tieto polia - pôvodne išlo do update() celé telo
+    // požiadavky, takže sa dalo prepísať aj aktivity či id
+    const POLIA = [
+      'meno', 'priezvisko', 'datum_narodenia', 'cislo_dresu', 'pozicia', 'narodnost',
+      'vaha', 'vyska', 'fotka', 'tim_id', 'datum_pripojenia', 'datum_odpojenia', 'stav', 'poznamky',
+    ];
+    const updateData: Record<string, any> = {};
+    for (const pole of POLIA) {
+      if (req.body[pole] === undefined) continue;
+      updateData[pole] = req.body[pole] === '' ? null : req.body[pole];
     }
 
     if (updateData.stav !== undefined && !STAVY_HRACA.includes(updateData.stav)) {
@@ -373,28 +435,67 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Skontrolujeme číslo dresu (ak sa mení)
-    if (updateData.cislo_dresu && updateData.cislo_dresu !== (player as any).cislo_dresu) {
+    // Kontrola výsledného hráča - aj polí, ktoré sa nemenili
+    const vysledny = { ...(player as any).toSafeJSON(), ...updateData };
+    const chybyUdajov = validatePlayerData(vysledny);
+    if (chybyUdajov.length > 0) {
+      res.status(400).json({ success: false, message: chybyUdajov[0], errors: chybyUdajov });
+      return;
+    }
+
+    const chybaDatumov = overDatumyClenstva(vysledny);
+    if (chybaDatumov) {
+      res.status(400).json({ success: false, message: chybaDatumov });
+      return;
+    }
+
+    // Presun do iného tímu - cieľový tím musí existovať
+    const cielovyTimId = Number(vysledny.tim_id);
+    const menitTim = cielovyTimId !== Number((player as any).tim_id);
+    if (menitTim) {
+      const cielovy = await Team.findOne({ where: { id: cielovyTimId, aktivity: true } });
+      if (!cielovy) {
+        res.status(400).json({ success: false, message: 'Cieľový tím neexistuje' });
+        return;
+      }
+    }
+
+    // Číslo dresu musí byť voľné v tíme, kde hráč bude hrať
+    const cislo = vysledny.cislo_dresu ? Number(vysledny.cislo_dresu) : null;
+    if (cislo && (menitTim || cislo !== Number((player as any).cislo_dresu))) {
       const existingPlayer = await Player.findOne({
         where: {
-          cislo_dresu: updateData.cislo_dresu,
-          tim_id: (player as any).tim_id,
+          cislo_dresu: cislo,
+          tim_id: cielovyTimId,
           aktivity: true,
-          id: { [require('sequelize').Op.ne]: playerId }
+          id: { [Op.ne]: playerId }
         }
       });
 
       if (existingPlayer) {
         res.status(409).json({
           success: false,
-          message: `Číslo dresu ${updateData.cislo_dresu} je už obsadené v tomto tíme`
+          message: `Číslo dresu ${cislo} je v ${menitTim ? 'cieľovom' : 'tomto'} tíme už obsadené ` +
+            `(${(existingPlayer as any).getFullName()})`
         });
         return;
       }
     }
 
+    const povodnyTimId = Number((player as any).tim_id);
+
     // Aktualizácia
     await player.update(updateData);
+
+    // Presun do iného tímu alebo výslovne zvolená sezóna - súpiska sa
+    // prispôsobí (v pôvodnom tíme zostane záznam ako história)
+    if (menitTim || req.body.sezona_id) {
+      await zapisNaSupiskuSezony(
+        player,
+        req.body.sezona_id ? Number(req.body.sezona_id) : null,
+        menitTim ? povodnyTimId : null
+      );
+    }
 
     console.log('Player updated successfully:', player.id);
 
@@ -405,6 +506,7 @@ export const updatePlayer = async (req: Request, res: Response): Promise<void> =
     });
 
   } catch (error) {
+    if (odpovedzNaChybuModelu(error, res)) return;
     console.error('Chyba pri aktualizácii hráča:', error);
     res.status(500).json({
       success: false,

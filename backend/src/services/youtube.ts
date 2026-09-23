@@ -9,10 +9,10 @@
 // ČO SA DÁ A ČO NIE:
 //   - náhľad sa dá zostaviť priamo z ID videa, bez akéhokoľvek kľúča
 //   - názov vráti verejné oEmbed rozhranie YouTube, tiež bez kľúča
-//   - DĹŽKA sa bez kľúča zistiť NEDÁ. YouTube ju vydáva len cez
-//     Data API v3, ktoré vyžaduje YOUTUBE_API_KEY. Bez neho sa dĺžka
-//     ticho preskočí a dá sa zadať ručne - radšej než aby sme
-//     predstierali hodnotu, ktorú nemáme.
+//   - DĹŽKA: oficiálne ju YouTube vydáva cez Data API v3 (YOUTUBE_API_KEY).
+//     Bez kľúča ju prečítame z verejnej stránky videa. Keď nevyjde ani
+//     jedno, dĺžka zostane prázdna a dá sa zadať ručne - radšej než aby
+//     sme predstierali hodnotu, ktorú nemáme.
 
 /** Koľko čakáme na odpoveď, aby uloženie videa nezamrzlo. */
 const CAKANIE_MS = 5000;
@@ -77,11 +77,41 @@ const nacitaj = async (url: string): Promise<any | null> => {
   }
 };
 
+/** Načíta HTML stránku s časovým limitom (pre dĺžku videa bez kľúča). */
+const nacitajText = async (url: string): Promise<string | null> => {
+  const prerusenie = new AbortController();
+  const casovac = setTimeout(() => prerusenie.abort(), CAKANIE_MS);
+
+  try {
+    const odpoved = await fetch(url, {
+      signal: prerusenie.signal,
+      headers: { 'Accept-Language': 'sk,en;q=0.8' },
+    });
+    if (!odpoved.ok) return null;
+    return await odpoved.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(casovac);
+  }
+};
+
+/** Vytiahne ID videa z adresy Vimeo. */
+export const vimeoIdZUrl = (url: string): string | null => {
+  const zhoda = url?.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return zhoda ? zhoda[1] : null;
+};
+
 /**
  * Zistí, čo sa o videu dá zistiť.
  *
  * Nikdy nevyhodí výnimku - keď sa nepodarí nič, vráti samé null
  * a hodnoty sa jednoducho zadajú ručne.
+ *
+ * Dĺžka videa:
+ *   - s YOUTUBE_API_KEY sa berie z oficiálneho Data API
+ *   - bez kľúča sa prečíta z verejnej stránky videa (údaj lengthSeconds)
+ *   - Vimeo ju vracia priamo v oEmbed
  *
  * @param url - adresa videa
  */
@@ -96,7 +126,20 @@ export const zistiUdajeVidea = async (url: string): Promise<UdajeVidea> => {
     dlzka: null,
   };
 
-  if (!videoId) return vysledok;
+  if (!videoId) {
+    // Vimeo - názov, náhľad aj dĺžka z verejného oEmbed
+    const vimeoId = vimeoIdZUrl(url);
+    if (!vimeoId) return vysledok;
+
+    vysledok.video_id = vimeoId;
+    const vimeo = await nacitaj(
+      `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(`https://vimeo.com/${vimeoId}`)}`
+    );
+    if (vimeo?.title) vysledok.nazov = String(vimeo.title);
+    if (vimeo?.thumbnail_url) vysledok.nahlad = String(vimeo.thumbnail_url);
+    if (Number.isFinite(Number(vimeo?.duration))) vysledok.dlzka = Number(vimeo.duration);
+    return vysledok;
+  }
 
   // Názov z verejného oEmbed - bez kľúča
   const oembed = await nacitaj(
@@ -104,15 +147,22 @@ export const zistiUdajeVidea = async (url: string): Promise<UdajeVidea> => {
   );
   if (oembed?.title) vysledok.nazov = String(oembed.title);
 
-  // Dĺžka len s kľúčom k Data API
+  // Dĺžka cez Data API, ak je nastavený kľúč
   const kluc = process.env.YOUTUBE_API_KEY;
-  if (!kluc) return vysledok;
+  if (kluc) {
+    const data = await nacitaj(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${kluc}`
+    );
+    const trvanie = data?.items?.[0]?.contentDetails?.duration;
+    if (trvanie) vysledok.dlzka = trvanieNaSekundy(String(trvanie));
+  }
 
-  const data = await nacitaj(
-    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${kluc}`
-  );
-  const trvanie = data?.items?.[0]?.contentDetails?.duration;
-  if (trvanie) vysledok.dlzka = trvanieNaSekundy(String(trvanie));
+  // Bez kľúča (alebo keď API zlyhalo) skúsime verejnú stránku videa
+  if (vysledok.dlzka === null) {
+    const html = await nacitajText(`https://www.youtube.com/watch?v=${videoId}`);
+    const zhoda = html?.match(/"lengthSeconds":"(\d+)"/);
+    if (zhoda) vysledok.dlzka = Number(zhoda[1]);
+  }
 
   return vysledok;
 };

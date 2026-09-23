@@ -307,8 +307,8 @@ adminPageRouter.post('/', [
     .custom(slugValidator),
   body('v_menu').optional().isBoolean()
     .withMessage('V menu musí byť boolean'),
-  body('poradie_menu').optional().isInt({ min: 1, max: 9999 })
-    .withMessage('Poradie menu musí byť číslo 1-9999'),
+  body('poradie_menu').optional({ nullable: true }).isInt({ min: 1, max: 9999 })
+    .withMessage('Poradie v menu musí byť číslo od 1 do 9999'),
   body('publikovany').optional().isBoolean()
     .withMessage('Publikovany musí byť boolean'),
   body('meta_title').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 100 }).trim()
@@ -403,8 +403,8 @@ adminPageRouter.put('/:id', [
     .custom(slugValidator),
   body('v_menu').optional().isBoolean()
     .withMessage('V menu musí byť boolean'),
-  body('poradie_menu').optional().isInt({ min: 1, max: 9999 })
-    .withMessage('Poradie menu musí byť číslo 1-9999'),
+  body('poradie_menu').optional({ nullable: true }).isInt({ min: 1, max: 9999 })
+    .withMessage('Poradie v menu musí byť číslo od 1 do 9999'),
   body('publikovany').optional().isBoolean()
     .withMessage('Publikovany musí byť boolean'),
   body('meta_title').optional({ nullable: true, checkFalsy: true }).isString().isLength({ max: 100 }).trim()
@@ -681,11 +681,12 @@ adminPageRouter.get('/:id/nahlad', [
       });
     }
 
+    // `data` je samotná stránka, rovnako ako pri verejnom zobrazení - web
+    // tak použije ten istý kód a líši sa len adresou, z ktorej číta.
     res.json({
       success: true,
-      data: {
-        page: page.toJSON(),
-        nahlad: true,
+      data: page.toJSON(),
+      nahlad: {
         publikovana: page.publikovany
       }
     });

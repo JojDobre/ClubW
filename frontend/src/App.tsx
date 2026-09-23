@@ -98,6 +98,7 @@ const MatchDetail = lazy(() => import('./pages/MatchDetail'));
 const Calendar = lazy(() => import('./pages/CalendarPage')); //nefunguje uplne
 const Galleries = lazy(() => import('./pages/Galleries'));
 const GalleryDetail = lazy(() => import('./pages/GalleryDetail'));
+const Videos = lazy(() => import('./pages/Videos'));
 const Stats = lazy(() => import('./pages/Stats'));
 const TestPage = lazy(() => import('./components/TestPage'));
 
@@ -373,6 +374,7 @@ const AppContent: React.FC<{
   const isCalendarPage = currentPath === '/calendar'; //nefunguje uplne
   const isGalleriesPage = currentPath === '/galleries'; 
   const isGalleryDetailPage = currentPath.startsWith('/galleries/') && currentPath !== '/galleries';
+  const isVideosPage = currentPath === '/videa';
   const isStatsPage = currentPath === '/stats';
   const isTestPage = currentPath === '/testpage';
 
@@ -732,6 +734,16 @@ if (isTestPage) {
   );
 }
 
+
+if (isVideosPage) {
+  return (
+    <Suspense fallback={<PublicLayout><p style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>Načítavam videá...</p></PublicLayout>}>
+      <PublicLayout>
+        <Videos />
+      </PublicLayout>
+    </Suspense>
+  );
+}
 
 if (isGalleriesPage) {
   return (

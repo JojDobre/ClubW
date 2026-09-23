@@ -17,6 +17,7 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { clankyApi, kategorieApi } from '../../api/clanky';
 import { ApiChyba } from '../../app/apiKlient';
 import { naVstupDatumCas } from '../../utils/datum';
+import { timyApi } from '../../api/sport';
 import type { Clanok, Kategoria, StavClanku, ClanokNaUlozenie } from '../../api/typy';
 import './ClanokEditor.css';
 
@@ -26,9 +27,12 @@ const PRAZDNY: ClanokNaUlozenie & { slug?: string } = {
   excerpt: '',
   obrazok: '',
   kategoria_id: null,
+  tim_id: null,
   status: 'draft',
   publikovany_datum: null,
   featured: false,
+  // Komentáre sú pri novom článku zámerne vypnuté - zapnú sa vedome
+  komentare_povolene: false,
   meta_title: '',
   meta_description: '',
   tags: [],
@@ -58,6 +62,8 @@ export const ClanokEditor: React.FC = () => {
   const [uklada, setUklada] = useState(false);
   const [zmazatOtvorene, setZmazatOtvorene] = useState(false);
   const [maze, setMaze] = useState(false);
+  const [nahrava, setNahrava] = useState(false);
+  const vyberSuboru = useRef<HTMLInputElement>(null);
   const [zmenene, setZmenene] = useState(false);
   const [poslednéUloženie, setPoslednéUloženie] = useState<Date | null>(null);
 
@@ -66,6 +72,7 @@ export const ClanokEditor: React.FC = () => {
   const povodnyStav = useRef('');
 
   const kategorie = useNacitanie((signal) => kategorieApi.vypis(signal));
+  const timy = useNacitanie((signal) => timyApi.vypis(signal));
 
   const clanok = useNacitanie(
     (signal) => (idCislo !== null ? clankyApi.detail(idCislo, signal) : Promise.resolve(null)),
@@ -90,9 +97,11 @@ export const ClanokEditor: React.FC = () => {
       excerpt: c.excerpt ?? '',
       obrazok: c.obrazok ?? '',
       kategoria_id: c.kategoria_id ?? c.kategoria?.id ?? null,
+      tim_id: c.tim_id ?? null,
       status: c.status ?? 'draft',
       publikovany_datum: c.publikovany_datum ?? null,
       featured: Boolean(c.featured),
+      komentare_povolene: Boolean(c.komentare_povolene),
       meta_title: c.meta_title ?? '',
       meta_description: c.meta_description ?? '',
       tags: Array.isArray(c.tags) ? c.tags : [],
@@ -153,6 +162,30 @@ export const ClanokEditor: React.FC = () => {
     window.addEventListener('beforeunload', naOdchod);
     return () => window.removeEventListener('beforeunload', naOdchod);
   }, [zmenene]);
+
+  /**
+   * Nahrá vybraný súbor a zapíše jeho cestu do poľa obrázka.
+   *
+   * Súbor ide cez Media knižnicu, takže skončí v /uploads/media/<rok>/<mesiac>/
+   * a dá sa neskôr použiť aj pri inom článku.
+   */
+  const nahrajObrazok = async (subor?: File | null) => {
+    if (!subor) return;
+
+    setNahrava(true);
+    try {
+      const { cesta } = await clankyApi.nahrajObrazok(subor);
+      if (!cesta) throw new Error('Server nevrátil cestu k súboru');
+      zmen('obrazok', cesta);
+      uspech('Obrázok bol nahratý');
+    } catch (e) {
+      hlasChybu(e instanceof Error ? e.message : 'Obrázok sa nepodarilo nahrať');
+    } finally {
+      setNahrava(false);
+      // Aby sa dal ten istý súbor vybrať znova
+      if (vyberSuboru.current) vyberSuboru.current.value = '';
+    }
+  };
 
   const uloz = async (novyStav?: StavClanku) => {
     setChybyPoli([]);
@@ -276,7 +309,13 @@ export const ClanokEditor: React.FC = () => {
         {!jeNovy && formular.slug && (
           <button
             className="cw-ced__btn"
-            onClick={() => window.open(`/clanky/${formular.slug}`, '_blank', 'noopener')}
+            // Verejná adresa článku je /clanek/<slug> (nie /clanky/). Parameter
+            // ?nahlad=<id> povie stránke, aby článok načítala cez
+            // administrátorský endpoint - inak by koncept skončil na
+            // „Článok nebol nájdený", lebo verejný výpis vracia len publikované.
+            onClick={() =>
+              window.open(`/clanek/${formular.slug}?nahlad=${idCislo}`, '_blank', 'noopener')
+            }
           >
             <Icon nazov="oko" velkost={15} />
             Náhľad
@@ -331,7 +370,7 @@ export const ClanokEditor: React.FC = () => {
 
             <div className="cw-ced__url">
               <span>URL:</span>
-              <span className="cw-ced__url-zaklad">/clanky/</span>
+              <span className="cw-ced__url-zaklad">/clanek/</span>
               <input
                 className="cw-ced__url-vstup"
                 value={formular.slug ?? ''}
@@ -391,6 +430,24 @@ export const ClanokEditor: React.FC = () => {
               ))}
             </select>
 
+            <label className="cw-ced__label" htmlFor="ced-tim">
+              Tím
+            </label>
+            <select
+              id="ced-tim"
+              className="cw-select"
+              value={formular.tim_id ?? ''}
+              onChange={(e) => zmen('tim_id', e.target.value ? Number(e.target.value) : null)}
+              style={{ marginBottom: 13 }}
+            >
+              <option value="">Bez tímu</option>
+              {(timy.data ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nazov}
+                </option>
+              ))}
+            </select>
+
             <label className="cw-ced__label">Štítky</label>
             <div className="cw-ced__stitky">
               {(formular.tags ?? []).map((t) => (
@@ -440,11 +497,44 @@ export const ClanokEditor: React.FC = () => {
               )}
             </div>
 
+            <input
+              ref={vyberSuboru}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => void nahrajObrazok(e.target.files?.[0])}
+            />
+
+            <div className="cw-ced__obrazok-akcie">
+              <button
+                type="button"
+                className="cw-ced__btn"
+                onClick={() => vyberSuboru.current?.click()}
+                disabled={nahrava}
+              >
+                <Icon nazov="galerie" velkost={14} />
+                {nahrava ? 'Nahrávam…' : formular.obrazok ? 'Zmeniť obrázok' : 'Nahrať obrázok'}
+              </button>
+
+              {formular.obrazok && (
+                <button
+                  type="button"
+                  className="cw-ced__btn cw-ced__btn--nebezpecne"
+                  onClick={() => zmen('obrazok', '')}
+                  disabled={nahrava}
+                  aria-label="Odobrať obrázok"
+                >
+                  <Icon nazov="zmazat" velkost={14} />
+                </button>
+              )}
+            </div>
+
             <Input
               value={formular.obrazok ?? ''}
               onChange={(e) => zmen('obrazok', e.target.value)}
-              placeholder="/uploads/images/…"
+              placeholder="/uploads/media/…"
               aria-label="Adresa hlavného obrázka"
+              napoveda="Nahraj súbor alebo vlož adresu už nahratého obrázka"
             />
           </div>
 
@@ -470,6 +560,17 @@ export const ClanokEditor: React.FC = () => {
               onZmena={(v) => zmen('featured', v)}
               menovka="Odporúčaný článok"
               popis="Zobrazí sa zvýraznený na hlavnej stránke"
+            />
+
+            <Switch
+              zapnute={Boolean(formular.komentare_povolene)}
+              onZmena={(v) => zmen('komentare_povolene', v)}
+              menovka="Povoliť komentáre"
+              popis={
+                formular.komentare_povolene
+                  ? 'Návštevníci môžu pridávať komentáre pod článok'
+                  : 'Komentáre sú vypnuté — pod článkom sa nezobrazia'
+              }
             />
           </div>
 

@@ -10,7 +10,7 @@ import {
   deletePlayer
 } from '../controllers/playerController';
 // Auth middleware - ochrana zápisových operácií pred neprihlásenými používateľmi
-import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
+import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -26,7 +26,7 @@ const router = Router();
  * @query   include_team - pridať info o tíme (true|false)
  * @example GET /api/players?tim_id=1&pozicia=brankár&include_team=true
  */
-router.get('/', getPlayers);
+router.get('/', optionalAuth, getPlayers);
 
 /**
  * @route   GET /api/players/:id
@@ -36,7 +36,7 @@ router.get('/', getPlayers);
  * @query   include_team - pridať info o tíme (true|false)
  * @example GET /api/players/1?include_team=true
  */
-router.get('/:id', getPlayerById);
+router.get('/:id', optionalAuth, getPlayerById);
 
 // ===== ADMIN ROUTES (vyžadujú autentifikáciu) =====
 

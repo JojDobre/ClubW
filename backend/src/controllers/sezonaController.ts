@@ -6,7 +6,6 @@ import Sezona from '../models/Sezona';
 import SupiskaSezony from '../models/SupiskaSezony';
 import Player from '../models/Player';
 import Team from '../models/Team';
-import Liga from '../models/Liga';
 import { sanitizePlainText } from '../utils/sanitize';
 
 /**
@@ -202,19 +201,10 @@ export const deleteSezona = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // História sa nemaže. Radšej vysvetlíme, čo sezónu drží.
-    const pocetLig = await Liga.count({ where: { sezona_id: id } as any });
-    const pocetSupisiek = await SupiskaSezony.count({ where: { sezona_id: id } });
-
-    if (pocetLig > 0 || pocetSupisiek > 0) {
-      res.status(409).json({
-        success: false,
-        message:
-          `Sezónu nemožno zmazať - odkazuje na ňu ${pocetLig} líg a ${pocetSupisiek} záznamov na súpiskách. ` +
-          'Ak ju chcete uzavrieť, nastavte príznak "uzavreta".',
-      });
-      return;
-    }
+    // Archivácia je mäkká - ligy, súpisky aj štatistiky sezóny zostávajú.
+    // Preto ju nebránime ani pri existujúcich odkazoch: skončená sezóna
+    // so súpiskami je presne to, čo sa archivuje (stav „archivovaná").
+    // Trvalé zmazanie z archívu odkazy stále ochráni.
 
     if (sezona.aktualna) {
       res.status(409).json({

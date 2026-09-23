@@ -158,6 +158,18 @@ const loginLimiter = rateLimit({
   },
 });
 
+// Rate limit pre komentáre návštevníkov. Pridať komentár sa dá bez
+// prihlásenia, takže bez limitu by jeden skript zahltil frontu na schválenie.
+// Týka sa len odoslania nového komentára, nie čítania ani moderovania.
+const komentarLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minút
+  max: 10, // max 10 nových komentárov z jednej adresy za 10 minút
+  message: {
+    success: false,
+    message: 'Poslali ste priveľa komentárov naraz. Skúste to o chvíľu znova.'
+  },
+});
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -221,6 +233,7 @@ app.get('/api/status', (req, res) => {
 
 // Auth routes s rate limitom
 app.use('/api/auth/login', loginLimiter);
+app.post('/api/comments', komentarLimiter);
 // Kontrola licencie - musí byť pred API routes.
 // Čítanie necháva prejsť vždy, blokuje len zmeny obsahu.
 app.use(kontrolaLicencie);

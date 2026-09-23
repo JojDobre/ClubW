@@ -112,13 +112,13 @@ export const Sezony: React.FC = () => {
     setMaze(true);
     try {
       await sezonyApi.zmaz(naZmazanie.id);
-      uspech('Sezóna bola zmazaná');
+      uspech('Sezóna bola presunutá do archívu');
       setNaZmazanie(null);
       sezony.obnov();
     } catch (e: any) {
       // Server odmietne zmazať sezónu, na ktorú niečo odkazuje —
       // hláška vysvetľuje, čo ju drží
-      hlasChybu(e?.message || 'Sezónu sa nepodarilo zmazať');
+      hlasChybu(e?.message || 'Sezónu sa nepodarilo archivovať');
     } finally {
       setMaze(false);
     }
@@ -202,7 +202,12 @@ export const Sezony: React.FC = () => {
                 <div className="cw-sezony__hlavne">
                   <span className="cw-sezony__nazov">{s.nazov}</span>
                   <div className="cw-sezony__stitky">
-                    {s.aktualna && <Badge ton="success">Aktuálna</Badge>}
+                    {/* Stav podľa požiadavky: aktívna / neaktívna (archivované sú v Archíve) */}
+                    {s.aktualna && !s.uzavreta ? (
+                      <Badge ton="success">Aktívna · aktuálna</Badge>
+                    ) : (
+                      <Badge ton="neutral">Neaktívna</Badge>
+                    )}
                     {s.uzavreta && <Badge ton="warning">Uzavretá</Badge>}
                   </div>
                 </div>
@@ -232,9 +237,10 @@ export const Sezony: React.FC = () => {
                       variant="ghost"
                       velkost="sm"
                       onClick={() => setNaZmazanie(s)}
-                      aria-label={`Zmazať sezónu ${s.nazov}`}
+                      aria-label={`Archivovať sezónu ${s.nazov}`}
+                      title="Presunúť do archívu"
                     >
-                      <Icon nazov="zmazat" velkost={15} />
+                      <Icon nazov="archiv" velkost={15} />
                     </Button>
                   )}
                 </div>
@@ -442,9 +448,9 @@ export const Sezony: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať sezónu?"
-        sprava={`Sezóna ${naZmazanie?.nazov} bude zmazaná. Ak na ňu odkazujú ligy alebo súpisky, server zmazanie odmietne — história sa nestráca.`}
-        potvrdit="Zmazať"
+        nadpis="Archivovať sezónu?"
+        sprava={`Sezóna ${naZmazanie?.nazov} bude archivovaná. Súpisky a výsledky zostanú zachované a sezónu môžete obnoviť v Archíve.`}
+        potvrdit="Archivovať"
         nebezpecne
         nacitava={maze}
         onPotvrd={zmazSezonu}

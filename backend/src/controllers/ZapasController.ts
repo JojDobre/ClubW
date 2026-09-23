@@ -546,6 +546,12 @@ export const createMatch = async (req: Request, res: Response): Promise<void> =>
     // Pri domácom zápase doplníme miesto zo štadióna nášho tímu
     await doplnMiestoKonania(createData);
 
+    // Názov nie je povinný - keď chýba, zložíme ho z tímov
+    // (inak databáza odmietla záznam a klient dostal chybu 500)
+    if (!createData.nazov || !String(createData.nazov).trim()) {
+      createData.nazov = `${createData.domaci_tim_nazov || 'Domáci'} – ${createData.hostujuci_tim_nazov || 'Hostia'}`;
+    }
+
     console.log('Creating match with data:', createData);
 
     const newZapas = await Zapas.create(createData);

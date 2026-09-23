@@ -62,6 +62,8 @@ export interface Kategoria {
   farba: string | null;
   ikona: string | null;
   poradie: number;
+  /** Vracia len administrátorský výpis. */
+  pocet_clankov?: number;
 }
 
 // ===== Článok =====
@@ -95,6 +97,10 @@ export interface Clanok extends ClanokVoVypise {
   obsah: string;
   status: StavClanku;
   kategoria_id: number | null;
+  /** Voliteľné priradenie článku k tímu (napr. reportáž z jeho zápasu). */
+  tim_id?: number | null;
+  /** Komentáre sú pri novom článku vypnuté, zapínajú sa vedome. */
+  komentare_povolene?: boolean;
   meta_title: string | null;
   meta_description: string | null;
   aktualizovany?: string;
@@ -107,9 +113,11 @@ export interface ClanokNaUlozenie {
   excerpt?: string | null;
   obrazok?: string | null;
   kategoria_id: number | null;
+  tim_id?: number | null;
   status: StavClanku;
   publikovany_datum?: string | null;
   featured?: boolean;
+  komentare_povolene?: boolean;
   meta_title?: string | null;
   meta_description?: string | null;
   tags?: string[];
@@ -140,11 +148,38 @@ export interface Tim {
   typ: string;
   vekova_kategoria: string;
   popis: string | null;
+  stadion_id: number | null;
+  sezona_id: number | null;
   logo: string | null;
   farba_prva: string | null;
   farba_druha: string | null;
   poradie: number;
   aktivity: boolean;
+}
+
+// ===== Štadión =====
+
+export interface Stadion {
+  id: number;
+  nazov: string;
+  adresa: string | null;
+  fotka: string | null;
+  kapacita: number | null;
+  poznamka: string | null;
+  aktivity: boolean;
+}
+
+// ===== Archív =====
+
+export type TypArchivu = 'timy' | 'hraci' | 'realizacny-tim' | 'ligy' | 'stadiony' | 'sezony';
+
+export interface PolozkaArchivu {
+  typ: TypArchivu;
+  typ_nazov: string;
+  id: number;
+  nazov: string;
+  detail: string | null;
+  archivovane: string | null;
 }
 
 // ===== Hráč =====
@@ -166,6 +201,9 @@ export interface Hrac {
   vaha: number | null;
   fotka: string | null;
   tim_id: number;
+  datum_pripojenia: string | null;
+  datum_odpojenia: string | null;
+  stav: 'aktivny' | 'neaktivny';
   poznamky: string | null;
   aktivity: boolean;
   /** Príznaky z filtrovania osobných údajov detí */
@@ -357,6 +395,8 @@ export interface Sezona {
   aktualna: boolean;
   uzavreta: boolean;
   poznamka: string | null;
+  /** Odvodený stav, ktorý dopĺňa server */
+  stav?: 'aktivna' | 'neaktivna' | 'archivovana';
 }
 
 export interface ZaznamSupisky {
@@ -451,7 +491,38 @@ export interface Galeria {
   clanok_id: number | null;
   zapas_id: number | null;
   typ_priradenia: string;
+  /** Zobrazuje sa na webe? (skrytie - nie zmazanie) */
+  zobrazit_na_webe: boolean;
   aktivity: boolean;
+  vytvoreny: string;
+}
+
+/** Fotka v galérii. Cesty sú celé (/uploads/...). */
+export interface GaleriaObrazok {
+  id: number;
+  galeria_id: number;
+  nazov: string | null;
+  /** Popis pod fotkou */
+  popis: string | null;
+  cesta_suboru: string;
+  nahladovy_maly: string | null;
+  nahladovy_stredny: string | null;
+  poradie: number;
+  je_nahladovy: boolean;
+  sirka: number | null;
+  vyska: number | null;
+}
+
+/** Súbor v Media knižnici. */
+export interface MediaSubor {
+  id: number;
+  nazov: string;
+  originalny_nazov: string;
+  cesta: string;
+  typ: 'obrazok' | 'dokument' | 'ine';
+  sirka: number | null;
+  vyska: number | null;
+  alt_text: string | null;
   vytvoreny: string;
 }
 
@@ -465,6 +536,12 @@ export interface ClenRealizacnehoTimu {
   tim_id: number | null;
   email: string | null;
   telefon: string | null;
+  datum_narodenia: string | null;
+  narodnost: string | null;
+  datum_pripojenia: string | null;
+  datum_odpojenia: string | null;
+  sezona_id: number | null;
+  kvalifikacia: string | null;
   fotka: string | null;
   poradie: number;
   aktivity: boolean;
@@ -572,6 +649,8 @@ export interface Komentar {
   obsah: string;
   stav: StavKomentara;
   rodic_id: number | null;
+  /** Kedy autor naposledy upravil text (vtedy ide komentár znova na schválenie). */
+  upraveny_autorom?: string | null;
   vytvoreny: string;
   clanok?: { id: number; nazov: string; slug: string };
 }
@@ -589,11 +668,24 @@ export interface Video {
   /** Adresu náhľadu dopĺňa server — pri YouTube ju vie odvodiť */
   nahlad_url?: string | null;
   dlzka: number | null;
+  /** Pôvodná voľná kategória - len pre staré záznamy */
   kategoria: string | null;
+  rubrika_id: number | null;
+  rubrika?: { id: number; nazov: string; slug: string; farba: string | null } | null;
   zapas_id: number | null;
+  zapas?: { id: number; nazov: string; datum_cas: string } | null;
   publikovane: boolean;
   poradie: number;
   vytvorene: string;
+}
+
+/** Čo server zistí z odkazu na video. */
+export interface ZisteneVideo {
+  zdroj: ZdrojVidea;
+  video_id: string | null;
+  nazov: string | null;
+  nahlad: string | null;
+  dlzka: number | null;
 }
 
 export type TypTurnaja = 'single_elimination' | 'double_elimination' | 'round_robin' | 'groups_playoff';

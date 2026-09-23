@@ -115,3 +115,33 @@ export const odpovedChyba = (
   }
   return res.status(status).json(telo);
 };
+
+/**
+ * Ak ide o chybu validácie databázového modelu (neplatná hodnota,
+ * porušený cudzí kľúč, duplicita), odpovie 400/409 so zrozumiteľnou
+ * hláškou a vráti true. Inak nechá odpoveď na volajúcom (500).
+ *
+ * Bez toho končili neplatné vstupy chybou servera 500.
+ */
+export const odpovedzNaChybuModelu = (chyba: any, res: Response): boolean => {
+  const nazov = chyba?.name;
+
+  if (nazov === 'SequelizeValidationError') {
+    const spravy: string[] = (chyba.errors ?? []).map((e: any) => e.message);
+    res.status(400).json({ success: false, message: spravy[0] || 'Neplatné údaje', errors: spravy });
+    return true;
+  }
+  if (nazov === 'SequelizeUniqueConstraintError') {
+    res.status(409).json({ success: false, message: 'Taký záznam už existuje' });
+    return true;
+  }
+  if (nazov === 'SequelizeForeignKeyConstraintError') {
+    res.status(400).json({ success: false, message: 'Odkaz na neexistujúci záznam (tím, sezóna, štadión…)' });
+    return true;
+  }
+  if (nazov === 'SequelizeDatabaseError' && /invalid input syntax|out of range/i.test(String(chyba.message))) {
+    res.status(400).json({ success: false, message: 'Neplatná hodnota niektorého poľa' });
+    return true;
+  }
+  return false;
+};

@@ -2,7 +2,7 @@
 // Volania API pre komentáre, videá a turnaje.
 
 import api from '../app/apiKlient';
-import type { Komentar, Video, Turnaj, StavKomentara } from './typy';
+import type { Komentar, Video, Turnaj, StavKomentara, ZisteneVideo } from './typy';
 
 export const komentareApi = {
   /**
@@ -31,8 +31,13 @@ export const komentareApi = {
 };
 
 export const videaApi = {
+  /** Administrácia potrebuje aj skryté videá (vsetky=1). */
   vypis: (signal?: AbortSignal) =>
-    api.ziskaj<Video[]>('/videos', { parametre: { limit: 300 }, signal }),
+    api.ziskaj<Video[]>('/videos', { parametre: { limit: 500, vsetky: 1 }, signal }),
+
+  /** Názov, náhľad a dĺžka zistené priamo z videa. */
+  zisti: (url: string, signal?: AbortSignal) =>
+    api.ziskaj<ZisteneVideo>('/videos/zisti', { parametre: { url }, signal }),
 
   vytvor: (udaje: Partial<Video>) => api.vytvor<Video>('/videos', udaje),
   uprav: (id: number, udaje: Partial<Video>) => api.uprav<Video>(`/videos/${id}`, udaje),

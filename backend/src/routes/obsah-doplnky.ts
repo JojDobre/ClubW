@@ -8,6 +8,8 @@ import Video from '../models/Video';
 import LigaTurnaj from '../models/LigaTurnaj';
 import Liga from '../models/Liga';
 import Article from '../models/Article';
+import Category from '../models/Category';
+import Zapas from '../models/Zapas';
 import {
   getPavuk,
   generujPavuka,
@@ -17,10 +19,57 @@ import {
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zistiUdajeVidea } from '../services/youtube';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 const router = Router();
 
 // ============ KOMENTÁRE ============
+
+const STAVY_KOMENTARA = ['caka', 'schvaleny', 'zamietnuty', 'spam'] as const;
+
+interface NastaveniaKomentarov {
+  /** Komentáre na celom webe zapnuté/vypnuté. */
+  povolene: boolean;
+  /** Nový komentár čaká na schválenie (inak sa zobrazí hneď). */
+  moderovat: boolean;
+  vyzadovat_email: boolean;
+  /** Dá sa odpovedať na iný komentár. */
+  povolit_odpovede: boolean;
+}
+
+/**
+ * Globálne nastavenia komentárov z Nastavení klubu.
+ *
+ * Doteraz sa ukladali, ale nič ich nečítalo - vypnutie komentárov na webe
+ * alebo vypnutie moderovania nemalo žiadny účinok.
+ */
+const nastaveniaKomentarov = async (): Promise<NastaveniaKomentarov> => {
+  const n = (await NastaveniaKlubu.nacitaj()).nastavenia_komentarov as Partial<NastaveniaKomentarov>;
+  return {
+    povolene: n?.povolene !== false,
+    moderovat: n?.moderovat !== false,
+    vyzadovat_email: n?.vyzadovat_email === true,
+    povolit_odpovede: n?.povolit_odpovede !== false,
+  };
+};
+
+/** Je článok naozaj na webe? (publikovaný a dátum publikovania už nastal) */
+const clanokJeVerejny = (clanok: Article): boolean =>
+  clanok.status === 'published' &&
+  (!clanok.publikovany_datum || new Date(clanok.publikovany_datum).getTime() <= Date.now());
+
+/** Komentár tak, ako ho smie vidieť návštevník - bez e-mailu a IP adresy. */
+const verejnyKomentar = (k: Komentar, prihlasenyId?: number) => ({
+  id: k.id,
+  rodic_id: k.rodic_id,
+  autor_meno: k.autor_meno,
+  obsah: k.obsah,
+  vytvoreny: k.vytvoreny,
+  upraveny: Boolean(k.upraveny_autorom),
+  // Vlastný komentár vidí autor aj kým čaká na schválenie a smie ho upraviť
+  moj: Boolean(prihlasenyId && k.pouzivatel_id === prihlasenyId),
+  caka_na_schvalenie: k.stav === 'caka',
+});
 
 /**
  * GET /api/comments
@@ -77,13 +126,31 @@ router.put('/comments/:id', authenticateToken, requireEditor, async (req: Reques
     }
 
     const zmeny: any = {};
-    if (req.body.stav) zmeny.stav = req.body.stav;
+    if (req.body.stav !== undefined) {
+      // Neplatný stav predtým padol až v databáze na 500
+      if (!STAVY_KOMENTARA.includes(req.body.stav)) {
+        res.status(400).json({
+          success: false,
+          message: `Neplatný stav komentára. Povolené: ${STAVY_KOMENTARA.join(', ')}`,
+        });
+        return;
+      }
+      zmeny.stav = req.body.stav;
+    }
     // Redaktor môže opraviť preklep alebo skrátiť vulgárny výraz
-    if (req.body.obsah !== undefined) zmeny.obsah = sanitizePlainText(req.body.obsah);
+    if (req.body.obsah !== undefined) zmeny.obsah = sanitizePlainText(String(req.body.obsah));
 
     await komentar.update(zmeny);
     res.json({ success: true, data: komentar, message: 'Komentár bol upravený' });
-  } catch (chyba) {
+  } catch (chyba: any) {
+    if (chyba?.name === 'SequelizeValidationError') {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné údaje',
+        errors: chyba.errors.map((e: any) => e.message),
+      });
+      return;
+    }
     console.error('Chyba pri úprave komentára:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
@@ -106,16 +173,108 @@ router.delete('/comments/:id', authenticateToken, requireEditor, async (req: Req
 });
 
 /**
+ * GET /api/comments/clanok/:clanokId
+ * Komentáre pod článkom pre návštevníka webu.
+ *
+ * Doteraz žiadny verejný výpis neexistoval - komentáre sa dali len
+ * moderovať v administrácii, ale na webe ich nikto nevidel.
+ *
+ * Vracia schválené komentáre, a prihlásenému používateľovi navyše jeho
+ * vlastné, ktoré ešte čakajú na schválenie (aby nezmizli hneď po odoslaní
+ * alebo úprave). E-mail ani IP adresa sa nevracajú nikdy.
+ */
+router.get('/comments/clanok/:clanokId', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const clanokId = Number(req.params.clanokId);
+    const clanok = Number.isInteger(clanokId) ? await Article.findByPk(clanokId) : null;
+
+    if (!clanok || !clanokJeVerejny(clanok)) {
+      res.status(404).json({ success: false, message: 'Článok sa nenašiel' });
+      return;
+    }
+
+    const nastavenia = await nastaveniaKomentarov();
+    const prihlasenyId = req.userId ?? undefined;
+
+    const kde: any = prihlasenyId
+      ? {
+          clanok_id: clanokId,
+          [Op.or]: [
+            { stav: 'schvaleny' },
+            { stav: 'caka', pouzivatel_id: prihlasenyId },
+          ],
+        }
+      : { clanok_id: clanokId, stav: 'schvaleny' };
+
+    const komentare = await Komentar.findAll({
+      where: kde,
+      order: [['vytvoreny', 'ASC']],
+      limit: 500,
+    });
+
+    res.json({
+      success: true,
+      data: komentare.map((k) => verejnyKomentar(k, prihlasenyId)),
+      // Podľa toho web ukáže alebo schová formulár
+      nastavenia: {
+        povolene: nastavenia.povolene && clanok.komentare_povolene,
+        vyzadovat_email: nastavenia.vyzadovat_email,
+        povolit_odpovede: nastavenia.povolit_odpovede,
+        moderovat: nastavenia.moderovat,
+      },
+    });
+  } catch (chyba) {
+    console.error('Chyba pri načítaní komentárov článku:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+/**
  * POST /api/comments
  * Nový komentár od návštevníka webu — bez prihlásenia.
+ *
+ * Kontroluje, či sa pod článok vôbec dá komentovať. Predtým sa dal pridať
+ * komentár aj k článku s vypnutými komentármi, aj ku konceptu, ktorý
+ * na webe ešte nie je.
  */
 router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
   try {
     const clanokId = Number(req.body?.clanok_id);
-    const clanok = await Article.findByPk(clanokId);
-    if (!clanok) {
+    const clanok = Number.isInteger(clanokId) ? await Article.findByPk(clanokId) : null;
+    if (!clanok || !clanokJeVerejny(clanok)) {
       res.status(404).json({ success: false, message: 'Článok sa nenašiel' });
       return;
+    }
+
+    const nastavenia = await nastaveniaKomentarov();
+
+    if (!nastavenia.povolene || !clanok.komentare_povolene) {
+      res.status(403).json({
+        success: false,
+        message: 'Komentáre sú pri tomto článku vypnuté.',
+      });
+      return;
+    }
+
+    const email = req.body?.autor_email ? String(req.body.autor_email).trim() : '';
+    if (nastavenia.vyzadovat_email && !email) {
+      res.status(400).json({ success: false, message: 'Zadajte e-mailovú adresu.' });
+      return;
+    }
+
+    // Odpoveď musí patriť k tomu istému článku a mieriť na schválený komentár
+    let rodicId: number | null = null;
+    if (req.body?.rodic_id) {
+      if (!nastavenia.povolit_odpovede) {
+        res.status(400).json({ success: false, message: 'Odpovede na komentáre sú vypnuté.' });
+        return;
+      }
+      const rodic = await Komentar.findByPk(Number(req.body.rodic_id));
+      if (!rodic || rodic.clanok_id !== clanokId || rodic.stav !== 'schvaleny') {
+        res.status(400).json({ success: false, message: 'Komentár, na ktorý odpovedáte, neexistuje.' });
+        return;
+      }
+      rodicId = rodic.id;
     }
 
     const komentar = await Komentar.create({
@@ -126,19 +285,21 @@ router.post('/comments', optionalAuth, async (req: Request, res: Response) => {
       pouzivatel_id: req.userId ?? null,
       autor_meno: sanitizePlainText(
         String(req.body?.autor_meno || req.user?.meno || '')
-      ),
-      autor_email: req.body?.autor_email || null,
-      obsah: sanitizePlainText(String(req.body?.obsah || '')),
-      rodic_id: req.body?.rodic_id ? Number(req.body.rodic_id) : null,
+      ).trim(),
+      autor_email: email || null,
+      obsah: sanitizePlainText(String(req.body?.obsah || '')).trim(),
+      rodic_id: rodicId,
       ip_adresa: req.ip || null,
-      // Zámerne 'caka' — komentár sa zobrazí až po schválení
-      stav: 'caka',
+      // Pri zapnutom moderovaní sa komentár zobrazí až po schválení
+      stav: nastavenia.moderovat ? 'caka' : 'schvaleny',
     });
 
     res.status(201).json({
       success: true,
-      data: komentar.id,
-      message: 'Ďakujeme. Komentár sa zobrazí po schválení.',
+      data: verejnyKomentar(komentar, req.userId ?? undefined),
+      message: nastavenia.moderovat
+        ? 'Ďakujeme. Komentár sa zobrazí po schválení.'
+        : 'Ďakujeme za komentár.',
     });
   } catch (chyba: any) {
     if (chyba.name === 'SequelizeValidationError') {
@@ -190,17 +351,21 @@ router.put('/comments/:id/moj', authenticateToken, async (req: Request, res: Res
       return;
     }
 
+    const { moderovat } = await nastaveniaKomentarov();
+
     await komentar.update({
       obsah,
       upraveny_autorom: new Date(),
-      // Znova na schválenie
-      stav: 'caka',
+      // Pri moderovaní ide upravený komentár znova na schválenie
+      stav: moderovat ? 'caka' : komentar.stav,
     });
 
     res.json({
       success: true,
-      data: komentar,
-      message: 'Komentár bol upravený a čaká na schválenie.',
+      data: verejnyKomentar(komentar, req.userId ?? undefined),
+      message: moderovat
+        ? 'Komentár bol upravený a čaká na schválenie.'
+        : 'Komentár bol upravený.',
     });
   } catch (chyba) {
     console.error('Chyba pri úprave komentára:', chyba);
@@ -210,32 +375,175 @@ router.put('/comments/:id/moj', authenticateToken, async (req: Request, res: Res
 
 // ============ VIDEÁ ============
 
-/** GET /api/videos — verejné */
-router.get('/videos', async (req: Request, res: Response) => {
+/** Pridružené záznamy, ktoré sa vracajú pri videu. */
+const PRILOHY_VIDEA = [
+  { model: Category, as: 'rubrika', attributes: ['id', 'nazov', 'slug', 'farba'], required: false },
+  {
+    model: Zapas,
+    as: 'zapas',
+    attributes: ['id', 'nazov', 'datum_cas', 'domaci_tim_nazov', 'hostujuci_tim_nazov', 'goly_domaci', 'goly_hostia'],
+    required: false,
+  },
+];
+
+/** Video pre klienta - s adresou náhľadu, ktorú vieme pri YouTube odvodiť. */
+const videoNaVystup = (v: Video) => ({ ...v.toJSON(), nahlad_url: v.nahladovyObrazok() });
+
+/** Prihlásený redaktor alebo správca smie vidieť aj skryté videá. */
+const jeRedaktor = (req: Request): boolean =>
+  ['admin', 'redaktor'].includes(String((req as any).user?.rola || ''));
+
+/** Kladné celé číslo alebo null; pri nezmysle vráti undefined. */
+const idAleboNull = (hodnota: unknown): number | null | undefined => {
+  if (hodnota === null || hodnota === '' || hodnota === undefined) return null;
+  const cislo = Number(hodnota);
+  return Number.isInteger(cislo) && cislo > 0 ? cislo : undefined;
+};
+
+/**
+ * Overí a pripraví polia videa z tela požiadavky.
+ * Vracia buď chybovú správu, alebo objekt len s poslanými poliami.
+ */
+const pripravPoliaVidea = async (
+  telo: any
+): Promise<{ chyba: string } | { polia: Record<string, any> }> => {
+  const polia: Record<string, any> = {};
+
+  if (telo.url !== undefined) {
+    const url = String(telo.url || '').trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) {
+      return { chyba: 'Zadajte platný odkaz na video (začína https://)' };
+    }
+    polia.url = url;
+  }
+
+  if (telo.nazov !== undefined) polia.nazov = sanitizePlainText(String(telo.nazov || '')).trim();
+  if (telo.popis !== undefined) {
+    polia.popis = telo.popis ? sanitizePlainText(String(telo.popis)).trim() || null : null;
+  }
+  if (telo.kategoria !== undefined) {
+    polia.kategoria = telo.kategoria ? sanitizePlainText(String(telo.kategoria)).slice(0, 60) : null;
+  }
+  if (telo.nahlad !== undefined) {
+    const nahlad = telo.nahlad ? String(telo.nahlad).trim() : null;
+    if (nahlad && !/^(https?:\/\/|\/uploads\/)/i.test(nahlad)) {
+      return { chyba: 'Náhľad musí byť odkaz na obrázok' };
+    }
+    polia.nahlad = nahlad;
+  }
+
+  if (telo.dlzka !== undefined) {
+    if (telo.dlzka === null || telo.dlzka === '') {
+      polia.dlzka = null;
+    } else {
+      const dlzka = Number(telo.dlzka);
+      if (!Number.isInteger(dlzka) || dlzka < 0 || dlzka > 86400) {
+        return { chyba: 'Dĺžka videa musí byť počet sekúnd (0 – 86400)' };
+      }
+      polia.dlzka = dlzka;
+    }
+  }
+
+  if (telo.poradie !== undefined) {
+    const poradie = Number(telo.poradie);
+    polia.poradie = Number.isInteger(poradie) ? poradie : 0;
+  }
+  if (telo.publikovane !== undefined) polia.publikovane = Boolean(telo.publikovane);
+
+  // Väzby overíme vopred - inak by neexistujúce ID skončilo chybou databázy
+  if (telo.rubrika_id !== undefined) {
+    const id = idAleboNull(telo.rubrika_id);
+    if (id === undefined) return { chyba: 'Neplatná rubrika' };
+    if (id !== null && !(await Category.findByPk(id))) {
+      return { chyba: 'Zvolená rubrika neexistuje' };
+    }
+    polia.rubrika_id = id;
+  }
+  if (telo.zapas_id !== undefined) {
+    const id = idAleboNull(telo.zapas_id);
+    if (id === undefined) return { chyba: 'Neplatný zápas' };
+    if (id !== null && !(await Zapas.findByPk(id))) {
+      return { chyba: 'Zvolený zápas neexistuje' };
+    }
+    polia.zapas_id = id;
+  }
+
+  return { polia };
+};
+
+/**
+ * GET /api/videos
+ * Verejne len zverejnené videá. Redaktor s ?vsetky=1 dostane aj skryté
+ * (administrácia ich musí vidieť, aby ich mohla znova zverejniť).
+ * Filtre: rubrika_id, zapas_id, kategoria, search.
+ */
+router.get('/videos', optionalAuth, async (req: Request, res: Response) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 200, 1), 500);
     const kde: any = {};
 
+    if (!(req.query.vsetky === '1' && jeRedaktor(req))) kde.publikovane = true;
     if (req.query.kategoria) kde.kategoria = String(req.query.kategoria);
+    const rubrika = idAleboNull(req.query.rubrika_id);
+    if (rubrika) kde.rubrika_id = rubrika;
+    const zapas = idAleboNull(req.query.zapas_id);
+    if (zapas) kde.zapas_id = zapas;
     if (req.query.search) {
       kde.nazov = { [Op.iLike]: `%${String(req.query.search)}%` };
     }
 
     const videa = await Video.findAll({
       where: kde,
+      include: PRILOHY_VIDEA as any,
       order: [['poradie', 'ASC'], ['vytvorene', 'DESC']],
       limit,
     });
 
-    // Doplníme adresu náhľadu — pri YouTube ju vieme odvodiť
-    const sNahladmi = videa.map((v) => ({
-      ...v.toJSON(),
-      nahlad_url: v.nahladovyObrazok(),
-    }));
-
-    res.json({ success: true, data: sNahladmi });
+    res.json({ success: true, data: videa.map(videoNaVystup) });
   } catch (chyba) {
     console.error('Chyba pri načítaní videí:', chyba);
+    res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+/**
+ * GET /api/videos/zisti?url=...
+ * Predvyplnenie formulára - názov, náhľad a dĺžka zistené z videa.
+ */
+router.get('/videos/zisti', authenticateToken, requireEditor, async (req: Request, res: Response) => {
+  const url = String(req.query.url || '').trim();
+  if (!/^https?:\/\/\S+$/i.test(url)) {
+    res.status(400).json({ success: false, message: 'Zadajte platný odkaz na video' });
+    return;
+  }
+
+  const zistene = await zistiUdajeVidea(url);
+  const rozpoznane = Video.rozpoznajId(url);
+
+  res.json({
+    success: true,
+    data: { ...zistene, zdroj: rozpoznane.zdroj },
+    message:
+      rozpoznane.zdroj === 'ine'
+        ? 'Odkaz nie je z YouTube ani Vimeo - údaje zadajte ručne'
+        : undefined,
+  });
+});
+
+/** GET /api/videos/:id - verejne len zverejnené video */
+router.get('/videos/:id', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id, { include: PRILOHY_VIDEA as any }) : null;
+
+    if (!video || (!video.publikovane && !jeRedaktor(req))) {
+      res.status(404).json({ success: false, message: 'Video sa nenašlo' });
+      return;
+    }
+
+    res.json({ success: true, data: videoNaVystup(video) });
+  } catch (chyba) {
+    console.error('Chyba pri načítaní videa:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
@@ -243,16 +551,21 @@ router.get('/videos', async (req: Request, res: Response) => {
 /** POST /api/videos */
 router.post('/videos', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const url = String(req.body?.url || '');
+    const pripravene = await pripravPoliaVidea({ ...req.body, url: req.body?.url ?? '' });
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
+      return;
+    }
+    const polia = pripravene.polia;
 
     // Čo sa dá, doplníme z videa. Ručne zadané hodnoty majú prednosť -
     // požiadavka hovorí „automaticky" ako pohodlie, nie ako prepisovanie.
-    const zistene = await zistiUdajeVidea(url);
+    const zistene = await zistiUdajeVidea(polia.url);
 
     // Keď názov neprišiel a ani sa ho nepodarilo zistiť (video je
     // súkromné, zmazané, alebo server nemá von prístup), povieme to
     // rovno - inak by z toho bola technická hláška o validácii.
-    const nazovVidea = sanitizePlainText(String(req.body?.nazov || zistene.nazov || '')).trim();
+    const nazovVidea = polia.nazov || sanitizePlainText(zistene.nazov || '').trim();
     if (!nazovVidea) {
       res.status(400).json({
         success: false,
@@ -264,19 +577,16 @@ router.post('/videos', authenticateToken, requireEditor, async (req: Request, re
     }
 
     const video = await Video.create({
+      publikovane: true,
+      poradie: 0,
+      ...polia,
       nazov: nazovVidea,
-      popis: req.body?.popis ? sanitizePlainText(req.body.popis) : null,
-      url,
-      nahlad: req.body?.nahlad || zistene.nahlad,
-      dlzka: req.body?.dlzka ?? zistene.dlzka,
-      kategoria: req.body?.kategoria || null,
-      rubrika_id: req.body?.rubrika_id ?? null,
-      zapas_id: req.body?.zapas_id ?? null,
-      publikovane: req.body?.publikovane ?? true,
-      poradie: req.body?.poradie ?? 0,
+      nahlad: polia.nahlad || zistene.nahlad,
+      dlzka: polia.dlzka ?? zistene.dlzka,
     } as any);
 
-    res.status(201).json({ success: true, data: video, message: 'Video bolo pridané' });
+    await video.reload({ include: PRILOHY_VIDEA as any });
+    res.status(201).json({ success: true, data: videoNaVystup(video), message: 'Video bolo pridané' });
   } catch (chyba: any) {
     if (chyba.name === 'SequelizeValidationError') {
       res.status(400).json({
@@ -294,37 +604,55 @@ router.post('/videos', authenticateToken, requireEditor, async (req: Request, re
 /** PUT /api/videos/:id */
 router.put('/videos/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const video = await Video.findByPk(Number(req.params.id));
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id) : null;
     if (!video) {
       res.status(404).json({ success: false, message: 'Video sa nenašlo' });
       return;
     }
 
-    const polia = ['nazov', 'popis', 'url', 'nahlad', 'dlzka', 'kategoria', 'rubrika_id', 'zapas_id', 'publikovane', 'poradie'];
-    const zmeny: any = {};
+    const pripravene = await pripravPoliaVidea(req.body || {});
+    if ('chyba' in pripravene) {
+      res.status(400).json({ success: false, message: pripravene.chyba });
+      return;
+    }
+    const zmeny = pripravene.polia;
 
-    for (const pole of polia) {
-      if (req.body[pole] === undefined) continue;
-      let hodnota = req.body[pole];
-      if (hodnota === '') hodnota = null;
-      if (hodnota !== null && ['nazov', 'popis', 'kategoria'].includes(pole)) {
-        hodnota = sanitizePlainText(String(hodnota));
-      }
-      zmeny[pole] = hodnota;
+    if (zmeny.nazov !== undefined && !zmeny.nazov) {
+      res.status(400).json({ success: false, message: 'Názov videa nesmie byť prázdny' });
+      return;
+    }
+
+    // Nový odkaz = iné video: náhľad a dĺžku doplníme z neho,
+    // pokiaľ ich redaktor zároveň nezadal ručne
+    if (zmeny.url && zmeny.url !== video.url) {
+      const zistene = await zistiUdajeVidea(zmeny.url);
+      if (!zmeny.nahlad) zmeny.nahlad = zistene.nahlad;
+      if (zmeny.dlzka === undefined || zmeny.dlzka === null) zmeny.dlzka = zistene.dlzka;
     }
 
     await video.update(zmeny);
-    res.json({ success: true, data: video, message: 'Zmeny boli uložené' });
-  } catch (chyba) {
+    await video.reload({ include: PRILOHY_VIDEA as any });
+    res.json({ success: true, data: videoNaVystup(video), message: 'Zmeny boli uložené' });
+  } catch (chyba: any) {
+    if (chyba.name === 'SequelizeValidationError') {
+      res.status(400).json({
+        success: false,
+        message: 'Neplatné údaje',
+        errors: chyba.errors.map((e: any) => e.message),
+      });
+      return;
+    }
     console.error('Chyba pri úprave videa:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
-/** DELETE /api/videos/:id */
-router.delete('/videos/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+/** DELETE /api/videos/:id - rovnako ako galérie smie mazať redaktor */
+router.delete('/videos/:id', authenticateToken, requireEditor, async (req: Request, res: Response) => {
   try {
-    const video = await Video.findByPk(Number(req.params.id));
+    const id = idAleboNull(req.params.id);
+    const video = id ? await Video.findByPk(id) : null;
     if (!video) {
       res.status(404).json({ success: false, message: 'Video sa nenašlo' });
       return;

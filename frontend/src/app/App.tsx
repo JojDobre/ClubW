@@ -29,10 +29,13 @@ import Pouzivatelia from '../pages/admin/Pouzivatelia';
 import Nastavenia from '../pages/admin/Nastavenia';
 import Licencia from '../pages/admin/Licencia';
 import Sezony from '../pages/admin/Sezony';
+import Stadiony from '../pages/admin/Stadiony';
+import Archiv from '../pages/admin/Archiv';
 import OchranaUdajov from '../pages/admin/OchranaUdajov';
 import Kategorie from '../pages/admin/Kategorie';
 import Stranky from '../pages/admin/Stranky';
 import Galerie from '../pages/admin/Galerie';
+import GaleriaEditor from '../pages/admin/GaleriaEditor';
 import RealizacnyTim from '../pages/admin/RealizacnyTim';
 import Ligy from '../pages/admin/Ligy';
 // Sekcia KLUB
@@ -78,6 +81,8 @@ export const App: React.FC = () => (
                 <Route path="kategorie" element={<Kategorie />} />
                 <Route path="stranky" element={<Stranky />} />
                 <Route path="galerie" element={<Galerie />} />
+                <Route path="galerie/nova" element={<GaleriaEditor />} />
+                <Route path="galerie/:id" element={<GaleriaEditor />} />
                 <Route path="komentare" element={<Komentare />} />
                 <Route path="videa" element={<Videa />} />
                 <Route path="timy" element={<Timy />} />
@@ -92,6 +97,8 @@ export const App: React.FC = () => (
                 <Route path="zapasy/:id/live" element={<ZapasLive />} />
                 <Route path="kalendar" element={<Kalendar />} />
                 <Route path="sezony" element={<Sezony />} />
+                <Route path="stadiony" element={<Stadiony />} />
+                <Route path="archiv" element={<Archiv />} />
 
                 {/* Sekcia KLUB */}
                 <Route path="sponzori" element={<Sponzori />} />
