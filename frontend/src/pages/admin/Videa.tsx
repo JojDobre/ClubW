@@ -67,6 +67,7 @@ export const Videa: React.FC = () => {
   const [zistuje, setZistuje] = useState(false);
   const [zistene, setZistene] = useState<ZisteneVideo | null>(null);
   const poslednaAdresa = useRef('');
+  const povodnaAdresa = useRef('');
 
   const videa = useNacitanie((signal) => videaApi.vypis(signal));
   const zapasy = useNacitanie((signal) => zapasyApi.vypis(signal));
@@ -110,6 +111,7 @@ export const Videa: React.FC = () => {
     setDlzkaVstup(dlzkaText(video.dlzka));
     setZistene(null);
     poslednaAdresa.current = video.url ?? '';
+    povodnaAdresa.current = video.url ?? '';
   };
 
   /**
@@ -190,7 +192,10 @@ export const Videa: React.FC = () => {
         publikovane: Boolean(upravovane.publikovane),
         poradie: Number(upravovane.poradie) || 0,
       };
-      if (upravovane.nahlad) naUlozenie.nahlad = upravovane.nahlad;
+      // Náhľad posielame len čerstvo zistený; pri zmene odkazu bez neho
+      // pošleme null, aby server odvodil náhľad nového videa
+      if (zistene?.nahlad) naUlozenie.nahlad = zistene.nahlad;
+      else if (!jeNove && url !== povodnaAdresa.current) naUlozenie.nahlad = null;
 
       if (jeNove) {
         await videaApi.vytvor(naUlozenie);
