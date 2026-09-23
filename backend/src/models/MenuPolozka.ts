@@ -64,7 +64,8 @@ class MenuPolozka
   public odkaz(): string | null {
     if (this.typ === 'url') return this.url;
     if (this.typ === 'stranka') return this.stranka ? `/${this.stranka.slug}` : null;
-    if (this.typ === 'rubrika') return this.rubrika ? `/rubrika/${this.rubrika.slug}` : null;
+    // Web nemá samostatnú stránku rubriky - zoznam článkov sa filtruje
+    if (this.typ === 'rubrika') return this.rubrika ? `/clanky?rubrika=${encodeURIComponent(this.rubrika.slug)}` : null;
     return null;
   }
 
@@ -126,6 +127,10 @@ MenuPolozka.init(
         }
         if (this.typ === 'url' && !this.url) {
           throw new Error('Položka typu „url" musí mať vyplnenú adresu');
+        }
+        // Len adresa na webe (/…) alebo http(s) - nie javascript: a pod.
+        if (this.typ === 'url' && this.url && !/^(\/(?!\/)|https?:\/\/)/i.test(this.url)) {
+          throw new Error('Adresa musí začínať / (stránka webu) alebo https://');
         }
       },
     },

@@ -1004,3 +1004,23 @@ export interface OdpovedFormulara {
   ip_adresa: string | null;
   vytvorena: string;
 }
+
+// ===== Menu webu =====
+
+export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url';
+
+export interface PolozkaMenuWebu {
+  id: number;
+  nazov: string;
+  typ: TypPolozkyMenu;
+  stranka_id: number | null;
+  rubrika_id: number | null;
+  url: string | null;
+  /** Adresa, kam položka vedie (dopočíta server) */
+  odkaz: string | null;
+  rodic_id: number | null;
+  poradie: number;
+  otvorit_v_novom: boolean;
+  aktivity: boolean;
+  deti?: PolozkaMenuWebu[];
+}

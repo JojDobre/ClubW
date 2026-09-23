@@ -5,6 +5,7 @@
 // webe, pretože obe berú hodnoty z toho istého endpointu (/api/settings.css).
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, useToast,
 } from '../../ui';
@@ -19,6 +20,7 @@ import './Nastavenia.css';
 export const Nastavenia: React.FC = () => {
   const { uspech, chyba: hlasChybu } = useToast();
   const { obnov: obnovNastaveniaAplikacie } = useNastavenia();
+  const navigate = useNavigate();
 
   const [formular, setFormular] = useState<Partial<NastaveniaAdmin>>({});
   const [chybyPoli, setChybyPoli] = useState<string[]>([]);
@@ -114,7 +116,15 @@ export const Nastavenia: React.FC = () => {
 
   return (
     <div className="cw-nastavenia">
-      <PageHeader nadpis="Nastavenia klubu" podnadpis="Identita, farby a kontaktné údaje." />
+      <PageHeader
+        nadpis="Nastavenia klubu"
+        podnadpis="Identita, farby a kontaktné údaje."
+        akcie={
+          <Button variant="secondary" ikona={<Icon nazov="menu" velkost={15} />} onClick={() => navigate('/admin/menu')}>
+            Menu webu
+          </Button>
+        }
+      />
 
       <div className="cw-nastavenia__bar">
         <p className="cw-nastavenia__info">

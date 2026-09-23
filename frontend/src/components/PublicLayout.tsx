@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl, souborUrl } from '../config/api';
 import { useNastavenia } from '../context/NastaveniaContext';
+import './PublicLayout.css';
 // Link namiesto <a href> - bez neho každý klik znovu načíta celú aplikáciu
 import { Link } from 'react-router-dom';
 // Sledovanie šírky obrazovky tak, aby React reagoval na zmenu veľkosti okna
@@ -13,6 +14,35 @@ import { useJeMobil } from '../hooks/useMediaQuery';
 interface PublicLayoutProps {
   children: React.ReactNode;
 }
+
+/** Položka menu nastaveného v administrácii (Menu webu). */
+interface PolozkaMenuWebu {
+  id: number;
+  nazov: string;
+  odkaz: string | null;
+  otvorit_v_novom: boolean;
+  deti?: PolozkaMenuWebu[];
+}
+
+/** Odkaz z menu - interný cez Link, externý alebo do nového okna cez <a>. */
+const OdkazMenu: React.FC<{ p: PolozkaMenuWebu; className?: string; onClick?: () => void; children?: React.ReactNode }> = ({
+  p, className, onClick, children,
+}) => {
+  const adresa = p.odkaz || '#';
+  if (adresa.startsWith('/') && !p.otvorit_v_novom) {
+    return <Link to={adresa} className={className} onClick={onClick}>{children ?? p.nazov}</Link>;
+  }
+  return (
+    <a
+      href={adresa}
+      className={className}
+      onClick={onClick}
+      {...(p.otvorit_v_novom ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
+      {children ?? p.nazov}
+    </a>
+  );
+};
 
 interface MenuPage {
   id: number;
@@ -43,6 +73,8 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   ];
 
   const [menuPages, setMenuPages] = useState<MenuPage[]>([]);
+  // Menu nastavené v administrácii; prázdne = predvolené odkazy
+  const [menuWebu, setMenuWebu] = useState<PolozkaMenuWebu[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -64,6 +96,10 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
     };
 
     fetchMenuPages();
+    fetch(apiUrl('/menu'))
+      .then((r) => r.json())
+      .then((d) => d?.success && Array.isArray(d.data) && setMenuWebu(d.data))
+      .catch(() => undefined);
   }, []);
 
   return (
@@ -113,6 +149,21 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
               alignItems: 'center',
               gap: '30px'
             }}>
+              {menuWebu.length > 0 ? (
+                menuWebu.map((p) => (
+                  <div key={p.id} className="pl-menu__polozka">
+                    <OdkazMenu p={p} className="pl-menu__odkaz" />
+                    {(p.deti?.length ?? 0) > 0 && (
+                      <div className="pl-menu__podmenu">
+                        {p.deti!.map((d) => (
+                          <OdkazMenu key={d.id} p={d} className="pl-menu__pododkaz" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+              <>
               {/* Hlavné odkazy */}
               <Link to="/" style={{
                 textDecoration: 'none',
@@ -158,7 +209,8 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                   {page.nazov}
                 </a>
               ))}
-
+              </>
+              )}
               {/* Admin odkaz */}
               <Link to="/admin" style={{
                 textDecoration: 'none',
@@ -202,6 +254,17 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 flexDirection: 'column',
                 gap: '15px'
               }}>
+                {menuWebu.length > 0 ? (
+                  menuWebu.map((p) => (
+                    <React.Fragment key={p.id}>
+                      <OdkazMenu p={p} className="pl-menu__mobil" onClick={() => setMobileMenuOpen(false)} />
+                      {p.deti?.map((d) => (
+                        <OdkazMenu key={d.id} p={d} className="pl-menu__mobil pl-menu__mobil--vnorena" onClick={() => setMobileMenuOpen(false)} />
+                      ))}
+                    </React.Fragment>
+                  ))
+                ) : (
+                <>
                 <Link to="/" style={{
                   textDecoration: 'none',
                   color: '#4a5568',
@@ -240,7 +303,8 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                     📄 {page.nazov}
                   </a>
                 ))}
-
+                </>
+                )}
                 <Link to="/admin" style={{
                   textDecoration: 'none',
                   color: '#3182ce',

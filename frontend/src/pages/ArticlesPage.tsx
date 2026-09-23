@@ -47,7 +47,10 @@ const ArticlesPage: React.FC = () => {
   
   // Filtre
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // Odkaz z menu webu na rubriku: /clanky?rubrika=slug
+  const [selectedCategory, setSelectedCategory] = useState(
+    () => new URLSearchParams(window.location.search).get('rubrika') ?? ''
+  );
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 

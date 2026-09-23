@@ -1,0 +1,79 @@
+/* Umiestnenie: frontend/src/pages/admin/MenuWebu.css */
+
+.cw-menu__panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.cw-menu__zoznam,
+.cw-menu__deti {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cw-menu__deti {
+  margin: 8px 0 0 28px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.cw-menu__riadok {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.cw-menu__polozka.is-skryta > .cw-menu__riadok {
+  opacity: 0.6;
+}
+
+.cw-menu__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-menu__text span {
+  font-size: 12.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.cw-menu__stitky {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cw-menu__akcie {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .cw-menu__riadok {
+    flex-wrap: wrap;
+  }
+
+  .cw-menu__akcie {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .cw-menu__deti {
+    margin-left: 10px;
+  }
+}

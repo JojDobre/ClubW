@@ -80,6 +80,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
     polozky: [
       { modul: 'pouzivatelia', cesta: '/admin/pouzivatelia', popis: 'Používatelia', ikona: 'pouzivatelia', role: ['admin'] },
       { modul: 'nastavenia', cesta: '/admin/nastavenia', popis: 'Nastavenia', ikona: 'nastavenia', role: ['admin'] },
+      { modul: 'nastavenia', cesta: '/admin/menu', popis: 'Menu webu', ikona: 'menu', role: ['admin'] },
       { modul: 'licencia', cesta: '/admin/licencia', popis: 'Licencia', ikona: 'licencia', role: ['admin'] },
       // Doplnené nad rámec návrhu — backend má funkčné rozhranie
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať

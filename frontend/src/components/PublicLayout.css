@@ -1,0 +1,15 @@
+/* frontend/src/components/PublicLayout.css - menu webu s podmenu */
+.pl-menu__polozka { position: relative; display: flex; align-items: center; }
+.pl-menu__odkaz { text-decoration: none; color: #4a5568; font-weight: 500; padding: 8px 0; }
+.pl-menu__odkaz:hover { color: #1a202c; }
+.pl-menu__podmenu {
+  position: absolute; top: 100%; left: -12px; min-width: 200px; padding: 8px 0;
+  background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, .15);
+  display: none; flex-direction: column; z-index: 1100;
+}
+.pl-menu__polozka:hover .pl-menu__podmenu,
+.pl-menu__polozka:focus-within .pl-menu__podmenu { display: flex; }
+.pl-menu__pododkaz { padding: 8px 16px; color: #4a5568; text-decoration: none; font-size: 15px; white-space: nowrap; }
+.pl-menu__pododkaz:hover { background: #f7fafc; color: #1a202c; }
+.pl-menu__mobil { text-decoration: none; color: #4a5568; font-weight: 500; padding: 10px 0; }
+.pl-menu__mobil--vnorena { padding-left: 18px; font-weight: 400; font-size: 15px; }
