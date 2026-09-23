@@ -181,3 +181,24 @@
     position: static;
   }
 }
+
+/* ===== Dodatkové farby ===== */
+.cw-nastavenia__dodatkove {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cw-nastavenia__dodatkove > button {
+  align-self: flex-start;
+}
+
+.cw-nastavenia__dodatkova {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 96px auto;
+  gap: 8px;
+  align-items: center;
+}

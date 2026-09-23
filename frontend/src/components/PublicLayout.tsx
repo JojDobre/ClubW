@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
-import { apiUrl } from '../config/api';
+import { apiUrl, souborUrl } from '../config/api';
+import { useNastavenia } from '../context/NastaveniaContext';
 // Link namiesto <a href> - bez neho každý klik znovu načíta celú aplikáciu
 import { Link } from 'react-router-dom';
 // Sledovanie šírky obrazovky tak, aby React reagoval na zmenu veľkosti okna
@@ -24,6 +25,22 @@ interface MenuPage {
 const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   // Reaguje na zmenu veľkosti okna (otočenie telefónu, zmena šírky)
   const jeMobil = useJeMobil();
+  const { nastavenia } = useNastavenia();
+  const kontakt = nastavenia.kontakt ?? { email: null, telefon: null, adresa: null };
+  const siete = Object.entries({
+    Facebook: nastavenia.socialne_siete?.facebook,
+    Instagram: nastavenia.socialne_siete?.instagram,
+    YouTube: nastavenia.socialne_siete?.youtube,
+    X: nastavenia.socialne_siete?.x,
+    TikTok: nastavenia.socialne_siete?.tiktok,
+  }).filter(([, url]) => Boolean(url)) as Array<[string, string]>;
+  const udaje = nastavenia.udaje;
+  // Stránky klubu mimo dynamického menu
+  const klubOdkazy = [
+    { cesta: '/turnaje', nazov: 'Turnaje' },
+    { cesta: '/dokumenty', nazov: 'Dokumenty' },
+    { cesta: '/sponzori', nazov: 'Partneri' },
+  ];
 
   const [menuPages, setMenuPages] = useState<MenuPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,8 +98,12 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <span style={{ fontSize: '2rem' }}>🏆</span>
-                ClubW
+                {nastavenia.logo ? (
+                  <img src={souborUrl(nastavenia.logo)} alt="" style={{ height: '44px', width: '44px', objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: '2rem' }}>🏆</span>
+                )}
+                {nastavenia.nazov}
               </Link>
             </div>
 
@@ -115,6 +136,11 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 Články
               </Link>
 
+              {klubOdkazy.map((o) => (
+                <Link key={o.cesta} to={o.cesta} style={{ textDecoration: 'none', color: '#4a5568', fontWeight: '500', padding: '8px 0' }}>
+                  {o.nazov}
+                </Link>
+              ))}
               {/* Dynamické menu stránky */}
               {!loading && menuPages.map((page) => (
                 <a 
@@ -194,6 +220,11 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                   📰 Články
                 </Link>
 
+                {klubOdkazy.map((o) => (
+                  <Link key={o.cesta} to={o.cesta} style={{ textDecoration: 'none', color: '#4a5568', fontWeight: '500', padding: '10px 0' }}>
+                    {o.nazov}
+                  </Link>
+                ))}
                 {/* Dynamické menu stránky */}
                 {!loading && menuPages.map((page) => (
                   <a 
@@ -248,11 +279,22 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             marginBottom: '30px'
           }}>
             <div>
-              <h3 style={{ marginBottom: '15px', color: '#e2e8f0' }}>ClubW</h3>
-              <p style={{ color: '#a0aec0', fontSize: '14px' }}>
-                Moderná platforma pre správu športových klubov. 
-                Všetko čo potrebujete na jednom mieste.
-              </p>
+              <h3 style={{ marginBottom: '15px', color: '#e2e8f0' }}>{nastavenia.nazov}</h3>
+              {(nastavenia.slogan || nastavenia.meta_popis) && (
+                <p style={{ color: '#a0aec0', fontSize: '14px' }}>{nastavenia.slogan || nastavenia.meta_popis}</p>
+              )}
+              {nastavenia.rok_zalozenia && (
+                <p style={{ color: '#a0aec0', fontSize: '14px' }}>Založený v roku {nastavenia.rok_zalozenia}</p>
+              )}
+              {siete.length > 0 && (
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '12px' }}>
+                  {siete.map(([nazov, url]) => (
+                    <a key={nazov} href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#e2e8f0', fontSize: '14px' }}>
+                      {nazov}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div>
@@ -264,6 +306,11 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 <Link to="/clanky" style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
                   Články
                 </Link>
+                {klubOdkazy.map((o) => (
+                  <Link key={o.cesta} to={o.cesta} style={{ color: '#a0aec0', textDecoration: 'none', fontSize: '14px' }}>
+                    {o.nazov}
+                  </Link>
+                ))}
                 {menuPages.slice(0, 3).map((page) => (
                   <a 
                     key={page.id}
@@ -279,9 +326,22 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             <div>
               <h4 style={{ marginBottom: '15px', color: '#e2e8f0' }}>Kontakt</h4>
               <div style={{ color: '#a0aec0', fontSize: '14px' }}>
-                <p>📧 info@clubw.sk</p>
-                <p>📞 +421 900 123 456</p>
-                <p>📍 Bratislava, Slovensko</p>
+                {kontakt.email && (
+                  <p>📧 <a href={`mailto:${kontakt.email}`} style={{ color: 'inherit' }}>{kontakt.email}</a></p>
+                )}
+                {kontakt.telefon && (
+                  <p>📞 <a href={`tel:${kontakt.telefon.replace(/\s+/g, '')}`} style={{ color: 'inherit' }}>{kontakt.telefon}</a></p>
+                )}
+                {kontakt.adresa && <p>📍 {kontakt.adresa}</p>}
+                {udaje?.pravny_nazov && <p>{udaje.pravny_nazov}</p>}
+                {(udaje?.ico || udaje?.dic || udaje?.ic_dph) && (
+                  <p>
+                    {[udaje?.ico && `IČO: ${udaje.ico}`, udaje?.dic && `DIČ: ${udaje.dic}`, udaje?.ic_dph && `IČ DPH: ${udaje.ic_dph}`]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                )}
+                {udaje?.iban && <p>IBAN: {udaje.iban.replace(/(.{4})/g, '$1 ').trim()}</p>}
               </div>
             </div>
           </div>
@@ -292,7 +352,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             color: '#a0aec0',
             fontSize: '14px'
           }}>
-            <p>&copy; 2024 ClubW. Všetky práva vyhradené.</p>
+            <p>&copy; {new Date().getFullYear()} {nastavenia.nazov}. Všetky práva vyhradené.</p>
           </div>
         </div>
       </footer>

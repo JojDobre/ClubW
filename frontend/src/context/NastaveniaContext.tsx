@@ -35,6 +35,15 @@ export interface NastaveniaKlubu {
     instagram: string | null;
     youtube: string | null;
     x: string | null;
+    tiktok?: string | null;
+  };
+  /** Údaje organizácie do päty webu */
+  udaje?: {
+    pravny_nazov: string | null;
+    ico: string | null;
+    dic: string | null;
+    ic_dph: string | null;
+    iban: string | null;
   };
   meta_popis: string | null;
 }
@@ -80,6 +89,13 @@ const nastavFarbyDoDokumentu = (farby: FarbyKlubu): void => {
   koren.style.setProperty('--club-accent', farby.akcent);
   koren.style.setProperty('--club-primary-contrast', farby.primarna_kontrast);
   koren.style.setProperty('--club-accent-contrast', farby.akcent_kontrast);
+  // Dodatkové farby šablóny prídu v tom istom objekte - ako --club-extra-*
+  const zakladne = ['primarna', 'sekundarna', 'akcent', 'primarna_kontrast', 'akcent_kontrast'];
+  for (const [kluc, hodnota] of Object.entries(farby as unknown as Record<string, string>)) {
+    if (!zakladne.includes(kluc) && /^#[0-9A-Fa-f]{6}$/.test(String(hodnota))) {
+      koren.style.setProperty(`--club-extra-${kluc}`, hodnota);
+    }
+  }
 };
 
 export const NastaveniaProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

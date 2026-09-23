@@ -44,12 +44,18 @@ interface NastaveniaKlubuAttributes {
   adresa: string | null;
   ico: string | null;
   dic: string | null;
+  /** Oficiálny názov organizácie (napr. občianske združenie) */
+  pravny_nazov: string | null;
+  ic_dph: string | null;
+  /** Účet na príspevky a platby členského */
+  iban: string | null;
 
   // ===== Sociálne siete =====
   facebook_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
   x_url: string | null;
+  tiktok_url: string | null;
 
   // ===== Web =====
   meta_popis: string | null;
@@ -76,8 +82,8 @@ interface NastaveniaKlubuCreationAttributes
     | 'id' | 'skratka' | 'slogan' | 'rok_zalozenia' | 'logo' | 'favicon'
     | 'farba_primarna' | 'farba_sekundarna' | 'farba_akcent'
     | 'farba_primarna_kontrast' | 'farba_akcent_kontrast'
-    | 'email' | 'telefon' | 'adresa' | 'ico' | 'dic'
-    | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url'
+    | 'email' | 'telefon' | 'adresa' | 'ico' | 'dic' | 'pravny_nazov' | 'ic_dph' | 'iban'
+    | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url' | 'tiktok_url'
     | 'meta_popis' | 'google_analytics_id'
     | 'dodatkove_farby' | 'nastavenia_komentarov'
     | 'nastavenia_gdpr' | 'nastavenia_seo'
@@ -105,10 +111,14 @@ class NastaveniaKlubu
   public adresa!: string | null;
   public ico!: string | null;
   public dic!: string | null;
+  public pravny_nazov!: string | null;
+  public ic_dph!: string | null;
+  public iban!: string | null;
   public facebook_url!: string | null;
   public instagram_url!: string | null;
   public youtube_url!: string | null;
   public x_url!: string | null;
+  public tiktok_url!: string | null;
   public meta_popis!: string | null;
   public google_analytics_id!: string | null;
   public dodatkove_farby!: Record<string, string>;
@@ -162,6 +172,15 @@ class NastaveniaKlubu
         instagram: this.instagram_url,
         youtube: this.youtube_url,
         x: this.x_url,
+        tiktok: this.tiktok_url,
+      },
+      // Údaje organizácie do päty webu (IČO, účet na príspevky)
+      udaje: {
+        pravny_nazov: this.pravny_nazov,
+        ico: this.ico,
+        dic: this.dic,
+        ic_dph: this.ic_dph,
+        iban: this.iban,
       },
       meta_popis: this.meta_popis,
       // Web podľa nich rozhodne, či ukázať cookie lištu a či sú
@@ -236,26 +255,44 @@ NastaveniaKlubu.init(
     adresa: { type: DataTypes.STRING(255), allowNull: true },
     ico: { type: DataTypes.STRING(20), allowNull: true },
     dic: { type: DataTypes.STRING(20), allowNull: true },
+    pravny_nazov: { type: DataTypes.STRING(200), allowNull: true },
+    ic_dph: { type: DataTypes.STRING(20), allowNull: true },
+    iban: {
+      type: DataTypes.STRING(34),
+      allowNull: true,
+      validate: {
+        jeIban(hodnota: string | null) {
+          if (hodnota && !/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(hodnota)) {
+            throw new Error('IBAN nie je platný (napríklad SK31 1200 0000 1987 4263 7541)');
+          }
+        },
+      },
+    },
 
     facebook_url: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      validate: { isUrl: true },
+      validate: { isUrl: { msg: 'Adresa Facebook nie je platná (začína https://)' } },
     },
     instagram_url: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      validate: { isUrl: true },
+      validate: { isUrl: { msg: 'Adresa Instagram nie je platná (začína https://)' } },
     },
     youtube_url: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      validate: { isUrl: true },
+      validate: { isUrl: { msg: 'Adresa YouTube nie je platná (začína https://)' } },
     },
     x_url: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      validate: { isUrl: true },
+      validate: { isUrl: { msg: 'Adresa X nie je platná (začína https://)' } },
+    },
+    tiktok_url: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      validate: { isUrl: { msg: 'Adresa TikTok nie je platná (začína https://)' } },
     },
 
     meta_popis: {

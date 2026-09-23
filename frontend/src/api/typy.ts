@@ -450,12 +450,19 @@ export interface NastaveniaAdmin {
   adresa: string | null;
   ico: string | null;
   dic: string | null;
+  /** Oficiálny názov organizácie (napr. občianske združenie) */
+  pravny_nazov: string | null;
+  ic_dph: string | null;
+  iban: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
   x_url: string | null;
+  tiktok_url: string | null;
   meta_popis: string | null;
   google_analytics_id: string | null;
+  /** Dodatkové farby šablóny - kľúč → #RRGGBB, v CSS ako --club-extra-<kľúč> */
+  dodatkove_farby: Record<string, string>;
 }
 
 // ===== Sezóna =====
