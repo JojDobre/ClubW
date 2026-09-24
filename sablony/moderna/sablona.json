@@ -1,0 +1,52 @@
+{
+  "slug": "moderna",
+  "nazov": "Moderná",
+  "verzia": "1.0.0",
+  "autor": "ClubW",
+  "popis": "Prémiový redakčný vzhľad: veľké fotky, zaoblené karty, jemné tiene a Match Centre ako hlavný prvok úvodnej stránky. Na mobile sa správa ako športová aplikácia so spodnou navigáciou. Nahrádza všetky stránky webu a farby berie z Nastavení klubu.",
+  "api": 1,
+  "nahlad": "nahlad.svg",
+  "styl": "styl.css",
+  "skript": "sablona.js",
+  "nastavenia": [
+    {
+      "kluc": "uvodna_fotka",
+      "typ": "obrazok",
+      "menovka": "Fotka na úvode",
+      "napoveda": "Široká fotka (štadión, tím, fanúšikovia), aspoň 1920 px. Bez fotky sa zobrazí tmavé pozadie vo farbe klubu."
+    },
+    { "kluc": "stitok_uvodu", "typ": "text", "menovka": "Štítok nad nadpisom", "napoveda": "Napr. Sezóna 2026/2027. Prázdne = názov klubu." },
+    { "kluc": "titulok_uvodu", "typ": "text", "menovka": "Veľký nadpis na úvode", "napoveda": "Prázdne = slogan klubu, inak názov klubu." },
+    { "kluc": "podtitulok_uvodu", "typ": "dlhy_text", "menovka": "Text pod nadpisom" },
+    {
+      "kluc": "tim_uvodu",
+      "typ": "cislo",
+      "menovka": "Tím na úvodnej stránke (ID)",
+      "napoveda": "Hráči a zápasy ktorého tímu sa ukážu na úvode. 0 = prvý mužský tím.",
+      "min": 0,
+      "max": 100000,
+      "predvolene": 0
+    },
+    { "kluc": "pocet_clankov", "typ": "cislo", "menovka": "Počet správ na úvode", "min": 3, "max": 9, "predvolene": 5 },
+    { "kluc": "ukazat_tabulku", "typ": "prepinac", "menovka": "Tabuľka súťaže na úvode", "predvolene": true },
+    { "kluc": "ukazat_hracov", "typ": "prepinac", "menovka": "Hráči na úvode", "predvolene": true },
+    { "kluc": "ukazat_media", "typ": "prepinac", "menovka": "Fotky a videá na úvode", "predvolene": true },
+    { "kluc": "ukazat_anketu", "typ": "prepinac", "menovka": "Anketa na úvode", "predvolene": true },
+    { "kluc": "ukazat_partnerov", "typ": "prepinac", "menovka": "Partneri na úvode", "predvolene": true },
+    {
+      "kluc": "panel_nadpis",
+      "typ": "text",
+      "menovka": "Tmavý panel: nadpis",
+      "napoveda": "Výzva na konci úvodu, napr. vstupenky alebo členstvo. Prázdne = panel sa neukáže.",
+      "predvolene": "Buďte pri tom na každom domácom zápase."
+    },
+    {
+      "kluc": "panel_text",
+      "typ": "dlhy_text",
+      "menovka": "Tmavý panel: text",
+      "predvolene": "Vstupenky, permanentky a členstvo v klube na jednom mieste."
+    },
+    { "kluc": "panel_tlacidlo", "typ": "text", "menovka": "Tmavý panel: text tlačidla", "predvolene": "Vstupenky a členstvo" },
+    { "kluc": "panel_odkaz", "typ": "text", "menovka": "Tmavý panel: odkaz tlačidla", "napoveda": "Napr. /vstupenky alebo https://...", "predvolene": "/vstupenky" }
+  ]
+}
