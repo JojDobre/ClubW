@@ -11,6 +11,7 @@ import { sezonyApi } from '../../api/sprava';
 import { timyApi, hraciApi } from '../../api/sport';
 import { formatujDatum } from '../../utils/datum';
 import type { Sezona, ZaznamSupisky } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Sezony.css';
 
 const PRAZDNA: Partial<Sezona> = { nazov: '', zaciatok: null, koniec: null, poznamka: '' };
@@ -65,7 +66,7 @@ export const Sezony: React.FC = () => {
     if (!upravovana) return;
 
     if (!upravovana.nazov?.trim()) {
-      varovanie('Zadajte názov sezóny, napríklad 2026/2027');
+      varovanie(tr('Zadajte názov sezóny, napríklad 2026/2027'));
       return;
     }
 
@@ -77,7 +78,7 @@ export const Sezony: React.FC = () => {
           zaciatok: upravovana.zaciatok || null,
           koniec: upravovana.koniec || null,
         });
-        uspech('Sezóna bola vytvorená');
+        uspech(tr('Sezóna bola vytvorená'));
       } else {
         await sezonyApi.uprav(upravovana.id!, {
           nazov: upravovana.nazov.trim(),
@@ -86,12 +87,12 @@ export const Sezony: React.FC = () => {
           uzavreta: upravovana.uzavreta,
           poznamka: upravovana.poznamka || null,
         });
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovana(null);
       sezony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Sezónu sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Sezónu sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -100,10 +101,10 @@ export const Sezony: React.FC = () => {
   const nastavAktualnu = async (id: number) => {
     try {
       await sezonyApi.nastavAktualnu(id);
-      uspech('Sezóna je teraz aktuálna');
+      uspech(tr('Sezóna je teraz aktuálna'));
       sezony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Sezónu sa nepodarilo označiť');
+      hlasChybu(e?.message || tr('Sezónu sa nepodarilo označiť'));
     }
   };
 
@@ -112,13 +113,13 @@ export const Sezony: React.FC = () => {
     setMaze(true);
     try {
       await sezonyApi.zmaz(naZmazanie.id);
-      uspech('Sezóna bola presunutá do archívu');
+      uspech(tr('Sezóna bola presunutá do archívu'));
       setNaZmazanie(null);
       sezony.obnov();
     } catch (e: any) {
       // Server odmietne zmazať sezónu, na ktorú niečo odkazuje —
       // hláška vysvetľuje, čo ju drží
-      hlasChybu(e?.message || 'Sezónu sa nepodarilo archivovať');
+      hlasChybu(e?.message || tr('Sezónu sa nepodarilo archivovať'));
     } finally {
       setMaze(false);
     }
@@ -128,7 +129,7 @@ export const Sezony: React.FC = () => {
     if (!pridavany || vybranaSezona === null || vybranyTim === null) return;
 
     if (!pridavany.hrac_id) {
-      varovanie('Vyberte hráča');
+      varovanie(tr('Vyberte hráča'));
       return;
     }
 
@@ -141,11 +142,11 @@ export const Sezony: React.FC = () => {
         cislo_dresu: pridavany.cislo ? Number(pridavany.cislo) : null,
         kapitan: pridavany.kapitan,
       });
-      uspech('Hráč bol zapísaný na súpisku');
+      uspech(tr('Hráč bol zapísaný na súpisku'));
       setPridavany(null);
       supiska.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Hráča sa nepodarilo zapísať');
+      hlasChybu(e?.message || tr('Hráča sa nepodarilo zapísať'));
     } finally {
       setUklada(false);
     }
@@ -154,15 +155,15 @@ export const Sezony: React.FC = () => {
   const odoberZoSupisky = async (zaznam: ZaznamSupisky) => {
     try {
       await sezonyApi.zmazZoSupisky(zaznam.id);
-      uspech('Hráč bol odobratý zo súpisky');
+      uspech(tr('Hráč bol odobratý zo súpisky'));
       supiska.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Hráča sa nepodarilo odobrať');
+      hlasChybu(e?.message || tr('Hráča sa nepodarilo odobrať'));
     }
   };
 
   if (sezony.chyba) {
-    return <ErrorState sprava="Sezóny sa nepodarilo načítať" detail={sezony.chyba} onSkusZnova={sezony.obnov} />;
+    return <ErrorState sprava={tr('Sezóny sa nepodarilo načítať')} detail={sezony.chyba} onSkusZnova={sezony.obnov} />;
   }
 
   // Hráči, ktorí na súpiske ešte nie sú
@@ -171,15 +172,15 @@ export const Sezony: React.FC = () => {
 
   return (
     <div className="cw-sezony">
-      <PageHeader nadpis="Sezóny a súpisky" podnadpis="Ročníky súťaží a príslušnosť hráčov k tímom." />
+      <PageHeader nadpis={tr('Sezóny a súpisky')} podnadpis={tr('Ročníky súťaží a príslušnosť hráčov k tímom.')} />
 
       {/* ===== Sezóny ===== */}
       <Card
-        nadpis="Sezóny"
-        podnadpis="Aktuálna sezóna určuje, čo sa zobrazuje na verejnom webe"
+        nadpis={tr('Sezóny')}
+        podnadpis={tr('Aktuálna sezóna určuje, čo sa zobrazuje na verejnom webe')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovana({ ...PRAZDNA })}>
-            Nová sezóna
+            {tr('Nová sezóna')}
           </Button>
         }
         bezOdsadenia
@@ -191,9 +192,9 @@ export const Sezony: React.FC = () => {
         ) : zoznamSezon.length === 0 ? (
           <EmptyState
             ikona={<Icon nazov="sezony" velkost={36} />}
-            nadpis="Žiadne sezóny"
-            popis="Vytvorte prvú sezónu, napríklad 2026/2027."
-            akcia={<Button onClick={() => setUpravovana({ ...PRAZDNA })}>Vytvoriť sezónu</Button>}
+            nadpis={tr('Žiadne sezóny')}
+            popis={tr('Vytvorte prvú sezónu, napríklad 2026/2027.')}
+            akcia={<Button onClick={() => setUpravovana({ ...PRAZDNA })}>{tr('Vytvoriť sezónu')}</Button>}
           />
         ) : (
           <ul className="cw-sezony__zoznam">
@@ -204,31 +205,31 @@ export const Sezony: React.FC = () => {
                   <div className="cw-sezony__stitky">
                     {/* Stav podľa požiadavky: aktívna / neaktívna (archivované sú v Archíve) */}
                     {s.aktualna && !s.uzavreta ? (
-                      <Badge ton="success">Aktívna · aktuálna</Badge>
+                      <Badge ton="success">{tr('Aktívna · aktuálna')}</Badge>
                     ) : (
-                      <Badge ton="neutral">Neaktívna</Badge>
+                      <Badge ton="neutral">{tr('Neaktívna')}</Badge>
                     )}
-                    {s.uzavreta && <Badge ton="warning">Uzavretá</Badge>}
+                    {s.uzavreta && <Badge ton="warning">{tr('Uzavretá')}</Badge>}
                   </div>
                 </div>
 
                 <span className="cw-sezony__obdobie">
                   {s.zaciatok || s.koniec
                     ? `${s.zaciatok ? formatujDatum(s.zaciatok) : '?'} – ${s.koniec ? formatujDatum(s.koniec) : '?'}`
-                    : 'obdobie nezadané'}
+                    : tr('obdobie nezadané')}
                 </span>
 
                 <div className="cw-sezony__akcie">
                   {!s.aktualna && (
                     <Button variant="ghost" velkost="sm" onClick={() => nastavAktualnu(s.id)}>
-                      Označiť ako aktuálnu
+                      {tr('Označiť ako aktuálnu')}
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     velkost="sm"
                     onClick={() => setUpravovana({ ...s })}
-                    aria-label={`Upraviť sezónu ${s.nazov}`}
+                    aria-label={tr('Upraviť sezónu {nazov}', { nazov: s.nazov })}
                   >
                     <Icon nazov="upravit" velkost={15} />
                   </Button>
@@ -237,8 +238,8 @@ export const Sezony: React.FC = () => {
                       variant="ghost"
                       velkost="sm"
                       onClick={() => setNaZmazanie(s)}
-                      aria-label={`Archivovať sezónu ${s.nazov}`}
-                      title="Presunúť do archívu"
+                      aria-label={tr('Archivovať sezónu {nazov}', { nazov: s.nazov })}
+                      title={tr('Presunúť do archívu')}
                     >
                       <Icon nazov="archiv" velkost={15} />
                     </Button>
@@ -252,8 +253,8 @@ export const Sezony: React.FC = () => {
 
       {/* ===== Súpiska ===== */}
       <Card
-        nadpis="Súpiska tímu"
-        podnadpis="Príslušnosť hráča k tímu v konkrétnej sezóne — zachováva históriu pri prestupoch"
+        nadpis={tr('Súpiska tímu')}
+        podnadpis={tr('Príslušnosť hráča k tímu v konkrétnej sezóne — zachováva históriu pri prestupoch')}
         akcie={
           <Button
             velkost="sm"
@@ -261,22 +262,22 @@ export const Sezony: React.FC = () => {
             onClick={() => setPridavany({ hrac_id: '', cislo: '', kapitan: false })}
             disabled={vybranaSezona === null || vybranyTim === null || zvolenaSezona?.uzavreta}
           >
-            Zapísať hráča
+            {tr('Zapísať hráča')}
           </Button>
         }
       >
         <div className="cw-sezony__vyber">
           <Select
-            menovka="Sezóna"
+            menovka={tr('Sezóna')}
             value={vybranaSezona ?? ''}
             onChange={(e) => setVybranaSezona(e.target.value ? Number(e.target.value) : null)}
             moznosti={zoznamSezon.map((s) => ({
               hodnota: s.id,
-              popis: `${s.nazov}${s.aktualna ? ' (aktuálna)' : ''}${s.uzavreta ? ' — uzavretá' : ''}`,
+              popis: `${s.nazov}${s.aktualna ? tr(' (aktuálna)') : ''}${s.uzavreta ? tr(' — uzavretá') : ''}`,
             }))}
           />
           <Select
-            menovka="Tím"
+            menovka={tr('Tím')}
             value={vybranyTim ?? ''}
             onChange={(e) => setVybranyTim(e.target.value ? Number(e.target.value) : null)}
             moznosti={zoznamTimov.map((t) => ({
@@ -289,7 +290,7 @@ export const Sezony: React.FC = () => {
         {zvolenaSezona?.uzavreta && (
           <div className="cw-sezony__uzavreta">
             <Icon nazov="licencia" velkost={15} />
-            <span>Sezóna je uzavretá. Súpisku už nemožno meniť — slúži len na čítanie v archíve.</span>
+            <span>{tr('Sezóna je uzavretá. Súpisku už nemožno meniť — slúži len na čítanie v archíve.')}</span>
           </div>
         )}
 
@@ -297,7 +298,7 @@ export const Sezony: React.FC = () => {
           <Skeleton riadkov={4} vyska="18px" />
         ) : (supiska.data ?? []).length === 0 ? (
           <p className="cw-sezony__prazdne">
-            Na súpiske tohto tímu v zvolenej sezóne zatiaľ nikto nie je.
+            {tr('Na súpiske tohto tímu v zvolenej sezóne zatiaľ nikto nie je.')}
           </p>
         ) : (
           <ul className="cw-sezony__supiska">
@@ -307,15 +308,15 @@ export const Sezony: React.FC = () => {
                   {z.cislo_dresu !== null ? z.cislo_dresu : '—'}
                 </span>
                 <span className="cw-sezony__hrac-meno">
-                  {z.hrac ? `${z.hrac.meno} ${z.hrac.priezvisko}` : `Hráč #${z.hrac_id}`}
-                  {z.kapitan && <Badge ton="primary">Kapitán</Badge>}
+                  {z.hrac ? `${z.hrac.meno} ${z.hrac.priezvisko}` : tr('Hráč #{hrac_id}', { hrac_id: z.hrac_id })}
+                  {z.kapitan && <Badge ton="primary">{tr('Kapitán')}</Badge>}
                 </span>
                 <span className="cw-sezony__pozicia">{z.pozicia ?? ''}</span>
                 {!zvolenaSezona?.uzavreta && (
                   <button
                     className="cw-sezony__odobrat"
                     onClick={() => odoberZoSupisky(z)}
-                    aria-label="Odobrať zo súpisky"
+                    aria-label={tr('Odobrať zo súpisky')}
                   >
                     <Icon nazov="zavriet" velkost={14} />
                   </button>
@@ -330,15 +331,15 @@ export const Sezony: React.FC = () => {
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={jeNova ? 'Nová sezóna' : `Sezóna ${upravovana?.nazov}`}
+        nadpis={jeNova ? tr('Nová sezóna') : tr('Sezóna {nazov}', { nazov: upravovana?.nazov })}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={ulozSezonu} nacitava={uklada}>
-              {jeNova ? 'Vytvoriť' : 'Uložiť'}
+              {jeNova ? tr('Vytvoriť') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -346,23 +347,23 @@ export const Sezony: React.FC = () => {
         {upravovana && (
           <>
             <Input
-              menovka="Názov sezóny"
+              menovka={tr('Názov sezóny')}
               value={upravovana.nazov ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, nazov: e.target.value }))}
               placeholder="2026/2027"
               povinne
-              napoveda="Odporúčaný tvar: 2026/2027"
+              napoveda={tr('Odporúčaný tvar: 2026/2027')}
             />
 
             <div className="cw-sezony__row">
               <Input
-                menovka="Začiatok"
+                menovka={tr('Začiatok')}
                 type="date"
                 value={upravovana.zaciatok?.slice(0, 10) ?? ''}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, zaciatok: e.target.value || null }))}
               />
               <Input
-                menovka="Koniec"
+                menovka={tr('Koniec')}
                 type="date"
                 value={upravovana.koniec?.slice(0, 10) ?? ''}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, koniec: e.target.value || null }))}
@@ -374,12 +375,12 @@ export const Sezony: React.FC = () => {
                 <Switch
                   zapnute={Boolean(upravovana.uzavreta)}
                   onZmena={(v) => setUpravovana((d) => ({ ...d!, uzavreta: v }))}
-                  menovka="Uzavretá sezóna"
-                  popis="Uzavretú sezónu už nemožno upravovať — zostane len na čítanie"
+                  menovka={tr('Uzavretá sezóna')}
+                  popis={tr('Uzavretú sezónu už nemožno upravovať — zostane len na čítanie')}
                 />
 
                 <Textarea
-                  menovka="Poznámka"
+                  menovka={tr('Poznámka')}
                   value={upravovana.poznamka ?? ''}
                   onChange={(e) => setUpravovana((d) => ({ ...d!, poznamka: e.target.value }))}
                   rows={2}
@@ -394,16 +395,16 @@ export const Sezony: React.FC = () => {
       <Modal
         otvorene={pridavany !== null}
         onZavri={() => setPridavany(null)}
-        nadpis="Zapísať hráča na súpisku"
+        nadpis={tr('Zapísať hráča na súpisku')}
         podnadpis={`${zvolenaSezona?.nazov ?? ''} · ${zoznamTimov.find((t) => t.id === vybranyTim)?.nazov ?? ''}`}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setPridavany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={pridajNaSupisku} nacitava={uklada}>
-              Zapísať
+              {tr('Zapísať')}
             </Button>
           </>
         }
@@ -411,10 +412,10 @@ export const Sezony: React.FC = () => {
         {pridavany && (
           <>
             <Select
-              menovka="Hráč"
+              menovka={tr('Hráč')}
               value={pridavany.hrac_id}
               onChange={(e) => setPridavany((d) => ({ ...d!, hrac_id: e.target.value }))}
-              prazdna="Vyberte hráča"
+              prazdna={tr('Vyberte hráča')}
               moznosti={dostupniHraci.map((h) => ({
                 hodnota: h.id,
                 popis: `${h.meno} ${h.priezvisko}`,
@@ -422,25 +423,25 @@ export const Sezony: React.FC = () => {
               povinne
               napoveda={
                 dostupniHraci.length === 0
-                  ? 'Všetci hráči už sú na súpiske tohto tímu'
+                  ? tr('Všetci hráči už sú na súpiske tohto tímu')
                   : undefined
               }
             />
 
             <Input
-              menovka="Číslo dresu"
+              menovka={tr('Číslo dresu')}
               type="number"
               min={1}
               max={99}
               value={pridavany.cislo}
               onChange={(e) => setPridavany((d) => ({ ...d!, cislo: e.target.value }))}
-              napoveda="Číslo sa môže medzi sezónami meniť"
+              napoveda={tr('Číslo sa môže medzi sezónami meniť')}
             />
 
             <Switch
               zapnute={pridavany.kapitan}
               onZmena={(v) => setPridavany((d) => ({ ...d!, kapitan: v }))}
-              menovka="Kapitán tímu"
+              menovka={tr('Kapitán tímu')}
             />
           </>
         )}
@@ -448,9 +449,9 @@ export const Sezony: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Archivovať sezónu?"
-        sprava={`Sezóna ${naZmazanie?.nazov} bude archivovaná. Súpisky a výsledky zostanú zachované a sezónu môžete obnoviť v Archíve.`}
-        potvrdit="Archivovať"
+        nadpis={tr('Archivovať sezónu?')}
+        sprava={tr('Sezóna {nazov} bude archivovaná. Súpisky a výsledky zostanú zachované a sezónu môžete obnoviť v Archíve.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Archivovať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmazSezonu}

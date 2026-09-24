@@ -12,13 +12,14 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { komentareApi } from '../../api/doplnky';
 import { formatujDatumCas } from '../../utils/datum';
 import type { Komentar, StavKomentara } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Komentare.css';
 
 const STAVY: Array<{ hodnota: StavKomentara; popis: string; ton: TonStitka }> = [
-  { hodnota: 'caka', popis: 'Čaká na schválenie', ton: 'warning' },
-  { hodnota: 'schvaleny', popis: 'Schválený', ton: 'success' },
-  { hodnota: 'zamietnuty', popis: 'Zamietnutý', ton: 'neutral' },
-  { hodnota: 'spam', popis: 'Spam', ton: 'danger' },
+  { hodnota: 'caka', popis: tr('Čaká na schválenie'), ton: 'warning' },
+  { hodnota: 'schvaleny', popis: tr('Schválený'), ton: 'success' },
+  { hodnota: 'zamietnuty', popis: tr('Zamietnutý'), ton: 'neutral' },
+  { hodnota: 'spam', popis: tr('Spam'), ton: 'danger' },
 ];
 
 export const Komentare: React.FC = () => {
@@ -34,7 +35,7 @@ export const Komentare: React.FC = () => {
 
   const chipy: Chip[] = useMemo(
     () => [
-      { hodnota: '', popis: 'Všetky', pocet: zoznam.length },
+      { hodnota: '', popis: tr('Všetky'), pocet: zoznam.length },
       ...STAVY.map((s) => ({
         hodnota: s.hodnota,
         popis: s.popis,
@@ -55,13 +56,13 @@ export const Komentare: React.FC = () => {
     try {
       await komentareApi.zmenStav(k.id, stav);
       uspech(
-        stav === 'schvaleny' ? 'Komentár bol schválený'
-          : stav === 'spam' ? 'Komentár označený ako spam'
-            : 'Komentár bol zamietnutý'
+        stav === 'schvaleny' ? tr('Komentár bol schválený')
+          : stav === 'spam' ? tr('Komentár označený ako spam')
+            : tr('Komentár bol zamietnutý')
       );
       komentare.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Stav sa nepodarilo zmeniť');
+      hlasChybu(e?.message || tr('Stav sa nepodarilo zmeniť'));
     } finally {
       setSpracuva(null);
     }
@@ -72,11 +73,11 @@ export const Komentare: React.FC = () => {
     setMaze(true);
     try {
       await komentareApi.zmaz(naZmazanie.id);
-      uspech('Komentár bol zmazaný');
+      uspech(tr('Komentár bol zmazaný'));
       setNaZmazanie(null);
       komentare.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Komentár sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Komentár sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -87,11 +88,11 @@ export const Komentare: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Komentáre"
+        nadpis={tr('Komentáre')}
         podnadpis={
           cakajucich > 0
-            ? `${cakajucich} komentárov čaká na schválenie.`
-            : 'Komentáre návštevníkov pod článkami.'
+            ? tr('{cakajucich} komentárov čaká na schválenie.', { cakajucich })
+            : tr('Komentáre návštevníkov pod článkami.')
         }
       />
 
@@ -99,12 +100,12 @@ export const Komentare: React.FC = () => {
         moznosti={chipy}
         zvolena={filter}
         onZmena={setFilter}
-        popisSkupiny="Filtrovať podľa stavu"
+        popisSkupiny={tr('Filtrovať podľa stavu')}
       />
 
       {komentare.chyba ? (
         <ErrorState
-          sprava="Komentáre sa nepodarilo načítať"
+          sprava={tr('Komentáre sa nepodarilo načítať')}
           detail={komentare.chyba}
           onSkusZnova={komentare.obnov}
         />
@@ -120,11 +121,11 @@ export const Komentare: React.FC = () => {
         <div className="cw-kom__prazdne">
           <EmptyState
             ikona={<Icon nazov="komentare" velkost={40} />}
-            nadpis={filter === 'caka' ? 'Nič nečaká na schválenie' : 'Žiadne komentáre'}
+            nadpis={filter === 'caka' ? tr('Nič nečaká na schválenie') : tr('Žiadne komentáre')}
             popis={
               filter === 'caka'
-                ? 'Všetky komentáre sú vybavené. Nové sa objavia tu.'
-                : 'V tomto stave nie sú žiadne komentáre.'
+                ? tr('Všetky komentáre sú vybavené. Nové sa objavia tu.')
+                : tr('V tomto stave nie sú žiadne komentáre.')
             }
           />
         </div>
@@ -147,7 +148,7 @@ export const Komentare: React.FC = () => {
                         {formatujDatumCas(k.vytvoreny)}
                         {k.clanok && (
                           <>
-                            {' · pod článkom '}
+                            {tr(' · pod článkom ')}
                             <Link to={`/admin/clanky/${k.clanok.id}`} className="cw-kom__odkaz">
                               {k.clanok.nazov}
                             </Link>
@@ -160,8 +161,8 @@ export const Komentare: React.FC = () => {
                   <div className="cw-kom__stitky">
                     {/* Upravený komentár prišiel znova na schválenie - moderátor
                         by mal vedieť, že nejde o nový, ale o zmenený text */}
-                    {k.upraveny_autorom && <Badge ton="info">Upravený autorom</Badge>}
-                    {k.rodic_id && <Badge ton="neutral">Odpoveď</Badge>}
+                    {k.upraveny_autorom && <Badge ton="info">{tr('Upravený autorom')}</Badge>}
+                    {k.rodic_id && <Badge ton="neutral">{tr('Odpoveď')}</Badge>}
                     <Badge ton={stav?.ton ?? 'neutral'}>{stav?.popis ?? k.stav}</Badge>
                   </div>
                 </div>
@@ -176,7 +177,7 @@ export const Komentare: React.FC = () => {
                       disabled={prebieha}
                       ikona={<Icon nazov="oko" velkost={14} />}
                     >
-                      Schváliť
+                      {tr('Schváliť')}
                     </Button>
                   )}
 
@@ -187,7 +188,7 @@ export const Komentare: React.FC = () => {
                       onClick={() => zmenStav(k, 'zamietnuty')}
                       disabled={prebieha}
                     >
-                      Zamietnuť
+                      {tr('Zamietnuť')}
                     </Button>
                   )}
 
@@ -198,7 +199,7 @@ export const Komentare: React.FC = () => {
                       onClick={() => zmenStav(k, 'spam')}
                       disabled={prebieha}
                     >
-                      Označiť ako spam
+                      {tr('Označiť ako spam')}
                     </Button>
                   )}
 
@@ -209,7 +210,7 @@ export const Komentare: React.FC = () => {
                     variant="ghost"
                     onClick={() => setNaZmazanie(k)}
                     disabled={prebieha}
-                    aria-label="Zmazať komentár"
+                    aria-label={tr('Zmazať komentár')}
                   >
                     <Icon nazov="zmazat" velkost={15} />
                   </Button>
@@ -222,9 +223,9 @@ export const Komentare: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať komentár?"
-        sprava={`Komentár od ${naZmazanie?.autor_meno} bude natrvalo odstránený.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať komentár?')}
+        sprava={tr('Komentár od {autor_meno} bude natrvalo odstránený.', { autor_meno: naZmazanie?.autor_meno })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

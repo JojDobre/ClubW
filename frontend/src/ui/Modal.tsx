@@ -4,6 +4,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Button from './Button';
+import { tr } from '../i18n';
 import './Modal.css';
 
 interface ModalProps {
@@ -108,7 +109,7 @@ export const Modal: React.FC<ModalProps> = ({
             <h2 className="cw-modal__title">{nadpis}</h2>
             {podnadpis && <p className="cw-modal__subtitle">{podnadpis}</p>}
           </div>
-          <button className="cw-modal__close" onClick={onZavri} aria-label="Zavrieť">
+          <button className="cw-modal__close" onClick={onZavri} aria-label={tr('Zavrieť')}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -140,7 +141,7 @@ interface ConfirmProps {
 }
 
 export const ConfirmDialog: React.FC<ConfirmProps> = ({
-  otvorene, nadpis, sprava, potvrdit = 'Potvrdiť',
+  otvorene, nadpis, sprava, potvrdit = tr('Potvrdiť'),
   nebezpecne = false, nacitava = false, onPotvrd, onZrus,
 }) => (
   <Modal
@@ -151,7 +152,7 @@ export const ConfirmDialog: React.FC<ConfirmProps> = ({
     pata={
       <>
         <Button variant="secondary" onClick={onZrus} disabled={nacitava}>
-          Zrušiť
+          {tr('Zrušiť')}
         </Button>
         <Button
           variant={nebezpecne ? 'danger' : 'primary'}

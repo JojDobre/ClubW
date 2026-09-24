@@ -18,6 +18,7 @@ import Button from './Button';
 import { Input, Select } from './Field';
 import { Badge, Skeleton, EmptyState, ErrorState } from './Feedback';
 import Icon from './Icon';
+import { tr, trn } from '../i18n';
 import './DataTable.css';
 
 // ===== Popis stĺpca =====
@@ -115,14 +116,14 @@ export function DataTable<T>({
   chyba = null,
   onSkusZnova,
   hladatV,
-  hladatPlaceholder = 'Hľadať…',
+  hladatPlaceholder = tr('Hľadať…'),
   filtre = [],
   filtrujZaznam,
   akcieRiadku = [],
   hromadneAkcie = [],
   naStranu = PREDVOLENE_NA_STRANU,
   onKlikNaRiadok,
-  prazdnyNadpis = 'Nič sme nenašli',
+  prazdnyNadpis = tr('Nič sme nenašli'),
   prazdnyPopis,
   prazdnaAkcia,
 }: DataTableProps<T>) {
@@ -281,7 +282,7 @@ export function DataTable<T>({
   // ===== Vykreslenie =====
 
   if (chyba) {
-    return <ErrorState sprava="Údaje sa nepodarilo načítať" detail={chyba} onSkusZnova={onSkusZnova} />;
+    return <ErrorState sprava={tr('Údaje sa nepodarilo načítať')} detail={chyba} onSkusZnova={onSkusZnova} />;
   }
 
   return (
@@ -299,7 +300,7 @@ export function DataTable<T>({
                 }}
                 placeholder={hladatPlaceholder}
                 ikona={<Icon nazov="hladat" velkost={15} />}
-                aria-label="Hľadať v tabuľke"
+                aria-label={tr('Hľadať v tabuľke')}
               />
             </div>
           )}
@@ -321,7 +322,7 @@ export function DataTable<T>({
 
           {jeFiltrovane && (
             <Button variant="ghost" velkost="sm" onClick={vycistiFiltre}>
-              Vymazať filter
+              {tr('Vymazať filter')}
             </Button>
           )}
         </div>
@@ -331,8 +332,7 @@ export function DataTable<T>({
       {vybrane.size > 0 && hromadneAkcie.length > 0 && (
         <div className="cw-dt__bulk">
           <span className="cw-dt__bulk-count">
-            {vybrane.size}{' '}
-            {vybrane.size === 1 ? 'označený' : vybrane.size < 5 ? 'označené' : 'označených'}
+            {trn(vybrane.size, '{n} označený', '{n} označené', '{n} označených')}
           </span>
 
           <div className="cw-dt__bulk-actions">
@@ -351,7 +351,7 @@ export function DataTable<T>({
               </Button>
             ))}
             <Button variant="ghost" velkost="sm" onClick={() => setVybrane(new Set())}>
-              Zrušiť výber
+              {tr('Zrušiť výber')}
             </Button>
           </div>
         </div>
@@ -372,16 +372,16 @@ export function DataTable<T>({
       {!nacitava && zobrazeneData.length === 0 && (
         <EmptyState
           ikona={<Icon nazov={jeFiltrovane ? 'hladat' : 'clanky'} velkost={38} />}
-          nadpis={jeFiltrovane ? 'Nič sme nenašli' : prazdnyNadpis}
+          nadpis={jeFiltrovane ? tr('Nič sme nenašli') : prazdnyNadpis}
           popis={
             jeFiltrovane
-              ? 'Skúste zmeniť hľadaný text alebo zrušiť filtre.'
+              ? tr('Skúste zmeniť hľadaný text alebo zrušiť filtre.')
               : prazdnyPopis
           }
           akcia={
             jeFiltrovane ? (
               <Button variant="secondary" onClick={vycistiFiltre}>
-                Vymazať filter
+                {tr('Vymazať filter')}
               </Button>
             ) : (
               prazdnaAkcia
@@ -403,7 +403,7 @@ export function DataTable<T>({
                         type="checkbox"
                         checked={vsetkyVybrane}
                         onChange={prepniVsetky}
-                        aria-label="Označiť všetky na tejto stránke"
+                        aria-label={tr('Označiť všetky na tejto stránke')}
                       />
                     </th>
                   )}
@@ -467,7 +467,7 @@ export function DataTable<T>({
                             type="checkbox"
                             checked={jeVybrany}
                             onChange={() => prepniJeden(id)}
-                            aria-label="Označiť riadok"
+                            aria-label={tr('Označiť riadok')}
                           />
                         </td>
                       )}
@@ -484,7 +484,7 @@ export function DataTable<T>({
                             <button
                               className="cw-dt__more"
                               onClick={() => setOtvorenaPonuka(otvorenaPonuka === id ? null : id)}
-                              aria-label="Ďalšie akcie"
+                              aria-label={tr('Ďalšie akcie')}
                               aria-expanded={otvorenaPonuka === id}
                             >
                               <Icon nazov="viac" velkost={16} />
@@ -537,7 +537,7 @@ export function DataTable<T>({
                         type="checkbox"
                         checked={vybrane.has(id)}
                         onChange={() => prepniJeden(id)}
-                        aria-label="Označiť záznam"
+                        aria-label={tr('Označiť záznam')}
                       />
                     </div>
                   )}
@@ -591,7 +591,7 @@ export function DataTable<T>({
                   disabled={stranka === 1}
                   onClick={() => setStranka((s) => s - 1)}
                 >
-                  Predošlá
+                  {tr('Predošlá')}
                 </Button>
                 <span className="cw-dt__pager-page">
                   {stranka} / {pocetStran}
@@ -602,7 +602,7 @@ export function DataTable<T>({
                   disabled={stranka === pocetStran}
                   onClick={() => setStranka((s) => s + 1)}
                 >
-                  Ďalšia
+                  {tr('Ďalšia')}
                 </Button>
               </div>
             </div>

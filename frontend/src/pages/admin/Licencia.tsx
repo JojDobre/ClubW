@@ -6,38 +6,39 @@ import { PageHeader, Card, Badge, Button, Icon, Skeleton, ErrorState, StatCard, 
 import { useNacitanie } from '../../app/useNacitanie';
 import { licenciaApi } from '../../api/sprava';
 import { formatujDatum, formatujDatumCas } from '../../utils/datum';
+import { tr, trn } from '../../i18n';
 import './Licencia.css';
 
 /** Zrozumiteľné vysvetlenie stavu licencie. */
 const VYSVETLENIE: Record<string, { popis: string; ton: 'success' | 'warning' | 'danger' | 'neutral' }> = {
-  platna: { popis: 'Licencia je platná', ton: 'success' },
-  vypnuta_kontrola: { popis: 'Kontrola licencie je vypnutá (vývojový režim)', ton: 'neutral' },
-  ochranna_lehota: { popis: 'Licenčný server je nedostupný — beží ochranná lehota', ton: 'warning' },
-  neexistujuca_licencia: { popis: 'Licenčný kľúč nebol rozpoznaný', ton: 'danger' },
-  vyprsana_licencia: { popis: 'Platnosť licencie vypršala', ton: 'danger' },
-  licencia_pozastavena: { popis: 'Licencia bola pozastavená', ton: 'danger' },
-  nespravna_domena: { popis: 'Licencia je vydaná na inú doménu', ton: 'danger' },
-  nezistene: { popis: 'Stav licencie sa zisťuje', ton: 'neutral' },
-  chyba_ochranna_lehota_vyprsala: { popis: 'Ochranná lehota vypršala — spojte sa s dodávateľom', ton: 'danger' },
-  ochranna_lehota_vyprsala: { popis: 'Ochranná lehota vypršala — spojte sa s dodávateľom', ton: 'danger' },
-  licencia_zrusena: { popis: 'Licencia bola zrušená', ton: 'danger' },
+  platna: { popis: tr('Licencia je platná'), ton: 'success' },
+  vypnuta_kontrola: { popis: tr('Kontrola licencie je vypnutá (vývojový režim)'), ton: 'neutral' },
+  ochranna_lehota: { popis: tr('Licenčný server je nedostupný — beží ochranná lehota'), ton: 'warning' },
+  neexistujuca_licencia: { popis: tr('Licenčný kľúč nebol rozpoznaný'), ton: 'danger' },
+  vyprsana_licencia: { popis: tr('Platnosť licencie vypršala'), ton: 'danger' },
+  licencia_pozastavena: { popis: tr('Licencia bola pozastavená'), ton: 'danger' },
+  nespravna_domena: { popis: tr('Licencia je vydaná na inú doménu'), ton: 'danger' },
+  nezistene: { popis: tr('Stav licencie sa zisťuje'), ton: 'neutral' },
+  chyba_ochranna_lehota_vyprsala: { popis: tr('Ochranná lehota vypršala — spojte sa s dodávateľom'), ton: 'danger' },
+  ochranna_lehota_vyprsala: { popis: tr('Ochranná lehota vypršala — spojte sa s dodávateľom'), ton: 'danger' },
+  licencia_zrusena: { popis: tr('Licencia bola zrušená'), ton: 'danger' },
   chybajuca_konfiguracia: {
-    popis: 'Chýba licenčný kľúč alebo adresa licenčného servera (LICENSE_KEY, LICENSE_SERVER_URL v .env)',
+    popis: tr('Chýba licenčný kľúč alebo adresa licenčného servera (LICENSE_KEY, LICENSE_SERVER_URL v .env)'),
     ton: 'danger',
   },
 };
 
 /** Popisné názvy funkcií podľa plánu. */
 const NAZVY_FUNKCII: Record<string, string> = {
-  clanky: 'Články a novinky',
-  zapasy: 'Zápasy a výsledky',
-  tabulky: 'Ligové tabuľky',
-  galerie: 'Fotogalérie',
-  hraci: 'Databáza hráčov',
-  turnaje: 'Turnaje a pavúky',
-  live: 'Živé sledovanie',
-  export: 'Export údajov',
-  api: 'Prístup k API',
+  clanky: tr('Články a novinky'),
+  zapasy: tr('Zápasy a výsledky'),
+  tabulky: tr('Ligové tabuľky'),
+  galerie: tr('Fotogalérie'),
+  hraci: tr('Databáza hráčov'),
+  turnaje: tr('Turnaje a pavúky'),
+  live: tr('Živé sledovanie'),
+  export: tr('Export údajov'),
+  api: tr('Prístup k API'),
 };
 
 export const Licencia: React.FC = () => {
@@ -54,9 +55,9 @@ export const Licencia: React.FC = () => {
       await licenciaApi.over();
       licencia.obnov();
       verzia.obnov();
-      uspech('Licencia bola overená');
+      uspech(tr('Licencia bola overená'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Licenciu sa nepodarilo overiť');
+      hlasChybu(e?.message || tr('Licenciu sa nepodarilo overiť'));
     } finally {
       setOveruje(false);
     }
@@ -71,7 +72,7 @@ export const Licencia: React.FC = () => {
   if (licencia.chyba) {
     return (
       <ErrorState
-        sprava="Stav licencie sa nepodarilo načítať"
+        sprava={tr('Stav licencie sa nepodarilo načítať')}
         detail={licencia.chyba}
         onSkusZnova={licencia.obnov}
       />
@@ -92,12 +93,12 @@ export const Licencia: React.FC = () => {
   const lehota = /^ochranna_lehota_(\d+)_dni$/.exec(l.dovod);
   const dovod = lehota ? 'ochranna_lehota' : l.dovod;
   const stav = lehota
-    ? { popis: `Licenčný server je nedostupný — ochranná lehota ešte ${lehota[1]} ${Number(lehota[1]) === 1 ? 'deň' : Number(lehota[1]) < 5 ? 'dni' : 'dní'}`, ton: 'warning' as const }
+    ? { popis: tr('Licenčný server je nedostupný — ochranná lehota ešte {trvanie}', { trvanie: trn(Number(lehota[1]), '{n} deň', '{n} dni', '{n} dní') }), ton: 'warning' as const }
     : VYSVETLENIE[dovod] ?? { popis: l.dovod, ton: 'neutral' as const };
 
   return (
     <div className="cw-licencia">
-      <PageHeader nadpis="Licencia" podnadpis="Stav licencie a dostupné funkcie." />
+      <PageHeader nadpis={tr('Licencia')} podnadpis={tr('Stav licencie a dostupné funkcie.')} />
 
       {/* ===== Hlavný stav ===== */}
       <Card>
@@ -112,17 +113,17 @@ export const Licencia: React.FC = () => {
           <div className="cw-licencia__text">
             <div className="cw-licencia__stav">
               {l.povolene ? (
-                <Badge ton="success">Aktívna</Badge>
+                <Badge ton="success">{tr('Aktívna')}</Badge>
               ) : (
-                <Badge ton="danger">Neaktívna</Badge>
+                <Badge ton="danger">{tr('Neaktívna')}</Badge>
               )}
-              {l.plan && <Badge ton="primary">Plán {l.plan}</Badge>}
+              {l.plan && <Badge ton="primary">{tr('Plán')} {l.plan}</Badge>}
             </div>
             <p className="cw-licencia__popis">{stav.popis}</p>
           </div>
 
           <Button variant="secondary" onClick={overTeraz} nacitava={overuje} ikona={<Icon nazov="live" velkost={15} />}>
-            Overiť teraz
+            {tr('Overiť teraz')}
           </Button>
         </div>
 
@@ -131,9 +132,9 @@ export const Licencia: React.FC = () => {
           <div className="cw-licencia__upozornenie">
             <Icon nazov="hodiny" velkost={16} />
             <span>
-              Licencia vyprší za {l.dniDoVyprsania}{' '}
-              {l.dniDoVyprsania === 1 ? 'deň' : l.dniDoVyprsania < 5 ? 'dni' : 'dní'}.
-              Spojte sa s dodávateľom kvôli obnove.
+              {tr('Licencia vyprší za {trvanie}. Spojte sa s dodávateľom kvôli obnove.', {
+                trvanie: trn(l.dniDoVyprsania, '{n} deň', '{n} dni', '{n} dní'),
+              })}
             </span>
           </div>
         )}
@@ -144,9 +145,7 @@ export const Licencia: React.FC = () => {
           <div className="cw-licencia__upozornenie is-warning">
             <Icon nazov="hodiny" velkost={16} />
             <span>
-              Licenčný server je nedostupný. Systém funguje ďalej v ochrannej lehote,
-              ktorá trvá 7 dní od posledného úspešného overenia. Po jej uplynutí sa
-              zablokujú úpravy obsahu — verejný web zostane dostupný.
+              {tr('Licenčný server je nedostupný. Systém funguje ďalej v ochrannej lehote, ktorá trvá 7 dní od posledného úspešného overenia. Po jej uplynutí sa zablokujú úpravy obsahu — verejný web zostane dostupný.')}
             </span>
           </div>
         )}
@@ -155,8 +154,7 @@ export const Licencia: React.FC = () => {
           <div className="cw-licencia__upozornenie is-danger">
             <Icon nazov="licencia" velkost={16} />
             <span>
-              Úpravy obsahu sú zablokované. Verejný web klubu aj prihlásenie
-              fungujú ďalej, aby ste videli toto upozornenie.
+              {tr('Úpravy obsahu sú zablokované. Verejný web klubu aj prihlásenie fungujú ďalej, aby ste videli toto upozornenie.')}
             </span>
           </div>
         )}
@@ -165,17 +163,17 @@ export const Licencia: React.FC = () => {
       {/* ===== Údaje ===== */}
       <div className="cw-licencia__karty">
         <StatCard
-          menovka="Platná do"
-          hodnota={l.platnaDo ? formatujDatum(l.platnaDo) : 'neurčito'}
+          menovka={tr('Platná do')}
+          hodnota={l.platnaDo ? formatujDatum(l.platnaDo) : tr('neurčito')}
           ikona={<Icon nazov="kalendar" velkost={16} />}
         />
         <StatCard
-          menovka="Zostáva dní"
+          menovka={tr('Zostáva dní')}
           hodnota={l.dniDoVyprsania !== null ? l.dniDoVyprsania : '—'}
           ikona={<Icon nazov="hodiny" velkost={16} />}
         />
         <StatCard
-          menovka="Posledné overenie"
+          menovka={tr('Posledné overenie')}
           hodnota={
             l.poslednyUspesnyKontakt
               ? formatujDatumCas(new Date(l.poslednyUspesnyKontakt))
@@ -187,17 +185,16 @@ export const Licencia: React.FC = () => {
 
       {/* ===== Funkcie plánu ===== */}
       <Card
-        nadpis="Dostupné funkcie"
+        nadpis={tr('Dostupné funkcie')}
         podnadpis={
           l.funkcie.length > 0
-            ? `Plán ${l.plan ?? '—'} obsahuje ${l.funkcie.length} funkcií`
-            : 'Zoznam funkcií nie je dostupný'
+            ? tr('Plán {hodnota} obsahuje {length} funkcií', { hodnota: l.plan ?? '—', length: l.funkcie.length })
+            : tr('Zoznam funkcií nie je dostupný')
         }
       >
         {l.funkcie.length === 0 ? (
           <p className="cw-licencia__prazdne">
-            Licenčný server nevrátil zoznam funkcií. Ak je kontrola licencie vypnutá,
-            sú dostupné všetky funkcie.
+            {tr('Licenčný server nevrátil zoznam funkcií. Ak je kontrola licencie vypnutá, sú dostupné všetky funkcie.')}
           </p>
         ) : (
           <ul className="cw-licencia__funkcie">
@@ -212,7 +209,7 @@ export const Licencia: React.FC = () => {
       </Card>
 
       {/* ===== Verzia systému a aktualizácie ===== */}
-      <Card nadpis="Verzia systému" podnadpis="Aplikácia a stav databázy">
+      <Card nadpis={tr('Verzia systému')} podnadpis={tr('Aplikácia a stav databázy')}>
         {verzia.chyba ? (
           <p className="cw-licencia__prazdne">{verzia.chyba}</p>
         ) : !v ? (
@@ -220,45 +217,42 @@ export const Licencia: React.FC = () => {
         ) : (
           <>
             <dl className="cw-licencia__verzia">
-              <dt>Verzia aplikácie</dt>
+              <dt>{tr('Verzia aplikácie')}</dt>
               <dd>{v.verzia_aplikacie}</dd>
-              <dt>Databáza</dt>
+              <dt>{tr('Databáza')}</dt>
               <dd>
-                {v.schema.pocet_migracii} migrácií
-                {v.schema.posledna_migracia && <span> · posledná {v.schema.posledna_migracia.replace(/\.js$/, '')}</span>}
+                {v.schema.pocet_migracii} {tr('migrácií')}
+                {v.schema.posledna_migracia && <span> {tr('· posledná')} {v.schema.posledna_migracia.replace(/\.js$/, '')}</span>}
               </dd>
-              <dt>Prostredie</dt>
+              <dt>{tr('Prostredie')}</dt>
               <dd>
-                {v.prostredie === 'production' ? 'Produkcia' : 'Vývoj'} · Node {v.node}
+                {v.prostredie === 'production' ? tr('Produkcia') : tr('Vývoj')} {tr('· Node')} {v.node}
               </dd>
-              <dt>Server beží</dt>
+              <dt>{tr('Server beží')}</dt>
               <dd>{behDni(v.bezi_sekund)}</dd>
             </dl>
             {v.schema.cakajuce_migracie.length > 0 ? (
               <div className="cw-licencia__upozornenie is-warning">
                 <Icon nazov="obnovit" velkost={16} />
                 <span>
-                  Databáza nie je aktuálna - čaká {v.schema.cakajuce_migracie.length} migrácií
-                  ({v.schema.cakajuce_migracie.map((m) => m.replace(/\.js$/, '')).join(', ')}). Spustite v priečinku backend
-                  príkaz <code>npm run db:migrate</code> a reštartujte server.
+                  {tr('Databáza nie je aktuálna - čaká')} {v.schema.cakajuce_migracie.length} {tr('migrácií (')}{v.schema.cakajuce_migracie.map((m) => m.replace(/\.js$/, '')).join(', ')}{tr('). Spustite v priečinku backend príkaz')} <code>{tr('npm run db:migrate')}</code> {tr('a reštartujte server.')}
                 </span>
               </div>
             ) : (
               <p className="cw-licencia__aktualne">
-                <Badge ton="success">Aktuálne</Badge> Databáza zodpovedá verzii aplikácie.
+                <Badge ton="success">{tr('Aktuálne')}</Badge> {tr('Databáza zodpovedá verzii aplikácie.')}
               </p>
             )}
             <p className="cw-licencia__poznamka">
-              Aktualizácia systému: stiahnite novú verziu (git pull), spustite <code>npm install</code> a{' '}
-              <code>npm run db:migrate</code>, potom reštartujte backend.
+              {tr('Aktualizácia systému: stiahnite novú verziu (git pull), spustite')} <code>{tr('npm install')}</code> a{' '}
+              <code>{tr('npm run db:migrate')}</code>{tr(', potom reštartujte backend.')}
             </p>
           </>
         )}
       </Card>
 
       <p className="cw-licencia__poznamka">
-        Licencia sa overuje automaticky raz za 24 hodín. Overenie prebieha na pozadí
-        a nevyžaduje žiadnu činnosť.
+        {tr('Licencia sa overuje automaticky raz za 24 hodín. Overenie prebieha na pozadí a nevyžaduje žiadnu činnosť.')}
       </p>
     </div>
   );

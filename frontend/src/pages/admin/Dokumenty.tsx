@@ -16,6 +16,7 @@ import { mediaApi } from '../../api/media';
 import { souborUrl, apiUrl } from '../../config/api';
 import { formatujDatum } from '../../utils/datum';
 import type { Dokument, KategoriaDokumentu } from '../../api/typy';
+import { tr, trn } from '../../i18n';
 import './Dokumenty.css';
 
 const PRAZDNY: Partial<Dokument> = {
@@ -68,7 +69,7 @@ export const Dokumenty: React.FC = () => {
     setNahrava(true);
     try {
       const [ulozeny] = await mediaApi.nahraj([subor]);
-      if (!ulozeny) throw new Error('Súbor sa nepodarilo uložiť');
+      if (!ulozeny) throw new Error(tr('Súbor sa nepodarilo uložiť'));
       setUpravovany((d) => ({
         ...d!,
         subor_url: ulozeny.cesta,
@@ -77,9 +78,9 @@ export const Dokumenty: React.FC = () => {
         // Prázdny názov doplníme z mena súboru
         nazov: d?.nazov?.trim() ? d.nazov : subor.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '),
       }));
-      uspech('Súbor bol nahratý');
+      uspech(tr('Súbor bol nahratý'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Súbor sa nepodarilo nahrať');
+      hlasChybu(e?.message || tr('Súbor sa nepodarilo nahrať'));
     } finally {
       setNahrava(false);
       if (vstup.current) vstup.current.value = '';
@@ -88,8 +89,8 @@ export const Dokumenty: React.FC = () => {
 
   const uloz = async () => {
     if (!upravovany) return;
-    if (!upravovany.nazov?.trim()) return varovanie('Zadajte názov dokumentu');
-    if (!upravovany.subor_url?.trim()) return varovanie('Nahrajte súbor dokumentu');
+    if (!upravovany.nazov?.trim()) return varovanie(tr('Zadajte názov dokumentu'));
+    if (!upravovany.subor_url?.trim()) return varovanie(tr('Nahrajte súbor dokumentu'));
 
     setUklada(true);
     try {
@@ -106,15 +107,15 @@ export const Dokumenty: React.FC = () => {
       };
       if (jeNovy) {
         await dokumentyApi.vytvor(naUlozenie);
-        uspech('Dokument bol pridaný');
+        uspech(tr('Dokument bol pridaný'));
       } else {
         await dokumentyApi.uprav(upravovany.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovany(null);
       dokumenty.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Dokument sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Dokument sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -125,11 +126,11 @@ export const Dokumenty: React.FC = () => {
     setMaze(true);
     try {
       await dokumentyApi.zmaz(naZmazanie.id);
-      uspech('Dokument bol odstránený');
+      uspech(tr('Dokument bol odstránený'));
       setNaZmazanie(null);
       dokumenty.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Dokument sa nepodarilo odstrániť');
+      hlasChybu(e?.message || tr('Dokument sa nepodarilo odstrániť'));
     } finally {
       setMaze(false);
     }
@@ -137,7 +138,7 @@ export const Dokumenty: React.FC = () => {
 
   // ===== Kategórie =====
   const pridajKategoriu = async () => {
-    if (novaKategoria.nazov.trim().length < 2) return varovanie('Názov kategórie musí mať aspoň 2 znaky');
+    if (novaKategoria.nazov.trim().length < 2) return varovanie(tr('Názov kategórie musí mať aspoň 2 znaky'));
     try {
       await kategorieDokumentovApi.vytvor({
         nazov: novaKategoria.nazov.trim(),
@@ -146,15 +147,15 @@ export const Dokumenty: React.FC = () => {
       });
       setNovaKategoria({ nazov: '', popis: '' });
       kategorie.obnov();
-      uspech('Kategória bola pridaná');
+      uspech(tr('Kategória bola pridaná'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Kategóriu sa nepodarilo pridať');
+      hlasChybu(e?.message || tr('Kategóriu sa nepodarilo pridať'));
     }
   };
 
   const ulozKategoriu = async () => {
     if (!upravovanaKat) return;
-    if (upravovanaKat.nazov.trim().length < 2) return varovanie('Názov kategórie musí mať aspoň 2 znaky');
+    if (upravovanaKat.nazov.trim().length < 2) return varovanie(tr('Názov kategórie musí mať aspoň 2 znaky'));
     try {
       await kategorieDokumentovApi.uprav(upravovanaKat.id, {
         nazov: upravovanaKat.nazov.trim(),
@@ -162,29 +163,29 @@ export const Dokumenty: React.FC = () => {
       });
       setUpravovanaKat(null);
       kategorie.obnov();
-      uspech('Kategória bola uložená');
+      uspech(tr('Kategória bola uložená'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Kategóriu sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Kategóriu sa nepodarilo uložiť'));
     }
   };
 
   const zmazKategoriu = async (k: KategoriaDokumentu) => {
     const pouzitie = zoznam.filter((d) => d.kategoria_id === k.id).length;
-    if (!window.confirm(pouzitie ? `Kategóriu ${k.nazov} má ${pouzitie} dokumentov - zostanú bez kategórie. Zmazať?` : `Zmazať kategóriu ${k.nazov}?`)) return;
+    if (!window.confirm(pouzitie ? tr('Kategóriu {nazov} má {pouzitie} dokumentov - zostanú bez kategórie. Zmazať?', { nazov: k.nazov, pouzitie }) : tr('Zmazať kategóriu {nazov}?', { nazov: k.nazov }))) return;
     try {
       await kategorieDokumentovApi.zmaz(k.id);
       kategorie.obnov();
       dokumenty.obnov();
-      uspech('Kategória bola zmazaná');
+      uspech(tr('Kategória bola zmazaná'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Kategóriu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Kategóriu sa nepodarilo zmazať'));
     }
   };
 
   const stlpce: Stlpec<Dokument>[] = [
     {
       kluc: 'nazov',
-      popis: 'Dokument',
+      popis: tr('Dokument'),
       obsah: (d) => (
         <div className="cw-hraci__hrac">
           <div className="cw-hraci__avatar" aria-hidden="true">
@@ -200,14 +201,14 @@ export const Dokumenty: React.FC = () => {
     },
     {
       kluc: 'kategoria',
-      popis: 'Kategória',
+      popis: tr('Kategória'),
       obsah: (d) => (nazovKategorie(d) ? <Badge>{nazovKategorie(d)}</Badge> : <span style={{ color: 'var(--muted)' }}>—</span>),
       hodnotaNaZoradenie: (d) => nazovKategorie(d),
       sirka: '190px',
     },
     {
       kluc: 'velkost',
-      popis: 'Veľkosť',
+      popis: tr('Veľkosť'),
       obsah: (d) => <span style={{ color: 'var(--muted)' }}>{velkost(d.velkost_kb)}</span>,
       hodnotaNaZoradenie: (d) => d.velkost_kb,
       zarovnanie: 'right',
@@ -216,15 +217,15 @@ export const Dokumenty: React.FC = () => {
     },
     {
       kluc: 'pristup',
-      popis: 'Prístup',
+      popis: tr('Prístup'),
       obsah: (d) =>
-        !d.aktivity ? <Badge>Skrytý</Badge> : d.verejny ? <Badge ton="success">Verejný</Badge> : <Badge ton="warning">Interný</Badge>,
+        !d.aktivity ? <Badge>{tr('Skrytý')}</Badge> : d.verejny ? <Badge ton="success">{tr('Verejný')}</Badge> : <Badge ton="warning">{tr('Interný')}</Badge>,
       hodnotaNaZoradenie: (d) => (d.verejny ? 1 : 0),
       sirka: '120px',
     },
     {
       kluc: 'stiahnutia',
-      popis: 'Stiahnutí',
+      popis: tr('Stiahnutí'),
       obsah: (d) => d.pocet_stiahnuti,
       hodnotaNaZoradenie: (d) => d.pocet_stiahnuti,
       zarovnanie: 'center',
@@ -233,7 +234,7 @@ export const Dokumenty: React.FC = () => {
     },
     {
       kluc: 'datum',
-      popis: 'Pridaný',
+      popis: tr('Pridaný'),
       obsah: (d) => <span style={{ color: 'var(--muted)' }}>{formatujDatum(d.vytvoreny)}</span>,
       hodnotaNaZoradenie: (d) => new Date(d.vytvoreny).getTime(),
       sirka: '120px',
@@ -242,23 +243,23 @@ export const Dokumenty: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<Dokument>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (d) => setUpravovany({ ...d }) },
-    { popis: 'Otvoriť súbor', ikona: 'oko', onKlik: (d) => window.open(souborUrl(d.subor_url), '_blank', 'noopener') },
-    { popis: 'Odstrániť', ikona: 'zmazat', nebezpecna: true, onKlik: (d) => setNaZmazanie(d) },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (d) => setUpravovany({ ...d }) },
+    { popis: tr('Otvoriť súbor'), ikona: 'oko', onKlik: (d) => window.open(souborUrl(d.subor_url), '_blank', 'noopener') },
+    { popis: tr('Odstrániť'), ikona: 'zmazat', nebezpecna: true, onKlik: (d) => setNaZmazanie(d) },
   ];
 
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Dokumenty"
-        podnadpis="Stanovy, prihlášky a tlačivá na stiahnutie. Verejné sú na webe na adrese /dokumenty."
+        nadpis={tr('Dokumenty')}
+        podnadpis={tr('Stanovy, prihlášky a tlačivá na stiahnutie. Verejné sú na webe na adrese /dokumenty.')}
         akcie={
           <>
             <Button variant="secondary" onClick={() => setKategorieOtvorene(true)}>
-              Kategórie
+              {tr('Kategórie')}
             </Button>
             <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-              Nový dokument
+              {tr('Nový dokument')}
             </Button>
           </>
         }
@@ -272,15 +273,15 @@ export const Dokumenty: React.FC = () => {
         chyba={dokumenty.chyba}
         onSkusZnova={dokumenty.obnov}
         hladatV={(d) => `${d.nazov} ${d.popis ?? ''}`}
-        hladatPlaceholder="Hľadať dokument…"
+        hladatPlaceholder={tr('Hľadať dokument…')}
         filtre={[
-          { kluc: 'kategoria', popis: 'Všetky kategórie', moznosti: zoznamKat.map((k) => ({ hodnota: String(k.id), popis: k.nazov })) },
+          { kluc: 'kategoria', popis: tr('Všetky kategórie'), moznosti: zoznamKat.map((k) => ({ hodnota: String(k.id), popis: k.nazov })) },
           {
             kluc: 'pristup',
-            popis: 'Verejné aj interné',
+            popis: tr('Verejné aj interné'),
             moznosti: [
-              { hodnota: 'verejny', popis: 'Verejné' },
-              { hodnota: 'interny', popis: 'Interné' },
+              { hodnota: 'verejny', popis: tr('Verejné') },
+              { hodnota: 'interny', popis: tr('Interné') },
             ],
           },
         ]}
@@ -291,23 +292,23 @@ export const Dokumenty: React.FC = () => {
         }}
         akcieRiadku={akcieRiadku}
         onKlikNaRiadok={(d) => setUpravovany({ ...d })}
-        prazdnyNadpis="Zatiaľ žiadne dokumenty"
-        prazdnyPopis="Pridajte stanovy, prihlášky alebo iné tlačivá na stiahnutie."
-        prazdnaAkcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>Pridať dokument</Button>}
+        prazdnyNadpis={tr('Zatiaľ žiadne dokumenty')}
+        prazdnyPopis={tr('Pridajte stanovy, prihlášky alebo iné tlačivá na stiahnutie.')}
+        prazdnaAkcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>{tr('Pridať dokument')}</Button>}
       />
 
       {/* ===== Dokument ===== */}
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový dokument' : upravovany?.nazov ?? 'Dokument'}
+        nadpis={jeNovy ? tr('Nový dokument') : upravovany?.nazov ?? tr('Dokument')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Pridať' : 'Uložiť'}
+              {jeNovy ? tr('Pridať') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -315,71 +316,71 @@ export const Dokumenty: React.FC = () => {
         {upravovany && (
           <>
             <div className="cw-field">
-              <span className="cw-field__label">Súbor *</span>
+              <span className="cw-field__label">{tr('Súbor *')}</span>
               <div className="cw-dok__subor">
                 {upravovany.subor_url ? (
                   <a href={souborUrl(upravovany.subor_url)} target="_blank" rel="noreferrer">
                     📄 {upravovany.subor_url.split('/').pop()} {upravovany.velkost_kb ? `(${velkost(upravovany.velkost_kb)})` : ''}
                   </a>
                 ) : (
-                  <span style={{ color: 'var(--muted)' }}>Zatiaľ nenahratý</span>
+                  <span style={{ color: 'var(--muted)' }}>{tr('Zatiaľ nenahratý')}</span>
                 )}
                 <Button variant="secondary" velkost="sm" nacitava={nahrava} ikona={<Icon nazov="nahrat" velkost={14} />} onClick={() => vstup.current?.click()}>
-                  {upravovany.subor_url ? 'Nahradiť súbor' : 'Nahrať súbor'}
+                  {upravovany.subor_url ? tr('Nahradiť súbor') : tr('Nahrať súbor')}
                 </Button>
-                <input ref={vstup} type="file" hidden accept={PRIJIMANE} aria-label="Nahrať súbor dokumentu" onChange={(e) => nahraj(e.target.files?.[0])} />
+                <input ref={vstup} type="file" hidden accept={PRIJIMANE} aria-label={tr('Nahrať súbor dokumentu')} onChange={(e) => nahraj(e.target.files?.[0])} />
               </div>
-              <div className="cw-field__hint">PDF, Word, Excel, PowerPoint alebo obrázok, najviac 10 MB</div>
+              <div className="cw-field__hint">{tr('PDF, Word, Excel, PowerPoint alebo obrázok, najviac 10 MB')}</div>
             </div>
 
             <Input
-              menovka="Názov"
+              menovka={tr('Názov')}
               value={upravovany.nazov ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: Stanovy klubu"
+              placeholder={tr('Napríklad: Stanovy klubu')}
               povinne
             />
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={upravovany.popis ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, popis: e.target.value }))}
               rows={2}
             />
             <Select
-              menovka="Kategória"
+              menovka={tr('Kategória')}
               value={upravovany.kategoria_id ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, kategoria_id: e.target.value ? Number(e.target.value) : null }))}
-              prazdna={upravovany.kategoria && !upravovany.kategoria_id ? `${upravovany.kategoria} (pôvodná)` : 'Bez kategórie'}
+              prazdna={upravovany.kategoria && !upravovany.kategoria_id ? tr('{kategoria} (pôvodná)', { kategoria: upravovany.kategoria }) : tr('Bez kategórie')}
               moznosti={zoznamKat.map((k) => ({ hodnota: k.id, popis: k.nazov }))}
-              napoveda="Kategórie spravujete tlačidlom Kategórie"
+              napoveda={tr('Kategórie spravujete tlačidlom Kategórie')}
             />
             <Switch
               zapnute={Boolean(upravovany.verejny)}
               onZmena={(v) => setUpravovany((d) => ({ ...d!, verejny: v }))}
-              menovka="Verejný dokument"
-              popis={upravovany.verejny ? 'Stiahne si ho ktokoľvek na webe' : 'Len pre administráciu (interný)'}
+              menovka={tr('Verejný dokument')}
+              popis={upravovany.verejny ? tr('Stiahne si ho ktokoľvek na webe') : tr('Len pre administráciu (interný)')}
             />
             <Switch
               zapnute={upravovany.aktivity !== false}
               onZmena={(v) => setUpravovany((d) => ({ ...d!, aktivity: v }))}
-              menovka="Zobrazený"
+              menovka={tr('Zobrazený')}
             />
           </>
         )}
       </Modal>
 
       {/* ===== Kategórie ===== */}
-      <Modal otvorene={kategorieOtvorene} onZavri={() => setKategorieOtvorene(false)} nadpis="Kategórie dokumentov">
+      <Modal otvorene={kategorieOtvorene} onZavri={() => setKategorieOtvorene(false)} nadpis={tr('Kategórie dokumentov')}>
         <ul className="cw-dok__kategorie">
-          {zoznamKat.length === 0 && <li className="cw-dok__prazdne">Zatiaľ žiadne kategórie.</li>}
+          {zoznamKat.length === 0 && <li className="cw-dok__prazdne">{tr('Zatiaľ žiadne kategórie.')}</li>}
           {zoznamKat.map((k) =>
             upravovanaKat?.id === k.id ? (
               <li key={k.id} className="cw-dok__kat-uprava">
-                <Input menovka="Názov" value={upravovanaKat.nazov} onChange={(e) => setUpravovanaKat({ ...upravovanaKat, nazov: e.target.value })} />
-                <Input menovka="Popis" value={upravovanaKat.popis ?? ''} onChange={(e) => setUpravovanaKat({ ...upravovanaKat, popis: e.target.value })} />
+                <Input menovka={tr('Názov')} value={upravovanaKat.nazov} onChange={(e) => setUpravovanaKat({ ...upravovanaKat, nazov: e.target.value })} />
+                <Input menovka={tr('Popis')} value={upravovanaKat.popis ?? ''} onChange={(e) => setUpravovanaKat({ ...upravovanaKat, popis: e.target.value })} />
                 <div className="cw-dok__kat-akcie">
-                  <Button velkost="sm" variant="secondary" onClick={() => setUpravovanaKat(null)}>Zrušiť</Button>
-                  <Button velkost="sm" onClick={ulozKategoriu}>Uložiť</Button>
+                  <Button velkost="sm" variant="secondary" onClick={() => setUpravovanaKat(null)}>{tr('Zrušiť')}</Button>
+                  <Button velkost="sm" onClick={ulozKategoriu}>{tr('Uložiť')}</Button>
                 </div>
               </li>
             ) : (
@@ -387,13 +388,13 @@ export const Dokumenty: React.FC = () => {
                 <div>
                   <strong>{k.nazov}</strong>
                   {k.popis && <span>{k.popis}</span>}
-                  <span>{zoznam.filter((d) => d.kategoria_id === k.id).length} dokumentov</span>
+                  <span>{trn(zoznam.filter((d) => d.kategoria_id === k.id).length, '{n} dokument', '{n} dokumenty', '{n} dokumentov')}</span>
                 </div>
                 <div className="cw-dok__kat-akcie">
-                  <Button velkost="sm" variant="ghost" onClick={() => setUpravovanaKat({ ...k })} aria-label={`Upraviť ${k.nazov}`}>
+                  <Button velkost="sm" variant="ghost" onClick={() => setUpravovanaKat({ ...k })} aria-label={tr('Upraviť {nazov}', { nazov: k.nazov })}>
                     <Icon nazov="upravit" velkost={14} />
                   </Button>
-                  <Button velkost="sm" variant="ghost" onClick={() => zmazKategoriu(k)} aria-label={`Zmazať ${k.nazov}`}>
+                  <Button velkost="sm" variant="ghost" onClick={() => zmazKategoriu(k)} aria-label={tr('Zmazať {nazov}', { nazov: k.nazov })}>
                     <Icon nazov="zmazat" velkost={14} />
                   </Button>
                 </div>
@@ -402,17 +403,17 @@ export const Dokumenty: React.FC = () => {
           )}
         </ul>
         <div className="cw-dok__nova">
-          <Input menovka="Nová kategória" value={novaKategoria.nazov} onChange={(e) => setNovaKategoria((n) => ({ ...n, nazov: e.target.value }))} placeholder="Prihlášky a tlačivá" />
-          <Input menovka="Popis kategórie" value={novaKategoria.popis} onChange={(e) => setNovaKategoria((n) => ({ ...n, popis: e.target.value }))} />
-          <Button onClick={pridajKategoriu} ikona={<Icon nazov="plus" velkost={14} />}>Pridať kategóriu</Button>
+          <Input menovka={tr('Nová kategória')} value={novaKategoria.nazov} onChange={(e) => setNovaKategoria((n) => ({ ...n, nazov: e.target.value }))} placeholder={tr('Prihlášky a tlačivá')} />
+          <Input menovka={tr('Popis kategórie')} value={novaKategoria.popis} onChange={(e) => setNovaKategoria((n) => ({ ...n, popis: e.target.value }))} />
+          <Button onClick={pridajKategoriu} ikona={<Icon nazov="plus" velkost={14} />}>{tr('Pridať kategóriu')}</Button>
         </div>
       </Modal>
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Odstrániť dokument?"
-        sprava={`Dokument ${naZmazanie?.nazov} bude odstránený zo zoznamu. Súbor zostane v knižnici médií.`}
-        potvrdit="Odstrániť"
+        nadpis={tr('Odstrániť dokument?')}
+        sprava={tr('Dokument {nazov} bude odstránený zo zoznamu. Súbor zostane v knižnici médií.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Odstrániť')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

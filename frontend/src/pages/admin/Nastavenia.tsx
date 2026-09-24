@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, Switch, useToast,
+  PageHeader, Card, Button, Input, Textarea, Icon, Skeleton, ErrorState, Switch, Select, useToast,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { nastaveniaApi } from '../../api/sprava';
@@ -15,6 +15,7 @@ import { useNastavenia } from '../../context/NastaveniaContext';
 import { ApiChyba } from '../../app/apiKlient';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import type { NastaveniaAdmin, NastaveniaKomentarov, NastaveniaGdpr, NastaveniaSeo } from '../../api/typy';
+import { tr, JAZYKY } from '../../i18n';
 import './Nastavenia.css';
 
 export const Nastavenia: React.FC = () => {
@@ -80,12 +81,12 @@ export const Nastavenia: React.FC = () => {
 
     const kluce = dodatkove.map((d) => d.kluc.replace(/-+$/, ''));
     if (kluce.some((k) => !/^[a-z]/.test(k))) {
-      hlasChybu('Každá dodatková farba potrebuje názov začínajúci písmenom');
+      hlasChybu(tr('Každá dodatková farba potrebuje názov začínajúci písmenom'));
       setUklada(false);
       return;
     }
     if (new Set(kluce).size !== kluce.length) {
-      hlasChybu('Dodatkové farby musia mať rôzne názvy');
+      hlasChybu(tr('Dodatkové farby musia mať rôzne názvy'));
       setUklada(false);
       return;
     }
@@ -95,7 +96,7 @@ export const Nastavenia: React.FC = () => {
         ...formular,
         dodatkove_farby: Object.fromEntries(dodatkove.map((d, i) => [kluce[i], d.farba])),
       });
-      uspech('Nastavenia boli uložené');
+      uspech(tr('Nastavenia boli uložené'));
 
       // Obnovíme nastavenia v celej aplikácii, aby sa nové farby
       // a názov prejavili bez obnovenia stránky
@@ -106,7 +107,7 @@ export const Nastavenia: React.FC = () => {
         hlasChybu(e.message);
         if (e.chybyPoli) setChybyPoli(e.chybyPoli);
       } else {
-        hlasChybu('Nastavenia sa nepodarilo uložiť');
+        hlasChybu(tr('Nastavenia sa nepodarilo uložiť'));
       }
     } finally {
       setUklada(false);
@@ -116,7 +117,7 @@ export const Nastavenia: React.FC = () => {
   if (nastavenia.chyba) {
     return (
       <ErrorState
-        sprava="Nastavenia sa nepodarilo načítať"
+        sprava={tr('Nastavenia sa nepodarilo načítať')}
         detail={nastavenia.chyba}
         onSkusZnova={nastavenia.obnov}
       />
@@ -134,27 +135,27 @@ export const Nastavenia: React.FC = () => {
   return (
     <div className="cw-nastavenia">
       <PageHeader
-        nadpis="Nastavenia klubu"
-        podnadpis="Identita, farby a kontaktné údaje."
+        nadpis={tr('Nastavenia klubu')}
+        podnadpis={tr('Identita, farby a kontaktné údaje.')}
         akcie={
           <Button variant="secondary" ikona={<Icon nazov="menu" velkost={15} />} onClick={() => navigate('/admin/menu')}>
-            Menu webu
+            {tr('Menu webu')}
           </Button>
         }
       />
 
       <div className="cw-nastavenia__bar">
         <p className="cw-nastavenia__info">
-          Zmena farieb sa prejaví v administrácii aj na verejnom webe.
+          {tr('Zmena farieb sa prejaví v administrácii aj na verejnom webe.')}
         </p>
         <Button onClick={uloz} nacitava={uklada} ikona={<Icon nazov="ulozit" velkost={15} />}>
-          Uložiť nastavenia
+          {tr('Uložiť nastavenia')}
         </Button>
       </div>
 
       {chybyPoli.length > 0 && (
         <div className="cw-nastavenia__errors" role="alert">
-          <strong>Server odmietol uloženie:</strong>
+          <strong>{tr('Server odmietol uloženie:')}</strong>
           <ul>
             {chybyPoli.map((ch, i) => (
               <li key={i}>{ch}</li>
@@ -165,9 +166,9 @@ export const Nastavenia: React.FC = () => {
 
       <div className="cw-nastavenia__grid">
         <div className="cw-nastavenia__col">
-          <Card nadpis="Identita klubu">
+          <Card nadpis={tr('Identita klubu')}>
             <Input
-              menovka="Názov klubu"
+              menovka={tr('Názov klubu')}
               value={formular.nazov ?? ''}
               onChange={(e) => zmen('nazov', e.target.value)}
               placeholder="FC Slovan Dolina"
@@ -176,15 +177,15 @@ export const Nastavenia: React.FC = () => {
 
             <div className="cw-nastavenia__row">
               <Input
-                menovka="Skratka"
+                menovka={tr('Skratka')}
                 value={formular.skratka ?? ''}
                 onChange={(e) => zmen('skratka', e.target.value)}
                 placeholder="SD"
                 maxLength={4}
-                napoveda="Dva až štyri znaky do znaku loga"
+                napoveda={tr('Dva až štyri znaky do znaku loga')}
               />
               <Input
-                menovka="Rok založenia"
+                menovka={tr('Rok založenia')}
                 type="number"
                 min={1850}
                 max={new Date().getFullYear()}
@@ -197,37 +198,37 @@ export const Nastavenia: React.FC = () => {
             </div>
 
             <Input
-              menovka="Slogan"
+              menovka={tr('Slogan')}
               value={formular.slogan ?? ''}
               onChange={(e) => zmen('slogan', e.target.value)}
-              placeholder="Srdcom pre futbal"
+              placeholder={tr('Srdcom pre futbal')}
             />
 
             <div className="cw-nastavenia__row">
               <PoleObrazka
-                menovka="Logo"
+                menovka={tr('Logo')}
                 hodnota={formular.logo}
                 onZmena={(cesta) => zmen('logo', cesta)}
-                napoveda="Ideálne štvorcové PNG s priehľadným pozadím"
+                napoveda={tr('Ideálne štvorcové PNG s priehľadným pozadím')}
               />
               <PoleObrazka
-                menovka="Ikona stránky (favicon)"
+                menovka={tr('Ikona stránky (favicon)')}
                 hodnota={formular.favicon}
                 onZmena={(cesta) => zmen('favicon', cesta)}
-                napoveda="Malá ikona v záložke prehliadača, štvorcový obrázok"
+                napoveda={tr('Malá ikona v záložke prehliadača, štvorcový obrázok')}
               />
             </div>
           </Card>
 
           <Card
-            nadpis="Farby klubu"
-            podnadpis="Tri farby prefarbia celý web — ostatné odtiene sa dopočítajú"
+            nadpis={tr('Farby klubu')}
+            podnadpis={tr('Tri farby prefarbia celý web — ostatné odtiene sa dopočítajú')}
           >
             <div className="cw-nastavenia__farby">
               {([
-                ['farba_primarna', 'Primárna', 'Hlavná farba klubu — menu, tlačidlá, odkazy'],
-                ['farba_akcent', 'Akcentová', 'Zvýraznenia a upozornenia'],
-                ['farba_sekundarna', 'Sekundárna', 'Doplnková farba'],
+                ['farba_primarna', tr('Primárna'), tr('Hlavná farba klubu — menu, tlačidlá, odkazy')],
+                ['farba_akcent', tr('Akcentová'), tr('Zvýraznenia a upozornenia')],
+                ['farba_sekundarna', tr('Sekundárna'), tr('Doplnková farba')],
               ] as const).map(([pole, popis, vysvetlenie]) => (
                 <div key={pole} className="cw-nastavenia__farba">
                   <label className="cw-nastavenia__farba-label" htmlFor={`f-${pole}`}>
@@ -249,7 +250,7 @@ export const Nastavenia: React.FC = () => {
                       className="cw-input cw-nastavenia__farba-kod"
                       placeholder="#1B5E20"
                       maxLength={7}
-                      aria-label={`${popis} — kód farby`}
+                      aria-label={tr('{popis} — kód farby', { popis })}
                     />
                   </div>
                   <span className="cw-nastavenia__farba-popis">{vysvetlenie}</span>
@@ -260,7 +261,7 @@ export const Nastavenia: React.FC = () => {
             <div className="cw-nastavenia__row">
               <div className="cw-nastavenia__farba">
                 <label className="cw-nastavenia__farba-label" htmlFor="f-kontrast-pri">
-                  Text na primárnej farbe
+                  {tr('Text na primárnej farbe')}
                 </label>
                 <input
                   id="f-kontrast-pri"
@@ -272,7 +273,7 @@ export const Nastavenia: React.FC = () => {
               </div>
               <div className="cw-nastavenia__farba">
                 <label className="cw-nastavenia__farba-label" htmlFor="f-kontrast-akc">
-                  Text na akcentovej farbe
+                  {tr('Text na akcentovej farbe')}
                 </label>
                 <input
                   id="f-kontrast-akc"
@@ -286,10 +287,10 @@ export const Nastavenia: React.FC = () => {
 
             {/* Dodatkové farby podľa šablóny */}
             <div className="cw-nastavenia__dodatkove">
-              <span className="cw-nastavenia__farba-label">Dodatkové farby</span>
+              <span className="cw-nastavenia__farba-label">{tr('Dodatkové farby')}</span>
               <span className="cw-nastavenia__farba-popis">
-                Ďalšie farby, ktoré používa šablóna webu (napr. farba domácich, pozadie päty). V CSS sú ako
-                <code> --club-extra-názov</code>.
+                {tr('Ďalšie farby, ktoré používa šablóna webu (napr. farba domácich, pozadie päty). V CSS sú ako')}
+                <code> {tr('--club-extra-názov')}</code>.
               </span>
               {dodatkove.map((d, i) => (
                 <div key={i} className="cw-nastavenia__dodatkova">
@@ -298,7 +299,7 @@ export const Nastavenia: React.FC = () => {
                     value={/^#[0-9A-Fa-f]{6}$/.test(d.farba) ? d.farba : '#000000'}
                     onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, farba: e.target.value } : x)))}
                     className="cw-nastavenia__farba-vyber"
-                    aria-label={`Dodatková farba ${d.kluc || i + 1}`}
+                    aria-label={tr('Dodatková farba {hodnota}', { hodnota: d.kluc || i + 1 })}
                   />
                   <input
                     type="text"
@@ -306,7 +307,7 @@ export const Nastavenia: React.FC = () => {
                     value={d.kluc}
                     placeholder="nazov-farby"
                     onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, kluc: naKluc(e.target.value) } : x)))}
-                    aria-label={`Názov dodatkovej farby ${i + 1}`}
+                    aria-label={tr('Názov dodatkovej farby {hodnota}', { hodnota: i + 1 })}
                   />
                   <input
                     type="text"
@@ -314,13 +315,13 @@ export const Nastavenia: React.FC = () => {
                     value={d.farba}
                     maxLength={7}
                     onChange={(e) => setDodatkove((z) => z.map((x, j) => (j === i ? { ...x, farba: e.target.value } : x)))}
-                    aria-label={`Kód dodatkovej farby ${i + 1}`}
+                    aria-label={tr('Kód dodatkovej farby {hodnota}', { hodnota: i + 1 })}
                   />
                   <Button
                     variant="ghost"
                     velkost="sm"
                     onClick={() => setDodatkove((z) => z.filter((_, j) => j !== i))}
-                    aria-label={`Odstrániť dodatkovú farbu ${d.kluc || i + 1}`}
+                    aria-label={tr('Odstrániť dodatkovú farbu {hodnota}', { hodnota: d.kluc || i + 1 })}
                   >
                     <Icon nazov="zmazat" velkost={14} />
                   </Button>
@@ -333,14 +334,14 @@ export const Nastavenia: React.FC = () => {
                   ikona={<Icon nazov="plus" velkost={14} />}
                   onClick={() => setDodatkove((z) => [...z, { kluc: '', farba: '#888888' }])}
                 >
-                  Pridať farbu
+                  {tr('Pridať farbu')}
                 </Button>
               )}
             </div>
 
             {/* Ukážka, ako budú farby pôsobiť spolu */}
             <div className="cw-nastavenia__ukazka">
-              <span className="cw-nastavenia__ukazka-label">Ukážka</span>
+              <span className="cw-nastavenia__ukazka-label">{tr('Ukážka')}</span>
               <div className="cw-nastavenia__ukazka-plocha">
                 <div
                   className="cw-nastavenia__ukazka-hlavicka"
@@ -349,7 +350,7 @@ export const Nastavenia: React.FC = () => {
                     color: formular.farba_primarna_kontrast,
                   }}
                 >
-                  {formular.nazov || 'Názov klubu'}
+                  {formular.nazov || tr('Názov klubu')}
                 </div>
                 <div className="cw-nastavenia__ukazka-telo">
                   <span
@@ -359,7 +360,7 @@ export const Nastavenia: React.FC = () => {
                       color: formular.farba_akcent_kontrast,
                     }}
                   >
-                    Najbližší zápas
+                    {tr('Najbližší zápas')}
                   </span>
                   <button
                     className="cw-nastavenia__ukazka-tlacidlo"
@@ -369,7 +370,7 @@ export const Nastavenia: React.FC = () => {
                     }}
                     type="button"
                   >
-                    Viac informácií
+                    {tr('Viac informácií')}
                   </button>
                 </div>
               </div>
@@ -378,7 +379,7 @@ export const Nastavenia: React.FC = () => {
         </div>
 
         <div className="cw-nastavenia__col">
-          <Card nadpis="Kontaktné údaje">
+          <Card nadpis={tr('Kontaktné údaje')}>
             <Input
               menovka="E-mail"
               type="email"
@@ -387,41 +388,41 @@ export const Nastavenia: React.FC = () => {
               placeholder="info@vasklub.sk"
             />
             <Input
-              menovka="Telefón"
+              menovka={tr('Telefón')}
               value={formular.telefon ?? ''}
               onChange={(e) => zmen('telefon', e.target.value)}
               placeholder="+421 900 000 000"
             />
             <Input
-              menovka="Adresa"
+              menovka={tr('Adresa')}
               value={formular.adresa ?? ''}
               onChange={(e) => zmen('adresa', e.target.value)}
-              placeholder="Športová 1, 000 01 Mesto"
+              placeholder={tr('Športová 1, 000 01 Mesto')}
             />
           </Card>
 
-          <Card nadpis="Údaje organizácie" podnadpis="Zobrazujú sa v päte webu a na dokladoch">
+          <Card nadpis={tr('Údaje organizácie')} podnadpis={tr('Zobrazujú sa v päte webu a na dokladoch')}>
             <Input
-              menovka="Oficiálny názov organizácie"
+              menovka={tr('Oficiálny názov organizácie')}
               value={formular.pravny_nazov ?? ''}
               onChange={(e) => zmen('pravny_nazov', e.target.value)}
-              placeholder="Futbalový klub Dolina, o. z."
+              placeholder={tr('Futbalový klub Dolina, o. z.')}
             />
             <div className="cw-nastavenia__row">
               <Input
-                menovka="IČO"
+                menovka={tr('IČO')}
                 value={formular.ico ?? ''}
                 onChange={(e) => zmen('ico', e.target.value)}
               />
               <Input
-                menovka="DIČ"
+                menovka={tr('DIČ')}
                 value={formular.dic ?? ''}
                 onChange={(e) => zmen('dic', e.target.value)}
               />
             </div>
             <div className="cw-nastavenia__row">
               <Input
-                menovka="IČ DPH"
+                menovka={tr('IČ DPH')}
                 value={formular.ic_dph ?? ''}
                 onChange={(e) => zmen('ic_dph', e.target.value)}
                 placeholder="SK2020000000"
@@ -431,20 +432,20 @@ export const Nastavenia: React.FC = () => {
                 value={formular.iban ?? ''}
                 onChange={(e) => zmen('iban', e.target.value)}
                 placeholder="SK31 1200 0000 1987 4263 7541"
-                napoveda="Účet na príspevky a členské"
+                napoveda={tr('Účet na príspevky a členské')}
               />
             </div>
           </Card>
 
-          <Card nadpis="Sociálne siete">
+          <Card nadpis={tr('Sociálne siete')}>
             <Input
-              menovka="Facebook"
+              menovka={tr('Facebook')}
               value={formular.facebook_url ?? ''}
               onChange={(e) => zmen('facebook_url', e.target.value)}
               placeholder="https://facebook.com/vasklub"
             />
             <Input
-              menovka="Instagram"
+              menovka={tr('Instagram')}
               value={formular.instagram_url ?? ''}
               onChange={(e) => zmen('instagram_url', e.target.value)}
               placeholder="https://instagram.com/vasklub"
@@ -469,116 +470,126 @@ export const Nastavenia: React.FC = () => {
             />
           </Card>
 
-          <Card nadpis="Web a vyhľadávače">
+          <Card nadpis={tr('Administrácia')}>
+            <Select
+              menovka={tr('Predvolený jazyk administrácie')}
+              value={formular.jazyk_administracie ?? 'sk'}
+              onChange={(e) => zmen('jazyk_administracie', e.target.value)}
+              moznosti={JAZYKY.map((j) => ({ hodnota: j.kod, popis: j.nazov }))}
+              napoveda={tr('Platí pre používateľov, ktorí si v profile nezvolili vlastný jazyk. Verejný web ostáva po slovensky.')}
+            />
+          </Card>
+
+          <Card nadpis={tr('Web a vyhľadávače')}>
             <Textarea
-              menovka="Popis klubu pre vyhľadávače"
+              menovka={tr('Popis klubu pre vyhľadávače')}
               value={formular.meta_popis ?? ''}
               onChange={(e) => zmen('meta_popis', e.target.value)}
               rows={3}
               maxLength={300}
-              napoveda={`${(formular.meta_popis ?? '').length} / 300 znakov`}
+              napoveda={tr('{pocet} / 300 znakov', { pocet: (formular.meta_popis ?? '').length })}
             />
             <Input
-              menovka="Šablóna titulku stránok"
+              menovka={tr('Šablóna titulku stránok')}
               value={seo.meta_title_sablona ?? ''}
               onChange={(e) => zmenSeo({ meta_title_sablona: e.target.value })}
-              placeholder={`%s | ${formular.nazov || 'Názov klubu'}`}
-              napoveda="%s sa nahradí názvom stránky, napríklad „Zápasy | FK Dolina“"
+              placeholder={`%s | ${formular.nazov || tr('Názov klubu')}`}
+              napoveda={tr('%s sa nahradí názvom stránky, napríklad „Zápasy | FK Dolina“')}
             />
             <Input
-              menovka="Kľúčové slová"
+              menovka={tr('Kľúčové slová')}
               value={seo.kluc_slova ?? ''}
               onChange={(e) => zmenSeo({ kluc_slova: e.target.value })}
-              placeholder="futbal, mládež, Dolina"
+              placeholder={tr('futbal, mládež, Dolina')}
             />
             <PoleObrazka
-              menovka="Obrázok pre sociálne siete"
+              menovka={tr('Obrázok pre sociálne siete')}
               hodnota={seo.og_obrazok}
               onZmena={(cesta) => zmenSeo({ og_obrazok: cesta })}
               tvar="siroky"
-              napoveda="Zobrazí sa pri zdieľaní odkazu na Facebooku a pod. (ideálne 1200 × 630 px)"
+              napoveda={tr('Zobrazí sa pri zdieľaní odkazu na Facebooku a pod. (ideálne 1200 × 630 px)')}
             />
             <Switch
               zapnute={seo.indexovat}
               onZmena={(v) => zmenSeo({ indexovat: v })}
-              menovka="Zobrazovať vo vyhľadávačoch"
-              popis={seo.indexovat ? 'Google a ďalšie vyhľadávače môžu web indexovať' : 'Web je skrytý pred vyhľadávačmi (noindex)'}
+              menovka={tr('Zobrazovať vo vyhľadávačoch')}
+              popis={seo.indexovat ? tr('Google a ďalšie vyhľadávače môžu web indexovať') : tr('Web je skrytý pred vyhľadávačmi (noindex)')}
             />
             <Input
-              menovka="Google Search Console - kód overenia"
+              menovka={tr('Google Search Console - kód overenia')}
               value={seo.google_search_console ?? ''}
               onChange={(e) => zmenSeo({ google_search_console: e.target.value })}
-              placeholder="hodnota content z meta značky google-site-verification"
+              placeholder={tr('hodnota content z meta značky google-site-verification')}
             />
             <Input
-              menovka="Google Analytics"
+              menovka={tr('Google Analytics')}
               value={formular.google_analytics_id ?? ''}
               onChange={(e) => zmen('google_analytics_id', e.target.value)}
               placeholder="G-XXXXXXXXXX"
-              napoveda="Meranie sa spustí až po súhlase návštevníka s cookies"
+              napoveda={tr('Meranie sa spustí až po súhlase návštevníka s cookies')}
             />
           </Card>
 
-          <Card nadpis="Komentáre" podnadpis="Platí pre všetky články - komentáre sa dajú vypnúť aj pri jednotlivom článku">
+          <Card nadpis={tr('Komentáre')} podnadpis={tr('Platí pre všetky články - komentáre sa dajú vypnúť aj pri jednotlivom článku')}>
             <Switch
               zapnute={komentare.povolene}
               onZmena={(v) => zmenKomentare({ povolene: v })}
-              menovka="Komentáre na webe"
-              popis={komentare.povolene ? 'Návštevníci môžu komentovať články' : 'Nové komentáre sú vypnuté na celom webe'}
+              menovka={tr('Komentáre na webe')}
+              popis={komentare.povolene ? tr('Návštevníci môžu komentovať články') : tr('Nové komentáre sú vypnuté na celom webe')}
             />
             <Switch
               zapnute={komentare.moderovat}
               onZmena={(v) => zmenKomentare({ moderovat: v })}
-              menovka="Schvaľovať pred zverejnením"
-              popis="Nový komentár sa zobrazí až po schválení v sekcii Komentáre"
+              menovka={tr('Schvaľovať pred zverejnením')}
+              popis={tr('Nový komentár sa zobrazí až po schválení v sekcii Komentáre')}
             />
             <Switch
               zapnute={komentare.vyzadovat_email}
               onZmena={(v) => zmenKomentare({ vyzadovat_email: v })}
-              menovka="Vyžadovať e-mail"
+              menovka={tr('Vyžadovať e-mail')}
             />
             <Switch
               zapnute={komentare.povolit_odpovede}
               onZmena={(v) => zmenKomentare({ povolit_odpovede: v })}
-              menovka="Povoliť odpovede na komentáre"
+              menovka={tr('Povoliť odpovede na komentáre')}
             />
           </Card>
 
-          <Card nadpis="Ochrana súkromia (GDPR)">
+          <Card nadpis={tr('Ochrana súkromia (GDPR)')}>
             <Switch
               zapnute={gdpr.cookie_lista}
               onZmena={(v) => zmenGdpr({ cookie_lista: v })}
-              menovka="Lišta so súhlasom s cookies"
-              popis="Kým návštevník nesúhlasí, meranie návštevnosti sa nespustí"
+              menovka={tr('Lišta so súhlasom s cookies')}
+              popis={tr('Kým návštevník nesúhlasí, meranie návštevnosti sa nespustí')}
             />
             <Textarea
-              menovka="Text lišty"
+              menovka={tr('Text lišty')}
               value={gdpr.text_suhlasu ?? ''}
               onChange={(e) => zmenGdpr({ text_suhlasu: e.target.value })}
               rows={2}
-              placeholder="Používame cookies na meranie návštevnosti. Nevyhnutné cookies sú vždy zapnuté."
+              placeholder={tr('Používame cookies na meranie návštevnosti. Nevyhnutné cookies sú vždy zapnuté.')}
             />
             <Input
-              menovka="Odkaz na zásady ochrany údajov"
+              menovka={tr('Odkaz na zásady ochrany údajov')}
               value={gdpr.odkaz_zasad ?? ''}
               onChange={(e) => zmenGdpr({ odkaz_zasad: e.target.value })}
               placeholder="/ochrana-osobnych-udajov"
-              napoveda="Stránka s podrobnosťami - zobrazí sa v lište a v päte webu"
+              napoveda={tr('Stránka s podrobnosťami - zobrazí sa v lište a v päte webu')}
             />
             <Input
-              menovka="Kontakt zodpovednej osoby"
+              menovka={tr('Kontakt zodpovednej osoby')}
               value={gdpr.kontakt_zodpovednej_osoby ?? ''}
               onChange={(e) => zmenGdpr({ kontakt_zodpovednej_osoby: e.target.value })}
               placeholder="gdpr@vasklub.sk"
             />
             <Input
-              menovka="Doba uchovávania údajov (mesiace)"
+              menovka={tr('Doba uchovávania údajov (mesiace)')}
               type="number"
               min={1}
               max={240}
               value={gdpr.retencia_mesiacov}
               onChange={(e) => zmenGdpr({ retencia_mesiacov: Number(e.target.value) })}
-              napoveda="Po tejto dobe ukáže Ochrana údajov neaktívnych hráčov na anonymizáciu"
+              napoveda={tr('Po tejto dobe ukáže Ochrana údajov neaktívnych hráčov na anonymizáciu')}
             />
           </Card>
         </div>

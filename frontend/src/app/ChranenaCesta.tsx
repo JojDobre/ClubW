@@ -4,6 +4,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, type Rola } from './AuthContext';
+import { tr } from '../i18n';
 
 interface ChranenaCestaProps {
   children: React.ReactNode;
@@ -23,7 +24,7 @@ export const ChranenaCesta: React.FC<ChranenaCestaProps> = ({ children, role, mo
   if (nacitava) {
     return (
       <div className="cw-boot">
-        <div className="cw-boot__spinner" aria-label="Načítava sa" />
+        <div className="cw-boot__spinner" aria-label={tr('Načítava sa')} />
       </div>
     );
   }

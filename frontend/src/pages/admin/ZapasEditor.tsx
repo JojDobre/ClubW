@@ -29,30 +29,31 @@ import type {
   Zapas, ZapasNaUlozenie, StavZapasu, UdalostZapasu, UdalostNaUlozenie, TypUdalosti,
   TypZapasu, HracZostavy, TextovaUdalost, Hrac,
 } from '../../api/typy';
+import { tr } from '../../i18n';
 import './ZapasEditor.css';
 
 const STAVY: Array<{ hodnota: StavZapasu; popis: string }> = [
-  { hodnota: 'naplanovany', popis: 'Naplánovaný' },
-  { hodnota: 'prebieha', popis: 'Prebieha' },
-  { hodnota: 'ukonceny', popis: 'Odohraný' },
-  { hodnota: 'odlozeny', popis: 'Odložený' },
-  { hodnota: 'zruseny', popis: 'Zrušený' },
+  { hodnota: 'naplanovany', popis: tr('Naplánovaný') },
+  { hodnota: 'prebieha', popis: tr('Prebieha') },
+  { hodnota: 'ukonceny', popis: tr('Odohraný') },
+  { hodnota: 'odlozeny', popis: tr('Odložený') },
+  { hodnota: 'zruseny', popis: tr('Zrušený') },
 ];
 
 const MIESTA: Array<{ hodnota: TypZapasu; popis: string }> = [
-  { hodnota: 'doma', popis: 'Doma' },
-  { hodnota: 'vonku', popis: 'Vonku' },
-  { hodnota: 'neutralne', popis: 'Neutrálna pôda' },
+  { hodnota: 'doma', popis: tr('Doma') },
+  { hodnota: 'vonku', popis: tr('Vonku') },
+  { hodnota: 'neutralne', popis: tr('Neutrálna pôda') },
 ];
 
 /** Popisy a symboly typov udalostí. */
 export const TYPY_UDALOSTI: Record<TypUdalosti, { popis: string; symbol: string }> = {
-  gol: { popis: 'Gól', symbol: '⚽' },
-  vlastny_gol: { popis: 'Vlastný gól', symbol: '⚽' },
-  asistencia: { popis: 'Asistencia', symbol: '👟' },
-  zlta_karta: { popis: 'Žltá karta', symbol: '🟨' },
-  cervena_karta: { popis: 'Červená karta', symbol: '🟥' },
-  striedanie: { popis: 'Striedanie', symbol: '🔁' },
+  gol: { popis: tr('Gól'), symbol: '⚽' },
+  vlastny_gol: { popis: tr('Vlastný gól'), symbol: '⚽' },
+  asistencia: { popis: tr('Asistencia'), symbol: '👟' },
+  zlta_karta: { popis: tr('Žltá karta'), symbol: '🟨' },
+  cervena_karta: { popis: tr('Červená karta'), symbol: '🟥' },
+  striedanie: { popis: tr('Striedanie'), symbol: '🔁' },
 };
 
 /** Stav podľa času - rovnaké pravidlo ako na serveri. */
@@ -252,8 +253,8 @@ export const ZapasEditor: React.FC = () => {
   const nasTim = zoznamTimov.find((t) => t.id === formular.nas_tim_id);
   const superNazov =
     formular.super_typ === 'nas'
-      ? zoznamTimov.find((t) => t.id === formular.super_tim_id)?.nazov ?? 'Súper'
-      : formular.super_nazov.trim() || 'Súper';
+      ? zoznamTimov.find((t) => t.id === formular.super_tim_id)?.nazov ?? tr('Súper')
+      : formular.super_nazov.trim() || tr('Súper');
 
   // Naša strana v zostave podľa miesta zápasu
   const nasaStrana: HracZostavy['strana'] = formular.typ_zapasu === 'vonku' ? 'hostia' : 'domaci';
@@ -266,14 +267,14 @@ export const ZapasEditor: React.FC = () => {
 
   const menoHraca = (hracId: number | null | undefined): string => {
     const h = zoznamHracov.find((x) => x.id === hracId);
-    if (!h) return hracId ? `Hráč #${hracId}` : '—';
+    if (!h) return hracId ? tr('Hráč #{hracId}', { hracId }) : '—';
     return `${h.meno} ${h.priezvisko}${h.cislo_dresu ? ` (${h.cislo_dresu})` : ''}`;
   };
 
   const menoVUdalosti = (u: UdalostNaUlozenie): string =>
     u.hrac_id
       ? menoHraca(u.hrac_id)
-      : `${u.hostujuci_hrac_meno ?? '?'}${u.hostujuci_hrac_cislo != null ? ` (${u.hostujuci_hrac_cislo})` : ''} · hosť`;
+      : tr('{hodnota}{hodnota2} · hosť', { hodnota: u.hostujuci_hrac_meno ?? '?', hodnota2: u.hostujuci_hrac_cislo != null ? ` (${u.hostujuci_hrac_cislo})` : '' });
 
   // Hráči na výber v udalostiach: najprv zostava, potom zvyšok tímu
   const hraciNaVyber = useMemo(() => {
@@ -283,7 +284,7 @@ export const ZapasEditor: React.FC = () => {
     const ostatni = zoznamHracov.filter((h) => !hraciTimu.includes(h) && udalosti.some((u) => u.hrac_id === h.id));
     return [...zoradeni, ...ostatni].map((h: Hrac) => ({
       hodnota: h.id,
-      popis: `${h.meno} ${h.priezvisko}${h.cislo_dresu ? ` (${h.cislo_dresu})` : ''}${vZostave.has(h.id) ? '' : ' – mimo zostavy'}`,
+      popis: `${h.meno} ${h.priezvisko}${h.cislo_dresu ? ` (${h.cislo_dresu})` : ''}${vZostave.has(h.id) ? '' : tr(' – mimo zostavy')}`,
     }));
   }, [hraciTimu, zostava, zoznamHracov, udalosti]);
 
@@ -301,25 +302,25 @@ export const ZapasEditor: React.FC = () => {
     const n = novaUdalost;
     const minuta = cisloAleboNull(n.minuta);
     if (minuta !== null && (!Number.isInteger(minuta) || minuta < 1 || minuta > 130)) {
-      varovanie('Minúta musí byť celé číslo 1 – 130');
+      varovanie(tr('Minúta musí byť celé číslo 1 – 130'));
       return;
     }
 
     const udalost: UdalostNaUlozenie = { typ: n.typ, minuta, hrac_id: null };
     if (n.kto === 'nas') {
       if (!n.hrac_id) {
-        varovanie('Vyberte hráča');
+        varovanie(tr('Vyberte hráča'));
         return;
       }
       udalost.hrac_id = Number(n.hrac_id);
     } else {
       if (!n.meno.trim()) {
-        varovanie('Zadajte meno hosťujúceho hráča');
+        varovanie(tr('Zadajte meno hosťujúceho hráča'));
         return;
       }
       const cislo = cisloAleboNull(n.cislo);
       if (cislo !== null && (!Number.isInteger(cislo) || cislo < 0 || cislo > 999)) {
-        varovanie('Číslo dresu musí byť 0 – 999');
+        varovanie(tr('Číslo dresu musí byť 0 – 999'));
         return;
       }
       udalost.hostujuci_hrac_meno = n.meno.trim();
@@ -330,7 +331,7 @@ export const ZapasEditor: React.FC = () => {
       if (n.za_koho_id) udalost.striedany_hrac_id = Number(n.za_koho_id);
       else if (n.za_koho_meno.trim()) udalost.striedany_hrac_meno = n.za_koho_meno.trim();
       else {
-        varovanie('Pri striedaní vyberte aj hráča, ktorý odchádza');
+        varovanie(tr('Pri striedaní vyberte aj hráča, ktorý odchádza'));
         return;
       }
     }
@@ -358,12 +359,12 @@ export const ZapasEditor: React.FC = () => {
 
   const pridajHosta = () => {
     if (!novyHost.meno.trim()) {
-      varovanie('Zadajte meno hráča');
+      varovanie(tr('Zadajte meno hráča'));
       return;
     }
     const cislo = cisloAleboNull(novyHost.cislo);
     if (cislo !== null && (!Number.isInteger(cislo) || cislo < 0 || cislo > 999)) {
-      varovanie('Číslo dresu musí byť 0 – 999');
+      varovanie(tr('Číslo dresu musí byť 0 – 999'));
       return;
     }
     setZostava((z) => [
@@ -381,11 +382,11 @@ export const ZapasEditor: React.FC = () => {
   const pridajText = () => {
     const minuta = cisloAleboNull(novyText.minuta);
     if (minuta !== null && (!Number.isInteger(minuta) || minuta < 0 || minuta > 150)) {
-      varovanie('Minúta musí byť celé číslo 0 – 150');
+      varovanie(tr('Minúta musí byť celé číslo 0 – 150'));
       return;
     }
     if (!novyText.text.trim()) {
-      varovanie('Napíšte text udalosti');
+      varovanie(tr('Napíšte text udalosti'));
       return;
     }
     setPriebeh((p) => [...p, { minuta, text: novyText.text.trim(), poradie: p.length }]);
@@ -402,26 +403,26 @@ export const ZapasEditor: React.FC = () => {
     setChybyPoli([]);
     const f = formular;
 
-    if (!f.nas_tim_id) return varovanie('Vyberte náš tím');
-    if (f.super_typ === 'text' && f.super_nazov.trim().length < 2) return varovanie('Zadajte názov súpera');
-    if (f.super_typ === 'nas' && !f.super_tim_id) return varovanie('Vyberte súpera');
-    if (f.super_typ === 'nas' && f.super_tim_id === f.nas_tim_id) return varovanie('Súper nemôže byť ten istý tím');
-    if (!f.datum) return varovanie('Zadajte dátum zápasu');
-    if (!f.liga_id && f.liga_nazov.trim().length < 2) return varovanie('Vyberte súťaž alebo zadajte jej názov');
+    if (!f.nas_tim_id) return varovanie(tr('Vyberte náš tím'));
+    if (f.super_typ === 'text' && f.super_nazov.trim().length < 2) return varovanie(tr('Zadajte názov súpera'));
+    if (f.super_typ === 'nas' && !f.super_tim_id) return varovanie(tr('Vyberte súpera'));
+    if (f.super_typ === 'nas' && f.super_tim_id === f.nas_tim_id) return varovanie(tr('Súper nemôže byť ten istý tím'));
+    if (!f.datum) return varovanie(tr('Zadajte dátum zápasu'));
+    if (!f.liga_id && f.liga_nazov.trim().length < 2) return varovanie(tr('Vyberte súťaž alebo zadajte jej názov'));
 
     const golyNas = cisloAleboNull(f.goly_nas);
     const golySuper = cisloAleboNull(f.goly_super);
     const kolo = cisloAleboNull(f.kolo);
     const divaci = cisloAleboNull(f.pocet_divakov);
-    for (const [hodnota, popis] of [[golyNas, 'Góly'], [golySuper, 'Góly'], [kolo, 'Kolo'], [divaci, 'Počet divákov']] as const) {
-      if (hodnota !== null && (!Number.isInteger(hodnota) || hodnota < 0)) return varovanie(`${popis}: zadajte celé nezáporné číslo`);
+    for (const [hodnota, popis] of [[golyNas, tr('Góly')], [golySuper, tr('Góly')], [kolo, tr('Kolo')], [divaci, tr('Počet divákov')]] as const) {
+      if (hodnota !== null && (!Number.isInteger(hodnota) || hodnota < 0)) return varovanie(tr('{popis}: zadajte celé nezáporné číslo', { popis }));
     }
-    if ((golyNas === null) !== (golySuper === null)) return varovanie('Zadajte skóre oboch tímov, alebo nechajte obe prázdne');
-    if (f.video_url.trim() && !/^https?:\/\//i.test(f.video_url.trim())) return varovanie('Odkaz na video musí začínať https://');
+    if ((golyNas === null) !== (golySuper === null)) return varovanie(tr('Zadajte skóre oboch tímov, alebo nechajte obe prázdne'));
+    if (f.video_url.trim() && !/^https?:\/\//i.test(f.video_url.trim())) return varovanie(tr('Odkaz na video musí začínať https://'));
 
     const datumCas = zoVstupuDatumCas(`${f.datum}T${f.cas || '00:00'}`);
     const stav: StavZapasu = f.stav === 'auto' ? automatickyStav(datumCas) : f.stav;
-    if (stav === 'ukonceny' && golyNas === null) return varovanie('Odohraný zápas musí mať zadaný výsledok');
+    if (stav === 'ukonceny' && golyNas === null) return varovanie(tr('Odohraný zápas musí mať zadaný výsledok'));
 
     const nasJeDomaci = f.typ_zapasu !== 'vonku';
     const nas = { id: f.nas_tim_id };
@@ -477,8 +478,8 @@ export const ZapasEditor: React.FC = () => {
           .catch((e) => chyby.push(`priebeh: ${e?.message}`));
       }
 
-      if (chyby.length) hlasChybu(`Zápas uložený, ale nie všetko: ${chyby.join('; ')}`);
-      else uspech(jeNovy ? 'Zápas bol vytvorený' : 'Zmeny boli uložené');
+      if (chyby.length) hlasChybu(tr('Zápas uložený, ale nie všetko: {hodnota}', { hodnota: chyby.join('; ') }));
+      else uspech(jeNovy ? tr('Zápas bol vytvorený') : tr('Zmeny boli uložené'));
 
       if (jeNovy && zapasId) {
         navigate(`/admin/zapasy/${zapasId}`, { replace: true });
@@ -493,7 +494,7 @@ export const ZapasEditor: React.FC = () => {
         hlasChybu(e.message);
         if (e.chybyPoli) setChybyPoli(e.chybyPoli);
       } else {
-        hlasChybu('Zápas sa nepodarilo uložiť');
+        hlasChybu(tr('Zápas sa nepodarilo uložiť'));
       }
     } finally {
       setUklada(false);
@@ -504,16 +505,16 @@ export const ZapasEditor: React.FC = () => {
     setMaze(true);
     try {
       await zapasyApi.zmaz(idCislo!);
-      uspech('Zápas bol vymazaný');
+      uspech(tr('Zápas bol vymazaný'));
       navigate('/admin/zapasy', { replace: true });
     } catch (e: any) {
-      hlasChybu(e?.message || 'Zápas sa nepodarilo vymazať');
+      hlasChybu(e?.message || tr('Zápas sa nepodarilo vymazať'));
       setMaze(false);
     }
   };
 
   if (zapas.chyba) {
-    return <ErrorState sprava="Zápas sa nepodarilo načítať" detail={zapas.chyba} onSkusZnova={zapas.obnov} />;
+    return <ErrorState sprava={tr('Zápas sa nepodarilo načítať')} detail={zapas.chyba} onSkusZnova={zapas.obnov} />;
   }
 
   if (!jeNovy && zapas.nacitava) {
@@ -525,8 +526,8 @@ export const ZapasEditor: React.FC = () => {
   }
 
   const nasDomaci = formular.typ_zapasu !== 'vonku';
-  const nazovDomacich = nasDomaci ? nasTim?.nazov ?? 'Náš tím' : superNazov;
-  const nazovHosti = nasDomaci ? superNazov : nasTim?.nazov ?? 'Náš tím';
+  const nazovDomacich = nasDomaci ? nasTim?.nazov ?? tr('Náš tím') : superNazov;
+  const nazovHosti = nasDomaci ? superNazov : nasTim?.nazov ?? tr('Náš tím');
   const datumIso = formular.datum ? zoVstupuDatumCas(`${formular.datum}T${formular.cas || '00:00'}`) : '';
   const autoStav = STAVY.find((s) => s.hodnota === automatickyStav(datumIso))?.popis ?? '';
   const videaZapasu = (videa.data ?? []).filter((v) => idCislo && v.zapas_id === idCislo);
@@ -546,19 +547,19 @@ export const ZapasEditor: React.FC = () => {
       <div className="cw-ced__bar">
         <button className="cw-ced__spat" onClick={() => navigate('/admin/zapasy')}>
           <Icon nazov="sipkaVlavo" velkost={15} />
-          Späť
+          {tr('Späť')}
         </button>
 
-        <h1 className="cw-zed__nadpis">{jeNovy ? 'Nový zápas' : `${nazovDomacich} – ${nazovHosti}`}</h1>
+        <h1 className="cw-zed__nadpis">{jeNovy ? tr('Nový zápas') : `${nazovDomacich} – ${nazovHosti}`}</h1>
 
-        {zapas.data?.actual_status === 'prebieha' && <Badge ton="danger" zivy>Prebieha</Badge>}
+        {zapas.data?.actual_status === 'prebieha' && <Badge ton="danger" zivy>{tr('Prebieha')}</Badge>}
 
         <div className="cw-ced__medzera" />
 
         {!jeNovy && (
           <button className="cw-ced__btn" onClick={() => navigate(`/admin/zapasy/${idCislo}/live`)}>
             <Icon nazov="live" velkost={15} />
-            Živý záznam
+            {tr('Živý záznam')}
           </button>
         )}
 
@@ -566,7 +567,7 @@ export const ZapasEditor: React.FC = () => {
           <button
             className="cw-ced__btn cw-ced__btn--nebezpecne"
             onClick={() => setZmazatOtvorene(true)}
-            aria-label="Vymazať zápas"
+            aria-label={tr('Vymazať zápas')}
           >
             <Icon nazov="zmazat" velkost={15} />
           </button>
@@ -574,13 +575,13 @@ export const ZapasEditor: React.FC = () => {
 
         <button className="cw-ced__btn cw-ced__btn--hlavne" onClick={uloz} disabled={uklada}>
           <Icon nazov="ulozit" velkost={15} />
-          {uklada ? 'Ukladám…' : 'Uložiť zápas'}
+          {uklada ? tr('Ukladám…') : tr('Uložiť zápas')}
         </button>
       </div>
 
       {chybyPoli.length > 0 && (
         <div className="cw-ced__chyby" role="alert">
-          <strong>Server odmietol uloženie:</strong>
+          <strong>{tr('Server odmietol uloženie:')}</strong>
           <ul>
             {chybyPoli.map((ch, i) => (
               <li key={i}>{ch}</li>
@@ -593,18 +594,18 @@ export const ZapasEditor: React.FC = () => {
         <div className="cw-zed__hlavne">
           {/* ===== Základné údaje ===== */}
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Zápas</div>
+            <div className="cw-zed__panel-nadpis">{tr('Zápas')}</div>
             <div className="cw-zed__row">
               <Select
-                menovka="Náš tím"
+                menovka={tr('Náš tím')}
                 value={formular.nas_tim_id ?? ''}
                 onChange={(e) => zmen('nas_tim_id', e.target.value ? Number(e.target.value) : null)}
-                prazdna="Vyberte tím"
+                prazdna={tr('Vyberte tím')}
                 moznosti={zoznamTimov.map((t) => ({ hodnota: t.id, popis: `${t.nazov} (${t.vekova_kategoria})` }))}
                 povinne
               />
               <Select
-                menovka="Kde sa hrá"
+                menovka={tr('Kde sa hrá')}
                 value={formular.typ_zapasu}
                 onChange={(e) => zmen('typ_zapasu', e.target.value as TypZapasu)}
                 moznosti={MIESTA}
@@ -613,28 +614,28 @@ export const ZapasEditor: React.FC = () => {
 
             <div className="cw-zed__row">
               <Select
-                menovka="Súper je"
+                menovka={tr('Súper je')}
                 value={formular.super_typ}
                 onChange={(e) => zmen('super_typ', e.target.value as Formular['super_typ'])}
                 moznosti={[
-                  { hodnota: 'text', popis: 'Iný klub' },
-                  { hodnota: 'nas', popis: 'Náš tím (interný zápas)' },
+                  { hodnota: 'text', popis: tr('Iný klub') },
+                  { hodnota: 'nas', popis: tr('Náš tím (interný zápas)') },
                 ]}
               />
               {formular.super_typ === 'text' ? (
                 <Input
-                  menovka="Súper"
+                  menovka={tr('Súper')}
                   value={formular.super_nazov}
                   onChange={(e) => zmen('super_nazov', e.target.value)}
-                  placeholder="Napríklad: FK Rača"
+                  placeholder={tr('Napríklad: FK Rača')}
                   povinne
                 />
               ) : (
                 <Select
-                  menovka="Súper"
+                  menovka={tr('Súper')}
                   value={formular.super_tim_id ?? ''}
                   onChange={(e) => zmen('super_tim_id', e.target.value ? Number(e.target.value) : null)}
-                  prazdna="Vyberte tím"
+                  prazdna={tr('Vyberte tím')}
                   moznosti={zoznamTimov
                     .filter((t) => t.id !== formular.nas_tim_id)
                     .map((t) => ({ hodnota: t.id, popis: `${t.nazov} (${t.vekova_kategoria})` }))}
@@ -645,7 +646,7 @@ export const ZapasEditor: React.FC = () => {
 
             {formular.super_typ === 'text' && (
               <PoleObrazka
-                menovka="Logo súpera"
+                menovka={tr('Logo súpera')}
                 hodnota={formular.super_logo}
                 onZmena={(cesta) => zmen('super_logo', cesta)}
               />
@@ -653,14 +654,14 @@ export const ZapasEditor: React.FC = () => {
 
             <div className="cw-zed__row">
               <Input
-                menovka="Dátum"
+                menovka={tr('Dátum')}
                 type="date"
                 value={formular.datum}
                 onChange={(e) => zmen('datum', e.target.value)}
                 povinne
               />
               <Input
-                menovka="Čas výkopu"
+                menovka={tr('Čas výkopu')}
                 type="time"
                 value={formular.cas}
                 onChange={(e) => zmen('cas', e.target.value)}
@@ -670,26 +671,26 @@ export const ZapasEditor: React.FC = () => {
             <div className="cw-zed__row">
               {formular.typ_zapasu === 'doma' ? (
                 <Select
-                  menovka="Štadión"
+                  menovka={tr('Štadión')}
                   value={formular.stadion_id ?? ''}
                   onChange={(e) => zmen('stadion_id', e.target.value ? Number(e.target.value) : null)}
-                  prazdna="Domáci štadión tímu"
+                  prazdna={tr('Domáci štadión tímu')}
                   moznosti={(stadiony.data ?? []).map((s) => ({ hodnota: s.id, popis: s.nazov }))}
-                  napoveda="Bez výberu sa použije štadión nastavený pri tíme"
+                  napoveda={tr('Bez výberu sa použije štadión nastavený pri tíme')}
                 />
               ) : (
                 <Input
-                  menovka="Miesto konania"
+                  menovka={tr('Miesto konania')}
                   value={formular.miesto}
                   onChange={(e) => zmen('miesto', e.target.value)}
-                  placeholder={formular.typ_zapasu === 'vonku' ? 'Štadión súpera' : 'Napríklad: NTC Poprad'}
+                  placeholder={formular.typ_zapasu === 'vonku' ? tr('Štadión súpera') : tr('Napríklad: NTC Poprad')}
                 />
               )}
               <Input
-                menovka="Rozhodca"
+                menovka={tr('Rozhodca')}
                 value={formular.rozhodca}
                 onChange={(e) => zmen('rozhodca', e.target.value)}
-                placeholder="Nepovinné"
+                placeholder={tr('Nepovinné')}
               />
             </div>
           </div>
@@ -697,26 +698,26 @@ export const ZapasEditor: React.FC = () => {
           {/* ===== Zostava ===== */}
           <div className="cw-zed__panel">
             <div className="cw-zed__panel-nadpis">
-              Zostava {nasTim ? `· ${nasTim.nazov}` : ''}
-              <span className="cw-zed__pocet">{pocetZaklad} v základe · {zostava.length - pocetZaklad} na lavičke</span>
+              {tr('Zostava')} {nasTim ? `· ${nasTim.nazov}` : ''}
+              <span className="cw-zed__pocet">{pocetZaklad} {tr('v základe ·')} {zostava.length - pocetZaklad} {tr('na lavičke')}</span>
             </div>
             <p className="cw-zed__panel-popis">
-              Kto nastúpil v základnej zostave a kto bol na lavičke. Odohrané minúty sú nepovinné.
+              {tr('Kto nastúpil v základnej zostave a kto bol na lavičke. Odohrané minúty sú nepovinné.')}
             </p>
 
             {!formular.nas_tim_id ? (
-              <p className="cw-zed__prazdne">Najprv vyberte náš tím.</p>
+              <p className="cw-zed__prazdne">{tr('Najprv vyberte náš tím.')}</p>
             ) : hraciTimu.length === 0 && hostiaVZostave.length === 0 ? (
-              <p className="cw-zed__prazdne">Tím nemá žiadnych aktívnych hráčov. Pridajte ich v sekcii Hráči alebo pridajte hosťujúceho hráča.</p>
+              <p className="cw-zed__prazdne">{tr('Tím nemá žiadnych aktívnych hráčov. Pridajte ich v sekcii Hráči alebo pridajte hosťujúceho hráča.')}</p>
             ) : (
               <div className="cw-zed__zostava-wrap">
                 <table className="cw-zed__zostava">
                   <thead>
                     <tr>
-                      <th>Hráč</th>
-                      <th>Zaradenie</th>
-                      <th>Minúty</th>
-                      <th>Kapitán</th>
+                      <th>{tr('Hráč')}</th>
+                      <th>{tr('Zaradenie')}</th>
+                      <th>{tr('Minúty')}</th>
+                      <th>{tr('Kapitán')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -732,11 +733,11 @@ export const ZapasEditor: React.FC = () => {
                               className="cw-zed__mini"
                               value={z?.zaradenie ?? ''}
                               onChange={(e) => prepniVZostave(h, (e.target.value || null) as HracZostavy['zaradenie'] | null)}
-                              aria-label={`Zaradenie – ${h.meno} ${h.priezvisko}`}
+                              aria-label={tr('Zaradenie – {meno} {priezvisko}', { meno: h.meno, priezvisko: h.priezvisko })}
                             >
-                              <option value="">Nehral</option>
-                              <option value="zakladna">Základ</option>
-                              <option value="lavicka">Lavička</option>
+                              <option value="">{tr('Nehral')}</option>
+                              <option value="zakladna">{tr('Základ')}</option>
+                              <option value="lavicka">{tr('Lavička')}</option>
                             </select>
                           </td>
                           <td>
@@ -750,7 +751,7 @@ export const ZapasEditor: React.FC = () => {
                                   odohrane_minuty: e.target.value === '' ? null : Number(e.target.value),
                                 })
                               }
-                              aria-label={`Minúty – ${h.meno} ${h.priezvisko}`}
+                              aria-label={tr('Minúty – {meno} {priezvisko}', { meno: h.meno, priezvisko: h.priezvisko })}
                             />
                           </td>
                           <td>
@@ -761,7 +762,7 @@ export const ZapasEditor: React.FC = () => {
                               onChange={(e) =>
                                 setZostava((zs) => zs.map((x) => ({ ...x, kapitan: x.hrac_id === h.id ? e.target.checked : e.target.checked ? false : x.kapitan })))
                               }
-                              aria-label={`Kapitán – ${h.meno} ${h.priezvisko}`}
+                              aria-label={tr('Kapitán – {meno} {priezvisko}', { meno: h.meno, priezvisko: h.priezvisko })}
                             />
                           </td>
                         </tr>
@@ -771,7 +772,7 @@ export const ZapasEditor: React.FC = () => {
                       <tr key={`host-${i}`}>
                         <td>
                           <span className="cw-zed__cislo">{z.hostujuci_hrac_cislo ?? '–'}</span> {z.hostujuci_hrac_meno}{' '}
-                          <Badge>hosť</Badge>
+                          <Badge>{tr('hosť')}</Badge>
                         </td>
                         <td>
                           <select
@@ -782,11 +783,11 @@ export const ZapasEditor: React.FC = () => {
                                 ? upravZostavu((x) => x === z, { zaradenie: e.target.value as HracZostavy['zaradenie'] })
                                 : setZostava((zs) => zs.filter((x) => x !== z))
                             }
-                            aria-label={`Zaradenie – ${z.hostujuci_hrac_meno}`}
+                            aria-label={tr('Zaradenie – {hostujuci_hrac_meno}', { hostujuci_hrac_meno: z.hostujuci_hrac_meno })}
                           >
-                            <option value="">Odstrániť</option>
-                            <option value="zakladna">Základ</option>
-                            <option value="lavicka">Lavička</option>
+                            <option value="">{tr('Odstrániť')}</option>
+                            <option value="zakladna">{tr('Základ')}</option>
+                            <option value="lavicka">{tr('Lavička')}</option>
                           </select>
                         </td>
                         <td>
@@ -797,7 +798,7 @@ export const ZapasEditor: React.FC = () => {
                             onChange={(e) =>
                               upravZostavu((x) => x === z, { odohrane_minuty: e.target.value === '' ? null : Number(e.target.value) })
                             }
-                            aria-label={`Minúty – ${z.hostujuci_hrac_meno}`}
+                            aria-label={tr('Minúty – {hostujuci_hrac_meno}', { hostujuci_hrac_meno: z.hostujuci_hrac_meno })}
                           />
                         </td>
                         <td />
@@ -810,42 +811,42 @@ export const ZapasEditor: React.FC = () => {
 
             <div className="cw-zed__host">
               <Input
-                menovka="Hosťujúci hráč"
+                menovka={tr('Hosťujúci hráč')}
                 value={novyHost.meno}
                 onChange={(e) => setNovyHost((h) => ({ ...h, meno: e.target.value }))}
-                placeholder="Meno hráča mimo súpisky"
+                placeholder={tr('Meno hráča mimo súpisky')}
               />
               <Input
-                menovka="Číslo"
+                menovka={tr('Číslo')}
                 inputMode="numeric"
                 value={novyHost.cislo}
                 onChange={(e) => setNovyHost((h) => ({ ...h, cislo: e.target.value }))}
               />
               <Select
-                menovka="Zaradenie"
+                menovka={tr('Zaradenie')}
                 value={novyHost.zaradenie}
                 onChange={(e) => setNovyHost((h) => ({ ...h, zaradenie: e.target.value as HracZostavy['zaradenie'] }))}
                 moznosti={[
-                  { hodnota: 'zakladna', popis: 'Základ' },
-                  { hodnota: 'lavicka', popis: 'Lavička' },
+                  { hodnota: 'zakladna', popis: tr('Základ') },
+                  { hodnota: 'lavicka', popis: tr('Lavička') },
                 ]}
               />
               <Button variant="secondary" onClick={pridajHosta} ikona={<Icon nazov="plus" velkost={15} />}>
-                Pridať
+                {tr('Pridať')}
               </Button>
             </div>
           </div>
 
           {/* ===== Udalosti hráčov ===== */}
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Udalosti hráčov</div>
+            <div className="cw-zed__panel-nadpis">{tr('Udalosti hráčov')}</div>
             <p className="cw-zed__panel-popis">
-              Góly, asistencie, karty, vlastné góly a striedania. Zobrazia sa na webe a v štatistikách hráčov.
+              {tr('Góly, asistencie, karty, vlastné góly a striedania. Zobrazia sa na webe a v štatistikách hráčov.')}
             </p>
 
             <div className="cw-zed__udalost-form cw-zed__udalost-form--siroky">
               <Select
-                menovka="Udalosť"
+                menovka={tr('Udalosť')}
                 value={novaUdalost.typ}
                 onChange={(e) => setNovaUdalost((d) => ({ ...d, typ: e.target.value as TypUdalosti }))}
                 moznosti={(Object.keys(TYPY_UDALOSTI) as TypUdalosti[]).map((t) => ({
@@ -854,31 +855,31 @@ export const ZapasEditor: React.FC = () => {
                 }))}
               />
               <Select
-                menovka={novaUdalost.typ === 'striedanie' ? 'Prichádza' : 'Hráč je'}
+                menovka={novaUdalost.typ === 'striedanie' ? tr('Prichádza') : tr('Hráč je')}
                 value={novaUdalost.kto}
                 onChange={(e) => setNovaUdalost((d) => ({ ...d, kto: e.target.value as NovaUdalost['kto'] }))}
                 moznosti={[
-                  { hodnota: 'nas', popis: 'Z našej súpisky' },
-                  { hodnota: 'host', popis: 'Hosť (meno a číslo)' },
+                  { hodnota: 'nas', popis: tr('Z našej súpisky') },
+                  { hodnota: 'host', popis: tr('Hosť (meno a číslo)') },
                 ]}
               />
               {novaUdalost.kto === 'nas' ? (
                 <Select
-                  menovka="Hráč"
+                  menovka={tr('Hráč')}
                   value={novaUdalost.hrac_id}
                   onChange={(e) => setNovaUdalost((d) => ({ ...d, hrac_id: e.target.value }))}
-                  prazdna="Vyberte hráča"
+                  prazdna={tr('Vyberte hráča')}
                   moznosti={hraciNaVyber}
                 />
               ) : (
                 <>
                   <Input
-                    menovka="Meno hráča"
+                    menovka={tr('Meno hráča')}
                     value={novaUdalost.meno}
                     onChange={(e) => setNovaUdalost((d) => ({ ...d, meno: e.target.value }))}
                   />
                   <Input
-                    menovka="Číslo"
+                    menovka={tr('Číslo')}
                     inputMode="numeric"
                     value={novaUdalost.cislo}
                     onChange={(e) => setNovaUdalost((d) => ({ ...d, cislo: e.target.value }))}
@@ -888,15 +889,15 @@ export const ZapasEditor: React.FC = () => {
               {novaUdalost.typ === 'striedanie' && (
                 <>
                   <Select
-                    menovka="Odchádza"
+                    menovka={tr('Odchádza')}
                     value={novaUdalost.za_koho_id}
                     onChange={(e) => setNovaUdalost((d) => ({ ...d, za_koho_id: e.target.value }))}
-                    prazdna="Hosť – napíšte meno →"
+                    prazdna={tr('Hosť – napíšte meno →')}
                     moznosti={hraciNaVyber}
                   />
                   {!novaUdalost.za_koho_id && (
                     <Input
-                      menovka="Meno odchádzajúceho"
+                      menovka={tr('Meno odchádzajúceho')}
                       value={novaUdalost.za_koho_meno}
                       onChange={(e) => setNovaUdalost((d) => ({ ...d, za_koho_meno: e.target.value }))}
                     />
@@ -904,21 +905,21 @@ export const ZapasEditor: React.FC = () => {
                 </>
               )}
               <Input
-                menovka="Minúta"
+                menovka={tr('Minúta')}
                 inputMode="numeric"
                 value={novaUdalost.minuta}
                 onChange={(e) => setNovaUdalost((d) => ({ ...d, minuta: e.target.value }))}
                 placeholder="—"
               />
               <Button variant="secondary" onClick={pridajUdalost} ikona={<Icon nazov="plus" velkost={15} />}>
-                Pridať
+                {tr('Pridať')}
               </Button>
             </div>
 
             {statistiky.nacitava ? (
               <Skeleton riadkov={3} />
             ) : zoradeneUdalosti.length === 0 ? (
-              <p className="cw-zed__prazdne">Zatiaľ žiadne udalosti.</p>
+              <p className="cw-zed__prazdne">{tr('Zatiaľ žiadne udalosti.')}</p>
             ) : (
               <ul className="cw-zed__udalosti">
                 {zoradeneUdalosti.map(({ u, index }) => (
@@ -935,7 +936,7 @@ export const ZapasEditor: React.FC = () => {
                     <button
                       className="cw-zed__odobrat"
                       onClick={() => setUdalosti((d) => d.filter((_, i) => i !== index))}
-                      aria-label="Odobrať udalosť"
+                      aria-label={tr('Odobrať udalosť')}
                     >
                       <Icon nazov="zavriet" velkost={14} />
                     </button>
@@ -947,30 +948,30 @@ export const ZapasEditor: React.FC = () => {
 
           {/* ===== Priebeh zápasu (voľný text) ===== */}
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Priebeh zápasu</div>
+            <div className="cw-zed__panel-nadpis">{tr('Priebeh zápasu')}</div>
             <p className="cw-zed__panel-popis">
-              Voľné poznámky k priebehu, napríklad „20' Tyčka Nováka" alebo „Prerušenie pre dážď".
+              {tr('Voľné poznámky k priebehu, napríklad „20\' Tyčka Nováka" alebo „Prerušenie pre dážď".')}
             </p>
             <div className="cw-zed__text-form">
               <Input
-                menovka="Minúta"
+                menovka={tr('Minúta')}
                 inputMode="numeric"
                 value={novyText.minuta}
                 onChange={(e) => setNovyText((t) => ({ ...t, minuta: e.target.value }))}
                 placeholder="—"
               />
               <Input
-                menovka="Text udalosti"
+                menovka={tr('Text udalosti')}
                 value={novyText.text}
                 onChange={(e) => setNovyText((t) => ({ ...t, text: e.target.value }))}
                 onKeyDown={(e) => e.key === 'Enter' && pridajText()}
               />
               <Button variant="secondary" onClick={pridajText} ikona={<Icon nazov="plus" velkost={15} />}>
-                Pridať
+                {tr('Pridať')}
               </Button>
             </div>
             {zoradenyPriebeh.length === 0 ? (
-              <p className="cw-zed__prazdne">Zatiaľ žiadne poznámky k priebehu.</p>
+              <p className="cw-zed__prazdne">{tr('Zatiaľ žiadne poznámky k priebehu.')}</p>
             ) : (
               <ul className="cw-zed__udalosti">
                 {zoradenyPriebeh.map(({ p, index }) => (
@@ -980,7 +981,7 @@ export const ZapasEditor: React.FC = () => {
                     <button
                       className="cw-zed__odobrat"
                       onClick={() => setPriebeh((d) => d.filter((_, i) => i !== index))}
-                      aria-label="Odobrať poznámku"
+                      aria-label={tr('Odobrať poznámku')}
                     >
                       <Icon nazov="zavriet" velkost={14} />
                     </button>
@@ -994,7 +995,7 @@ export const ZapasEditor: React.FC = () => {
         {/* ===== Bočný panel ===== */}
         <div className="cw-zed__bok">
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Výsledok</div>
+            <div className="cw-zed__panel-nadpis">{tr('Výsledok')}</div>
             <div className="cw-zed__skore">
               {nasDomaci ? golyVstup('goly_nas', nazovDomacich) : golyVstup('goly_super', nazovDomacich)}
               <span className="cw-zed__dvojbodka">:</span>
@@ -1002,44 +1003,44 @@ export const ZapasEditor: React.FC = () => {
             </div>
 
             <Select
-              menovka="Stav zápasu"
+              menovka={tr('Stav zápasu')}
               value={formular.stav}
               onChange={(e) => zmen('stav', e.target.value as Formular['stav'])}
               moznosti={[
-                { hodnota: 'auto', popis: `Automaticky podľa času${autoStav ? ` (${autoStav})` : ''}` },
-                ...STAVY.map((s) => ({ hodnota: s.hodnota, popis: `Ručne: ${s.popis}` })),
+                { hodnota: 'auto', popis: tr('Automaticky podľa času{hodnota}', { hodnota: autoStav ? ` (${autoStav})` : '' }) },
+                ...STAVY.map((s) => ({ hodnota: s.hodnota, popis: tr('Ručne: {popis}', { popis: s.popis }) })),
               ]}
-              napoveda="Automatika prepne zápas na odohraný 2 hodiny po výkope. Ručne zvolený stav sa nemení."
+              napoveda={tr('Automatika prepne zápas na odohraný 2 hodiny po výkope. Ručne zvolený stav sa nemení.')}
             />
           </div>
 
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Súťaž</div>
+            <div className="cw-zed__panel-nadpis">{tr('Súťaž')}</div>
             <Select
-              menovka="Súťaž"
+              menovka={tr('Súťaž')}
               value={formular.liga_id ?? ''}
               onChange={(e) => zmen('liga_id', e.target.value ? Number(e.target.value) : null)}
-              prazdna="Vlastná súťaž →"
+              prazdna={tr('Vlastná súťaž →')}
               moznosti={(ligy.data ?? []).map((l) => ({ hodnota: l.id, popis: `${l.nazov} (${l.sezona})` }))}
             />
             {!formular.liga_id && (
               <Input
-                menovka="Názov súťaže"
+                menovka={tr('Názov súťaže')}
                 value={formular.liga_nazov}
                 onChange={(e) => zmen('liga_nazov', e.target.value)}
-                placeholder="Napríklad: Priateľský zápas"
+                placeholder={tr('Napríklad: Priateľský zápas')}
               />
             )}
             <div className="cw-zed__row">
               <Input
-                menovka="Kolo"
+                menovka={tr('Kolo')}
                 inputMode="numeric"
                 value={formular.kolo}
                 onChange={(e) => zmen('kolo', e.target.value)}
                 placeholder="—"
               />
               <Input
-                menovka="Diváci"
+                menovka={tr('Diváci')}
                 inputMode="numeric"
                 value={formular.pocet_divakov}
                 onChange={(e) => zmen('pocet_divakov', e.target.value)}
@@ -1049,31 +1050,31 @@ export const ZapasEditor: React.FC = () => {
           </div>
 
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Galéria a video</div>
+            <div className="cw-zed__panel-nadpis">{tr('Galéria a video')}</div>
             <Select
-              menovka="Fotogaléria"
+              menovka={tr('Fotogaléria')}
               value={formular.fotogaleria_id ?? ''}
               onChange={(e) => zmen('fotogaleria_id', e.target.value ? Number(e.target.value) : null)}
-              prazdna="Bez galérie"
+              prazdna={tr('Bez galérie')}
               moznosti={(galerie.data ?? []).map((g) => ({ hodnota: g.id, popis: g.nazov }))}
             />
             <Input
-              menovka="Odkaz na video"
+              menovka={tr('Odkaz na video')}
               value={formular.video_url}
               onChange={(e) => zmen('video_url', e.target.value)}
               placeholder="https://youtube.com/…"
             />
             {videaZapasu.length > 0 && (
               <div className="cw-zed__videa">
-                Videá priradené v Videogalérii: {videaZapasu.map((v) => v.nazov).join(', ')}
+                {tr('Videá priradené v Videogalérii:')} {videaZapasu.map((v) => v.nazov).join(', ')}
               </div>
             )}
           </div>
 
           <div className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Poznámka</div>
+            <div className="cw-zed__panel-nadpis">{tr('Poznámka')}</div>
             <Textarea
-              menovka="Poznámka k zápasu"
+              menovka={tr('Poznámka k zápasu')}
               value={formular.poznamky}
               onChange={(e) => zmen('poznamky', e.target.value)}
               rows={3}
@@ -1084,9 +1085,9 @@ export const ZapasEditor: React.FC = () => {
 
       <ConfirmDialog
         otvorene={zmazatOtvorene}
-        nadpis="Vymazať zápas?"
-        sprava="Zápas bude odstránený. Ak patrí do ligy, tabuľka sa automaticky prepočíta."
-        potvrdit="Vymazať"
+        nadpis={tr('Vymazať zápas?')}
+        sprava={tr('Zápas bude odstránený. Ak patrí do ligy, tabuľka sa automaticky prepočíta.')}
+        potvrdit={tr('Vymazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

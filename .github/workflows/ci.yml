@@ -76,6 +76,10 @@ jobs:
         working-directory: backend
         run: npm test
 
+      - name: Preklady hlášok (cs, en)
+        working-directory: backend
+        run: npm run preklady -- --kontrola
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -94,6 +98,10 @@ jobs:
       - name: Kontrola typov
         working-directory: frontend
         run: npx tsc --noEmit
+
+      - name: Preklady administrácie (cs, en)
+        working-directory: frontend
+        run: npm run preklady -- --kontrola
 
       - name: Produkčný build
         working-directory: frontend

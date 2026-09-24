@@ -19,17 +19,18 @@ import { sezonyApi } from '../../api/sprava';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import { souborUrl } from '../../config/api';
 import type { Liga, RiadokTabulky, RiadokNaUlozenie } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Ligy.css';
 
 const TYPY_SUTAZE = [
-  { hodnota: 'sutaz', popis: 'Ligová súťaž' },
-  { hodnota: 'pohar', popis: 'Pohár' },
-  { hodnota: 'priatelska', popis: 'Priateľské zápasy' },
+  { hodnota: 'sutaz', popis: tr('Ligová súťaž') },
+  { hodnota: 'pohar', popis: tr('Pohár') },
+  { hodnota: 'priatelska', popis: tr('Priateľské zápasy') },
 ];
 
 const REZIMY = [
-  { hodnota: 'plna', popis: 'Plná tabuľka (zápasy, výhry, skóre, forma…)' },
-  { hodnota: 'len_body', popis: 'Len poradie a body' },
+  { hodnota: 'plna', popis: tr('Plná tabuľka (zápasy, výhry, skóre, forma…)') },
+  { hodnota: 'len_body', popis: tr('Len poradie a body') },
 ];
 
 const PRAZDNA_LIGA: Partial<Liga> = {
@@ -146,7 +147,7 @@ export const Ligy: React.FC = () => {
     () =>
       (sezony.data ?? []).map((s) => ({
         hodnota: s.id,
-        popis: `${s.nazov}${s.aktualna ? ' (aktuálna)' : ''}`,
+        popis: `${s.nazov}${s.aktualna ? tr(' (aktuálna)') : ''}`,
       })),
     [sezony.data]
   );
@@ -164,16 +165,16 @@ export const Ligy: React.FC = () => {
   const ulozLigu = async () => {
     if (!upravovana) return;
     if ((upravovana.nazov ?? '').trim().length < 2) {
-      varovanie('Názov súťaže musí mať aspoň 2 znaky');
+      varovanie(tr('Názov súťaže musí mať aspoň 2 znaky'));
       return;
     }
     if (!upravovana.sezona_id && !upravovana.sezona) {
-      varovanie('Vyberte sezónu');
+      varovanie(tr('Vyberte sezónu'));
       return;
     }
     const cisla = [upravovana.body_za_vitazstvo, upravovana.body_za_remizy, upravovana.body_za_prehru];
     if (cisla.some((c) => c === undefined || c === null || Number.isNaN(Number(c)) || Number(c) < 0 || Number(c) > 10)) {
-      varovanie('Body za výsledok musia byť čísla 0 – 10');
+      varovanie(tr('Body za výsledok musia byť čísla 0 – 10'));
       return;
     }
 
@@ -198,16 +199,16 @@ export const Ligy: React.FC = () => {
     try {
       if (upravovana.id) {
         await tabulkyApi.upravLigu(upravovana.id, udaje);
-        uspech('Súťaž bola uložená');
+        uspech(tr('Súťaž bola uložená'));
       } else {
         const nova = await tabulkyApi.vytvorLigu(udaje);
-        uspech('Súťaž bola vytvorená');
+        uspech(tr('Súťaž bola vytvorená'));
         setVybrana(nova.id);
       }
       setUpravovana(null);
       ligy.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Súťaž sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Súťaž sa nepodarilo uložiť'));
     } finally {
       setUkladaLigu(false);
     }
@@ -219,10 +220,10 @@ export const Ligy: React.FC = () => {
     setPrepocitava(true);
     try {
       await tabulkyApi.prepocitaj(vybrana);
-      uspech('Tabuľka bola prepočítaná zo zápasov');
+      uspech(tr('Tabuľka bola prepočítaná zo zápasov'));
       tabulka.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Tabuľku sa nepodarilo prepočítať');
+      hlasChybu(e?.message || tr('Tabuľku sa nepodarilo prepočítať'));
     } finally {
       setPrepocitava(false);
     }
@@ -233,12 +234,12 @@ export const Ligy: React.FC = () => {
     setMaze(true);
     try {
       await tabulkyApi.zmazLigu(naZmazanie.id);
-      uspech('Súťaž bola presunutá do archívu');
+      uspech(tr('Súťaž bola presunutá do archívu'));
       setNaZmazanie(null);
       setVybrana(null);
       ligy.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Súťaž sa nepodarilo archivovať');
+      hlasChybu(e?.message || tr('Súťaž sa nepodarilo archivovať'));
     } finally {
       setMaze(false);
     }
@@ -247,18 +248,18 @@ export const Ligy: React.FC = () => {
   const duplikuj = async () => {
     if (!zvolena || !duplikovat) return;
     if (!duplikovat.sezona_id) {
-      varovanie('Vyberte sezónu, do ktorej sa liga skopíruje');
+      varovanie(tr('Vyberte sezónu, do ktorej sa liga skopíruje'));
       return;
     }
     setDuplikuje(true);
     try {
       const vysledok = await tabulkyApi.duplikuj(zvolena.id, { sezona_id: duplikovat.sezona_id, zachovat_body: duplikovat.zachovat_body });
-      uspech(`Liga bola skopírovaná do sezóny ${vysledok.liga.sezona}`);
+      uspech(tr('Liga bola skopírovaná do sezóny {sezona}', { sezona: vysledok.liga.sezona }));
       setDuplikovat(null);
       await ligy.obnov();
       setVybrana(vysledok.liga.id);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Ligu sa nepodarilo duplikovať');
+      hlasChybu(e?.message || tr('Ligu sa nepodarilo duplikovať'));
     } finally {
       setDuplikuje(false);
     }
@@ -299,22 +300,22 @@ export const Ligy: React.FC = () => {
     if (novyTim.typ === 'nas') {
       const tim = nasTim(novyTim.tim_id);
       if (!tim) {
-        varovanie('Vyberte náš tím');
+        varovanie(tr('Vyberte náš tím'));
         return;
       }
       if (riadkyUprav.some((r) => r.tim_id === tim.id)) {
-        varovanie(`Tím ${tim.nazov} už v tabuľke je`);
+        varovanie(tr('Tím {nazov} už v tabuľke je', { nazov: tim.nazov }));
         return;
       }
       novy = { ...zaklad, tim_id: tim.id, custom_tim_nazov: '', custom_tim_logo: null, nazov: tim.nazov, logo: tim.logo };
     } else {
       const nazov = novyTim.nazov.trim();
       if (nazov.length < 2) {
-        varovanie('Zadajte názov tímu');
+        varovanie(tr('Zadajte názov tímu'));
         return;
       }
       if (riadkyUprav.some((r) => !r.tim_id && r.custom_tim_nazov.toLowerCase() === nazov.toLowerCase())) {
-        varovanie(`Tím ${nazov} už v tabuľke je`);
+        varovanie(tr('Tím {nazov} už v tabuľke je', { nazov }));
         return;
       }
       novy = { ...zaklad, tim_id: null, custom_tim_nazov: nazov, custom_tim_logo: novyTim.logo, nazov, logo: novyTim.logo };
@@ -329,7 +330,7 @@ export const Ligy: React.FC = () => {
 
     const cislo = (t: string, popis: string, nazov: string) => {
       const n = t.trim() === '' ? 0 : Number(t);
-      if (!Number.isInteger(n)) throw new Error(`${nazov}: ${popis} musí byť celé číslo`);
+      if (!Number.isInteger(n)) throw new Error(tr('{nazov}: {popis} musí byť celé číslo', { nazov, popis }));
       return n;
     };
 
@@ -347,15 +348,15 @@ export const Ligy: React.FC = () => {
           riadok.custom_tim_logo = r.custom_tim_logo;
         }
         if (!lenBody) {
-          riadok.zapasy = cislo(r.zapasy, 'zápasy', r.nazov);
-          riadok.vitazstva = cislo(r.vitazstva, 'výhry', r.nazov);
-          riadok.remizy = cislo(r.remizy, 'remízy', r.nazov);
+          riadok.zapasy = cislo(r.zapasy, tr('zápasy'), r.nazov);
+          riadok.vitazstva = cislo(r.vitazstva, tr('výhry'), r.nazov);
+          riadok.remizy = cislo(r.remizy, tr('remízy'), r.nazov);
           riadok.prehry = cislo(r.prehry, 'prehry', r.nazov);
-          riadok.goly_za = cislo(r.goly_za, 'strelené góly', r.nazov);
-          riadok.goly_proti = cislo(r.goly_proti, 'inkasované góly', r.nazov);
+          riadok.goly_za = cislo(r.goly_za, tr('strelené góly'), r.nazov);
+          riadok.goly_proti = cislo(r.goly_proti, tr('inkasované góly'), r.nazov);
           const forma = formaNaUlozenie(r.forma);
           if (forma && !/^[WDL]{1,10}$/.test(forma)) {
-            throw new Error(`${r.nazov}: forma smie obsahovať len V (výhra), R (remíza), P (prehra), najviac 10 znakov`);
+            throw new Error(tr('{nazov}: forma smie obsahovať len V (výhra), R (remíza), P (prehra), najviac 10 znakov', { nazov: r.nazov }));
           }
           riadok.forma = forma || null;
         }
@@ -372,12 +373,12 @@ export const Ligy: React.FC = () => {
         await tabulkyApi.zmazRiadok(zvolena.id, id);
       }
       if (data.length > 0) await tabulkyApi.ulozTabulku(zvolena.id, data);
-      uspech('Tabuľka bola uložená');
+      uspech(tr('Tabuľka bola uložená'));
       setRiadkyUprav(null);
       setNaOdstranenie([]);
       tabulka.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Tabuľku sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Tabuľku sa nepodarilo uložiť'));
       tabulka.obnov();
     } finally {
       setUkladaTabulku(false);
@@ -401,7 +402,7 @@ export const Ligy: React.FC = () => {
     );
 
   if (ligy.chyba) {
-    return <ErrorState sprava="Súťaže sa nepodarilo načítať" detail={ligy.chyba} onSkusZnova={ligy.obnov} />;
+    return <ErrorState sprava={tr('Súťaže sa nepodarilo načítať')} detail={ligy.chyba} onSkusZnova={ligy.obnov} />;
   }
 
   const bunkaCisla = (r: UpravovanyRiadok, pole: keyof UpravovanyRiadok, popis: string) => (
@@ -419,11 +420,11 @@ export const Ligy: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Ligy a tabuľky"
-        podnadpis="Súťaže klubu a ich tabuľky."
+        nadpis={tr('Ligy a tabuľky')}
+        podnadpis={tr('Súťaže klubu a ich tabuľky.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => otvorLigu(PRAZDNA_LIGA)}>
-            Nová súťaž
+            {tr('Nová súťaž')}
           </Button>
         }
       />
@@ -436,9 +437,9 @@ export const Ligy: React.FC = () => {
         <Card>
           <EmptyState
             ikona={<Icon nazov="ligy" velkost={40} />}
-            nadpis="Zatiaľ žiadne súťaže"
-            popis="Vytvorte ligu, pridajte do nej tímy a tabuľku môžete viesť ručne alebo ju počítať zo zápasov."
-            akcia={<Button onClick={() => otvorLigu(PRAZDNA_LIGA)}>Vytvoriť súťaž</Button>}
+            nadpis={tr('Zatiaľ žiadne súťaže')}
+            popis={tr('Vytvorte ligu, pridajte do nej tímy a tabuľku môžete viesť ručne alebo ju počítať zo zápasov.')}
+            akcia={<Button onClick={() => otvorLigu(PRAZDNA_LIGA)}>{tr('Vytvoriť súťaž')}</Button>}
           />
         </Card>
       ) : (
@@ -446,7 +447,7 @@ export const Ligy: React.FC = () => {
           {/* ===== Výber súťaže ===== */}
           <div className="cw-ligy__vyber">
             <Select
-              menovka="Súťaž"
+              menovka={tr('Súťaž')}
               value={vybrana ?? ''}
               onChange={(e) => setVybrana(e.target.value ? Number(e.target.value) : null)}
               moznosti={zoznam.map((l) => ({ hodnota: l.id, popis: `${l.nazov} · ${l.sezona}` }))}
@@ -455,21 +456,21 @@ export const Ligy: React.FC = () => {
             {zvolena && (
               <div className="cw-ligy__akcie">
                 <Button variant="secondary" ikona={<Icon nazov="upravit" velkost={15} />} onClick={() => otvorLigu(zvolena)}>
-                  Upraviť súťaž
+                  {tr('Upraviť súťaž')}
                 </Button>
                 <Button
                   variant="secondary"
                   ikona={<Icon nazov="kopirovat" velkost={15} />}
                   onClick={() => setDuplikovat({ sezona_id: null, zachovat_body: false })}
                 >
-                  Do novej sezóny
+                  {tr('Do novej sezóny')}
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => setNaZmazanie(zvolena)}
                   ikona={<Icon nazov="archiv" velkost={15} />}
                 >
-                  Archivovať
+                  {tr('Archivovať')}
                 </Button>
               </div>
             )}
@@ -483,13 +484,13 @@ export const Ligy: React.FC = () => {
               <Badge>{TYPY_SUTAZE.find((t) => t.hodnota === zvolena.typ)?.popis ?? zvolena.typ}</Badge>
               {nasTim(zvolena.tim_id) && <Badge ton="info">{nasTim(zvolena.tim_id)!.nazov}</Badge>}
               {lenBody ? (
-                <Badge>Len body</Badge>
+                <Badge>{tr('Len body')}</Badge>
               ) : (
                 <span className="cw-ligy__pravidla">
-                  {zvolena.body_za_vitazstvo} b. za výhru · {zvolena.body_za_remizy} b. za remízu
+                  {zvolena.body_za_vitazstvo} {tr('b. za výhru ·')} {zvolena.body_za_remizy} {tr('b. za remízu')}
                 </span>
               )}
-              {zvolena.auto_update_tabulka && <Badge ton="success">Prepočet zo zápasov</Badge>}
+              {zvolena.auto_update_tabulka && <Badge ton="success">{tr('Prepočet zo zápasov')}</Badge>}
               {zvolena.popis && <p className="cw-ligy__popis">{zvolena.popis}</p>}
             </div>
           )}
@@ -497,26 +498,26 @@ export const Ligy: React.FC = () => {
           {/* ===== Tabuľka ===== */}
           <Card
             bezOdsadenia
-            nadpis="Tabuľka"
+            nadpis={tr('Tabuľka')}
             akcie={
               riadkyUprav ? (
                 <div className="cw-ligy__akcie">
                   <Button variant="secondary" velkost="sm" onClick={() => setRiadkyUprav(null)} disabled={ukladaTabulku}>
-                    Zrušiť
+                    {tr('Zrušiť')}
                   </Button>
                   <Button velkost="sm" onClick={ulozTabulku} nacitava={ukladaTabulku}>
-                    Uložiť tabuľku
+                    {tr('Uložiť tabuľku')}
                   </Button>
                 </div>
               ) : (
                 <div className="cw-ligy__akcie">
                   {zvolena?.auto_update_tabulka && (
                     <Button variant="ghost" velkost="sm" onClick={prepocitaj} nacitava={prepocitava}>
-                      Prepočítať zo zápasov
+                      {tr('Prepočítať zo zápasov')}
                     </Button>
                   )}
                   <Button variant="secondary" velkost="sm" ikona={<Icon nazov="upravit" velkost={14} />} onClick={zacniUpravu}>
-                    Upraviť tabuľku
+                    {tr('Upraviť tabuľku')}
                   </Button>
                 </div>
               )
@@ -534,20 +535,20 @@ export const Ligy: React.FC = () => {
                     <thead>
                       <tr>
                         <th className="cw-ligy__poz">#</th>
-                        <th>Tím</th>
+                        <th>{tr('Tím')}</th>
                         {!lenBody && (
                           <>
-                            <th className="cw-ligy__cislo" title="Zápasy">Z</th>
-                            <th className="cw-ligy__cislo" title="Výhry">V</th>
-                            <th className="cw-ligy__cislo" title="Remízy">R</th>
-                            <th className="cw-ligy__cislo" title="Prehry">P</th>
-                            <th className="cw-ligy__cislo" title="Strelené góly">Góly +</th>
-                            <th className="cw-ligy__cislo" title="Inkasované góly">Góly −</th>
-                            <th title="Forma, napr. VVRPV">Forma</th>
+                            <th className="cw-ligy__cislo" title={tr('Zápasy')}>Z</th>
+                            <th className="cw-ligy__cislo" title={tr('Výhry')}>V</th>
+                            <th className="cw-ligy__cislo" title={tr('Remízy')}>R</th>
+                            <th className="cw-ligy__cislo" title={tr('Prehry')}>P</th>
+                            <th className="cw-ligy__cislo" title={tr('Strelené góly')}>{tr('Góly +')}</th>
+                            <th className="cw-ligy__cislo" title={tr('Inkasované góly')}>{tr('Góly −')}</th>
+                            <th title={tr('Forma, napr. VVRPV')}>{tr('Forma')}</th>
                           </>
                         )}
-                        <th className="cw-ligy__body">Body</th>
-                        <th aria-label="Akcie" />
+                        <th className="cw-ligy__body">{tr('Body')}</th>
+                        <th aria-label={tr('Akcie')} />
                       </tr>
                     </thead>
                     <tbody>
@@ -557,8 +558,8 @@ export const Ligy: React.FC = () => {
                             <div className="cw-ligy__poradie">
                               <span>{i + 1}</span>
                               <span className="cw-ligy__sipky">
-                                <button onClick={() => posun(i, -1)} disabled={i === 0} aria-label={`Posunúť ${r.nazov} vyššie`}>▲</button>
-                                <button onClick={() => posun(i, 1)} disabled={i === riadkyUprav.length - 1} aria-label={`Posunúť ${r.nazov} nižšie`}>▼</button>
+                                <button onClick={() => posun(i, -1)} disabled={i === 0} aria-label={tr('Posunúť {nazov} vyššie', { nazov: r.nazov })}>▲</button>
+                                <button onClick={() => posun(i, 1)} disabled={i === riadkyUprav.length - 1} aria-label={tr('Posunúť {nazov} nižšie', { nazov: r.nazov })}>▼</button>
                               </span>
                             </div>
                           </td>
@@ -575,19 +576,19 @@ export const Ligy: React.FC = () => {
                                     zmenRiadok(r.kluc, 'custom_tim_nazov', e.target.value);
                                     zmenRiadok(r.kluc, 'nazov', e.target.value);
                                   }}
-                                  aria-label={`Názov tímu ${r.nazov}`}
+                                  aria-label={tr('Názov tímu {nazov}', { nazov: r.nazov })}
                                 />
                               )}
                             </div>
                           </td>
                           {!lenBody && (
                             <>
-                              {bunkaCisla(r, 'zapasy', 'Zápasy')}
-                              {bunkaCisla(r, 'vitazstva', 'Výhry')}
-                              {bunkaCisla(r, 'remizy', 'Remízy')}
-                              {bunkaCisla(r, 'prehry', 'Prehry')}
-                              {bunkaCisla(r, 'goly_za', 'Strelené góly')}
-                              {bunkaCisla(r, 'goly_proti', 'Inkasované góly')}
+                              {bunkaCisla(r, 'zapasy', tr('Zápasy'))}
+                              {bunkaCisla(r, 'vitazstva', tr('Výhry'))}
+                              {bunkaCisla(r, 'remizy', tr('Remízy'))}
+                              {bunkaCisla(r, 'prehry', tr('Prehry'))}
+                              {bunkaCisla(r, 'goly_za', tr('Strelené góly'))}
+                              {bunkaCisla(r, 'goly_proti', tr('Inkasované góly'))}
                               <td>
                                 <input
                                   className="cw-ligy__vstup cw-ligy__vstup--forma"
@@ -595,7 +596,7 @@ export const Ligy: React.FC = () => {
                                   maxLength={10}
                                   placeholder="—"
                                   onChange={(e) => zmenRiadok(r.kluc, 'forma', e.target.value.toUpperCase())}
-                                  aria-label={`Forma – ${r.nazov}`}
+                                  aria-label={tr('Forma – {nazov}', { nazov: r.nazov })}
                                 />
                               </td>
                             </>
@@ -606,11 +607,11 @@ export const Ligy: React.FC = () => {
                               inputMode="numeric"
                               value={r.body}
                               onChange={(e) => zmenRiadok(r.kluc, 'body', e.target.value)}
-                              aria-label={`Body – ${r.nazov}`}
+                              aria-label={tr('Body – {nazov}', { nazov: r.nazov })}
                             />
                           </td>
                           <td>
-                            <button className="cw-ligy__odstranit" onClick={() => odstranRiadok(r)} aria-label={`Odstrániť ${r.nazov} z tabuľky`}>
+                            <button className="cw-ligy__odstranit" onClick={() => odstranRiadok(r)} aria-label={tr('Odstrániť {nazov} z tabuľky', { nazov: r.nazov })}>
                               <Icon nazov="zmazat" velkost={14} />
                             </button>
                           </td>
@@ -624,54 +625,54 @@ export const Ligy: React.FC = () => {
                 <div className="cw-ligy__pridat">
                   <div className="cw-ligy__pridat-riadok">
                     <Select
-                      menovka="Pridať tím"
+                      menovka={tr('Pridať tím')}
                       value={novyTim.typ}
                       onChange={(e) => setNovyTim({ typ: e.target.value as 'nas' | 'super', tim_id: null, nazov: '', logo: null })}
                       moznosti={[
-                        { hodnota: 'super', popis: 'Iný klub (súper)' },
-                        { hodnota: 'nas', popis: 'Náš tím' },
+                        { hodnota: 'super', popis: tr('Iný klub (súper)') },
+                        { hodnota: 'nas', popis: tr('Náš tím') },
                       ]}
                     />
                     {novyTim.typ === 'nas' ? (
                       <Select
-                        menovka="Náš tím"
+                        menovka={tr('Náš tím')}
                         value={novyTim.tim_id ?? ''}
                         onChange={(e) => setNovyTim((n) => ({ ...n, tim_id: e.target.value ? Number(e.target.value) : null }))}
-                        prazdna="Vyberte tím"
+                        prazdna={tr('Vyberte tím')}
                         moznosti={(timy.data ?? []).map((t) => ({ hodnota: t.id, popis: t.nazov }))}
                       />
                     ) : (
                       <Input
-                        menovka="Názov klubu"
+                        menovka={tr('Názov klubu')}
                         value={novyTim.nazov}
                         onChange={(e) => setNovyTim((n) => ({ ...n, nazov: e.target.value }))}
-                        placeholder="FK Rača"
+                        placeholder={tr('FK Rača')}
                         onKeyDown={(e) => e.key === 'Enter' && pridajTim()}
                       />
                     )}
                   </div>
                   {novyTim.typ === 'super' && (
                     <PoleObrazka
-                      menovka="Logo klubu"
+                      menovka={tr('Logo klubu')}
                       hodnota={novyTim.logo}
                       onZmena={(cesta) => setNovyTim((n) => ({ ...n, logo: cesta }))}
                     />
                   )}
                   <Button variant="secondary" ikona={<Icon nazov="plus" velkost={14} />} onClick={pridajTim}>
-                    Pridať do tabuľky
+                    {tr('Pridať do tabuľky')}
                   </Button>
                   <p className="cw-ligy__napoveda">
-                    Poradie meníte šípkami. {lenBody ? '' : 'Formu zadávajte písmenami V (výhra), R (remíza), P (prehra). '}
-                    Ručne upravené riadky prepočet zo zápasov nemení.
+                    {tr('Poradie meníte šípkami.')} {lenBody ? '' : tr('Formu zadávajte písmenami V (výhra), R (remíza), P (prehra).') + ' '}
+                    {tr('Ručne upravené riadky prepočet zo zápasov nemení.')}
                   </p>
                 </div>
               </>
             ) : riadky.length === 0 ? (
               <EmptyState
                 ikona={<Icon nazov="ligy" velkost={36} />}
-                nadpis="Tabuľka je prázdna"
-                popis="Pridajte tímy do tabuľky. Pri zapnutom prepočte sa naplní aj z výsledkov zápasov."
-                akcia={<Button onClick={zacniUpravu}>Pridať tímy</Button>}
+                nadpis={tr('Tabuľka je prázdna')}
+                popis={tr('Pridajte tímy do tabuľky. Pri zapnutom prepočte sa naplní aj z výsledkov zápasov.')}
+                akcia={<Button onClick={zacniUpravu}>{tr('Pridať tímy')}</Button>}
               />
             ) : (
               <div className="cw-ligy__wrap">
@@ -679,16 +680,16 @@ export const Ligy: React.FC = () => {
                   <thead>
                     <tr>
                       <th className="cw-ligy__poz">#</th>
-                      <th>Tím</th>
+                      <th>{tr('Tím')}</th>
                       {!lenBody && (
                         <>
                           <th className="cw-ligy__cislo">Z</th>
                           <th className="cw-ligy__cislo">V</th>
                           <th className="cw-ligy__cislo">R</th>
                           <th className="cw-ligy__cislo">P</th>
-                          <th className="cw-ligy__cislo cw-ligy__skryt">Skóre</th>
+                          <th className="cw-ligy__cislo cw-ligy__skryt">{tr('Skóre')}</th>
                           <th className="cw-ligy__cislo cw-ligy__skryt">+/−</th>
-                          {zvolena?.zobrazit_formu !== false && <th className="cw-ligy__cislo cw-ligy__skryt">Forma</th>}
+                          {zvolena?.zobrazit_formu !== false && <th className="cw-ligy__cislo cw-ligy__skryt">{tr('Forma')}</th>}
                         </>
                       )}
                       <th className="cw-ligy__body">B</th>
@@ -705,7 +706,7 @@ export const Ligy: React.FC = () => {
                               {logoRiadku(r.tim_logo ?? r.tim?.logo ?? r.custom_tim_logo, nazov)}
                               <span className="cw-ligy__nazov">{nazov}</span>
                               {r.manualne_upravene && zvolena?.auto_update_tabulka && (
-                                <span title="Riadok bol ručne upravený, prepočet ho nemení">
+                                <span title={tr('Riadok bol ručne upravený, prepočet ho nemení')}>
                                   <Icon nazov="upravit" velkost={13} />
                                 </span>
                               )}
@@ -744,7 +745,7 @@ export const Ligy: React.FC = () => {
                           <td className="cw-ligy__body">
                             {r.body}
                             {r.penalizacne_body !== 0 && (
-                              <span className="cw-ligy__penal" title="Penalizačné body">
+                              <span className="cw-ligy__penal" title={tr('Penalizačné body')}>
                                 {r.penalizacne_body}
                               </span>
                             )}
@@ -760,7 +761,7 @@ export const Ligy: React.FC = () => {
 
           <div className="cw-ligy__zapasy">
             <Button variant="ghost" ikona={<Icon nazov="zapasy" velkost={15} />} onClick={() => navigate('/admin/zapasy')}>
-              Zápasy klubu
+              {tr('Zápasy klubu')}
             </Button>
           </div>
         </>
@@ -770,14 +771,14 @@ export const Ligy: React.FC = () => {
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={upravovana?.id ? `Upraviť: ${upravovana.nazov}` : 'Nová súťaž'}
+        nadpis={upravovana?.id ? tr('Upraviť: {nazov}', { nazov: upravovana.nazov }) : tr('Nová súťaž')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={ukladaLigu}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={ulozLigu} nacitava={ukladaLigu}>
-              {upravovana?.id ? 'Uložiť súťaž' : 'Vytvoriť súťaž'}
+              {upravovana?.id ? tr('Uložiť súťaž') : tr('Vytvoriť súťaž')}
             </Button>
           </>
         }
@@ -785,58 +786,58 @@ export const Ligy: React.FC = () => {
         {upravovana && (
           <>
             <Input
-              menovka="Názov súťaže"
+              menovka={tr('Názov súťaže')}
               value={upravovana.nazov ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, nazov: e.target.value }))}
               placeholder="III. liga Bratislava"
               povinne
             />
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={upravovana.popis ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, popis: e.target.value }))}
               rows={2}
             />
             <div className="cw-ligy__riadok">
               <Select
-                menovka="Sezóna"
+                menovka={tr('Sezóna')}
                 value={upravovana.sezona_id ?? ''}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, sezona_id: e.target.value ? Number(e.target.value) : null }))}
-                prazdna={upravovana.sezona && !upravovana.sezona_id ? upravovana.sezona : 'Vyberte sezónu'}
+                prazdna={upravovana.sezona && !upravovana.sezona_id ? upravovana.sezona : tr('Vyberte sezónu')}
                 moznosti={moznostiSezon}
                 povinne
               />
               <Select
-                menovka="Náš tím v súťaži"
+                menovka={tr('Náš tím v súťaži')}
                 value={upravovana.tim_id ?? ''}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, tim_id: e.target.value ? Number(e.target.value) : null }))}
-                prazdna="Neurčený"
+                prazdna={tr('Neurčený')}
                 moznosti={(timy.data ?? []).map((t) => ({ hodnota: t.id, popis: t.nazov }))}
               />
             </div>
             <div className="cw-ligy__riadok">
               <Select
-                menovka="Typ súťaže"
+                menovka={tr('Typ súťaže')}
                 value={upravovana.typ ?? 'sutaz'}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, typ: e.target.value }))}
                 moznosti={TYPY_SUTAZE}
               />
               <Select
-                menovka="Tabuľka"
+                menovka={tr('Tabuľka')}
                 value={upravovana.rezim_tabulky ?? 'plna'}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, rezim_tabulky: e.target.value as Liga['rezim_tabulky'] }))}
                 moznosti={REZIMY}
               />
             </div>
             <PoleObrazka
-              menovka="Logo súťaže"
+              menovka={tr('Logo súťaže')}
               hodnota={upravovana.logo}
               onZmena={(cesta) => setUpravovana((d) => ({ ...d!, logo: cesta }))}
             />
             {upravovana.rezim_tabulky !== 'len_body' && (
               <div className="cw-ligy__riadok cw-ligy__riadok--3">
                 <Input
-                  menovka="Body za výhru"
+                  menovka={tr('Body za výhru')}
                   type="number"
                   min={0}
                   max={10}
@@ -844,7 +845,7 @@ export const Ligy: React.FC = () => {
                   onChange={(e) => setUpravovana((d) => ({ ...d!, body_za_vitazstvo: e.target.value === '' ? (undefined as any) : Number(e.target.value) }))}
                 />
                 <Input
-                  menovka="Body za remízu"
+                  menovka={tr('Body za remízu')}
                   type="number"
                   min={0}
                   max={10}
@@ -852,7 +853,7 @@ export const Ligy: React.FC = () => {
                   onChange={(e) => setUpravovana((d) => ({ ...d!, body_za_remizy: e.target.value === '' ? (undefined as any) : Number(e.target.value) }))}
                 />
                 <Input
-                  menovka="Body za prehru"
+                  menovka={tr('Body za prehru')}
                   type="number"
                   min={0}
                   max={10}
@@ -864,14 +865,14 @@ export const Ligy: React.FC = () => {
             <Switch
               zapnute={Boolean(upravovana.auto_update_tabulka)}
               onZmena={(v) => setUpravovana((d) => ({ ...d!, auto_update_tabulka: v }))}
-              menovka="Počítať tabuľku zo zápasov"
-              popis="Po zadaní výsledku zápasu sa riadky tímov prepočítajú. Ručne upravené riadky zostanú."
+              menovka={tr('Počítať tabuľku zo zápasov')}
+              popis={tr('Po zadaní výsledku zápasu sa riadky tímov prepočítajú. Ručne upravené riadky zostanú.')}
             />
             {upravovana.rezim_tabulky !== 'len_body' && (
               <Switch
                 zapnute={upravovana.zobrazit_formu !== false}
                 onZmena={(v) => setUpravovana((d) => ({ ...d!, zobrazit_formu: v }))}
-                menovka="Zobrazovať formu tímov"
+                menovka={tr('Zobrazovať formu tímov')}
               />
             )}
           </>
@@ -882,16 +883,16 @@ export const Ligy: React.FC = () => {
       <Modal
         otvorene={duplikovat !== null}
         onZavri={() => setDuplikovat(null)}
-        nadpis="Skopírovať súťaž do novej sezóny"
+        nadpis={tr('Skopírovať súťaž do novej sezóny')}
         podnadpis={zvolena ? `${zvolena.nazov} · ${zvolena.sezona}` : undefined}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setDuplikovat(null)} disabled={duplikuje}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={duplikuj} nacitava={duplikuje}>
-              Skopírovať
+              {tr('Skopírovať')}
             </Button>
           </>
         }
@@ -899,20 +900,20 @@ export const Ligy: React.FC = () => {
         {duplikovat && (
           <>
             <Select
-              menovka="Nová sezóna"
+              menovka={tr('Nová sezóna')}
               value={duplikovat.sezona_id ?? ''}
               onChange={(e) => setDuplikovat((d) => ({ ...d!, sezona_id: e.target.value ? Number(e.target.value) : null }))}
-              prazdna="Vyberte sezónu"
+              prazdna={tr('Vyberte sezónu')}
               moznosti={moznostiSezon.filter((m) => m.hodnota !== zvolena?.sezona_id)}
               povinne
             />
             <Select
-              menovka="Čo sa má preniesť"
+              menovka={tr('Čo sa má preniesť')}
               value={duplikovat.zachovat_body ? 'body' : 'timy'}
               onChange={(e) => setDuplikovat((d) => ({ ...d!, zachovat_body: e.target.value === 'body' }))}
               moznosti={[
-                { hodnota: 'timy', popis: 'Iba tímy (body a štatistiky od nuly)' },
-                { hodnota: 'body', popis: 'Tímy aj body a štatistiky' },
+                { hodnota: 'timy', popis: tr('Iba tímy (body a štatistiky od nuly)') },
+                { hodnota: 'body', popis: tr('Tímy aj body a štatistiky') },
               ]}
             />
           </>
@@ -921,9 +922,9 @@ export const Ligy: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Archivovať súťaž?"
-        sprava={`Súťaž ${naZmazanie?.nazov} (${naZmazanie?.sezona}) sa presunie do archívu aj s tabuľkou. Zápasy zostanú zachované a súťaž môžete obnoviť.`}
-        potvrdit="Archivovať"
+        nadpis={tr('Archivovať súťaž?')}
+        sprava={tr('Súťaž {nazov} ({sezona}) sa presunie do archívu aj s tabuľkou. Zápasy zostanú zachované a súťaž môžete obnoviť.', { nazov: naZmazanie?.nazov, sezona: naZmazanie?.sezona })}
+        potvrdit={tr('Archivovať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

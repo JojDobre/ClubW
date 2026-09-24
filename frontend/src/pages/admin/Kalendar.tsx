@@ -14,15 +14,16 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { zapasyApi, timyApi, kalendarApi } from '../../api/sport';
 import { formatujCas, formatujDatumDlho } from '../../utils/datum';
 import type { Zapas, StavZapasu, UdalostKalendara, TypOpakovania } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Kalendar.css';
 
 const MESIACE = [
-  'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
-  'Júl', 'August', 'September', 'Október', 'November', 'December',
+  tr('Január'), tr('Február'), tr('Marec'), tr('Apríl'), tr('Máj'), tr('Jún'),
+  tr('Júl'), tr('August'), tr('September'), tr('Október'), tr('November'), tr('December'),
 ];
 
 /** Skratky dní — týždeň začína pondelkom, ako je zvykom na Slovensku. */
-const DNI = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
+const DNI = [tr('Po'), tr('Ut'), tr('St'), tr('Št'), tr('Pi'), tr('So'), tr('Ne')];
 
 const TON_STAVU: Record<StavZapasu, 'info' | 'danger' | 'success' | 'warning' | 'neutral'> = {
   naplanovany: 'info',
@@ -33,11 +34,11 @@ const TON_STAVU: Record<StavZapasu, 'info' | 'danger' | 'success' | 'warning' | 
 };
 
 const OPAKOVANIA: Array<{ hodnota: TypOpakovania; popis: string }> = [
-  { hodnota: 'ziadne', popis: 'Neopakuje sa' },
-  { hodnota: 'denne', popis: 'Každý deň' },
-  { hodnota: 'tyzdenne', popis: 'Každý týždeň' },
-  { hodnota: 'dvojtyzdenne', popis: 'Každé dva týždne' },
-  { hodnota: 'mesacne', popis: 'Každý mesiac' },
+  { hodnota: 'ziadne', popis: tr('Neopakuje sa') },
+  { hodnota: 'denne', popis: tr('Každý deň') },
+  { hodnota: 'tyzdenne', popis: tr('Každý týždeň') },
+  { hodnota: 'dvojtyzdenne', popis: tr('Každé dva týždne') },
+  { hodnota: 'mesacne', popis: tr('Každý mesiac') },
 ];
 
 const naKluc = (rok: number, mesiac: number, den: number) =>
@@ -122,17 +123,17 @@ export const Kalendar: React.FC = () => {
         opakovanie_do: plna.opakovanie_do ?? '',
       });
     } catch (e: any) {
-      hlasChybu(e?.message || 'Udalosť sa nepodarilo načítať');
+      hlasChybu(e?.message || tr('Udalosť sa nepodarilo načítať'));
     }
   };
 
   const ulozUdalost = async () => {
     if (!udalost) return;
-    if (udalost.nazov.trim().length < 2) return varovanie('Názov udalosti musí mať aspoň 2 znaky');
-    if (!udalost.datum) return varovanie('Zadajte dátum');
-    if (udalost.cas_od && udalost.cas_do && udalost.cas_do < udalost.cas_od) return varovanie('Koniec nemôže byť skôr než začiatok');
+    if (udalost.nazov.trim().length < 2) return varovanie(tr('Názov udalosti musí mať aspoň 2 znaky'));
+    if (!udalost.datum) return varovanie(tr('Zadajte dátum'));
+    if (udalost.cas_od && udalost.cas_do && udalost.cas_do < udalost.cas_od) return varovanie(tr('Koniec nemôže byť skôr než začiatok'));
     if (udalost.opakovanie !== 'ziadne' && udalost.opakovanie_do && udalost.opakovanie_do < udalost.datum) {
-      return varovanie('Koniec opakovania nemôže byť skôr než dátum udalosti');
+      return varovanie(tr('Koniec opakovania nemôže byť skôr než dátum udalosti'));
     }
 
     const udaje: Partial<UdalostKalendara> = {
@@ -151,11 +152,11 @@ export const Kalendar: React.FC = () => {
     try {
       if (udalost.id) await kalendarApi.uprav(udalost.id, udaje);
       else await kalendarApi.vytvor(udaje);
-      uspech(udalost.id ? 'Udalosť bola uložená' : 'Udalosť bola pridaná');
+      uspech(udalost.id ? tr('Udalosť bola uložená') : tr('Udalosť bola pridaná'));
       setUdalost(null);
       udalosti.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Udalosť sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Udalosť sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -166,12 +167,12 @@ export const Kalendar: React.FC = () => {
     setMaze(true);
     try {
       await kalendarApi.zmaz(udalost.id);
-      uspech('Udalosť bola zmazaná');
+      uspech(tr('Udalosť bola zmazaná'));
       setNaZmazanie(false);
       setUdalost(null);
       udalosti.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Udalosť sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Udalosť sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -262,17 +263,17 @@ export const Kalendar: React.FC = () => {
       : z.hostujuci_tim_display_name || z.hostujuci_tim_nazov) || '—';
 
   if (zapasy.chyba) {
-    return <ErrorState sprava="Zápasy sa nepodarilo načítať" detail={zapasy.chyba} onSkusZnova={zapasy.obnov} />;
+    return <ErrorState sprava={tr('Zápasy sa nepodarilo načítať')} detail={zapasy.chyba} onSkusZnova={zapasy.obnov} />;
   }
 
   return (
     <div className="cw-kalendar">
       <PageHeader
-        nadpis="Kalendár"
-        podnadpis="Zápasy a udalosti klubu - tréningy, stretnutia, akcie."
+        nadpis={tr('Kalendár')}
+        podnadpis={tr('Zápasy a udalosti klubu - tréningy, stretnutia, akcie.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => novaUdalost()}>
-            Nová udalosť
+            {tr('Nová udalosť')}
           </Button>
         }
       />
@@ -281,17 +282,17 @@ export const Kalendar: React.FC = () => {
         nadpis={`${MESIACE[zobrazeny.mesiac]} ${zobrazeny.rok}`}
         akcie={
           <div className="cw-kalendar__ovladanie">
-            <Button variant="secondary" velkost="sm" onClick={() => posunMesiac(-1)} aria-label="Predošlý mesiac">
+            <Button variant="secondary" velkost="sm" onClick={() => posunMesiac(-1)} aria-label={tr('Predošlý mesiac')}>
               <Icon nazov="sipkaVlavo" velkost={15} />
             </Button>
             <Button variant="secondary" velkost="sm" onClick={naDnes}>
-              Dnes
+              {tr('Dnes')}
             </Button>
-            <Button variant="secondary" velkost="sm" onClick={() => posunMesiac(1)} aria-label="Ďalší mesiac">
+            <Button variant="secondary" velkost="sm" onClick={() => posunMesiac(1)} aria-label={tr('Ďalší mesiac')}>
               <Icon nazov="sipkaVpravo" velkost={15} />
             </Button>
             <Button velkost="sm" ikona={<Icon nazov="plus" velkost={14} />} onClick={() => navigate('/admin/zapasy/novy')}>
-              Nový zápas
+              {tr('Nový zápas')}
             </Button>
           </div>
         }
@@ -299,7 +300,7 @@ export const Kalendar: React.FC = () => {
         {zapasy.nacitava ? (
           <Skeleton riadkov={6} vyska="40px" />
         ) : (
-          <div className="cw-kalendar__mriezka" role="grid" aria-label="Kalendár zápasov">
+          <div className="cw-kalendar__mriezka" role="grid" aria-label={tr('Kalendár zápasov')}>
             {DNI.map((d) => (
               <div key={d} className="cw-kalendar__hlavicka" role="columnheader">
                 {d}
@@ -323,8 +324,8 @@ export const Kalendar: React.FC = () => {
                   <button
                     className="cw-kalendar__den"
                     onClick={() => novaUdalost(kluc)}
-                    title="Pridať udalosť v tento deň"
-                    aria-label={`Pridať udalosť ${den}.`}
+                    title={tr('Pridať udalosť v tento deň')}
+                    aria-label={tr('Pridať udalosť {den}.', { den })}
                   >
                     {den}
                   </button>
@@ -367,10 +368,10 @@ export const Kalendar: React.FC = () => {
       </Card>
 
       {/* ===== Zoznam pod kalendárom ===== */}
-      <Card nadpis="Zápasy v mesiaci" podnadpis={`${zapasyMesiaca.length} zápasov`} bezOdsadenia>
+      <Card nadpis={tr('Zápasy v mesiaci')} podnadpis={tr('{length} zápasov', { length: zapasyMesiaca.length })} bezOdsadenia>
         {zapasyMesiaca.length === 0 ? (
           <p className="cw-kalendar__prazdne">
-            V {MESIACE[zobrazeny.mesiac].toLowerCase()}i {zobrazeny.rok} nie sú naplánované žiadne zápasy.
+            V {MESIACE[zobrazeny.mesiac].toLowerCase()}i {zobrazeny.rok} {tr('nie sú naplánované žiadne zápasy.')}
           </p>
         ) : (
           <ul className="cw-kalendar__zoznam">
@@ -387,11 +388,11 @@ export const Kalendar: React.FC = () => {
                     )}
                   </span>
                   <Badge ton={TON_STAVU[z.actual_status ?? z.status]} zivy={(z.actual_status ?? z.status) === 'prebieha'}>
-                    {(z.actual_status ?? z.status) === 'prebieha' ? 'Prebieha' : ''}
-                    {(z.actual_status ?? z.status) === 'naplanovany' ? 'Naplánovaný' : ''}
-                    {(z.actual_status ?? z.status) === 'ukonceny' ? 'Odohraný' : ''}
-                    {(z.actual_status ?? z.status) === 'odlozeny' ? 'Odložený' : ''}
-                    {(z.actual_status ?? z.status) === 'zruseny' ? 'Zrušený' : ''}
+                    {(z.actual_status ?? z.status) === 'prebieha' ? tr('Prebieha') : ''}
+                    {(z.actual_status ?? z.status) === 'naplanovany' ? tr('Naplánovaný') : ''}
+                    {(z.actual_status ?? z.status) === 'ukonceny' ? tr('Odohraný') : ''}
+                    {(z.actual_status ?? z.status) === 'odlozeny' ? tr('Odložený') : ''}
+                    {(z.actual_status ?? z.status) === 'zruseny' ? tr('Zrušený') : ''}
                   </Badge>
                 </button>
               </li>
@@ -401,9 +402,9 @@ export const Kalendar: React.FC = () => {
       </Card>
 
       {/* ===== Udalosti mesiaca ===== */}
-      <Card nadpis="Udalosti v mesiaci" podnadpis={`${(udalosti.data ?? []).length} výskytov`} bezOdsadenia>
+      <Card nadpis={tr('Udalosti v mesiaci')} podnadpis={tr('{length} výskytov', { length: (udalosti.data ?? []).length })} bezOdsadenia>
         {(udalosti.data ?? []).length === 0 ? (
-          <p className="cw-kalendar__prazdne">V tomto mesiaci nie sú žiadne udalosti. Pridajte napríklad pravidelný tréning.</p>
+          <p className="cw-kalendar__prazdne">{tr('V tomto mesiaci nie sú žiadne udalosti. Pridajte napríklad pravidelný tréning.')}</p>
         ) : (
           <ul className="cw-kalendar__zoznam">
             {(udalosti.data ?? []).map((u) => (
@@ -418,7 +419,7 @@ export const Kalendar: React.FC = () => {
                     {u.nazov}
                     {u.miesto ? <span className="cw-kalendar__miesto"> · {u.miesto}</span> : null}
                   </span>
-                  {u.tim ? <Badge>{u.tim.nazov}</Badge> : <Badge ton="neutral">Celý klub</Badge>}
+                  {u.tim ? <Badge>{u.tim.nazov}</Badge> : <Badge ton="neutral">{tr('Celý klub')}</Badge>}
                 </button>
               </li>
             ))}
@@ -429,20 +430,20 @@ export const Kalendar: React.FC = () => {
       <Modal
         otvorene={udalost !== null}
         onZavri={() => setUdalost(null)}
-        nadpis={udalost?.id ? 'Upraviť udalosť' : 'Nová udalosť'}
+        nadpis={udalost?.id ? tr('Upraviť udalosť') : tr('Nová udalosť')}
         pata={
           <>
             {udalost?.id && (
               <Button variant="ghost" onClick={() => setNaZmazanie(true)} ikona={<Icon nazov="zmazat" velkost={15} />}>
-                Zmazať
+                {tr('Zmazať')}
               </Button>
             )}
             <div style={{ flex: 1 }} />
             <Button variant="secondary" onClick={() => setUdalost(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={ulozUdalost} nacitava={uklada}>
-              {udalost?.id ? 'Uložiť' : 'Pridať udalosť'}
+              {udalost?.id ? tr('Uložiť') : tr('Pridať udalosť')}
             </Button>
           </>
         }
@@ -450,50 +451,50 @@ export const Kalendar: React.FC = () => {
         {udalost && (
           <>
             <Input
-              menovka="Názov"
+              menovka={tr('Názov')}
               value={udalost.nazov}
               onChange={(e) => setUdalost((u) => ({ ...u!, nazov: e.target.value }))}
-              placeholder="Tréning U12"
+              placeholder={tr('Tréning U12')}
               povinne
             />
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={udalost.popis}
               onChange={(e) => setUdalost((u) => ({ ...u!, popis: e.target.value }))}
               rows={2}
             />
             <div className="cw-kalendar__riadok">
               <Select
-                menovka="Tím"
+                menovka={tr('Tím')}
                 value={udalost.tim_id ?? ''}
                 onChange={(e) => setUdalost((u) => ({ ...u!, tim_id: e.target.value ? Number(e.target.value) : null }))}
-                prazdna="Celý klub"
+                prazdna={tr('Celý klub')}
                 moznosti={(timy.data ?? []).map((t) => ({ hodnota: t.id, popis: t.nazov }))}
-                napoveda="Udalosť sa zobrazí vo farbe tímu"
+                napoveda={tr('Udalosť sa zobrazí vo farbe tímu')}
               />
               <Input
-                menovka="Miesto"
+                menovka={tr('Miesto')}
                 value={udalost.miesto}
                 onChange={(e) => setUdalost((u) => ({ ...u!, miesto: e.target.value }))}
-                placeholder="Tréningové ihrisko"
+                placeholder={tr('Tréningové ihrisko')}
               />
             </div>
             <div className="cw-kalendar__riadok cw-kalendar__riadok--3">
               <Input
-                menovka="Dátum"
+                menovka={tr('Dátum')}
                 type="date"
                 value={udalost.datum}
                 onChange={(e) => setUdalost((u) => ({ ...u!, datum: e.target.value }))}
                 povinne
               />
               <Input
-                menovka="Od"
+                menovka={tr('Od')}
                 type="time"
                 value={udalost.cas_od}
                 onChange={(e) => setUdalost((u) => ({ ...u!, cas_od: e.target.value }))}
               />
               <Input
-                menovka="Do"
+                menovka={tr('Do')}
                 type="time"
                 value={udalost.cas_do}
                 onChange={(e) => setUdalost((u) => ({ ...u!, cas_do: e.target.value }))}
@@ -501,23 +502,23 @@ export const Kalendar: React.FC = () => {
             </div>
             <div className="cw-kalendar__riadok">
               <Select
-                menovka="Opakovanie"
+                menovka={tr('Opakovanie')}
                 value={udalost.opakovanie}
                 onChange={(e) => setUdalost((u) => ({ ...u!, opakovanie: e.target.value as TypOpakovania }))}
                 moznosti={OPAKOVANIA}
               />
               {udalost.opakovanie !== 'ziadne' && (
                 <Input
-                  menovka="Opakovať do"
+                  menovka={tr('Opakovať do')}
                   type="date"
                   value={udalost.opakovanie_do}
                   onChange={(e) => setUdalost((u) => ({ ...u!, opakovanie_do: e.target.value }))}
-                  napoveda="Prázdne = bez konca"
+                  napoveda={tr('Prázdne = bez konca')}
                 />
               )}
             </div>
             {udalost.id && udalost.opakovanie !== 'ziadne' && (
-              <p className="cw-kalendar__pozn">Úprava a zmazanie sa týka celej série opakovaní.</p>
+              <p className="cw-kalendar__pozn">{tr('Úprava a zmazanie sa týka celej série opakovaní.')}</p>
             )}
           </>
         )}
@@ -525,13 +526,13 @@ export const Kalendar: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie}
-        nadpis="Zmazať udalosť?"
+        nadpis={tr('Zmazať udalosť?')}
         sprava={
           udalost?.opakovanie && udalost.opakovanie !== 'ziadne'
-            ? `Udalosť ${udalost.nazov} sa zmaže aj so všetkými opakovaniami.`
-            : `Udalosť ${udalost?.nazov ?? ''} bude zmazaná.`
+            ? tr('Udalosť {nazov} sa zmaže aj so všetkými opakovaniami.', { nazov: udalost.nazov })
+            : tr('Udalosť {hodnota} bude zmazaná.', { hodnota: udalost?.nazov ?? '' })
         }
-        potvrdit="Zmazať"
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmazUdalost}

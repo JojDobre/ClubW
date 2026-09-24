@@ -47,6 +47,7 @@ import zapasRoutes from './routes/zapas';
 import kalendarRoutes from './routes/kalendar';
 import pagesRoutes, { adminPageRouter } from './routes/pages'; 
 import { verejneSablonyRouter, adminSablonyRouter } from './routes/sablony';
+import { prekladHlasok } from './i18n/preklad';
 import { suborSablony, TYPY_SUBOROV } from './services/sablony';
 import galleriesRoutes, { adminGalleryRouter } from './routes/galleries';
 import { adminGalleryImagesRouter } from './routes/gallery-images';
@@ -159,8 +160,12 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
   credentials: true, // Povolenie cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Jazyk'],
 }));
+
+// Hlášky servera v jazyku administrácie (hlavička X-Jazyk) - pred
+// všetkými odpoveďami vrátane limitov požiadaviek
+app.use(prekladHlasok);
 
 // Rate limiting
 const limiter = rateLimit({

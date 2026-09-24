@@ -11,15 +11,16 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { zapasyApi, ligyApi } from '../../api/sport';
 import { formatujDatumCas } from '../../utils/datum';
 import type { Zapas, StavZapasu } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Zapasy.css';
 
 /** Popisné názvy stavov zápasu a ich farebné tóny. */
 const STAVY: Record<StavZapasu, { popis: string; ton: TonStitka; zivy?: boolean }> = {
-  naplanovany: { popis: 'Naplánovaný', ton: 'info' },
-  prebieha: { popis: 'Prebieha', ton: 'danger', zivy: true },
-  ukonceny: { popis: 'Odohraný', ton: 'success' },
-  odlozeny: { popis: 'Odložený', ton: 'warning' },
-  zruseny: { popis: 'Zrušený', ton: 'neutral' },
+  naplanovany: { popis: tr('Naplánovaný'), ton: 'info' },
+  prebieha: { popis: tr('Prebieha'), ton: 'danger', zivy: true },
+  ukonceny: { popis: tr('Odohraný'), ton: 'success' },
+  odlozeny: { popis: tr('Odložený'), ton: 'warning' },
+  zruseny: { popis: tr('Zrušený'), ton: 'neutral' },
 };
 
 export const Zapasy: React.FC = () => {
@@ -47,11 +48,11 @@ export const Zapasy: React.FC = () => {
     setMaze(true);
     try {
       await zapasyApi.zmaz(naZmazanie.id);
-      uspech('Zápas bol vymazaný');
+      uspech(tr('Zápas bol vymazaný'));
       setNaZmazanie(null);
       zapasy.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Zápas sa nepodarilo vymazať');
+      hlasChybu(e?.message || tr('Zápas sa nepodarilo vymazať'));
     } finally {
       setMaze(false);
     }
@@ -67,8 +68,8 @@ export const Zapasy: React.FC = () => {
     const uspesne = vysledky.filter((v) => v.status === 'fulfilled').length;
     const zlyhane = vysledky.length - uspesne;
 
-    if (uspesne > 0) uspech(`Vymazaných zápasov: ${uspesne}`);
-    if (zlyhane > 0) hlasChybu(`Nepodarilo sa vymazať: ${zlyhane}`);
+    if (uspesne > 0) uspech(tr('Vymazaných zápasov: {uspesne}', { uspesne }));
+    if (zlyhane > 0) hlasChybu(tr('Nepodarilo sa vymazať: {zlyhane}', { zlyhane }));
 
     setHromadneNaZmazanie(null);
     setMaze(false);
@@ -78,7 +79,7 @@ export const Zapasy: React.FC = () => {
   const stlpce: Stlpec<Zapas>[] = useMemo(() => [
     {
       kluc: 'datum',
-      popis: 'Dátum a čas',
+      popis: tr('Dátum a čas'),
       obsah: (z) => (
         <span className="cw-zapasy__datum">{formatujDatumCas(z.datum_cas)}</span>
       ),
@@ -87,7 +88,7 @@ export const Zapasy: React.FC = () => {
     },
     {
       kluc: 'zapas',
-      popis: 'Zápas',
+      popis: tr('Zápas'),
       obsah: (z) => (
         <div className="cw-zapasy__tim">
           <span className="cw-zapasy__tim-nazov">{nazovTimu(z, 'domaci')}</span>
@@ -99,7 +100,7 @@ export const Zapasy: React.FC = () => {
     },
     {
       kluc: 'vysledok',
-      popis: 'Výsledok',
+      popis: tr('Výsledok'),
       obsah: (z) =>
         z.goly_domaci !== null && z.goly_hostia !== null ? (
           <strong className="cw-zapasy__skore">
@@ -113,7 +114,7 @@ export const Zapasy: React.FC = () => {
     },
     {
       kluc: 'liga',
-      popis: 'Súťaž',
+      popis: tr('Súťaž'),
       obsah: (z) =>
         z.liga_display_name || z.liga_nazov ? (
           <Badge>{z.liga_display_name || z.liga_nazov}</Badge>
@@ -126,7 +127,7 @@ export const Zapasy: React.FC = () => {
     },
     {
       kluc: 'kolo',
-      popis: 'Kolo',
+      popis: tr('Kolo'),
       obsah: (z) => (z.kolo !== null ? `${z.kolo}.` : '—'),
       hodnotaNaZoradenie: (z) => z.kolo,
       zarovnanie: 'center',
@@ -135,7 +136,7 @@ export const Zapasy: React.FC = () => {
     },
     {
       kluc: 'status',
-      popis: 'Stav',
+      popis: tr('Stav'),
       obsah: (z) => {
         // Backend dopočítava stav podľa času — ten má prednosť
         const stav = STAVY[z.actual_status ?? z.status] ?? STAVY.naplanovany;
@@ -152,19 +153,19 @@ export const Zapasy: React.FC = () => {
 
   const akcieRiadku: AkciaRiadku<Zapas>[] = [
     {
-      popis: 'Upraviť',
+      popis: tr('Upraviť'),
       ikona: 'upravit',
       onKlik: (z) => navigate(`/admin/zapasy/${z.id}`),
     },
     {
-      popis: 'Živé sledovanie',
+      popis: tr('Živé sledovanie'),
       ikona: 'live',
       // Živé sledovanie má zmysel len pri zápase, ktorý ešte neskončil
       zobrazit: (z) => (z.actual_status ?? z.status) !== 'ukonceny',
       onKlik: (z) => navigate(`/admin/zapasy/${z.id}/live`),
     },
     {
-      popis: 'Vymazať',
+      popis: tr('Vymazať'),
       ikona: 'zmazat',
       nebezpecna: true,
       onKlik: (z) => setNaZmazanie(z),
@@ -173,7 +174,7 @@ export const Zapasy: React.FC = () => {
 
   const hromadneAkcie: HromadnaAkcia[] = [
     {
-      popis: 'Vymazať',
+      popis: tr('Vymazať'),
       ikona: 'zmazat',
       nebezpecna: true,
       onKlik: (ids) => setHromadneNaZmazanie(ids),
@@ -183,14 +184,14 @@ export const Zapasy: React.FC = () => {
   return (
     <>
       <PageHeader
-        nadpis="Zápasy"
-        podnadpis="Výsledky, súpisky a priebeh zápasov klubu."
+        nadpis={tr('Zápasy')}
+        podnadpis={tr('Výsledky, súpisky a priebeh zápasov klubu.')}
         akcie={
           <Button
             ikona={<Icon nazov="plus" velkost={15} />}
             onClick={() => navigate('/admin/zapasy/novy')}
           >
-            Nový zápas
+            {tr('Nový zápas')}
           </Button>
         }
       />
@@ -205,11 +206,11 @@ export const Zapasy: React.FC = () => {
         hladatV={(z) =>
           `${nazovTimu(z, 'domaci')} ${nazovTimu(z, 'hostujuci')} ${z.liga_nazov ?? ''} ${z.miesto ?? ''}`
         }
-        hladatPlaceholder="Hľadať podľa tímu, súťaže alebo miesta…"
+        hladatPlaceholder={tr('Hľadať podľa tímu, súťaže alebo miesta…')}
         filtre={[
           {
             kluc: 'status',
-            popis: 'Všetky stavy',
+            popis: tr('Všetky stavy'),
             moznosti: (Object.keys(STAVY) as StavZapasu[]).map((k) => ({
               hodnota: k,
               popis: STAVY[k].popis,
@@ -217,7 +218,7 @@ export const Zapasy: React.FC = () => {
           },
           {
             kluc: 'liga',
-            popis: 'Všetky súťaže',
+            popis: tr('Všetky súťaže'),
             moznosti: zoznamLig.map((l) => ({
               hodnota: String(l.id),
               popis: `${l.nazov} (${l.sezona})`,
@@ -232,22 +233,22 @@ export const Zapasy: React.FC = () => {
         akcieRiadku={akcieRiadku}
         hromadneAkcie={hromadneAkcie}
         onKlikNaRiadok={(z) => navigate(`/admin/zapasy/${z.id}`)}
-        prazdnyNadpis="Zatiaľ žiadne zápasy"
-        prazdnyPopis="Pridajte prvý zápas a začnite budovať kalendár klubu."
+        prazdnyNadpis={tr('Zatiaľ žiadne zápasy')}
+        prazdnyPopis={tr('Pridajte prvý zápas a začnite budovať kalendár klubu.')}
         prazdnaAkcia={
-          <Button onClick={() => navigate('/admin/zapasy/novy')}>Pridať zápas</Button>
+          <Button onClick={() => navigate('/admin/zapasy/novy')}>{tr('Pridať zápas')}</Button>
         }
       />
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Vymazať zápas?"
+        nadpis={tr('Vymazať zápas?')}
         sprava={
           naZmazanie
-            ? `Zápas ${nazovTimu(naZmazanie, 'domaci')} — ${nazovTimu(naZmazanie, 'hostujuci')} bude odstránený. Ak patrí do ligy, tabuľka sa automaticky prepočíta.`
+            ? tr('Zápas {hodnota} — {hodnota2} bude odstránený. Ak patrí do ligy, tabuľka sa automaticky prepočíta.', { hodnota: nazovTimu(naZmazanie, 'domaci'), hodnota2: nazovTimu(naZmazanie, 'hostujuci') })
             : ''
         }
-        potvrdit="Vymazať"
+        potvrdit={tr('Vymazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}
@@ -256,9 +257,9 @@ export const Zapasy: React.FC = () => {
 
       <ConfirmDialog
         otvorene={hromadneNaZmazanie !== null}
-        nadpis="Vymazať označené zápasy?"
-        sprava={`Bude odstránených ${hromadneNaZmazanie?.length ?? 0} zápasov. Tabuľky dotknutých líg sa prepočítajú.`}
-        potvrdit="Vymazať všetky"
+        nadpis={tr('Vymazať označené zápasy?')}
+        sprava={tr('Bude odstránených {hodnota} zápasov. Tabuľky dotknutých líg sa prepočítajú.', { hodnota: hromadneNaZmazanie?.length ?? 0 })}
+        potvrdit={tr('Vymazať všetky')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmazHromadne}

@@ -11,6 +11,7 @@ import { dostupneSekcie, jeAktivna, type Rola } from '../app/navigacia';
 import { useNastavenia } from '../context/NastaveniaContext';
 import { formulareApi, UDALOST_FORMULARE } from '../api/formulare';
 import { useAuth } from '../app/AuthContext';
+import { tr } from '../i18n';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -80,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           zuzeny ? 'cw-sidebar--collapsed' : '',
           mobilneOtvorene ? 'cw-sidebar--open' : '',
         ].filter(Boolean).join(' ')}
-        aria-label="Hlavná navigácia"
+        aria-label={tr('Hlavná navigácia')}
       >
         {/* ===== Značka ===== */}
         <div className="cw-sidebar__brand">
@@ -94,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!zuzeny && (
             <div className="cw-sidebar__brand-text">
               <div className="cw-sidebar__brand-name">{nastavenia.nazov}</div>
-              <div className="cw-sidebar__brand-sub">Redakčný systém klubu</div>
+              <div className="cw-sidebar__brand-sub">{tr('Redakčný systém klubu')}</div>
             </div>
           )}
         </div>
@@ -124,10 +125,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <Icon nazov={polozka.ikona} velkost={17} />
                   {!zuzeny && <span className="cw-sidebar__item-label">{polozka.popis}</span>}
                   {!zuzeny && polozka.pripravujeSa && (
-                    <span className="cw-sidebar__soon">čoskoro</span>
+                    <span className="cw-sidebar__soon">{tr('čoskoro')}</span>
                   )}
                   {polozka.odznak === 'formulare' && neprecitane > 0 && (
-                    <span className="cw-sidebar__count" aria-label={`${neprecitane} neprečítaných`}>
+                    <span className="cw-sidebar__count" aria-label={tr('{neprecitane} neprečítaných', { neprecitane })}>
                       {neprecitane > 99 ? '99+' : neprecitane}
                     </span>
                   )}
@@ -141,14 +142,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           className="cw-sidebar__collapse"
           onClick={onPrepniZuzenie}
-          aria-label={zuzeny ? 'Rozšíriť menu' : 'Zúžiť menu'}
+          aria-label={zuzeny ? tr('Rozšíriť menu') : tr('Zúžiť menu')}
         >
           <Icon
             nazov="sipkaVlavo"
             velkost={16}
             className={zuzeny ? 'cw-sidebar__chev is-flipped' : 'cw-sidebar__chev'}
           />
-          {!zuzeny && <span>Zúžiť menu</span>}
+          {!zuzeny && <span>{tr('Zúžiť menu')}</span>}
         </button>
       </aside>
     </>

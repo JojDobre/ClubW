@@ -19,6 +19,7 @@ import { ApiChyba } from '../../app/apiKlient';
 import { naVstupDatumCas, zoVstupuDatumCas } from '../../utils/datum';
 import { timyApi } from '../../api/sport';
 import type { Clanok, Kategoria, StavClanku, ClanokNaUlozenie } from '../../api/typy';
+import { tr, lokalita } from '../../i18n';
 import './ClanokEditor.css';
 
 const PRAZDNY: ClanokNaUlozenie & { slug?: string } = {
@@ -145,7 +146,7 @@ export const ClanokEditor: React.FC = () => {
     const s = novyStitok.trim().toLowerCase();
     if (!s) return;
     if ((formular.tags ?? []).includes(s)) {
-      varovanie('Tento štítok už článok má');
+      varovanie(tr('Tento štítok už článok má'));
       return;
     }
     zmen('tags', [...(formular.tags ?? []), s]);
@@ -175,11 +176,11 @@ export const ClanokEditor: React.FC = () => {
     setNahrava(true);
     try {
       const { cesta } = await clankyApi.nahrajObrazok(subor);
-      if (!cesta) throw new Error('Server nevrátil cestu k súboru');
+      if (!cesta) throw new Error(tr('Server nevrátil cestu k súboru'));
       zmen('obrazok', cesta);
-      uspech('Obrázok bol nahratý');
+      uspech(tr('Obrázok bol nahratý'));
     } catch (e) {
-      hlasChybu(e instanceof Error ? e.message : 'Obrázok sa nepodarilo nahrať');
+      hlasChybu(e instanceof Error ? e.message : tr('Obrázok sa nepodarilo nahrať'));
     } finally {
       setNahrava(false);
       // Aby sa dal ten istý súbor vybrať znova
@@ -191,16 +192,16 @@ export const ClanokEditor: React.FC = () => {
     setChybyPoli([]);
 
     if (!formular.nazov.trim()) {
-      varovanie('Zadajte názov článku');
+      varovanie(tr('Zadajte názov článku'));
       return;
     }
     // Editor vracia HTML — pri kontrole dĺžky značky odstránime
     if (formular.obsah.replace(/<[^>]*>/g, '').trim().length < 10) {
-      varovanie('Obsah článku musí mať aspoň 10 znakov');
+      varovanie(tr('Obsah článku musí mať aspoň 10 znakov'));
       return;
     }
     if (!formular.kategoria_id) {
-      varovanie('Vyberte kategóriu');
+      varovanie(tr('Vyberte kategóriu'));
       return;
     }
 
@@ -223,7 +224,7 @@ export const ClanokEditor: React.FC = () => {
     try {
       if (jeNovy) {
         const novy = await clankyApi.vytvor(naUlozenie);
-        uspech('Článok bol vytvorený');
+        uspech(tr('Článok bol vytvorený'));
         povodnyStav.current = JSON.stringify(naUlozenie);
         setZmenene(false);
         setPoslednéUloženie(new Date());
@@ -231,9 +232,9 @@ export const ClanokEditor: React.FC = () => {
       } else {
         await clankyApi.uprav(idCislo!, naUlozenie);
         uspech(
-          stav === 'published' ? 'Článok bol publikovaný'
-            : stav === 'draft' ? 'Uložené ako koncept'
-              : 'Zmeny boli uložené'
+          stav === 'published' ? tr('Článok bol publikovaný')
+            : stav === 'draft' ? tr('Uložené ako koncept')
+              : tr('Zmeny boli uložené')
         );
         setFormular(naUlozenie);
         povodnyStav.current = JSON.stringify(naUlozenie);
@@ -245,7 +246,7 @@ export const ClanokEditor: React.FC = () => {
         hlasChybu(e.message);
         if (e.chybyPoli) setChybyPoli(e.chybyPoli);
       } else {
-        hlasChybu('Článok sa nepodarilo uložiť');
+        hlasChybu(tr('Článok sa nepodarilo uložiť'));
       }
     } finally {
       setUklada(false);
@@ -256,21 +257,21 @@ export const ClanokEditor: React.FC = () => {
     setMaze(true);
     try {
       await clankyApi.zmaz(idCislo!);
-      uspech('Článok bol vymazaný');
+      uspech(tr('Článok bol vymazaný'));
       navigate('/admin/clanky', { replace: true });
     } catch (e: any) {
-      hlasChybu(e?.message || 'Článok sa nepodarilo vymazať');
+      hlasChybu(e?.message || tr('Článok sa nepodarilo vymazať'));
       setMaze(false);
     }
   };
 
   const odid = () => {
-    if (zmenene && !window.confirm('Máte neuložené zmeny. Naozaj chcete odísť?')) return;
+    if (zmenene && !window.confirm(tr('Máte neuložené zmeny. Naozaj chcete odísť?'))) return;
     navigate('/admin/clanky');
   };
 
   if (clanok.chyba) {
-    return <ErrorState sprava="Článok sa nepodarilo načítať" detail={clanok.chyba} onSkusZnova={clanok.obnov} />;
+    return <ErrorState sprava={tr('Článok sa nepodarilo načítať')} detail={clanok.chyba} onSkusZnova={clanok.obnov} />;
   }
 
   if (!jeNovy && clanok.nacitava) {
@@ -283,12 +284,12 @@ export const ClanokEditor: React.FC = () => {
 
   // Text stavu uloženia v lište
   const stavText = zmenene
-    ? 'Neuložené zmeny'
+    ? tr('Neuložené zmeny')
     : poslednéUloženie
-      ? `Uložené ${poslednéUloženie.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}`
+      ? tr('Uložené {hodnota}', { hodnota: poslednéUloženie.toLocaleTimeString(lokalita(), { hour: '2-digit', minute: '2-digit' }) })
       : jeNovy
-        ? 'Nový článok'
-        : 'Bez zmien';
+        ? tr('Nový článok')
+        : tr('Bez zmien');
 
   return (
     <div className="cw-ced">
@@ -296,7 +297,7 @@ export const ClanokEditor: React.FC = () => {
       <div className="cw-ced__bar">
         <button className="cw-ced__spat" onClick={odid}>
           <Icon nazov="sipkaVlavo" velkost={15} />
-          Späť
+          {tr('Späť')}
         </button>
 
         <div className="cw-ced__medzera" />
@@ -318,7 +319,7 @@ export const ClanokEditor: React.FC = () => {
             }
           >
             <Icon nazov="oko" velkost={15} />
-            Náhľad
+            {tr('Náhľad')}
           </button>
         )}
 
@@ -332,7 +333,7 @@ export const ClanokEditor: React.FC = () => {
         )}
 
         <button className="cw-ced__btn" onClick={() => uloz('draft')} disabled={uklada}>
-          Uložiť koncept
+          {tr('Uložiť koncept')}
         </button>
 
         <button
@@ -340,13 +341,13 @@ export const ClanokEditor: React.FC = () => {
           onClick={() => uloz('published')}
           disabled={uklada}
         >
-          {formular.status === 'published' ? 'Uložiť zmeny' : 'Publikovať'}
+          {formular.status === 'published' ? tr('Uložiť zmeny') : tr('Publikovať')}
         </button>
       </div>
 
       {chybyPoli.length > 0 && (
         <div className="cw-ced__chyby" role="alert">
-          <strong>Server odmietol uloženie:</strong>
+          <strong>{tr('Server odmietol uloženie:')}</strong>
           <ul>
             {chybyPoli.map((ch, i) => (
               <li key={i}>{ch}</li>
@@ -364,13 +365,13 @@ export const ClanokEditor: React.FC = () => {
               className="cw-ced__nazov"
               value={formular.nazov}
               onChange={(e) => zmenNazov(e.target.value)}
-              placeholder="Názov článku…"
-              aria-label="Názov článku"
+              placeholder={tr('Názov článku…')}
+              aria-label={tr('Názov článku')}
             />
 
             <div className="cw-ced__url">
-              <span>URL:</span>
-              <span className="cw-ced__url-zaklad">/clanek/</span>
+              <span>{tr('URL:')}</span>
+              <span className="cw-ced__url-zaklad">{tr('/clanek/')}</span>
               <input
                 className="cw-ced__url-vstup"
                 value={formular.slug ?? ''}
@@ -379,7 +380,7 @@ export const ClanokEditor: React.FC = () => {
                   zmen('slug', naAdresu(e.target.value));
                 }}
                 placeholder="adresa-clanku"
-                aria-label="Adresa článku"
+                aria-label={tr('Adresa článku')}
               />
             </div>
           </div>
@@ -388,22 +389,22 @@ export const ClanokEditor: React.FC = () => {
           <Editor
             hodnota={formular.obsah}
             onZmena={(html) => zmen('obsah', html)}
-            placeholder="Text článku…"
+            placeholder={tr('Text článku…')}
           />
 
           {/* Krátky úvod */}
           <div className="cw-ced__panel">
             <label className="cw-ced__label" htmlFor="ced-excerpt">
-              Krátky úvod
+              {tr('Krátky úvod')}
             </label>
             <Textarea
               id="ced-excerpt"
               value={formular.excerpt ?? ''}
               onChange={(e) => zmen('excerpt', e.target.value)}
-              placeholder="Jedna až dve vety do výpisu článkov…"
+              placeholder={tr('Jedna až dve vety do výpisu článkov…')}
               rows={3}
               maxLength={500}
-              napoveda={`${(formular.excerpt ?? '').length} / 500 znakov`}
+              napoveda={tr('{pocet} / 500 znakov', { pocet: (formular.excerpt ?? '').length })}
             />
           </div>
         </div>
@@ -413,7 +414,7 @@ export const ClanokEditor: React.FC = () => {
           {/* Kategória a štítky */}
           <div className="cw-ced__panel cw-ced__panel--tesny">
             <label className="cw-ced__label" htmlFor="ced-kat">
-              Kategória
+              {tr('Kategória')}
             </label>
             <select
               id="ced-kat"
@@ -422,7 +423,7 @@ export const ClanokEditor: React.FC = () => {
               onChange={(e) => zmen('kategoria_id', e.target.value ? Number(e.target.value) : null)}
               style={{ marginBottom: 13 }}
             >
-              <option value="">Vyberte kategóriu</option>
+              <option value="">{tr('Vyberte kategóriu')}</option>
               {zoznamKategorii.map((k) => (
                 <option key={k.id} value={k.id}>
                   {k.nazov}
@@ -431,7 +432,7 @@ export const ClanokEditor: React.FC = () => {
             </select>
 
             <label className="cw-ced__label" htmlFor="ced-tim">
-              Tím
+              {tr('Tím')}
             </label>
             <select
               id="ced-tim"
@@ -440,7 +441,7 @@ export const ClanokEditor: React.FC = () => {
               onChange={(e) => zmen('tim_id', e.target.value ? Number(e.target.value) : null)}
               style={{ marginBottom: 13 }}
             >
-              <option value="">Bez tímu</option>
+              <option value="">{tr('Bez tímu')}</option>
               {(timy.data ?? []).map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.nazov}
@@ -448,14 +449,14 @@ export const ClanokEditor: React.FC = () => {
               ))}
             </select>
 
-            <label className="cw-ced__label">Štítky</label>
+            <label className="cw-ced__label">{tr('Štítky')}</label>
             <div className="cw-ced__stitky">
               {(formular.tags ?? []).map((t) => (
                 <span key={t} className="cw-ced__stitok">
                   {t}
                   <button
                     onClick={() => zmen('tags', (formular.tags ?? []).filter((x) => x !== t))}
-                    aria-label={`Odobrať štítok ${t}`}
+                    aria-label={tr('Odobrať štítok {t}', { t })}
                   >
                     ✕
                   </button>
@@ -473,26 +474,26 @@ export const ClanokEditor: React.FC = () => {
                   pridajStitok();
                 }
               }}
-              placeholder="Pridať štítok a stlačiť Enter"
-              aria-label="Nový štítok"
+              placeholder={tr('Pridať štítok a stlačiť Enter')}
+              aria-label={tr('Nový štítok')}
             />
           </div>
 
           {/* Hlavný obrázok */}
           <div className="cw-ced__panel cw-ced__panel--tesny">
-            <label className="cw-ced__label">Hlavný obrázok</label>
+            <label className="cw-ced__label">{tr('Hlavný obrázok')}</label>
 
             <div className="cw-ced__obrazok">
               {formular.obrazok ? (
                 <img
                   src={formular.obrazok}
-                  alt="Náhľad hlavného obrázka"
+                  alt={tr('Náhľad hlavného obrázka')}
                   onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                 />
               ) : (
                 <div className="cw-ced__obrazok-prazdny">
                   <Icon nazov="galerie" velkost={24} />
-                  <span>Zatiaľ bez obrázka</span>
+                  <span>{tr('Zatiaľ bez obrázka')}</span>
                 </div>
               )}
             </div>
@@ -513,7 +514,7 @@ export const ClanokEditor: React.FC = () => {
                 disabled={nahrava}
               >
                 <Icon nazov="galerie" velkost={14} />
-                {nahrava ? 'Nahrávam…' : formular.obrazok ? 'Zmeniť obrázok' : 'Nahrať obrázok'}
+                {nahrava ? tr('Nahrávam…') : formular.obrazok ? tr('Zmeniť obrázok') : tr('Nahrať obrázok')}
               </button>
 
               {formular.obrazok && (
@@ -522,7 +523,7 @@ export const ClanokEditor: React.FC = () => {
                   className="cw-ced__btn cw-ced__btn--nebezpecne"
                   onClick={() => zmen('obrazok', '')}
                   disabled={nahrava}
-                  aria-label="Odobrať obrázok"
+                  aria-label={tr('Odobrať obrázok')}
                 >
                   <Icon nazov="zmazat" velkost={14} />
                 </button>
@@ -533,17 +534,17 @@ export const ClanokEditor: React.FC = () => {
               value={formular.obrazok ?? ''}
               onChange={(e) => zmen('obrazok', e.target.value)}
               placeholder="/uploads/media/…"
-              aria-label="Adresa hlavného obrázka"
-              napoveda="Nahraj súbor alebo vlož adresu už nahratého obrázka"
+              aria-label={tr('Adresa hlavného obrázka')}
+              napoveda={tr('Nahraj súbor alebo vlož adresu už nahratého obrázka')}
             />
           </div>
 
           {/* Publikovanie */}
           <div className="cw-ced__panel cw-ced__panel--tesny">
-            <label className="cw-ced__label">Publikovanie</label>
+            <label className="cw-ced__label">{tr('Publikovanie')}</label>
 
             <Input
-              menovka="Dátum a čas"
+              menovka={tr('Dátum a čas')}
               type="datetime-local"
               value={naVstupDatumCas(formular.publikovany_datum)}
               onChange={(e) =>
@@ -552,64 +553,64 @@ export const ClanokEditor: React.FC = () => {
                   e.target.value ? zoVstupuDatumCas(e.target.value) : null
                 )
               }
-              napoveda="Prázdne = pri publikovaní sa doplní aktuálny čas"
+              napoveda={tr('Prázdne = pri publikovaní sa doplní aktuálny čas')}
             />
 
             <Switch
               zapnute={Boolean(formular.featured)}
               onZmena={(v) => zmen('featured', v)}
-              menovka="Odporúčaný článok"
-              popis="Zobrazí sa zvýraznený na hlavnej stránke"
+              menovka={tr('Odporúčaný článok')}
+              popis={tr('Zobrazí sa zvýraznený na hlavnej stránke')}
             />
 
             <Switch
               zapnute={Boolean(formular.komentare_povolene)}
               onZmena={(v) => zmen('komentare_povolene', v)}
-              menovka="Povoliť komentáre"
+              menovka={tr('Povoliť komentáre')}
               popis={
                 formular.komentare_povolene
-                  ? 'Návštevníci môžu pridávať komentáre pod článok'
-                  : 'Komentáre sú vypnuté — pod článkom sa nezobrazia'
+                  ? tr('Návštevníci môžu pridávať komentáre pod článok')
+                  : tr('Komentáre sú vypnuté — pod článkom sa nezobrazia')
               }
             />
           </div>
 
           {/* SEO náhľad */}
           <div className="cw-ced__panel cw-ced__panel--tesny">
-            <label className="cw-ced__label">SEO náhľad</label>
+            <label className="cw-ced__label">{tr('SEO náhľad')}</label>
 
             {/* Ukážka, ako článok uvidí návštevník vo výsledkoch vyhľadávania */}
             <div className="cw-ced__seo">
               <div className="cw-ced__seo-url">
-                vasklub.sk › clanky › {formular.slug || 'adresa-clanku'}
+                {tr('vasklub.sk › clanky ›')} {formular.slug || 'adresa-clanku'}
               </div>
               <div className="cw-ced__seo-nazov">
-                {formular.meta_title || formular.nazov || 'Názov článku'}
+                {formular.meta_title || formular.nazov || tr('Názov článku')}
               </div>
               <div className="cw-ced__seo-popis">
                 {formular.meta_description ||
                   formular.excerpt ||
-                  'Popis sa zobrazí pod názvom vo výsledkoch vyhľadávania.'}
+                  tr('Popis sa zobrazí pod názvom vo výsledkoch vyhľadávania.')}
               </div>
             </div>
 
             <Input
-              menovka="Vlastný titulok"
+              menovka={tr('Vlastný titulok')}
               value={formular.meta_title ?? ''}
               onChange={(e) => zmen('meta_title', e.target.value)}
-              placeholder={formular.nazov || 'Použije sa názov článku'}
+              placeholder={formular.nazov || tr('Použije sa názov článku')}
               maxLength={70}
-              napoveda={`${(formular.meta_title ?? '').length} / 70 znakov`}
+              napoveda={tr('{pocet} / 70 znakov', { pocet: (formular.meta_title ?? '').length })}
             />
 
             <Textarea
-              menovka="Vlastný popis"
+              menovka={tr('Vlastný popis')}
               value={formular.meta_description ?? ''}
               onChange={(e) => zmen('meta_description', e.target.value)}
-              placeholder={formular.excerpt || 'Použije sa krátky úvod'}
+              placeholder={formular.excerpt || tr('Použije sa krátky úvod')}
               rows={3}
               maxLength={160}
-              napoveda={`${(formular.meta_description ?? '').length} / 160 znakov`}
+              napoveda={tr('{pocet} / 160 znakov', { pocet: (formular.meta_description ?? '').length })}
             />
           </div>
         </div>
@@ -617,9 +618,9 @@ export const ClanokEditor: React.FC = () => {
 
       <ConfirmDialog
         otvorene={zmazatOtvorene}
-        nadpis="Vymazať článok?"
-        sprava={`Článok „${formular.nazov}" bude odstránený. Túto akciu nemožno vrátiť späť.`}
-        potvrdit="Vymazať"
+        nadpis={tr('Vymazať článok?')}
+        sprava={tr('Článok „{nazov}" bude odstránený. Túto akciu nemožno vrátiť späť.', { nazov: formular.nazov })}
+        potvrdit={tr('Vymazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

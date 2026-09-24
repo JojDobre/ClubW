@@ -22,12 +22,14 @@ export interface UserAttributes {
   tim_id?: number | null;  // Voliteľné priradenie k tímu
   aktivity: boolean;
   posledne_prihlasenie?: Date | null;
+  /** Jazyk administrácie (sk/cs/en); null = podľa nastavenia klubu */
+  jazyk?: string | null;
   vytvoreny: Date;
   aktualizovany: Date;
 }
 
 // Interface pre vytvorenie používateľa (bez auto-generovaných polí)
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'priezvisko' | 'rola_id' | 'vytvoreny' | 'aktualizovany' | 'posledne_prihlasenie'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'priezvisko' | 'rola_id' | 'vytvoreny' | 'aktualizovany' | 'posledne_prihlasenie' | 'jazyk'> {}
 
 // Sequelize Model class
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
@@ -41,6 +43,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public tim_id!: number | null;
   public aktivity!: boolean;
   public posledne_prihlasenie!: Date | null;
+  public jazyk!: string | null;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
 
@@ -132,6 +135,10 @@ User.init(
     },
     posledne_prihlasenie: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    jazyk: {
+      type: DataTypes.STRING(5),
       allowNull: true,
     },
     vytvoreny: {

@@ -23,7 +23,8 @@
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
     "vytvor-spravcu": "tsx scripts/vytvor-spravcu.ts",
-    "import-media": "tsx scripts/import-media.ts"
+    "import-media": "tsx scripts/import-media.ts",
+    "preklady": "node scripts/preklady.mjs"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

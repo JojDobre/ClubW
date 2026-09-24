@@ -24,13 +24,18 @@ const koren = ReactDOM.createRoot(document.getElementById('root') as HTMLElement
  * administrácie a naopak.
  */
 if (jeNovaAdministracia()) {
-  void import('./app/App').then(({ default: App }) => {
-    koren.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-  });
+  // Jazyk sa nastaví pred načítaním administrácie - texty v menu
+  // a konštantách sa vyhodnocujú pri načítaní modulov
+  void import('./i18n')
+    .then(async ({ nacitajJazyk, ulozenyJazyk }) => nacitajJazyk(await ulozenyJazyk()))
+    .then(() => import('./app/App'))
+    .then(({ default: App }) => {
+      koren.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+    });
 } else {
   void import('./web/WebApp').then(({ default: WebApp }) => {
     koren.render(

@@ -8,6 +8,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Icon } from '../ui';
 import { MOBILNA_NAVIGACIA, jeAktivna } from '../app/navigacia';
+import { tr } from '../i18n';
 import './BottomNav.css';
 
 interface BottomNavProps {
@@ -16,7 +17,7 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ aktualnaCesta, onOtvorMenu }) => (
-  <nav className="cw-bottomnav" aria-label="Rýchla navigácia">
+  <nav className="cw-bottomnav" aria-label={tr('Rýchla navigácia')}>
     {MOBILNA_NAVIGACIA.map((polozka) => (
       <NavLink
         key={polozka.cesta}
@@ -35,7 +36,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ aktualnaCesta, onOtvorMenu
     {/* Posledná položka otvára plné menu */}
     <button className="cw-bottomnav__item" onClick={onOtvorMenu}>
       <Icon nazov="menu" velkost={19} />
-      <span>Viac</span>
+      <span>{tr('Viac')}</span>
     </button>
   </nav>
 );

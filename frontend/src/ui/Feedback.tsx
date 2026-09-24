@@ -2,6 +2,7 @@
 // Prvky spätnej väzby: štítok stavu, skeleton, prázdny stav, chybový stav.
 
 import React from 'react';
+import { tr } from '../i18n';
 import './Feedback.css';
 
 // ===== Štítok stavu =====
@@ -95,7 +96,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({ sprava, detail, onSkusZn
     </div>
     {onSkusZnova && (
       <button className="cw-error-state__retry" onClick={onSkusZnova}>
-        Skúsiť znova
+        {tr('Skúsiť znova')}
       </button>
     )}
   </div>

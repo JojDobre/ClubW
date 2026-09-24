@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../ui';
 import { useAuth } from '../app/AuthContext';
 import { useRezim } from '../app/RezimContext';
+import { tr } from '../i18n';
 import './Topbar.css';
 
 interface TopbarProps {
@@ -15,10 +16,10 @@ interface TopbarProps {
 
 /** Popisné názvy rolí pre zobrazenie. */
 const NAZVY_ROLI: Record<string, string> = {
-  admin: 'Administrátor',
-  redaktor: 'Redaktor',
-  trener: 'Tréner',
-  uzivatel: 'Používateľ',
+  admin: tr('Administrátor'),
+  redaktor: tr('Redaktor'),
+  trener: tr('Tréner'),
+  uzivatel: tr('Používateľ'),
 };
 
 export const Topbar: React.FC<TopbarProps> = ({ nadpis, onOtvorMobilneMenu }) => {
@@ -70,7 +71,7 @@ export const Topbar: React.FC<TopbarProps> = ({ nadpis, onOtvorMobilneMenu }) =>
         <button
           className="cw-topbar__burger"
           onClick={onOtvorMobilneMenu}
-          aria-label="Otvoriť menu"
+          aria-label={tr('Otvoriť menu')}
         >
           <Icon nazov="menu" velkost={20} />
         </button>
@@ -84,8 +85,8 @@ export const Topbar: React.FC<TopbarProps> = ({ nadpis, onOtvorMobilneMenu }) =>
         <button
           className="cw-topbar__icon-btn"
           onClick={prepni}
-          aria-label={jeTmavy ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
-          title={jeTmavy ? 'Svetlý režim' : 'Tmavý režim'}
+          aria-label={jeTmavy ? tr('Prepnúť na svetlý režim') : tr('Prepnúť na tmavý režim')}
+          title={jeTmavy ? tr('Svetlý režim') : tr('Tmavý režim')}
         >
           <Icon nazov={jeTmavy ? 'slnko' : 'mesiac'} velkost={18} />
         </button>
@@ -123,7 +124,7 @@ export const Topbar: React.FC<TopbarProps> = ({ nadpis, onOtvorMobilneMenu }) =>
                 }}
               >
                 <Icon nazov="pouzivatelia" velkost={15} />
-                Môj profil
+                {tr('Môj profil')}
               </button>
 
               <button
@@ -132,7 +133,7 @@ export const Topbar: React.FC<TopbarProps> = ({ nadpis, onOtvorMobilneMenu }) =>
                 onClick={odhlasSa}
               >
                 <Icon nazov="odhlasit" velkost={15} />
-                Odhlásiť sa
+                {tr('Odhlásiť sa')}
               </button>
             </div>
           )}

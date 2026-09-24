@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ApiChyba } from './apiKlient';
+import { tr } from '../i18n';
 
 interface Vysledok<T> {
   data: T | null;
@@ -70,7 +71,7 @@ export function useNacitanie<T>(
             ? e.message
             : e instanceof Error
               ? e.message
-              : 'Neznáma chyba'
+              : tr('Neznáma chyba')
         );
       })
       .finally(() => {

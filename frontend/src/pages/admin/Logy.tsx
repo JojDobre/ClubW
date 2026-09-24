@@ -9,6 +9,7 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { logyApi, NAZVY_AKCII, opisZaznamu, type FiltreLogov, type ZaznamLogu } from '../../api/logy';
 import { formatujDatumCas } from '../../utils/datum';
+import { tr } from '../../i18n';
 import './Logy.css';
 
 const NA_STRANU = 100;
@@ -65,7 +66,7 @@ export const Logy: React.FC = () => {
         setZaznamy(z.polozky);
         setCelkom(z.strankovanie?.total ?? z.polozky.length);
       })
-      .catch((e) => e?.name !== 'AbortError' && setChyba(e?.message || 'Logy sa nepodarilo načítať'))
+      .catch((e) => e?.name !== 'AbortError' && setChyba(e?.message || tr('Logy sa nepodarilo načítať')))
       .finally(() => !ovladac.signal.aborted && setNacitava(false));
     return () => ovladac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,7 +78,7 @@ export const Logy: React.FC = () => {
       const z = await logyApi.vypis(parametre(zaznamy.length));
       setZaznamy((s) => [...s, ...z.polozky.filter((n) => !s.some((x) => x.id === n.id))]);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Ďalšie záznamy sa nepodarilo načítať');
+      hlasChybu(e?.message || tr('Ďalšie záznamy sa nepodarilo načítať'));
     } finally {
       setNacitava(false);
     }
@@ -92,46 +93,46 @@ export const Logy: React.FC = () => {
     setFiltre(PRAZDNE);
   };
 
-  const kto = (z: ZaznamLogu) => z.pouzivatel?.meno ?? z.pouzivatel_email ?? 'Neznámy';
+  const kto = (z: ZaznamLogu) => z.pouzivatel?.meno ?? z.pouzivatel_email ?? tr('Neznámy');
 
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Logy"
-        podnadpis="Všetky zmeny v administrácii - kto, čo a kedy urobil. Čítanie sa nezaznamenáva."
+        nadpis={tr('Logy')}
+        podnadpis={tr('Všetky zmeny v administrácii - kto, čo a kedy urobil. Čítanie sa nezaznamenáva.')}
         akcie={
           <Button variant="secondary" ikona={<Icon nazov="obnovit" velkost={15} />} onClick={() => setObnovit((x) => x + 1)}>
-            Obnoviť
+            {tr('Obnoviť')}
           </Button>
         }
       />
 
       <div className="cw-logy__filtre">
         <Select
-          menovka="Akcia"
+          menovka={tr('Akcia')}
           value={filtre.akcia ?? ''}
           onChange={(e) => nastav({ akcia: e.target.value })}
-          prazdna="Všetky akcie"
+          prazdna={tr('Všetky akcie')}
           moznosti={(moznosti.data?.akcie ?? Object.keys(NAZVY_AKCII)).map((a) => ({ hodnota: a, popis: NAZVY_AKCII[a] ?? a }))}
         />
         <Select
-          menovka="Sekcia"
+          menovka={tr('Sekcia')}
           value={filtre.entita ?? ''}
           onChange={(e) => nastav({ entita: e.target.value })}
-          prazdna="Všetky sekcie"
-          moznosti={(moznosti.data?.entity ?? []).map((e) => ({ hodnota: e, popis: e }))}
+          prazdna={tr('Všetky sekcie')}
+          moznosti={(moznosti.data?.entity ?? []).map((e) => ({ hodnota: e, popis: tr(e) }))}
         />
         <Select
-          menovka="Používateľ"
+          menovka={tr('Používateľ')}
           value={filtre.pouzivatel_id ?? ''}
           onChange={(e) => nastav({ pouzivatel_id: e.target.value ? Number(e.target.value) : undefined })}
-          prazdna="Všetci používatelia"
+          prazdna={tr('Všetci používatelia')}
           moznosti={(moznosti.data?.pouzivatelia ?? []).map((p) => ({ hodnota: p.id, popis: p.meno }))}
         />
-        <Input menovka="Od" type="date" value={filtre.od ?? ''} onChange={(e) => nastav({ od: e.target.value })} />
-        <Input menovka="Do" type="date" value={filtre.do ?? ''} onChange={(e) => nastav({ do: e.target.value })} />
+        <Input menovka={tr('Od')} type="date" value={filtre.od ?? ''} onChange={(e) => nastav({ od: e.target.value })} />
+        <Input menovka={tr('Do')} type="date" value={filtre.do ?? ''} onChange={(e) => nastav({ do: e.target.value })} />
         <Input
-          menovka="Hľadať"
+          menovka={tr('Hľadať')}
           value={hladat}
           onChange={(e) => setHladat(e.target.value)}
           placeholder="E-mail, sekcia, adresa…"
@@ -141,17 +142,17 @@ export const Logy: React.FC = () => {
 
       <div className="cw-logy__lista">
         <span>
-          {nacitava && zaznamy.length === 0 ? 'Načítavam…' : `Zobrazené ${zaznamy.length} z ${celkom} záznamov`}
+          {nacitava && zaznamy.length === 0 ? tr('Načítavam…') : tr('Zobrazené {length} z {celkom} záznamov', { length: zaznamy.length, celkom })}
         </span>
         {maFilter && (
           <Button variant="ghost" velkost="sm" onClick={zrusFiltre}>
-            Zrušiť filtre
+            {tr('Zrušiť filtre')}
           </Button>
         )}
       </div>
 
       {chyba ? (
-        <ErrorState sprava="Logy sa nepodarilo načítať" detail={chyba} onSkusZnova={() => setObnovit((x) => x + 1)} />
+        <ErrorState sprava={tr('Logy sa nepodarilo načítať')} detail={chyba} onSkusZnova={() => setObnovit((x) => x + 1)} />
       ) : nacitava && zaznamy.length === 0 ? (
         <div className="cw-logy__tabulka">
           <Skeleton riadkov={8} />
@@ -160,8 +161,8 @@ export const Logy: React.FC = () => {
         <div className="cw-logy__tabulka">
           <EmptyState
             ikona={<Icon nazov="hodiny" velkost={36} />}
-            nadpis={maFilter ? 'Žiadne záznamy pre tento filter' : 'Zatiaľ žiadne udalosti'}
-            akcia={maFilter ? <Button onClick={zrusFiltre}>Zrušiť filtre</Button> : undefined}
+            nadpis={maFilter ? tr('Žiadne záznamy pre tento filter') : tr('Zatiaľ žiadne udalosti')}
+            akcia={maFilter ? <Button onClick={zrusFiltre}>{tr('Zrušiť filtre')}</Button> : undefined}
           />
         </div>
       ) : (
@@ -170,11 +171,11 @@ export const Logy: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>Čas</th>
-                  <th>Používateľ</th>
-                  <th>Akcia</th>
-                  <th>Záznam</th>
-                  <th className="cw-logy__detail-hlava">Detail</th>
+                  <th>{tr('Čas')}</th>
+                  <th>{tr('Používateľ')}</th>
+                  <th>{tr('Akcia')}</th>
+                  <th>{tr('Záznam')}</th>
+                  <th className="cw-logy__detail-hlava">{tr('Detail')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,8 +201,8 @@ export const Logy: React.FC = () => {
                       </button>
                     </td>
                     <td className="cw-logy__detail">
-                      {z.popis}
-                      {z.ip_adresa && <span> · IP {z.ip_adresa}</span>}
+                      {z.popis ? tr(z.popis) : null}
+                      {z.ip_adresa && <span> {tr('· IP')} {z.ip_adresa}</span>}
                     </td>
                   </tr>
                 ))}
@@ -211,7 +212,7 @@ export const Logy: React.FC = () => {
           {zaznamy.length < celkom && (
             <div className="cw-logy__dalsie">
               <Button variant="secondary" nacitava={nacitava} onClick={nacitajDalsie}>
-                Načítať ďalšie
+                {tr('Načítať ďalšie')}
               </Button>
             </div>
           )}
