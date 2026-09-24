@@ -126,16 +126,20 @@ export const ulozMedium = async (
     // Pre-enkódovanie odstráni vložené skripty, EXIF aj polyglot súbory.
     // Animované GIF-y necháme tak, aby sa nestratila animácia.
     const jeAnimovany = metadata.format === 'gif' && (metadata.pages || 1) > 1;
+    // Priehľadný obrázok (erb, logo partnera) ostane PNG - v JPG by
+    // priehľadné miesta sčerneli
+    const jePriehladny = !jeAnimovany && Boolean(metadata.hasAlpha);
+    const priponaVystupu = jeAnimovany ? 'gif' : jePriehladny ? 'png' : 'jpg';
 
-    const nazovSuboru = jeAnimovany
-      ? `${zaklad}-${odlisovac}.gif`
-      : `${zaklad}-${odlisovac}.jpg`;
+    const nazovSuboru = `${zaklad}-${odlisovac}.${priponaVystupu}`;
     const cielova = path.join(priecinok, nazovSuboru);
     overCestu(cielova);
 
     const vystup = jeAnimovany
       ? buffer
-      : await sharp(buffer).rotate().jpeg({ quality: 86 }).toBuffer();
+      : jePriehladny
+        ? await sharp(buffer).rotate().png({ compressionLevel: 9 }).toBuffer()
+        : await sharp(buffer).rotate().jpeg({ quality: 86 }).toBuffer();
 
     await fsPromises.writeFile(cielova, vystup);
 
@@ -145,7 +149,7 @@ export const ulozMedium = async (
       cesta: `/uploads/media/${mesiac}/${nazovSuboru}`,
       nazovSuboru,
       typ: 'obrazok',
-      mimeTyp: jeAnimovany ? 'image/gif' : 'image/jpeg',
+      mimeTyp: jeAnimovany ? 'image/gif' : jePriehladny ? 'image/png' : 'image/jpeg',
       velkost: vystup.length,
       sirka: finalneMeta.width ?? null,
       vyska: finalneMeta.height ?? null,

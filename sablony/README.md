@@ -8,6 +8,7 @@ náhľad inej šablóny, upraví jej nastavenia a nahrá novú šablónu ako bal
 sablony/
   zakladna/          predvolená šablóna - celý verejný web (dodaná so systémom)
   stadion/           tmavá športová šablóna (dodaná so systémom)
+  moderna/           prémiový redakčný vzhľad, nahrádza všetky stránky (dodaná so systémom)
   README.md          tento návod
 backend/sablony/     šablóny nahraté v administrácii (nie sú v gite)
 ```
@@ -175,6 +176,28 @@ a v novej časti vykresliť `<casti.Uvod />` s vlastným doplnkom okolo.
 `import` z `react`, `react-router-dom`, `@clubw/jadro` a `@clubw/zakladna` sa do
 `sablona.js` nezabalí - šablóna ich dostane od webu (`window.ClubW`). Na stránke je tak
 jediný React a šablóna má len niekoľko kB.
+
+## Šablóna Moderná
+
+Úplná šablóna - nahrádza **všetky** časti webu, zo základnej nepreberá nič. Slúži aj ako
+vzor, ako napísať celú šablónu od nuly.
+
+- **Desktop** - redakčný web: veľký tmavý úvod s najbližším zápasom, rýchle odkazy,
+  Match Centre s odpočtom, správy, hráči, tabuľka s anketou, fotky a videá, tmavý panel
+  s výzvou (vstupenky, členstvo) a partneri.
+- **Tablet** - hybrid: menu sa presúva do spodnej lišty, karty sa skladajú do dvoch stĺpcov.
+- **Mobil** - ako športová aplikácia: spodná navigácia (Domov, Správy, Zápasy, Tímy, Menu),
+  posúvateľné karty hráčov, kalendár ako zoznam dní, fotky s potiahnutím prstom.
+- **Vyhľadávanie** - ikona lupy v hlavičke alebo `Ctrl+K`: správy, hráči, zápasy, tímy, stránky.
+- **Farby** - všetko sa odvodzuje od hlavnej farby klubu z Nastavení (`--club-primary`).
+
+Nastavenia (Šablóny → Moderná → Prispôsobiť): fotka a texty úvodu, ktorý tím sa ukáže na
+úvode (ID tímu, 0 = prvý mužský), počet správ, zapnutie tabuľky, hráčov, médií, ankety
+a partnerov, texty a odkaz tmavého panelu (prázdny nadpis panel skryje).
+
+Zdrojové súbory sú v `moderna/src/` (`spolocne.tsx` - karty, tabuľka, formáty,
+`Rozlozenie.tsx` - hlavička, pätička, spodná navigácia, `stranky/` - jednotlivé stránky),
+štýl v `moderna/styl.css` (triedy `md-`, tokeny na začiatku súboru).
 
 ## Bezpečnosť
 
