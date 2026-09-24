@@ -10,6 +10,7 @@ import { Button, Icon, useToast } from '../../ui';
 import { mediaApi } from '../../api/media';
 import { souborUrl } from '../../config/api';
 import { VyberZKniznice } from './VyberZKniznice';
+import { tr } from '../../i18n';
 import './PoleObrazka.css';
 
 interface Props {
@@ -31,7 +32,7 @@ export const PoleObrazka: React.FC<Props> = ({ menovka, hodnota, onZmena, napove
   const nahraj = async (subor: File | undefined) => {
     if (!subor) return;
     if (!subor.type.startsWith('image/')) {
-      hlasChybu('Vyberte obrázok (JPG, PNG, WebP)');
+      hlasChybu(tr('Vyberte obrázok (JPG, PNG, WebP)'));
       return;
     }
     setNahrava(true);
@@ -39,7 +40,7 @@ export const PoleObrazka: React.FC<Props> = ({ menovka, hodnota, onZmena, napove
       const [ulozeny] = await mediaApi.nahraj([subor]);
       if (ulozeny?.cesta) onZmena(ulozeny.cesta);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Obrázok sa nepodarilo nahrať');
+      hlasChybu(e?.message || tr('Obrázok sa nepodarilo nahrať'));
     } finally {
       setNahrava(false);
       if (vstup.current) vstup.current.value = '';
@@ -67,14 +68,14 @@ export const PoleObrazka: React.FC<Props> = ({ menovka, hodnota, onZmena, napove
             ikona={<Icon nazov="nahrat" velkost={14} />}
             onClick={() => vstup.current?.click()}
           >
-            Nahrať
+            {tr('Nahrať')}
           </Button>
           <Button variant="secondary" velkost="sm" onClick={() => setKniznica(true)}>
-            Z knižnice
+            {tr('Z knižnice')}
           </Button>
           {hodnota && (
             <Button variant="ghost" velkost="sm" onClick={() => onZmena(null)}>
-              Odstrániť
+              {tr('Odstrániť')}
             </Button>
           )}
           <input
@@ -82,7 +83,7 @@ export const PoleObrazka: React.FC<Props> = ({ menovka, hodnota, onZmena, napove
             type="file"
             accept="image/*"
             hidden
-            aria-label={`Nahrať: ${menovka}`}
+            aria-label={tr('Nahrať: {menovka}', { menovka })}
             onChange={(e) => nahraj(e.target.files?.[0])}
           />
         </div>

@@ -77,6 +77,8 @@ interface NastaveniaKlubuAttributes {
   aktivna_sablona: string;
   /** Hodnoty nastavení šablón: {"stadion": {"akcent": "#f59e0b"}} */
   nastavenia_sablon: Record<string, Record<string, unknown>>;
+  /** Predvolený jazyk administrácie (sk/cs/en) */
+  jazyk_administracie: string;
 
   vytvoreny: Date;
   aktualizovany: Date;
@@ -92,7 +94,7 @@ interface NastaveniaKlubuCreationAttributes
     | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url' | 'tiktok_url'
     | 'meta_popis' | 'google_analytics_id'
     | 'dodatkove_farby' | 'nastavenia_komentarov'
-    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'aktivna_sablona' | 'nastavenia_sablon'
+    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'aktivna_sablona' | 'nastavenia_sablon' | 'jazyk_administracie'
     | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -133,6 +135,7 @@ class NastaveniaKlubu
   public nastavenia_seo!: Record<string, unknown>;
   public aktivna_sablona!: string;
   public nastavenia_sablon!: Record<string, Record<string, unknown>>;
+  public jazyk_administracie!: string;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
 
@@ -198,6 +201,8 @@ class NastaveniaKlubu
       komentare: this.nastavenia_komentarov,
       gdpr: this.nastavenia_gdpr,
       seo: this.nastavenia_seo,
+      // Jazyk prihlasovacej obrazovky administrácie (pred prihlásením)
+      jazyk_administracie: this.jazyk_administracie,
     };
   }
 }
@@ -360,6 +365,11 @@ NastaveniaKlubu.init(
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: {},
+    },
+    jazyk_administracie: {
+      type: DataTypes.STRING(5),
+      allowNull: false,
+      defaultValue: 'sk',
     },
 
     vytvoreny: {

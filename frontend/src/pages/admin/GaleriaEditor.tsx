@@ -24,6 +24,7 @@ import { souborUrl } from '../../config/api';
 import { formatujDatumCas } from '../../utils/datum';
 import VyberZKniznice from '../../components/admin/VyberZKniznice';
 import type { Galeria, GaleriaObrazok, MediaSubor } from '../../api/typy';
+import { tr } from '../../i18n';
 import './GaleriaEditor.css';
 
 type TypPriradenia = '' | 'zapas' | 'tim' | 'clanok';
@@ -83,7 +84,7 @@ export const GaleriaEditor: React.FC = () => {
     try {
       setObrazky(await galerieApi.obrazky(idCislo));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Fotky sa nepodarilo načítať');
+      hlasChybu(e?.message || tr('Fotky sa nepodarilo načítať'));
     }
   }, [idCislo, hlasChybu]);
 
@@ -122,11 +123,11 @@ export const GaleriaEditor: React.FC = () => {
 
   const uloz = async () => {
     if (formular.nazov.trim().length < 3) {
-      varovanie('Názov galérie musí mať aspoň 3 znaky');
+      varovanie(tr('Názov galérie musí mať aspoň 3 znaky'));
       return;
     }
     if (formular.typ && !formular.objekt_id) {
-      varovanie('Vyberte, ku ktorému záznamu galériu priradiť, alebo priradenie zrušte');
+      varovanie(tr('Vyberte, ku ktorému záznamu galériu priradiť, alebo priradenie zrušte'));
       return;
     }
 
@@ -144,16 +145,16 @@ export const GaleriaEditor: React.FC = () => {
     try {
       if (jeNova) {
         const nova = await galerieApi.vytvor(udaje);
-        uspech('Galéria bola vytvorená — teraz do nej nahrajte fotky');
+        uspech(tr('Galéria bola vytvorená — teraz do nej nahrajte fotky'));
         setPovodny(JSON.stringify(formular));
         navigate(`/admin/galerie/${nova.id}`, { replace: true });
       } else {
         await galerieApi.uprav(idCislo!, udaje);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
         setPovodny(JSON.stringify(formular));
       }
     } catch (e: any) {
-      hlasChybu(e?.message || 'Galériu sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Galériu sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -164,10 +165,10 @@ export const GaleriaEditor: React.FC = () => {
     setMaze(true);
     try {
       await galerieApi.zmaz(idCislo);
-      uspech('Galéria bola zmazaná');
+      uspech(tr('Galéria bola zmazaná'));
       navigate('/admin/galerie');
     } catch (e: any) {
-      hlasChybu(e?.message || 'Galériu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Galériu sa nepodarilo zmazať'));
       setMaze(false);
     }
   };
@@ -179,11 +180,11 @@ export const GaleriaEditor: React.FC = () => {
     if (idCislo === null) return;
     const obrazkove = subory.filter((s) => s.type.startsWith('image/'));
     if (obrazkove.length === 0) {
-      varovanie('Vyberte obrázky (JPG, PNG, WEBP…)');
+      varovanie(tr('Vyberte obrázky (JPG, PNG, WEBP…)'));
       return;
     }
     if (obrazkove.length < subory.length) {
-      varovanie('Niektoré súbory nie sú obrázky, preskočili sme ich');
+      varovanie(tr('Niektoré súbory nie sú obrázky, preskočili sme ich'));
     }
 
     const DAVKA = 5;
@@ -198,14 +199,14 @@ export const GaleriaEditor: React.FC = () => {
           chyb += Array.isArray(vysledok?.errors) ? vysledok.errors.length : 0;
         } catch (e: any) {
           chyb += davka.length;
-          hlasChybu(e?.message || 'Časť fotiek sa nepodarilo nahrať');
+          hlasChybu(e?.message || tr('Časť fotiek sa nepodarilo nahrať'));
         }
         hotovo += davka.length;
         setNahrava({ hotovo, spolu: obrazkove.length });
       }
       const uspesnych = obrazkove.length - chyb;
-      if (uspesnych > 0) uspech(`Nahraných fotiek: ${uspesnych}`);
-      if (chyb > 0) varovanie(`${chyb} fotiek sa nepodarilo nahrať`);
+      if (uspesnych > 0) uspech(tr('Nahraných fotiek: {uspesnych}', { uspesnych }));
+      if (chyb > 0) varovanie(tr('{chyb} fotiek sa nepodarilo nahrať', { chyb }));
     } finally {
       setNahrava(null);
       if (vyberSuborov.current) vyberSuborov.current.value = '';
@@ -218,12 +219,12 @@ export const GaleriaEditor: React.FC = () => {
     if (idCislo === null) return;
     try {
       await galerieApi.pridajZKniznice(idCislo, subory.map((s) => s.id));
-      uspech(subory.length === 1 ? 'Fotka bola pridaná' : `Pridaných fotiek: ${subory.length}`);
+      uspech(subory.length === 1 ? tr('Fotka bola pridaná') : tr('Pridaných fotiek: {length}', { length: subory.length }));
       setKniznicaOtvorena(false);
       await nacitajObrazky();
       galeria.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Fotky sa nepodarilo pridať');
+      hlasChybu(e?.message || tr('Fotky sa nepodarilo pridať'));
     }
   };
 
@@ -234,7 +235,7 @@ export const GaleriaEditor: React.FC = () => {
       await galerieApi.upravObrazok(o.galeria_id, o.id, { popis: novy });
       setObrazky((zoznam) => zoznam.map((x) => (x.id === o.id ? { ...x, popis: novy } : x)));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Popis sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Popis sa nepodarilo uložiť'));
     }
   };
 
@@ -243,9 +244,9 @@ export const GaleriaEditor: React.FC = () => {
       await galerieApi.nastavTitulny(o.galeria_id, o.id);
       setObrazky((zoznam) => zoznam.map((x) => ({ ...x, je_nahladovy: x.id === o.id })));
       setTitulna(o.nahladovy_stredny || o.cesta_suboru);
-      uspech('Titulná fotka bola nastavená');
+      uspech(tr('Titulná fotka bola nastavená'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Titulnú fotku sa nepodarilo nastaviť');
+      hlasChybu(e?.message || tr('Titulnú fotku sa nepodarilo nastaviť'));
     }
   };
 
@@ -253,12 +254,12 @@ export const GaleriaEditor: React.FC = () => {
     if (!naZmazanieFotku) return;
     try {
       await galerieApi.zmazObrazok(naZmazanieFotku.galeria_id, naZmazanieFotku.id);
-      uspech('Fotka bola odstránená z galérie');
+      uspech(tr('Fotka bola odstránená z galérie'));
       setNaZmazanieFotku(null);
       await nacitajObrazky();
       galeria.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Fotku sa nepodarilo odstrániť');
+      hlasChybu(e?.message || tr('Fotku sa nepodarilo odstrániť'));
     }
   };
 
@@ -267,7 +268,7 @@ export const GaleriaEditor: React.FC = () => {
   if (!jeNova && galeria.chyba) {
     return (
       <div className="cw-screen">
-        <ErrorState sprava="Galériu sa nepodarilo načítať" detail={galeria.chyba} onSkusZnova={galeria.obnov} />
+        <ErrorState sprava={tr('Galériu sa nepodarilo načítať')} detail={galeria.chyba} onSkusZnova={galeria.obnov} />
       </div>
     );
   }
@@ -287,11 +288,11 @@ export const GaleriaEditor: React.FC = () => {
       {/* Lišta */}
       <div className="cw-ged__lista">
         <Button variant="secondary" velkost="sm" onClick={() => navigate('/admin/galerie')}>
-          ← Späť
+          {tr('← Späť')}
         </Button>
 
         <div className="cw-ged__stav">
-          {zmenene ? 'Neuložené zmeny' : jeNova ? 'Nová galéria' : 'Uložené'}
+          {zmenene ? tr('Neuložené zmeny') : jeNova ? tr('Nová galéria') : tr('Uložené')}
         </div>
 
         {!jeNova && formular.zobrazit_na_webe && (
@@ -301,7 +302,7 @@ export const GaleriaEditor: React.FC = () => {
             ikona={<Icon nazov="oko" velkost={15} />}
             onClick={() => window.open(`/galleries/${idCislo}`, '_blank', 'noopener')}
           >
-            Zobraziť na webe
+            {tr('Zobraziť na webe')}
           </Button>
         )}
 
@@ -310,14 +311,14 @@ export const GaleriaEditor: React.FC = () => {
             variant="ghost"
             velkost="sm"
             onClick={() => setZmazatOtvorene(true)}
-            aria-label="Zmazať galériu"
+            aria-label={tr('Zmazať galériu')}
           >
             <Icon nazov="zmazat" velkost={15} />
           </Button>
         )}
 
         <Button onClick={uloz} nacitava={uklada}>
-          {jeNova ? 'Vytvoriť galériu' : 'Uložiť'}
+          {jeNova ? tr('Vytvoriť galériu') : tr('Uložiť')}
         </Button>
       </div>
 
@@ -326,17 +327,17 @@ export const GaleriaEditor: React.FC = () => {
         <div className="cw-ged__hlavny">
           <div className="cw-ged__panel">
             <Input
-              menovka="Názov galérie"
+              menovka={tr('Názov galérie')}
               value={formular.nazov}
               onChange={(e) => zmen('nazov', e.target.value)}
-              placeholder="Napríklad: Derby s Račou"
+              placeholder={tr('Napríklad: Derby s Račou')}
               povinne
             />
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={formular.popis}
               onChange={(e) => zmen('popis', e.target.value)}
-              placeholder="Krátky popis galérie…"
+              placeholder={tr('Krátky popis galérie…')}
               rows={3}
             />
           </div>
@@ -344,7 +345,7 @@ export const GaleriaEditor: React.FC = () => {
           <div className="cw-ged__panel">
             <div className="cw-ged__panel-hlava">
               <h2 className="cw-ged__nadpis">
-                Fotky {obrazky.length > 0 && <span className="cw-ged__pocet">{obrazky.length}</span>}
+                {tr('Fotky')} {obrazky.length > 0 && <span className="cw-ged__pocet">{obrazky.length}</span>}
               </h2>
 
               {!jeNova && (
@@ -355,7 +356,7 @@ export const GaleriaEditor: React.FC = () => {
                     onClick={() => setKniznicaOtvorena(true)}
                     disabled={Boolean(nahrava)}
                   >
-                    Z knižnice
+                    {tr('Z knižnice')}
                   </Button>
                   <Button
                     velkost="sm"
@@ -363,7 +364,7 @@ export const GaleriaEditor: React.FC = () => {
                     onClick={() => vyberSuborov.current?.click()}
                     disabled={Boolean(nahrava)}
                   >
-                    Nahrať fotky
+                    {tr('Nahrať fotky')}
                   </Button>
                 </div>
               )}
@@ -380,13 +381,13 @@ export const GaleriaEditor: React.FC = () => {
 
             {jeNova ? (
               <p className="cw-ged__napoveda">
-                Najprv galériu vytvorte — potom do nej nahráte fotky alebo ich vyberiete z knižnice.
+                {tr('Najprv galériu vytvorte — potom do nej nahráte fotky alebo ich vyberiete z knižnice.')}
               </p>
             ) : (
               <>
                 {nahrava && (
                   <div className="cw-ged__priebeh" role="status">
-                    Nahrávam {nahrava.hotovo} / {nahrava.spolu}…
+                    {tr('Nahrávam')} {nahrava.hotovo} / {nahrava.spolu}…
                     <div className="cw-ged__priebeh-pas">
                       <span style={{ width: `${(nahrava.hotovo / nahrava.spolu) * 100}%` }} />
                     </div>
@@ -410,9 +411,9 @@ export const GaleriaEditor: React.FC = () => {
                   {obrazky.length === 0 ? (
                     <div className="cw-ged__prazdne">
                       <Icon nazov="galerie" velkost={34} />
-                      <p>Pretiahnite sem fotky alebo použite tlačidlo „Nahrať fotky".</p>
+                      <p>{tr('Pretiahnite sem fotky alebo použite tlačidlo „Nahrať fotky".')}</p>
                       <p className="cw-ged__napoveda">
-                        Uložia sa do /uploads/galerie/&lt;rok&gt;/&lt;galéria&gt;/ a objavia sa aj v Media knižnici.
+                        {tr('Uložia sa do {cesta} a objavia sa aj v Media knižnici.', { cesta: `/uploads/galerie/<${tr('rok')}>/<${tr('galéria')}>/` })}
                       </p>
                     </div>
                   ) : (
@@ -425,14 +426,14 @@ export const GaleriaEditor: React.FC = () => {
                               alt={o.popis || ''}
                               loading="lazy"
                             />
-                            {o.je_nahladovy && <span className="cw-ged__titulna-stitok">Titulná</span>}
+                            {o.je_nahladovy && <span className="cw-ged__titulna-stitok">{tr('Titulná')}</span>}
                             <div className="cw-ged__fotka-akcie">
                               {!o.je_nahladovy && (
                                 <button
                                   type="button"
                                   onClick={() => void nastavTitulnu(o)}
-                                  title="Nastaviť ako titulnú"
-                                  aria-label="Nastaviť ako titulnú fotku"
+                                  title={tr('Nastaviť ako titulnú')}
+                                  aria-label={tr('Nastaviť ako titulnú fotku')}
                                 >
                                   ★
                                 </button>
@@ -441,8 +442,8 @@ export const GaleriaEditor: React.FC = () => {
                                 type="button"
                                 className="is-danger"
                                 onClick={() => setNaZmazanieFotku(o)}
-                                title="Odstrániť z galérie"
-                                aria-label="Odstrániť fotku z galérie"
+                                title={tr('Odstrániť z galérie')}
+                                aria-label={tr('Odstrániť fotku z galérie')}
                               >
                                 <Icon nazov="zmazat" velkost={14} />
                               </button>
@@ -451,9 +452,9 @@ export const GaleriaEditor: React.FC = () => {
                           <input
                             className="cw-ged__popis-fotky"
                             defaultValue={o.popis ?? ''}
-                            placeholder="Popis fotky…"
+                            placeholder={tr('Popis fotky…')}
                             maxLength={500}
-                            aria-label="Popis fotky"
+                            aria-label={tr('Popis fotky')}
                             onBlur={(e) => void ulozPopis(o, e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -475,18 +476,18 @@ export const GaleriaEditor: React.FC = () => {
             <Switch
               zapnute={formular.zobrazit_na_webe}
               onZmena={(v) => zmen('zobrazit_na_webe', v)}
-              menovka="Zobraziť na webe"
+              menovka={tr('Zobraziť na webe')}
               popis={
                 formular.zobrazit_na_webe
-                  ? 'Galériu vidia návštevníci webu'
-                  : 'Skrytá — v administrácii zostáva, na webe nie je'
+                  ? tr('Galériu vidia návštevníci webu')
+                  : tr('Skrytá — v administrácii zostáva, na webe nie je')
               }
             />
           </div>
 
           <div className="cw-ged__panel">
             <label className="cw-field__label" htmlFor="ged-typ">
-              Priradiť k
+              {tr('Priradiť k')}
             </label>
             <select
               id="ged-typ"
@@ -496,10 +497,10 @@ export const GaleriaEditor: React.FC = () => {
                 setFormular((f) => ({ ...f, typ: e.target.value as TypPriradenia, objekt_id: null }))
               }
             >
-              <option value="">Bez priradenia (voľná galéria)</option>
-              <option value="zapas">Zápasu</option>
-              <option value="tim">Tímu</option>
-              <option value="clanok">Článku</option>
+              <option value="">{tr('Bez priradenia (voľná galéria)')}</option>
+              <option value="zapas">{tr('Zápasu')}</option>
+              <option value="tim">{tr('Tímu')}</option>
+              <option value="clanok">{tr('Článku')}</option>
             </select>
 
             {formular.typ && (
@@ -509,10 +510,10 @@ export const GaleriaEditor: React.FC = () => {
                 style={{ marginTop: 10 }}
                 value={formular.objekt_id ?? ''}
                 onChange={(e) => zmen('objekt_id', e.target.value ? Number(e.target.value) : null)}
-                aria-label="Vyberte záznam"
+                aria-label={tr('Vyberte záznam')}
               >
                 <option value="">
-                  {formular.typ === 'zapas' ? 'Vyberte zápas' : formular.typ === 'tim' ? 'Vyberte tím' : 'Vyberte článok'}
+                  {formular.typ === 'zapas' ? tr('Vyberte zápas') : formular.typ === 'tim' ? tr('Vyberte tím') : tr('Vyberte článok')}
                 </option>
                 {moznostiPriradenia.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -524,10 +525,10 @@ export const GaleriaEditor: React.FC = () => {
           </div>
 
           <div className="cw-ged__panel">
-            <span className="cw-field__label">Titulný obrázok</span>
+            <span className="cw-field__label">{tr('Titulný obrázok')}</span>
             <div className="cw-ged__titulna">
               {titulna ? (
-                <img src={souborUrl(titulna)} alt="Titulný obrázok galérie" />
+                <img src={souborUrl(titulna)} alt={tr('Titulný obrázok galérie')} />
               ) : (
                 <div className="cw-ged__titulna-prazdna">
                   <Icon nazov="galerie" velkost={24} />
@@ -535,15 +536,15 @@ export const GaleriaEditor: React.FC = () => {
               )}
             </div>
             <p className="cw-ged__napoveda">
-              Prvá nahratá fotka sa stane titulnou automaticky. Inú zvolíte hviezdičkou ★ na fotke.
+              {tr('Prvá nahratá fotka sa stane titulnou automaticky. Inú zvolíte hviezdičkou ★ na fotke.')}
             </p>
             {!jeNova && galeria.data && (
               <p className="cw-ged__napoveda">
-                Vytvorená {formatujDatumCas(galeria.data.vytvoreny)}
+                {tr('Vytvorená')} {formatujDatumCas(galeria.data.vytvoreny)}
                 {!formular.zobrazit_na_webe && (
                   <>
                     {' · '}
-                    <Badge>Skrytá</Badge>
+                    <Badge>{tr('Skrytá')}</Badge>
                   </>
                 )}
               </p>
@@ -557,14 +558,14 @@ export const GaleriaEditor: React.FC = () => {
         onZavri={() => setKniznicaOtvorena(false)}
         onVyber={pridajZKniznice}
         viac
-        nadpis="Pridať fotky z knižnice"
+        nadpis={tr('Pridať fotky z knižnice')}
       />
 
       <ConfirmDialog
         otvorene={zmazatOtvorene}
-        nadpis="Zmazať galériu?"
-        sprava={`Galéria „${formular.nazov}" bude zmazaná aj so všetkými fotkami. Súbory v Media knižnici zostanú.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať galériu?')}
+        sprava={tr('Galéria „{nazov}" bude zmazaná aj so všetkými fotkami. Súbory v Media knižnici zostanú.', { nazov: formular.nazov })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}
@@ -573,9 +574,9 @@ export const GaleriaEditor: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanieFotku !== null}
-        nadpis="Odstrániť fotku?"
-        sprava="Fotka sa odstráni z tejto galérie. Súbor v Media knižnici zostane."
-        potvrdit="Odstrániť"
+        nadpis={tr('Odstrániť fotku?')}
+        sprava={tr('Fotka sa odstráni z tejto galérie. Súbor v Media knižnici zostane.')}
+        potvrdit={tr('Odstrániť')}
         nebezpecne
         onPotvrd={zmazFotku}
         onZrus={() => setNaZmazanieFotku(null)}

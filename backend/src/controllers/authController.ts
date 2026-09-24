@@ -7,11 +7,15 @@ import { body, validationResult } from 'express-validator';
 import User from '../models/user';
 import { sanitizePlainText } from '../utils/sanitize';
 import Rola, { MODULY } from '../models/Rola';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 /**
  * Používateľ aj s oprávneniami jeho roly - administrácia podľa nich
  * skryje sekcie, do ktorých nesmie. Skutočnú kontrolu robí server.
  */
+/** Jazyky administrácie */
+export const JAZYKY = ['sk', 'cs', 'en'];
+
 export const sOpravneniami = async (user: User) => {
   const data: any = user.toSafeJSON();
   const vsetko = (citat: boolean, pisat: boolean, mazat: boolean) =>
@@ -30,6 +34,10 @@ export const sOpravneniami = async (user: User) => {
         user.rola === 'redaktor' ? vsetko(true, true, false) : user.rola === 'trener' ? vsetko(true, false, false) : vsetko(false, false, false);
     }
   }
+  // Jazyk, v ktorom sa má administrácia zobraziť: vlastný, inak klubu
+  data.jazyk_administracie = JAZYKY.includes(user.jazyk as string)
+    ? user.jazyk
+    : (await NastaveniaKlubu.nacitaj()).jazyk_administracie || 'sk';
   return data;
 };
 // Vytvorenie dlhodobého obnovovacieho tokenu pri prihlásení
@@ -262,17 +270,31 @@ export const upravProfil = async (req: Request, res: Response): Promise<void> =>
       res.status(401).json({ success: false, message: 'Používateľ nie je prihlásený' });
       return;
     }
-    const meno = sanitizePlainText(String(req.body?.meno ?? '')).trim();
-    const priezvisko = req.body?.priezvisko ? sanitizePlainText(String(req.body.priezvisko)).trim() : null;
-    if (meno.length < 2 || meno.length > 100) {
-      res.status(400).json({ success: false, message: 'Meno musí mať 2-100 znakov' });
-      return;
+    const zmeny: { meno?: string; priezvisko?: string | null; jazyk?: string | null } = {};
+    // Meno sa mení len keď prišlo - samotná zmena jazyka ho neposiela
+    if (req.body?.meno !== undefined) {
+      const meno = sanitizePlainText(String(req.body.meno ?? '')).trim();
+      const priezvisko = req.body?.priezvisko ? sanitizePlainText(String(req.body.priezvisko)).trim() : null;
+      if (meno.length < 2 || meno.length > 100) {
+        res.status(400).json({ success: false, message: 'Meno musí mať 2-100 znakov' });
+        return;
+      }
+      if (priezvisko && priezvisko.length > 100) {
+        res.status(400).json({ success: false, message: 'Priezvisko môže mať najviac 100 znakov' });
+        return;
+      }
+      zmeny.meno = meno;
+      zmeny.priezvisko = priezvisko;
     }
-    if (priezvisko && priezvisko.length > 100) {
-      res.status(400).json({ success: false, message: 'Priezvisko môže mať najviac 100 znakov' });
-      return;
+    if (req.body?.jazyk !== undefined) {
+      const jazyk = req.body.jazyk || null;
+      if (jazyk !== null && !JAZYKY.includes(jazyk)) {
+        res.status(400).json({ success: false, message: 'Nepodporovaný jazyk' });
+        return;
+      }
+      zmeny.jazyk = jazyk;
     }
-    await req.user.update({ meno, priezvisko });
+    await req.user.update(zmeny);
     res.json({ success: true, data: await sOpravneniami(req.user), message: 'Profil bol uložený' });
   } catch (error) {
     console.error('Chyba pri úprave profilu:', error);

@@ -10,6 +10,7 @@ import { Modal, Button, Input, Icon, Skeleton, EmptyState } from '../../ui';
 import { mediaApi } from '../../api/media';
 import { souborUrl } from '../../config/api';
 import type { MediaSubor } from '../../api/typy';
+import { tr } from '../../i18n';
 import './VyberZKniznice.css';
 
 interface Props {
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export const VyberZKniznice: React.FC<Props> = ({
-  otvorene, onZavri, onVyber, viac = false, nadpis = 'Vybrať z knižnice',
+  otvorene, onZavri, onVyber, viac = false, nadpis = tr('Vybrať z knižnice'),
 }) => {
   const [hladat, setHladat] = useState('');
   const [subory, setSubory] = useState<MediaSubor[]>([]);
@@ -47,7 +48,7 @@ export const VyberZKniznice: React.FC<Props> = ({
         );
         setSubory(polozky);
       } catch (e: any) {
-        if (e?.name !== 'AbortError') setChyba(e?.message || 'Knižnicu sa nepodarilo načítať');
+        if (e?.name !== 'AbortError') setChyba(e?.message || tr('Knižnicu sa nepodarilo načítať'));
       } finally {
         setNacitava(false);
       }
@@ -91,13 +92,13 @@ export const VyberZKniznice: React.FC<Props> = ({
       pata={
         <>
           <span className="cw-kniznica__pocet">
-            {vybrane.length > 0 ? `Vybrané: ${vybrane.length}` : ''}
+            {vybrane.length > 0 ? tr('Vybrané: {length}', { length: vybrane.length }) : ''}
           </span>
           <Button variant="secondary" onClick={onZavri} disabled={potvrdzuje}>
-            Zrušiť
+            {tr('Zrušiť')}
           </Button>
           <Button onClick={potvrd} disabled={vybrane.length === 0} nacitava={potvrdzuje}>
-            {viac ? 'Pridať vybrané' : 'Použiť obrázok'}
+            {viac ? tr('Pridať vybrané') : tr('Použiť obrázok')}
           </Button>
         </>
       }
@@ -105,9 +106,9 @@ export const VyberZKniznice: React.FC<Props> = ({
       <Input
         value={hladat}
         onChange={(e) => setHladat(e.target.value)}
-        placeholder="Hľadať podľa názvu…"
+        placeholder={tr('Hľadať podľa názvu…')}
         ikona={<Icon nazov="hladat" velkost={15} />}
-        aria-label="Hľadať v knižnici"
+        aria-label={tr('Hľadať v knižnici')}
       />
 
       {chyba ? (
@@ -121,8 +122,8 @@ export const VyberZKniznice: React.FC<Props> = ({
       ) : subory.length === 0 ? (
         <EmptyState
           ikona={<Icon nazov="galerie" velkost={36} />}
-          nadpis={hladat ? 'Nič sme nenašli' : 'Knižnica je prázdna'}
-          popis={hladat ? 'Skúste iný hľadaný text.' : 'Obrázky sa sem dostanú nahratím k článku alebo do galérie.'}
+          nadpis={hladat ? tr('Nič sme nenašli') : tr('Knižnica je prázdna')}
+          popis={hladat ? tr('Skúste iný hľadaný text.') : tr('Obrázky sa sem dostanú nahratím k článku alebo do galérie.')}
         />
       ) : (
         <div className="cw-kniznica__mriezka" role="listbox" aria-multiselectable={viac}>

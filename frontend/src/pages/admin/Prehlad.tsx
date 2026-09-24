@@ -16,10 +16,13 @@ import { zapasyApi } from '../../api/sport';
 import { useAuth } from '../../app/AuthContext';
 import { formatujDatum } from '../../utils/datum';
 import type { Zapas } from '../../api/typy';
+import { tr, lokalita } from '../../i18n';
 import './Prehlad.css';
 
-const DNI_SKRATKA = ['NE', 'PO', 'UT', 'ST', 'ŠT', 'PI', 'SO'];
-const MESIACE_SKRATKA = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec'];
+/** Skratka dňa a mesiaca v jazyku administrácie (PO, UT… / MON, TUE…). */
+const skratkaDna = (d: Date) =>
+  new Intl.DateTimeFormat(lokalita(), { weekday: 'short' }).format(d).replace('.', '').slice(0, 3).toUpperCase();
+const skratkaMesiaca = (d: Date) => new Intl.DateTimeFormat(lokalita(), { month: 'short' }).format(d).replace('.', '');
 
 /** Znak tímu z názvu — dve začiatočné písmená. */
 const znakTimu = (nazov: string | null | undefined): string => {
@@ -116,12 +119,12 @@ export const Prehlad: React.FC = () => {
       : z.hostujuci_tim_display_name || z.hostujuci_tim_nazov) || '—';
 
   const rychleAkcie = [
-    { popis: 'Nový článok', ikona: 'clanky', cesta: '/admin/clanky/novy' },
-    { popis: 'Pridať zápas', ikona: 'zapasy', cesta: '/admin/zapasy/novy' },
-    { popis: 'Pridať hráča', ikona: 'hraci', cesta: '/admin/hraci' },
-    { popis: 'Nová galéria', ikona: 'galerie', cesta: '/admin/galerie' },
-    { popis: 'Upraviť tímy', ikona: 'timy', cesta: '/admin/timy' },
-    { popis: 'Nastavenia', ikona: 'nastavenia', cesta: '/admin/nastavenia' },
+    { popis: tr('Nový článok'), ikona: 'clanky', cesta: '/admin/clanky/novy' },
+    { popis: tr('Pridať zápas'), ikona: 'zapasy', cesta: '/admin/zapasy/novy' },
+    { popis: tr('Pridať hráča'), ikona: 'hraci', cesta: '/admin/hraci' },
+    { popis: tr('Nová galéria'), ikona: 'galerie', cesta: '/admin/galerie' },
+    { popis: tr('Upraviť tímy'), ikona: 'timy', cesta: '/admin/timy' },
+    { popis: tr('Nastavenia'), ikona: 'nastavenia', cesta: '/admin/nastavenia' },
   ];
 
   const krstneMeno = pouzivatel?.meno?.split(' ')[0] ?? '';
@@ -132,9 +135,9 @@ export const Prehlad: React.FC = () => {
       <div className="cw-dash__hlava">
         <div>
           <h1 className="cw-dash__pozdrav">
-            Dobrý deň{krstneMeno && `, ${krstneMeno}`} 👋
+            {tr('Dobrý deň')}{krstneMeno && `, ${krstneMeno}`} 👋
           </h1>
-          <p className="cw-dash__lead">Toto sa deje na webe klubu dnes.</p>
+          <p className="cw-dash__lead">{tr('Toto sa deje na webe klubu dnes.')}</p>
         </div>
 
         {zapasNaZivo && (
@@ -143,7 +146,7 @@ export const Prehlad: React.FC = () => {
             onClick={() => navigate(`/admin/zapasy/${zapasNaZivo.id}/live`)}
           >
             <span className="cw-dash__live-bod" aria-hidden="true" />
-            Spustiť LIVE zápas
+            {tr('Spustiť LIVE zápas')}
           </button>
         )}
       </div>
@@ -151,7 +154,7 @@ export const Prehlad: React.FC = () => {
       {/* ===== 2. Štatistické dlaždice ===== */}
       <div className="cw-dash__staty">
         <StatCard
-          menovka="Články"
+          menovka={tr('Články')}
           hodnota={s?.totalArticles ?? '—'}
           zmena={s ? `${s.publishedArticles} publik.` : undefined}
           ikona={<Icon nazov="clanky" velkost={19} />}
@@ -159,28 +162,28 @@ export const Prehlad: React.FC = () => {
           onClick={() => navigate('/admin/clanky')}
         />
         <StatCard
-          menovka="Aktívne tímy"
+          menovka={tr('Aktívne tímy')}
           hodnota={s?.totalTeams ?? '—'}
           ikona={<Icon nazov="timy" velkost={19} />}
           nacitava={statistiky.nacitava}
           onClick={() => navigate('/admin/timy')}
         />
         <StatCard
-          menovka="Hráči"
+          menovka={tr('Hráči')}
           hodnota={s?.totalPlayers ?? '—'}
           ikona={<Icon nazov="hraci" velkost={19} />}
           nacitava={statistiky.nacitava}
           onClick={() => navigate('/admin/hraci')}
         />
         <StatCard
-          menovka="Aktívne súťaže"
+          menovka={tr('Aktívne súťaže')}
           hodnota={s?.totalLeagues ?? '—'}
           ikona={<Icon nazov="ligy" velkost={19} />}
           nacitava={statistiky.nacitava}
           onClick={() => navigate('/admin/ligy')}
         />
         <StatCard
-          menovka="Zápasy"
+          menovka={tr('Zápasy')}
           hodnota={s?.totalMatches ?? '—'}
           zmena={s ? `${s.finishedMatches} odohr.` : undefined}
           ikona={<Icon nazov="zapasy" velkost={19} />}
@@ -188,7 +191,7 @@ export const Prehlad: React.FC = () => {
           onClick={() => navigate('/admin/zapasy')}
         />
         <StatCard
-          menovka="Používatelia"
+          menovka={tr('Používatelia')}
           hodnota={s?.totalUsers ?? '—'}
           ikona={<Icon nazov="pouzivatelia" velkost={19} />}
           nacitava={statistiky.nacitava}
@@ -203,7 +206,7 @@ export const Prehlad: React.FC = () => {
 
           <div className="cw-dash__zapas-obsah">
             <div className="cw-dash__zapas-hlava">
-              <span className="cw-dash__zapas-stitok">Najbližší zápas</span>
+              <span className="cw-dash__zapas-stitok">{tr('Najbližší zápas')}</span>
               {najblizsi && (
                 <span className="cw-dash__zapas-liga">
                   {najblizsi.liga_display_name || najblizsi.liga_nazov || '—'}
@@ -218,9 +221,9 @@ export const Prehlad: React.FC = () => {
               </div>
             ) : !najblizsi ? (
               <div className="cw-dash__zapas-prazdne">
-                <p>Žiadny naplánovaný zápas</p>
+                <p>{tr('Žiadny naplánovaný zápas')}</p>
                 <button className="cw-dash__zapas-btn" onClick={() => navigate('/admin/zapasy/novy')}>
-                  Pridať zápas
+                  {tr('Pridať zápas')}
                 </button>
               </div>
             ) : (
@@ -233,17 +236,17 @@ export const Prehlad: React.FC = () => {
 
                   <div className="cw-dash__zapas-cas">
                     <div className="cw-dash__zapas-hodina">
-                      {DNI_SKRATKA[new Date(najblizsi.datum_cas).getDay()]}{' '}
-                      {new Date(najblizsi.datum_cas).toLocaleTimeString('sk-SK', {
+                      {skratkaDna(new Date(najblizsi.datum_cas))}{' '}
+                      {new Date(najblizsi.datum_cas).toLocaleTimeString(lokalita(), {
                         timeZone: 'Europe/Bratislava',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </div>
                     <div className="cw-dash__zapas-datum">
-                      {najblizsi.domaci_tim_id ? 'Domáci' : 'Vonku'} ·{' '}
+                      {najblizsi.domaci_tim_id ? tr('Domáci') : tr('Vonku')} ·{' '}
                       {new Date(najblizsi.datum_cas).getDate()}.{' '}
-                      {MESIACE_SKRATKA[new Date(najblizsi.datum_cas).getMonth()]}
+                      {skratkaMesiaca(new Date(najblizsi.datum_cas))}
                     </div>
                   </div>
 
@@ -258,13 +261,13 @@ export const Prehlad: React.FC = () => {
                     className="cw-dash__zapas-btn"
                     onClick={() => navigate(`/admin/zapasy/${najblizsi.id}/live`)}
                   >
-                    Zadať výsledok
+                    {tr('Zadať výsledok')}
                   </button>
                   <button
                     className="cw-dash__zapas-btn cw-dash__zapas-btn--obrys"
                     onClick={() => navigate(`/admin/zapasy/${najblizsi.id}`)}
                   >
-                    Detail
+                    {tr('Detail')}
                   </button>
                 </div>
               </>
@@ -275,10 +278,10 @@ export const Prehlad: React.FC = () => {
         <div className="cw-dash__graf">
           <div className="cw-dash__graf-hlava">
             <div>
-              <div className="cw-dash__graf-nadpis">Aktivita klubu</div>
-              <div className="cw-dash__graf-popis">odohrané zápasy za 12 týždňov</div>
+              <div className="cw-dash__graf-nadpis">{tr('Aktivita klubu')}</div>
+              <div className="cw-dash__graf-popis">{tr('odohrané zápasy za 12 týždňov')}</div>
             </div>
-            {graf.suma > 0 && <span className="cw-dash__graf-zmena">{graf.suma} zápasov</span>}
+            {graf.suma > 0 && <span className="cw-dash__graf-zmena">{graf.suma} {tr('zápasov')}</span>}
           </div>
 
           <div className="cw-dash__graf-cislo">{s?.finishedMatches ?? '—'}</div>
@@ -314,9 +317,9 @@ export const Prehlad: React.FC = () => {
       <div className="cw-dash__mriezka">
         <div className="cw-dash__panel">
           <div className="cw-dash__panel-hlava">
-            <div className="cw-dash__panel-nadpis">Najnovšie články</div>
+            <div className="cw-dash__panel-nadpis">{tr('Najnovšie články')}</div>
             <button className="cw-dash__panel-odkaz" onClick={() => navigate('/admin/clanky')}>
-              Zobraziť všetky
+              {tr('Zobraziť všetky')}
             </button>
           </div>
 
@@ -326,9 +329,9 @@ export const Prehlad: React.FC = () => {
             </div>
           ) : zoznamClankov.length === 0 ? (
             <div className="cw-dash__prazdne">
-              <p>Zatiaľ žiadne články</p>
+              <p>{tr('Zatiaľ žiadne články')}</p>
               <button className="cw-dash__panel-odkaz" onClick={() => navigate('/admin/clanky/novy')}>
-                Napísať prvý
+                {tr('Napísať prvý')}
               </button>
             </div>
           ) : (
@@ -355,14 +358,14 @@ export const Prehlad: React.FC = () => {
                   <div className="cw-dash__clanok-meta">
                     {a.autor?.meno && `${a.autor.meno} · `}
                     {formatujDatum(a.publikovany_datum || a.vytvoreny)}
-                    {a.views > 0 && ` · ${a.views.toLocaleString('sk-SK')} zobrazení`}
+                    {a.views > 0 && tr(' · {hodnota} zobrazení', { hodnota: a.views.toLocaleString(lokalita()) })}
                   </div>
                 </div>
 
                 {a.status === 'published' ? (
-                  <Badge ton="success">Publikované</Badge>
+                  <Badge ton="success">{tr('Publikované')}</Badge>
                 ) : (
-                  <Badge>Koncept</Badge>
+                  <Badge>{tr('Koncept')}</Badge>
                 )}
               </button>
             ))
@@ -370,7 +373,7 @@ export const Prehlad: React.FC = () => {
         </div>
 
         <div className="cw-dash__panel cw-dash__panel--odsadeny">
-          <div className="cw-dash__panel-nadpis cw-dash__akcie-nadpis">Rýchle akcie</div>
+          <div className="cw-dash__panel-nadpis cw-dash__akcie-nadpis">{tr('Rýchle akcie')}</div>
 
           <div className="cw-dash__akcie">
             {rychleAkcie.map((a) => (

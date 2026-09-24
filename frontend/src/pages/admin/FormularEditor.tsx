@@ -11,20 +11,21 @@ import { formulareApi } from '../../api/formulare';
 import { FormularWeb } from '../../components/FormularWeb';
 import { znackaFormulara, kopiruj } from './Formulare';
 import type { Formular, PoleFormulara, TypPolaFormulara } from '../../api/typy';
+import { tr } from '../../i18n';
 import './ClanokEditor.css';
 import './ZapasEditor.css';
 import './Formulare.css';
 
 export const TYPY_POLI: Array<{ hodnota: TypPolaFormulara; popis: string }> = [
-  { hodnota: 'text', popis: 'Krátky text' },
-  { hodnota: 'textarea', popis: 'Dlhý text' },
+  { hodnota: 'text', popis: tr('Krátky text') },
+  { hodnota: 'textarea', popis: tr('Dlhý text') },
   { hodnota: 'email', popis: 'E-mail' },
-  { hodnota: 'telefon', popis: 'Telefón' },
-  { hodnota: 'cislo', popis: 'Číslo' },
-  { hodnota: 'datum', popis: 'Dátum' },
-  { hodnota: 'vyber', popis: 'Výber z možností' },
-  { hodnota: 'zaskrtavacie', popis: 'Zaškrtávacie možnosti' },
-  { hodnota: 'suhlas', popis: 'Súhlas (zaškrtnutie)' },
+  { hodnota: 'telefon', popis: tr('Telefón') },
+  { hodnota: 'cislo', popis: tr('Číslo') },
+  { hodnota: 'datum', popis: tr('Dátum') },
+  { hodnota: 'vyber', popis: tr('Výber z možností') },
+  { hodnota: 'zaskrtavacie', popis: tr('Zaškrtávacie možnosti') },
+  { hodnota: 'suhlas', popis: tr('Súhlas (zaškrtnutie)') },
 ];
 
 const sMoznostami = (typ: TypPolaFormulara) => typ === 'vyber' || typ === 'zaskrtavacie';
@@ -58,9 +59,9 @@ const zEditora = (p: PoleVEditore): PoleFormulara => ({
 
 /** Predvolené polia nového formulára - najčastejší prípad je prihláška. */
 const ZAKLADNE_POLIA: PoleFormulara[] = [
-  { kod: '', nazov: 'Meno a priezvisko', typ: 'text', povinne: true },
-  { kod: '', nazov: 'E-mail', typ: 'email', povinne: true, popis: 'Odpovieme vám na tento e-mail' },
-  { kod: '', nazov: 'Správa', typ: 'textarea', povinne: false },
+  { kod: '', nazov: tr('Meno a priezvisko'), typ: 'text', povinne: true },
+  { kod: '', nazov: 'E-mail', typ: 'email', povinne: true, popis: tr('Odpovieme vám na tento e-mail') },
+  { kod: '', nazov: tr('Správa'), typ: 'textarea', povinne: false },
 ];
 
 type Udaje = Pick<Formular, 'nazov' | 'slug' | 'popis' | 'sprava_po_odoslani' | 'email_pre_notifikacie' | 'aktivny'>;
@@ -106,7 +107,7 @@ export const FormularEditor: React.FC = () => {
       })
       .catch((e) => {
         if (e?.name === 'AbortError') return;
-        setChybaNacitania(e?.message || 'Formulár sa nepodarilo načítať');
+        setChybaNacitania(e?.message || tr('Formulár sa nepodarilo načítať'));
         setNacitava(false);
       });
     return () => ovladac.abort();
@@ -128,12 +129,12 @@ export const FormularEditor: React.FC = () => {
     setPolia((p) => [...p, doEditora({ kod: '', nazov: '', typ: 'text', povinne: false })]);
 
   const uloz = async () => {
-    if (udaje.nazov.trim().length < 2) return varovanie('Názov formulára musí mať aspoň 2 znaky');
-    if (polia.length === 0) return varovanie('Pridajte aspoň jedno pole');
+    if (udaje.nazov.trim().length < 2) return varovanie(tr('Názov formulára musí mať aspoň 2 znaky'));
+    if (polia.length === 0) return varovanie(tr('Pridajte aspoň jedno pole'));
     const bezNazvu = polia.findIndex((p) => !p.nazov.trim());
-    if (bezNazvu >= 0) return varovanie(`Pole ${bezNazvu + 1} nemá názov`);
+    if (bezNazvu >= 0) return varovanie(tr('Pole {hodnota} nemá názov', { hodnota: bezNazvu + 1 }));
     const bezMoznosti = polia.findIndex((p) => sMoznostami(p.typ) && !p._moznostiText.trim());
-    if (bezMoznosti >= 0) return varovanie(`Pole ${bezMoznosti + 1} potrebuje aspoň jednu možnosť`);
+    if (bezMoznosti >= 0) return varovanie(tr('Pole {hodnota} potrebuje aspoň jednu možnosť', { hodnota: bezMoznosti + 1 }));
 
     setUklada(true);
     setChybyPoli([]);
@@ -150,7 +151,7 @@ export const FormularEditor: React.FC = () => {
 
       if (jeNovy) {
         const novy = await formulareApi.vytvor(telo);
-        uspech('Formulár bol vytvorený');
+        uspech(tr('Formulár bol vytvorený'));
         navigate(`/admin/formulare/${novy.id}`, { replace: true });
       } else {
         const ulozeny = await formulareApi.uprav(Number(id), telo);
@@ -158,11 +159,11 @@ export const FormularEditor: React.FC = () => {
         // Kódy nových polí doplní server - bez nich by ďalšie uloženie
         // vytvorilo nové kódy a staré odpovede by stratili popisky
         setPolia(ulozeny.polia.map(doEditora));
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
     } catch (e: any) {
       if (Array.isArray(e?.chybyPoli) && e.chybyPoli.length) setChybyPoli(e.chybyPoli);
-      hlasChybu(e?.message || 'Formulár sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Formulár sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -176,11 +177,11 @@ export const FormularEditor: React.FC = () => {
     );
   }
   if (chybaNacitania) {
-    return <ErrorState sprava="Formulár sa nepodarilo načítať" detail={chybaNacitania} onSkusZnova={() => window.location.reload()} />;
+    return <ErrorState sprava={tr('Formulár sa nepodarilo načítať')} detail={chybaNacitania} onSkusZnova={() => window.location.reload()} />;
   }
 
   const nahlad = {
-    nazov: udaje.nazov || 'Názov formulára',
+    nazov: udaje.nazov || tr('Názov formulára'),
     popis: udaje.popis || null,
     aktivny: udaje.aktivny,
     sprava_po_odoslani: null,
@@ -195,25 +196,25 @@ export const FormularEditor: React.FC = () => {
       <div className="cw-ced__bar">
         <button className="cw-ced__spat" onClick={() => navigate('/admin/formulare')}>
           <Icon nazov="sipkaVlavo" velkost={15} />
-          Späť
+          {tr('Späť')}
         </button>
-        <h1 className="cw-zed__nadpis">{jeNovy ? 'Nový formulár' : udaje.nazov || 'Formulár'}</h1>
-        {!jeNovy && (udaje.aktivny ? <Badge ton="success">Prijíma</Badge> : <Badge>Vypnutý</Badge>)}
+        <h1 className="cw-zed__nadpis">{jeNovy ? tr('Nový formulár') : udaje.nazov || tr('Formulár')}</h1>
+        {!jeNovy && (udaje.aktivny ? <Badge ton="success">{tr('Prijíma')}</Badge> : <Badge>{tr('Vypnutý')}</Badge>)}
         <div className="cw-ced__medzera" />
         {!jeNovy && (
           <>
             <button className="cw-ced__btn" onClick={() => navigate(`/admin/formulare/${id}/odpovede`)}>
               <Icon nazov="komentare" velkost={15} />
-              Odpovede ({pocetOdpovedi})
+              {tr('Odpovede (')}{pocetOdpovedi})
             </button>
             <button className="cw-ced__btn" onClick={() => window.open(`/formular/${udaje.slug}`, '_blank', 'noopener')}>
               <Icon nazov="oko" velkost={15} />
-              Na webe
+              {tr('Na webe')}
             </button>
           </>
         )}
         <Button onClick={uloz} nacitava={uklada} ikona={<Icon nazov="ulozit" velkost={15} />}>
-          {jeNovy ? 'Vytvoriť' : 'Uložiť'}
+          {jeNovy ? tr('Vytvoriť') : tr('Uložiť')}
         </Button>
       </div>
 
@@ -221,39 +222,38 @@ export const FormularEditor: React.FC = () => {
         <div className="cw-form__hlavne">
           {/* ===== Základné údaje ===== */}
           <section className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Základné údaje</div>
+            <div className="cw-zed__panel-nadpis">{tr('Základné údaje')}</div>
             <Input
-              menovka="Názov formulára"
+              menovka={tr('Názov formulára')}
               value={udaje.nazov}
               onChange={(e) => setUdaje((u) => ({ ...u, nazov: e.target.value }))}
-              placeholder="Prihláška do klubu"
+              placeholder={tr('Prihláška do klubu')}
               povinne
             />
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={udaje.popis ?? ''}
               onChange={(e) => setUdaje((u) => ({ ...u, popis: e.target.value }))}
               rows={2}
-              napoveda="Zobrazí sa nad formulárom"
+              napoveda={tr('Zobrazí sa nad formulárom')}
             />
             <Textarea
-              menovka="Správa po odoslaní"
+              menovka={tr('Správa po odoslaní')}
               value={udaje.sprava_po_odoslani ?? ''}
               onChange={(e) => setUdaje((u) => ({ ...u, sprava_po_odoslani: e.target.value }))}
               rows={2}
-              placeholder="Ďakujeme, formulár bol odoslaný."
+              placeholder={tr('Ďakujeme, formulár bol odoslaný.')}
             />
           </section>
 
           {/* ===== Polia ===== */}
           <section className="cw-zed__panel">
             <div className="cw-zed__panel-nadpis">
-              Polia formulára
+              {tr('Polia formulára')}
               <span className="cw-form__pocet">{polia.length}</span>
             </div>
             <p className="cw-zed__panel-popis">
-              Každé pole má názov, typ a voliteľný popis (nápovedu pod názvom). Pri výbere z možností
-              napíšte každú možnosť na samostatný riadok.
+              {tr('Každé pole má názov, typ a voliteľný popis (nápovedu pod názvom). Pri výbere z možností napíšte každú možnosť na samostatný riadok.')}
             </p>
 
             {chybyPoli.length > 0 && (
@@ -270,59 +270,59 @@ export const FormularEditor: React.FC = () => {
                   <div className="cw-form__pole-hlava">
                     <span className="cw-form__cislo">{i + 1}</span>
                     <div className="cw-form__pole-akcie">
-                      <Button velkost="sm" variant="ghost" onClick={() => presun(i, -1)} disabled={i === 0} aria-label={`Posunúť pole ${i + 1} vyššie`}>
+                      <Button velkost="sm" variant="ghost" onClick={() => presun(i, -1)} disabled={i === 0} aria-label={tr('Posunúť pole {hodnota} vyššie', { hodnota: i + 1 })}>
                         ↑
                       </Button>
-                      <Button velkost="sm" variant="ghost" onClick={() => presun(i, 1)} disabled={i === polia.length - 1} aria-label={`Posunúť pole ${i + 1} nižšie`}>
+                      <Button velkost="sm" variant="ghost" onClick={() => presun(i, 1)} disabled={i === polia.length - 1} aria-label={tr('Posunúť pole {hodnota} nižšie', { hodnota: i + 1 })}>
                         ↓
                       </Button>
-                      <Button velkost="sm" variant="ghost" onClick={() => setPolia((x) => x.filter((_, j) => j !== i))} aria-label={`Odstrániť pole ${i + 1}`}>
+                      <Button velkost="sm" variant="ghost" onClick={() => setPolia((x) => x.filter((_, j) => j !== i))} aria-label={tr('Odstrániť pole {hodnota}', { hodnota: i + 1 })}>
                         <Icon nazov="zmazat" velkost={14} />
                       </Button>
                     </div>
                   </div>
                   <div className="cw-zed__row">
                     <Input
-                      menovka="Názov poľa"
+                      menovka={tr('Názov poľa')}
                       value={p.nazov}
                       onChange={(e) => zmenPole(i, { nazov: e.target.value })}
-                      placeholder="Napríklad: Dátum narodenia"
+                      placeholder={tr('Napríklad: Dátum narodenia')}
                       povinne
                     />
                     <Select
-                      menovka="Typ"
+                      menovka={tr('Typ')}
                       value={p.typ}
                       onChange={(e) => zmenPole(i, { typ: e.target.value as TypPolaFormulara })}
                       moznosti={TYPY_POLI}
                     />
                   </div>
                   <Input
-                    menovka="Popis poľa"
+                    menovka={tr('Popis poľa')}
                     value={p.popis ?? ''}
                     onChange={(e) => zmenPole(i, { popis: e.target.value })}
-                    placeholder="Nápoveda pre vypĺňajúceho (voliteľné)"
+                    placeholder={tr('Nápoveda pre vypĺňajúceho (voliteľné)')}
                   />
                   {sMoznostami(p.typ) && (
                     <Textarea
-                      menovka="Možnosti"
+                      menovka={tr('Možnosti')}
                       value={p._moznostiText}
                       onChange={(e) => zmenPole(i, { _moznostiText: e.target.value })}
                       rows={3}
                       placeholder={'U9\nU11\nU13'}
-                      napoveda="Každá možnosť na samostatnom riadku"
+                      napoveda={tr('Každá možnosť na samostatnom riadku')}
                       povinne
                     />
                   )}
                   <Switch
                     zapnute={Boolean(p.povinne)}
                     onZmena={(v) => zmenPole(i, { povinne: v })}
-                    menovka={p.typ === 'suhlas' ? 'Povinné potvrdiť' : 'Povinné pole'}
+                    menovka={p.typ === 'suhlas' ? tr('Povinné potvrdiť') : tr('Povinné pole')}
                   />
                 </li>
               ))}
             </ol>
             <Button variant="secondary" ikona={<Icon nazov="plus" velkost={14} />} onClick={pridajPole}>
-              Pridať pole
+              {tr('Pridať pole')}
             </Button>
           </section>
         </div>
@@ -330,53 +330,53 @@ export const FormularEditor: React.FC = () => {
         {/* ===== Bočný panel ===== */}
         <aside className="cw-form__bok">
           <section className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Zverejnenie</div>
+            <div className="cw-zed__panel-nadpis">{tr('Zverejnenie')}</div>
             <Switch
               zapnute={udaje.aktivny}
               onZmena={(v) => setUdaje((u) => ({ ...u, aktivny: v }))}
-              menovka="Prijíma odpovede"
-              popis={udaje.aktivny ? 'Návštevníci môžu formulár odoslať' : 'Formulár sa zobrazí, ale nedá sa odoslať'}
+              menovka={tr('Prijíma odpovede')}
+              popis={udaje.aktivny ? tr('Návštevníci môžu formulár odoslať') : tr('Formulár sa zobrazí, ale nedá sa odoslať')}
             />
             <Input
-              menovka="Adresa na webe"
+              menovka={tr('Adresa na webe')}
               value={udaje.slug}
               onChange={(e) => setUdaje((u) => ({ ...u, slug: e.target.value.toLowerCase() }))}
-              placeholder={jeNovy ? 'vytvorí sa z názvu' : ''}
+              placeholder={jeNovy ? tr('vytvorí sa z názvu') : ''}
               napoveda={`/formular/${udaje.slug || '…'}`}
             />
             {!jeNovy && (
               <div className="cw-form__znacka">
-                <span>Vloženie do stránky</span>
+                <span>{tr('Vloženie do stránky')}</span>
                 <code>{znackaFormulara(udaje)}</code>
                 <Button
                   velkost="sm"
                   variant="secondary"
                   ikona={<Icon nazov="kopirovat" velkost={13} />}
                   onClick={async () => {
-                    if (await kopiruj(znackaFormulara(udaje))) uspech('Značka skopírovaná - vložte ju do textu stránky');
+                    if (await kopiruj(znackaFormulara(udaje))) uspech(tr('Značka skopírovaná - vložte ju do textu stránky'));
                   }}
                 >
-                  Kopírovať
+                  {tr('Kopírovať')}
                 </Button>
-                <small>Vložte značku do obsahu stránky (Stránky → úprava). Na jej mieste sa zobrazí formulár.</small>
+                <small>{tr('Vložte značku do obsahu stránky (Stránky → úprava). Na jej mieste sa zobrazí formulár.')}</small>
               </div>
             )}
           </section>
 
           <section className="cw-zed__panel">
-            <div className="cw-zed__panel-nadpis">Upozornenie e-mailom</div>
+            <div className="cw-zed__panel-nadpis">{tr('Upozornenie e-mailom')}</div>
             <Input
-              menovka="E-mail pre upozornenia"
+              menovka={tr('E-mail pre upozornenia')}
               type="email"
               value={udaje.email_pre_notifikacie ?? ''}
               onChange={(e) => setUdaje((u) => ({ ...u, email_pre_notifikacie: e.target.value }))}
               placeholder="sekretar@klub.sk"
-              napoveda="Po každom odoslaní príde e-mail s vyplnenými údajmi (ak je nastavené odosielanie e-mailov)"
+              napoveda={tr('Po každom odoslaní príde e-mail s vyplnenými údajmi (ak je nastavené odosielanie e-mailov)')}
             />
           </section>
 
           <section className="cw-zed__panel cw-form__nahlad">
-            <div className="cw-zed__panel-nadpis">Náhľad</div>
+            <div className="cw-zed__panel-nadpis">{tr('Náhľad')}</div>
             <FormularWeb formular={nahlad} nahlad />
           </section>
         </aside>

@@ -11,6 +11,7 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { formulareApi, oznamZmenuFormularov } from '../../api/formulare';
 import { formatujDatumCas } from '../../utils/datum';
 import type { OdpovedFormulara, PoleFormulara } from '../../api/typy';
+import { tr } from '../../i18n';
 import './ClanokEditor.css';
 import './ZapasEditor.css';
 import './Formulare.css';
@@ -19,7 +20,7 @@ type Filter = 'vsetky' | 'nove' | 'precitane';
 
 /** Hodnota odpovede ako text. */
 const naText = (h: unknown): string =>
-  h === true ? 'Áno' : h === false ? 'Nie' : Array.isArray(h) ? h.join(', ') : h == null ? '' : String(h);
+  h === true ? tr('Áno') : h === false ? tr('Nie') : Array.isArray(h) ? h.join(', ') : h == null ? '' : String(h);
 
 /** Stĺpce odpovedí - aktuálne polia a za nimi kódy polí, ktoré už boli odstránené. */
 const stlpceOdpovedi = (polia: PoleFormulara[], odpovede: OdpovedFormulara[]) => {
@@ -28,7 +29,7 @@ const stlpceOdpovedi = (polia: PoleFormulara[], odpovede: OdpovedFormulara[]) =>
   odpovede.forEach((o) => Object.keys(o.udaje ?? {}).forEach((k) => !znamy.has(k) && stare.add(k)));
   return [
     ...polia.map((p) => ({ kod: p.kod, nazov: p.nazov })),
-    ...[...stare].map((k) => ({ kod: k, nazov: `${k} (odstránené pole)` })),
+    ...[...stare].map((k) => ({ kod: k, nazov: tr('{k} (odstránené pole)', { k }) })),
   ];
 };
 
@@ -36,9 +37,9 @@ const stlpceOdpovedi = (polia: PoleFormulara[], odpovede: OdpovedFormulara[]) =>
 const stiahniCsv = (nazov: string, stlpce: Array<{ kod: string; nazov: string }>, odpovede: OdpovedFormulara[]) => {
   const bunka = (t: string) => `"${t.replace(/"/g, '""')}"`;
   const riadky = [
-    ['Odoslané', 'Prečítané', ...stlpce.map((s) => s.nazov)].map(bunka).join(';'),
+    [tr('Odoslané'), tr('Prečítané'), ...stlpce.map((s) => s.nazov)].map(bunka).join(';'),
     ...odpovede.map((o) =>
-      [formatujDatumCas(o.vytvorena), o.precitane ? 'áno' : 'nie', ...stlpce.map((s) => naText(o.udaje?.[s.kod]))]
+      [formatujDatumCas(o.vytvorena), o.precitane ? tr('áno') : 'nie', ...stlpce.map((s) => naText(o.udaje?.[s.kod]))]
         .map(bunka)
         .join(';')
     ),
@@ -81,9 +82,9 @@ export const FormularOdpovede: React.FC = () => {
       await formulareApi.oznac(o.id, precitane);
       odpovede.obnov();
       oznamZmenuFormularov();
-      if (!tichy) uspech(precitane ? 'Označené ako prečítané' : 'Označené ako neprečítané');
+      if (!tichy) uspech(precitane ? tr('Označené ako prečítané') : tr('Označené ako neprečítané'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Stav sa nepodarilo zmeniť');
+      hlasChybu(e?.message || tr('Stav sa nepodarilo zmeniť'));
     }
   };
 
@@ -100,9 +101,9 @@ export const FormularOdpovede: React.FC = () => {
       await Promise.all(zoznam.filter((o) => !o.precitane).map((o) => formulareApi.oznac(o.id, true)));
       odpovede.obnov();
       oznamZmenuFormularov();
-      uspech('Všetky odpovede sú prečítané');
+      uspech(tr('Všetky odpovede sú prečítané'));
     } catch (e: any) {
-      hlasChybu(e?.message || 'Nepodarilo sa označiť všetky odpovede');
+      hlasChybu(e?.message || tr('Nepodarilo sa označiť všetky odpovede'));
     } finally {
       setHromadne(false);
     }
@@ -113,12 +114,12 @@ export const FormularOdpovede: React.FC = () => {
     setMaze(true);
     try {
       await formulareApi.zmazOdpoved(naZmazanie.id);
-      uspech('Odpoveď bola zmazaná');
+      uspech(tr('Odpoveď bola zmazaná'));
       setNaZmazanie(null);
       odpovede.obnov();
       oznamZmenuFormularov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Odpoveď sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Odpoveď sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -130,10 +131,10 @@ export const FormularOdpovede: React.FC = () => {
       .map((s) => naText(o.udaje?.[s.kod]))
       .filter(Boolean)
       .slice(0, 2)
-      .join(' · ') || 'Bez vyplnených údajov';
+      .join(' · ') || tr('Bez vyplnených údajov');
 
   if (formular.chyba) {
-    return <ErrorState sprava="Formulár sa nepodarilo načítať" detail={formular.chyba} onSkusZnova={formular.obnov} />;
+    return <ErrorState sprava={tr('Formulár sa nepodarilo načítať')} detail={formular.chyba} onSkusZnova={formular.obnov} />;
   }
 
   return (
@@ -141,14 +142,14 @@ export const FormularOdpovede: React.FC = () => {
       <div className="cw-ced__bar">
         <button className="cw-ced__spat" onClick={() => navigate('/admin/formulare')}>
           <Icon nazov="sipkaVlavo" velkost={15} />
-          Späť
+          {tr('Späť')}
         </button>
-        <h1 className="cw-zed__nadpis">{formular.data?.nazov ?? 'Formulár'}</h1>
-        {pocetNovych > 0 && <Badge ton="danger">{pocetNovych} nové</Badge>}
+        <h1 className="cw-zed__nadpis">{formular.data?.nazov ?? tr('Formulár')}</h1>
+        {pocetNovych > 0 && <Badge ton="danger">{pocetNovych} {tr('nové')}</Badge>}
         <div className="cw-ced__medzera" />
         <button className="cw-ced__btn" onClick={() => navigate(`/admin/formulare/${idFormulara}`)}>
           <Icon nazov="upravit" velkost={15} />
-          Upraviť formulár
+          {tr('Upraviť formulár')}
         </button>
         <button
           className="cw-ced__btn"
@@ -156,17 +157,17 @@ export const FormularOdpovede: React.FC = () => {
           onClick={() => stiahniCsv(formular.data?.nazov ?? 'formular', stlpce, zoznam)}
         >
           <Icon nazov="nahrat" velkost={15} />
-          Stiahnuť CSV
+          {tr('Stiahnuť CSV')}
         </button>
       </div>
 
       <div className="cw-form__lista">
         <FilterChips
-          popisSkupiny="Filter odpovedí"
+          popisSkupiny={tr('Filter odpovedí')}
           moznosti={[
-            { hodnota: 'vsetky', popis: 'Všetky', pocet: zoznam.length },
-            { hodnota: 'nove', popis: 'Neprečítané', pocet: pocetNovych },
-            { hodnota: 'precitane', popis: 'Prečítané', pocet: zoznam.length - pocetNovych },
+            { hodnota: 'vsetky', popis: tr('Všetky'), pocet: zoznam.length },
+            { hodnota: 'nove', popis: tr('Neprečítané'), pocet: pocetNovych },
+            { hodnota: 'precitane', popis: tr('Prečítané'), pocet: zoznam.length - pocetNovych },
           ]}
           zvolena={filter}
           onZmena={(h) => {
@@ -176,13 +177,13 @@ export const FormularOdpovede: React.FC = () => {
         />
         {pocetNovych > 0 && (
           <Button variant="secondary" velkost="sm" nacitava={hromadne} onClick={oznacVsetky}>
-            Označiť všetky ako prečítané
+            {tr('Označiť všetky ako prečítané')}
           </Button>
         )}
       </div>
 
       {odpovede.chyba ? (
-        <ErrorState sprava="Odpovede sa nepodarilo načítať" detail={odpovede.chyba} onSkusZnova={odpovede.obnov} />
+        <ErrorState sprava={tr('Odpovede sa nepodarilo načítať')} detail={odpovede.chyba} onSkusZnova={odpovede.obnov} />
       ) : odpovede.nacitava && !odpovede.data ? (
         <div className="cw-zed__panel">
           <Skeleton riadkov={5} />
@@ -191,8 +192,8 @@ export const FormularOdpovede: React.FC = () => {
         <div className="cw-zed__panel">
           <EmptyState
             ikona={<Icon nazov="formular" velkost={36} />}
-            nadpis={zoznam.length === 0 ? 'Zatiaľ nikto formulár nevyplnil' : 'Žiadne odpovede v tomto filtri'}
-            popis={zoznam.length === 0 ? `Formulár je na adrese /formular/${formular.data?.slug ?? ''}` : undefined}
+            nadpis={zoznam.length === 0 ? tr('Zatiaľ nikto formulár nevyplnil') : tr('Žiadne odpovede v tomto filtri')}
+            popis={zoznam.length === 0 ? tr('Formulár je na adrese /formular/{hodnota}', { hodnota: formular.data?.slug ?? '' }) : undefined}
           />
         </div>
       ) : (
@@ -200,7 +201,7 @@ export const FormularOdpovede: React.FC = () => {
           {zobrazene.map((o) => (
             <li key={o.id} className={`cw-form__odpoved ${o.precitane ? '' : 'is-nova'} ${otvorena === o.id ? 'is-otvorena' : ''}`}>
               <button className="cw-form__odpoved-hlava" onClick={() => otvor(o)} aria-expanded={otvorena === o.id}>
-                <span className="cw-form__bodka" aria-label={o.precitane ? 'Prečítané' : 'Neprečítané'} />
+                <span className="cw-form__bodka" aria-label={o.precitane ? tr('Prečítané') : tr('Neprečítané')} />
                 <span className="cw-form__suhrn">{suhrn(o)}</span>
                 <span className="cw-form__cas">{formatujDatumCas(o.vytvorena)}</span>
                 <Icon nazov="sipkaDole" velkost={15} />
@@ -217,10 +218,10 @@ export const FormularOdpovede: React.FC = () => {
                   </dl>
                   <div className="cw-form__odpoved-akcie">
                     <Button velkost="sm" variant="secondary" onClick={() => oznac(o, !o.precitane)}>
-                      {o.precitane ? 'Označiť ako neprečítané' : 'Označiť ako prečítané'}
+                      {o.precitane ? tr('Označiť ako neprečítané') : tr('Označiť ako prečítané')}
                     </Button>
                     <Button velkost="sm" variant="ghost" onClick={() => setNaZmazanie(o)} ikona={<Icon nazov="zmazat" velkost={14} />}>
-                      Zmazať
+                      {tr('Zmazať')}
                     </Button>
                   </div>
                 </div>
@@ -232,9 +233,9 @@ export const FormularOdpovede: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať odpoveď?"
-        sprava="Vyplnený formulár bude natrvalo zmazaný."
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať odpoveď?')}
+        sprava={tr('Vyplnený formulár bude natrvalo zmazaný.')}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

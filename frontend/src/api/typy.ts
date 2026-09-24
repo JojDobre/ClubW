@@ -483,6 +483,8 @@ export interface NastaveniaAdmin {
   tiktok_url: string | null;
   meta_popis: string | null;
   google_analytics_id: string | null;
+  /** Predvolený jazyk administrácie (sk, cs, en) */
+  jazyk_administracie?: string;
   /** Dodatkové farby šablóny - kľúč → #RRGGBB, v CSS ako --club-extra-<kľúč> */
   dodatkove_farby: Record<string, string>;
   nastavenia_komentarov: NastaveniaKomentarov;

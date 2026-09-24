@@ -7,6 +7,7 @@
 // Odtiaľto sa generuje bočné menu, mobilná navigácia aj drobečková cesta.
 
 import type { NazovIkony } from '../ui/Icon';
+import { tr } from '../i18n';
 
 /** Rola potrebná na zobrazenie položky. */
 export type Rola = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
@@ -40,55 +41,55 @@ export interface SekciaMenu {
  */
 export const SEKCIE_MENU: SekciaMenu[] = [
   {
-    nazov: 'OBSAH',
+    nazov: tr('OBSAH'),
     polozky: [
-      { cesta: '/admin', popis: 'Dashboard', ikona: 'dashboard' },
-      { modul: 'clanky', cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
-      { modul: 'rubriky', cesta: '/admin/kategorie', popis: 'Kategórie', ikona: 'kategorie' },
-      { modul: 'komentare', cesta: '/admin/komentare', popis: 'Komentáre', ikona: 'komentare' },
-      { modul: 'stranky', cesta: '/admin/stranky', popis: 'Stránky', ikona: 'stranky' },
-      { modul: 'galerie', cesta: '/admin/galerie', popis: 'Galérie', ikona: 'galerie' },
-      { modul: 'videa', cesta: '/admin/videa', popis: 'Videá', ikona: 'videa' },
-      { modul: 'media', cesta: '/admin/media', popis: 'Knižnica médií', ikona: 'media' },
+      { cesta: '/admin', popis: tr('Dashboard'), ikona: 'dashboard' },
+      { modul: 'clanky', cesta: '/admin/clanky', popis: tr('Články'), ikona: 'clanky' },
+      { modul: 'rubriky', cesta: '/admin/kategorie', popis: tr('Kategórie'), ikona: 'kategorie' },
+      { modul: 'komentare', cesta: '/admin/komentare', popis: tr('Komentáre'), ikona: 'komentare' },
+      { modul: 'stranky', cesta: '/admin/stranky', popis: tr('Stránky'), ikona: 'stranky' },
+      { modul: 'galerie', cesta: '/admin/galerie', popis: tr('Galérie'), ikona: 'galerie' },
+      { modul: 'videa', cesta: '/admin/videa', popis: tr('Videá'), ikona: 'videa' },
+      { modul: 'media', cesta: '/admin/media', popis: tr('Knižnica médií'), ikona: 'media' },
     ],
   },
   {
-    nazov: 'ŠPORT',
+    nazov: tr('ŠPORT'),
     polozky: [
-      { modul: 'timy', cesta: '/admin/timy', popis: 'Tímy', ikona: 'timy' },
-      { modul: 'hraci', cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
-      { modul: 'realizacny_tim', cesta: '/admin/realizacny-tim', popis: 'Realizačný tím', ikona: 'pouzivatelia' },
-      { modul: 'stadiony', cesta: '/admin/stadiony', popis: 'Štadióny', ikona: 'stadion' },
-      { modul: 'ligy', cesta: '/admin/ligy', popis: 'Ligy a tabuľky', ikona: 'ligy' },
-      { modul: 'turnaje', cesta: '/admin/turnaje', popis: 'Turnaje', ikona: 'ligy' },
-      { modul: 'zapasy', cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
-      { modul: 'kalendar', cesta: '/admin/kalendar', popis: 'Kalendár', ikona: 'kalendar' },
+      { modul: 'timy', cesta: '/admin/timy', popis: tr('Tímy'), ikona: 'timy' },
+      { modul: 'hraci', cesta: '/admin/hraci', popis: tr('Hráči'), ikona: 'hraci' },
+      { modul: 'realizacny_tim', cesta: '/admin/realizacny-tim', popis: tr('Realizačný tím'), ikona: 'pouzivatelia' },
+      { modul: 'stadiony', cesta: '/admin/stadiony', popis: tr('Štadióny'), ikona: 'stadion' },
+      { modul: 'ligy', cesta: '/admin/ligy', popis: tr('Ligy a tabuľky'), ikona: 'ligy' },
+      { modul: 'turnaje', cesta: '/admin/turnaje', popis: tr('Turnaje'), ikona: 'ligy' },
+      { modul: 'zapasy', cesta: '/admin/zapasy', popis: tr('Zápasy'), ikona: 'zapasy' },
+      { modul: 'kalendar', cesta: '/admin/kalendar', popis: tr('Kalendár'), ikona: 'kalendar' },
     ],
   },
   {
-    nazov: 'KLUB',
+    nazov: tr('KLUB'),
     polozky: [
-      { modul: 'sponzori', cesta: '/admin/sponzori', popis: 'Sponzori', ikona: 'licencia' },
-      { modul: 'dokumenty', cesta: '/admin/dokumenty', popis: 'Dokumenty', ikona: 'stranky' },
-      { modul: 'formulare', cesta: '/admin/formulare', popis: 'Formuláre', ikona: 'formular', odznak: 'formulare' },
-      { cesta: '/admin/ankety', popis: 'Ankety', ikona: 'komentare', role: ['admin', 'redaktor'] },
-      { cesta: '/admin/fanusikovia', popis: 'Fanúšikovia', ikona: 'pouzivatelia', role: ['admin', 'redaktor'] },
+      { modul: 'sponzori', cesta: '/admin/sponzori', popis: tr('Sponzori'), ikona: 'licencia' },
+      { modul: 'dokumenty', cesta: '/admin/dokumenty', popis: tr('Dokumenty'), ikona: 'stranky' },
+      { modul: 'formulare', cesta: '/admin/formulare', popis: tr('Formuláre'), ikona: 'formular', odznak: 'formulare' },
+      { cesta: '/admin/ankety', popis: tr('Ankety'), ikona: 'komentare', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/fanusikovia', popis: tr('Fanúšikovia'), ikona: 'pouzivatelia', role: ['admin', 'redaktor'] },
     ],
   },
   {
-    nazov: 'SYSTÉM',
+    nazov: tr('SYSTÉM'),
     polozky: [
-      { modul: 'pouzivatelia', cesta: '/admin/pouzivatelia', popis: 'Používatelia', ikona: 'pouzivatelia', role: ['admin'] },
-      { modul: 'nastavenia', cesta: '/admin/nastavenia', popis: 'Nastavenia', ikona: 'nastavenia', role: ['admin'] },
-      { modul: 'nastavenia', cesta: '/admin/menu', popis: 'Menu a odkazy', ikona: 'menu', role: ['admin'] },
-      { modul: 'sablony', cesta: '/admin/sablony', popis: 'Šablóny', ikona: 'sablony', role: ['admin'] },
-      { modul: 'licencia', cesta: '/admin/licencia', popis: 'Licencia', ikona: 'licencia', role: ['admin'] },
+      { modul: 'pouzivatelia', cesta: '/admin/pouzivatelia', popis: tr('Používatelia'), ikona: 'pouzivatelia', role: ['admin'] },
+      { modul: 'nastavenia', cesta: '/admin/nastavenia', popis: tr('Nastavenia'), ikona: 'nastavenia', role: ['admin'] },
+      { modul: 'nastavenia', cesta: '/admin/menu', popis: tr('Menu a odkazy'), ikona: 'menu', role: ['admin'] },
+      { modul: 'sablony', cesta: '/admin/sablony', popis: tr('Šablóny'), ikona: 'sablony', role: ['admin'] },
+      { modul: 'licencia', cesta: '/admin/licencia', popis: tr('Licencia'), ikona: 'licencia', role: ['admin'] },
       // Doplnené nad rámec návrhu — backend má funkčné rozhranie
       // pre sezóny a GDPR, bez položky v menu by sa nedali používať
-      { modul: 'sezony', cesta: '/admin/sezony', popis: 'Sezóny a súpisky', ikona: 'sezony' },
-      { modul: 'archiv', cesta: '/admin/archiv', popis: 'Archív', ikona: 'archiv' },
-      { modul: 'logy', cesta: '/admin/logy', popis: 'Logy', ikona: 'hodiny', role: ['admin'] },
-      { cesta: '/admin/ochrana-udajov', popis: 'Ochrana údajov', ikona: 'gdpr', role: ['admin'] },
+      { modul: 'sezony', cesta: '/admin/sezony', popis: tr('Sezóny a súpisky'), ikona: 'sezony' },
+      { modul: 'archiv', cesta: '/admin/archiv', popis: tr('Archív'), ikona: 'archiv' },
+      { modul: 'logy', cesta: '/admin/logy', popis: tr('Logy'), ikona: 'hodiny', role: ['admin'] },
+      { cesta: '/admin/ochrana-udajov', popis: tr('Ochrana údajov'), ikona: 'gdpr', role: ['admin'] },
     ],
   },
 ];
@@ -98,10 +99,10 @@ export const SEKCIE_MENU: SekciaMenu[] = [
  * Zámerne len päť najčastejších — viac sa na šírku telefónu nezmestí.
  */
 export const MOBILNA_NAVIGACIA: PolozkaMenu[] = [
-  { cesta: '/admin', popis: 'Prehľad', ikona: 'dashboard' },
-  { modul: 'clanky', cesta: '/admin/clanky', popis: 'Články', ikona: 'clanky' },
-  { modul: 'zapasy', cesta: '/admin/zapasy', popis: 'Zápasy', ikona: 'zapasy' },
-  { modul: 'hraci', cesta: '/admin/hraci', popis: 'Hráči', ikona: 'hraci' },
+  { cesta: '/admin', popis: tr('Prehľad'), ikona: 'dashboard' },
+  { modul: 'clanky', cesta: '/admin/clanky', popis: tr('Články'), ikona: 'clanky' },
+  { modul: 'zapasy', cesta: '/admin/zapasy', popis: tr('Zápasy'), ikona: 'zapasy' },
+  { modul: 'hraci', cesta: '/admin/hraci', popis: tr('Hráči'), ikona: 'hraci' },
 ];
 
 /**
@@ -123,7 +124,7 @@ export const nazovObrazovky = (cesta: string): string => {
     // Pri viacerých zhodách vyhráva najdlhšia (najkonkrétnejšia) cesta
     .sort((a, b) => b.cesta.length - a.cesta.length);
 
-  return kandidati[0]?.popis ?? 'Administrácia';
+  return kandidati[0]?.popis ?? tr('Administrácia');
 };
 
 /**

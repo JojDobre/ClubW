@@ -13,10 +13,11 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { presmerovaniaApi } from '../../api/menu';
 import { formatujDatumCas } from '../../utils/datum';
 import type { PresmerovanieOdkazu } from '../../api/typy';
+import { tr } from '../../i18n';
 
 const KODY = [
-  { hodnota: 301, popis: 'Trvalé (301) - stará adresa už neplatí' },
-  { hodnota: 302, popis: 'Dočasné (302) - stará adresa sa vráti' },
+  { hodnota: 301, popis: tr('Trvalé (301) - stará adresa už neplatí') },
+  { hodnota: 302, popis: tr('Dočasné (302) - stará adresa sa vráti') },
 ];
 
 const PRAZDNE: Partial<PresmerovanieOdkazu> = { stary_odkaz: '', novy_odkaz: '', kod: 301, poznamka: '', aktivity: true };
@@ -47,22 +48,22 @@ export const Presmerovania: React.FC = () => {
     if (!upravovane) return;
     const stary = naCestu(upravovane.stary_odkaz ?? '');
     const novy = naCestu(upravovane.novy_odkaz ?? '');
-    if (!stary.startsWith('/')) return varovanie('Starý odkaz musí byť adresa na tomto webe, napríklad /stary-clanok');
-    if (!novy) return varovanie('Zadajte nový odkaz');
+    if (!stary.startsWith('/')) return varovanie(tr('Starý odkaz musí byť adresa na tomto webe, napríklad /stary-clanok'));
+    if (!novy) return varovanie(tr('Zadajte nový odkaz'));
     setUklada(true);
     try {
       const telo = { ...upravovane, stary_odkaz: stary, novy_odkaz: novy, poznamka: upravovane.poznamka?.trim() || null };
       if (upravovane.id) {
         await presmerovaniaApi.uprav(upravovane.id, telo);
-        uspech('Presmerovanie bolo uložené');
+        uspech(tr('Presmerovanie bolo uložené'));
       } else {
         await presmerovaniaApi.vytvor(telo);
-        uspech('Presmerovanie bolo vytvorené');
+        uspech(tr('Presmerovanie bolo vytvorené'));
       }
       setUpravovane(null);
       zoznam.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Presmerovanie sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Presmerovanie sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -72,18 +73,18 @@ export const Presmerovania: React.FC = () => {
     if (!naZmazanie) return;
     try {
       await presmerovaniaApi.zmaz(naZmazanie.id);
-      uspech('Presmerovanie bolo zmazané');
+      uspech(tr('Presmerovanie bolo zmazané'));
       setNaZmazanie(null);
       zoznam.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Presmerovanie sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Presmerovanie sa nepodarilo zmazať'));
     }
   };
 
   const stlpce: Stlpec<PresmerovanieOdkazu>[] = [
     {
       kluc: 'odkazy',
-      popis: 'Starý odkaz → nový odkaz',
+      popis: tr('Starý odkaz → nový odkaz'),
       obsah: (p) => (
         <div className="cw-presm__odkazy">
           <code>{p.stary_odkaz}</code>
@@ -96,16 +97,16 @@ export const Presmerovania: React.FC = () => {
     },
     {
       kluc: 'kod',
-      popis: 'Typ',
-      obsah: (p) => (p.aktivity ? <Badge ton={p.kod === 301 || p.kod === 308 ? 'primary' : 'info'}>{p.kod === 301 || p.kod === 308 ? 'Trvalé' : 'Dočasné'}</Badge> : <Badge>Vypnuté</Badge>),
+      popis: tr('Typ'),
+      obsah: (p) => (p.aktivity ? <Badge ton={p.kod === 301 || p.kod === 308 ? 'primary' : 'info'}>{p.kod === 301 || p.kod === 308 ? tr('Trvalé') : tr('Dočasné')}</Badge> : <Badge>{tr('Vypnuté')}</Badge>),
       sirka: '120px',
     },
     {
       kluc: 'pouzitia',
-      popis: 'Použité',
+      popis: tr('Použité'),
       obsah: (p) => (
         <span className="cw-presm__pouzitie">
-          {p.pocet_pouziti}×{p.posledne_pouzite ? <small> naposledy {formatujDatumCas(p.posledne_pouzite)}</small> : null}
+          {p.pocet_pouziti}×{p.posledne_pouzite ? <small> {tr('naposledy')} {formatujDatumCas(p.posledne_pouzite)}</small> : null}
         </span>
       ),
       hodnotaNaZoradenie: (p) => p.pocet_pouziti,
@@ -115,20 +116,19 @@ export const Presmerovania: React.FC = () => {
   ];
 
   const akcie: AkciaRiadku<PresmerovanieOdkazu>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (p) => setUpravovane({ ...p }) },
-    { popis: 'Vyskúšať', ikona: 'oko', onKlik: (p) => window.open(p.stary_odkaz, '_blank', 'noopener') },
-    { popis: 'Zmazať', ikona: 'zmazat', nebezpecna: true, onKlik: (p) => setNaZmazanie(p) },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (p) => setUpravovane({ ...p }) },
+    { popis: tr('Vyskúšať'), ikona: 'oko', onKlik: (p) => window.open(p.stary_odkaz, '_blank', 'noopener') },
+    { popis: tr('Zmazať'), ikona: 'zmazat', nebezpecna: true, onKlik: (p) => setNaZmazanie(p) },
   ];
 
   return (
     <>
       <div className="cw-presm__lista">
         <p>
-          Keď sa zmení adresa stránky alebo článku, alebo prechádzate zo starého webu, návštevník aj vyhľadávač
-          zo starej adresy prejde na novú. Starý odkaz môžete vložiť aj ako celú adresu.
+          {tr('Keď sa zmení adresa stránky alebo článku, alebo prechádzate zo starého webu, návštevník aj vyhľadávač zo starej adresy prejde na novú. Starý odkaz môžete vložiť aj ako celú adresu.')}
         </p>
         <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovane({ ...PRAZDNE })}>
-          Nové presmerovanie
+          {tr('Nové presmerovanie')}
         </Button>
       </div>
 
@@ -140,25 +140,25 @@ export const Presmerovania: React.FC = () => {
         chyba={zoznam.chyba}
         onSkusZnova={zoznam.obnov}
         hladatV={(p) => `${p.stary_odkaz} ${p.novy_odkaz} ${p.poznamka ?? ''}`}
-        hladatPlaceholder="Hľadať odkaz…"
+        hladatPlaceholder={tr('Hľadať odkaz…')}
         akcieRiadku={akcie}
         onKlikNaRiadok={(p) => setUpravovane({ ...p })}
-        prazdnyNadpis="Zatiaľ žiadne presmerovania"
-        prazdnyPopis="Pridajte napríklad /stary-web/kontakt → /kontakt."
+        prazdnyNadpis={tr('Zatiaľ žiadne presmerovania')}
+        prazdnyPopis={tr('Pridajte napríklad /stary-web/kontakt → /kontakt.')}
       />
 
       <Modal
         otvorene={upravovane !== null}
         onZavri={() => setUpravovane(null)}
-        nadpis={upravovane?.id ? 'Upraviť presmerovanie' : 'Nové presmerovanie'}
+        nadpis={upravovane?.id ? tr('Upraviť presmerovanie') : tr('Nové presmerovanie')}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovane(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {upravovane?.id ? 'Uložiť' : 'Vytvoriť'}
+              {upravovane?.id ? tr('Uložiť') : tr('Vytvoriť')}
             </Button>
           </>
         }
@@ -166,36 +166,36 @@ export const Presmerovania: React.FC = () => {
         {upravovane && (
           <>
             <Input
-              menovka="Starý odkaz"
+              menovka={tr('Starý odkaz')}
               value={upravovane.stary_odkaz ?? ''}
               onChange={(e) => setUpravovane({ ...upravovane, stary_odkaz: e.target.value })}
               placeholder="/stary-clanok"
-              napoveda="Adresa, ktorá už neexistuje (na tomto webe)"
+              napoveda={tr('Adresa, ktorá už neexistuje (na tomto webe)')}
               povinne
             />
             <Input
-              menovka="Nový odkaz"
+              menovka={tr('Nový odkaz')}
               value={upravovane.novy_odkaz ?? ''}
               onChange={(e) => setUpravovane({ ...upravovane, novy_odkaz: e.target.value })}
               placeholder="/clanek/novy-clanok alebo https://…"
               povinne
             />
             <Select
-              menovka="Typ presmerovania"
+              menovka={tr('Typ presmerovania')}
               value={upravovane.kod === 302 || upravovane.kod === 307 ? 302 : 301}
               onChange={(e) => setUpravovane({ ...upravovane, kod: Number(e.target.value) })}
               moznosti={KODY}
             />
             <Input
-              menovka="Poznámka"
+              menovka={tr('Poznámka')}
               value={upravovane.poznamka ?? ''}
               onChange={(e) => setUpravovane({ ...upravovane, poznamka: e.target.value })}
-              placeholder="Napríklad: prechod zo starého webu"
+              placeholder={tr('Napríklad: prechod zo starého webu')}
             />
             <Switch
               zapnute={upravovane.aktivity !== false}
               onZmena={(v) => setUpravovane({ ...upravovane, aktivity: v })}
-              menovka="Aktívne"
+              menovka={tr('Aktívne')}
             />
           </>
         )}
@@ -203,9 +203,9 @@ export const Presmerovania: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať presmerovanie?"
-        sprava={`Adresa ${naZmazanie?.stary_odkaz ?? ''} prestane presmerovávať.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať presmerovanie?')}
+        sprava={tr('Adresa {hodnota} prestane presmerovávať.', { hodnota: naZmazanie?.stary_odkaz ?? '' })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         onPotvrd={zmaz}
         onZrus={() => setNaZmazanie(null)}

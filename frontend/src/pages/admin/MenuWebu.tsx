@@ -14,21 +14,22 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { menuApi } from '../../api/menu';
 import { strankyApi, kategorieSpravaApi } from '../../api/obsah';
 import type { PolozkaMenuWebu } from '../../api/typy';
+import { tr } from '../../i18n';
 import './MenuWebu.css';
 
 /** Sekcie webu, ktoré nie sú stránkou z databázy. */
 export const SEKCIE_WEBU: Array<{ url: string; nazov: string }> = [
-  { url: '/', nazov: 'Domov' },
-  { url: '/clanky', nazov: 'Články' },
-  { url: '/matches', nazov: 'Zápasy' },
-  { url: '/leagues', nazov: 'Ligy a tabuľky' },
-  { url: '/teams', nazov: 'Tímy' },
-  { url: '/turnaje', nazov: 'Turnaje' },
-  { url: '/calendar', nazov: 'Kalendár' },
-  { url: '/galleries', nazov: 'Galérie' },
-  { url: '/videa', nazov: 'Videá' },
-  { url: '/dokumenty', nazov: 'Dokumenty' },
-  { url: '/sponzori', nazov: 'Partneri' },
+  { url: '/', nazov: tr('Domov') },
+  { url: '/clanky', nazov: tr('Články') },
+  { url: '/matches', nazov: tr('Zápasy') },
+  { url: '/leagues', nazov: tr('Ligy a tabuľky') },
+  { url: '/teams', nazov: tr('Tímy') },
+  { url: '/turnaje', nazov: tr('Turnaje') },
+  { url: '/calendar', nazov: tr('Kalendár') },
+  { url: '/galleries', nazov: tr('Galérie') },
+  { url: '/videa', nazov: tr('Videá') },
+  { url: '/dokumenty', nazov: tr('Dokumenty') },
+  { url: '/sponzori', nazov: tr('Partneri') },
 ];
 
 /** Odporúčané menu pre prázdny web. */
@@ -103,14 +104,14 @@ export const MenuWebu: React.FC = () => {
   const ciel = (p: PolozkaMenuWebu): string => {
     if (p.typ === 'stranka') {
       const s = zoznamStranok.find((x) => x.id === p.stranka_id);
-      return s ? `Stránka: ${s.nazov}${s.publikovany ? '' : ' (nepublikovaná - na webe sa neukáže)'}` : 'Stránka bola zmazaná';
+      return s ? tr('Stránka: {nazov}{hodnota}', { nazov: s.nazov, hodnota: s.publikovany ? '' : tr(' (nepublikovaná - na webe sa neukáže)') }) : tr('Stránka bola zmazaná');
     }
     if (p.typ === 'rubrika') {
       const r = zoznamRubrik.find((x) => x.id === p.rubrika_id);
-      return r ? `Rubrika: ${r.nazov}` : 'Rubrika bola zmazaná';
+      return r ? tr('Rubrika: {nazov}', { nazov: r.nazov }) : tr('Rubrika bola zmazaná');
     }
     const sekcia = SEKCIE_WEBU.find((s) => s.url === p.url);
-    return sekcia ? `Sekcia webu: ${sekcia.nazov}` : `Adresa: ${p.url}`;
+    return sekcia ? tr('Sekcia webu: {nazov}', { nazov: sekcia.nazov }) : tr('Adresa: {url}', { url: p.url });
   };
 
   // ===== Poradie =====
@@ -123,7 +124,7 @@ export const MenuWebu: React.FC = () => {
       await menuApi.poradie(nove.map((p, i) => ({ id: p.id, poradie: i + 1, rodic_id: p.rodic_id })));
       menu.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Poradie sa nepodarilo zmeniť');
+      hlasChybu(e?.message || tr('Poradie sa nepodarilo zmeniť'));
     }
   };
 
@@ -131,11 +132,11 @@ export const MenuWebu: React.FC = () => {
   const uloz = async () => {
     if (!upravovana) return;
     const f = upravovana;
-    if (!f.nazov.trim()) return varovanie('Zadajte názov položky');
-    if (f.druh === 'stranka' && !f.stranka_id) return varovanie('Vyberte stránku');
-    if (f.druh === 'rubrika' && !f.rubrika_id) return varovanie('Vyberte rubriku');
+    if (!f.nazov.trim()) return varovanie(tr('Zadajte názov položky'));
+    if (f.druh === 'stranka' && !f.stranka_id) return varovanie(tr('Vyberte stránku'));
+    if (f.druh === 'rubrika' && !f.rubrika_id) return varovanie(tr('Vyberte rubriku'));
     if (f.druh === 'url' && !/^(\/(?!\/)|https?:\/\/)/i.test(f.url.trim())) {
-      return varovanie('Adresa musí začínať / (stránka webu) alebo https://');
+      return varovanie(tr('Adresa musí začínať / (stránka webu) alebo https://'));
     }
 
     const telo: Partial<PolozkaMenuWebu> = {
@@ -153,15 +154,15 @@ export const MenuWebu: React.FC = () => {
     try {
       if (f.id) {
         await menuApi.uprav(f.id, telo);
-        uspech('Položka bola uložená');
+        uspech(tr('Položka bola uložená'));
       } else {
         await menuApi.vytvor(telo);
-        uspech('Položka bola pridaná do menu');
+        uspech(tr('Položka bola pridaná do menu'));
       }
       setUpravovana(null);
       menu.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Položku sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Položku sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -171,11 +172,11 @@ export const MenuWebu: React.FC = () => {
     if (!naZmazanie) return;
     try {
       await menuApi.zmaz(naZmazanie.id);
-      uspech('Položka bola odstránená');
+      uspech(tr('Položka bola odstránená'));
       setNaZmazanie(null);
       menu.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Položku sa nepodarilo odstrániť');
+      hlasChybu(e?.message || tr('Položku sa nepodarilo odstrániť'));
     }
   };
 
@@ -185,10 +186,10 @@ export const MenuWebu: React.FC = () => {
         const s = SEKCIE_WEBU.find((x) => x.url === url)!;
         await menuApi.vytvor({ nazov: s.nazov, typ: 'url', url });
       }
-      uspech('Odporúčané menu bolo vytvorené');
+      uspech(tr('Odporúčané menu bolo vytvorené'));
       menu.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Menu sa nepodarilo vytvoriť');
+      hlasChybu(e?.message || tr('Menu sa nepodarilo vytvoriť'));
     }
   };
 
@@ -211,20 +212,20 @@ export const MenuWebu: React.FC = () => {
           <span>{ciel(p)}</span>
         </div>
         <div className="cw-menu__stitky">
-          {!p.aktivity && <Badge>Skrytá</Badge>}
-          {p.otvorit_v_novom && <Badge ton="info">Nové okno</Badge>}
+          {!p.aktivity && <Badge>{tr('Skrytá')}</Badge>}
+          {p.otvorit_v_novom && <Badge ton="info">{tr('Nové okno')}</Badge>}
         </div>
         <div className="cw-menu__akcie">
-          <Button velkost="sm" variant="ghost" disabled={index === 0} onClick={() => presun(uroven, index, -1)} aria-label={`Posunúť ${p.nazov} vyššie`}>
+          <Button velkost="sm" variant="ghost" disabled={index === 0} onClick={() => presun(uroven, index, -1)} aria-label={tr('Posunúť {nazov} vyššie', { nazov: p.nazov })}>
             ↑
           </Button>
-          <Button velkost="sm" variant="ghost" disabled={index === uroven.length - 1} onClick={() => presun(uroven, index, 1)} aria-label={`Posunúť ${p.nazov} nižšie`}>
+          <Button velkost="sm" variant="ghost" disabled={index === uroven.length - 1} onClick={() => presun(uroven, index, 1)} aria-label={tr('Posunúť {nazov} nižšie', { nazov: p.nazov })}>
             ↓
           </Button>
-          <Button velkost="sm" variant="ghost" onClick={() => setUpravovana(doFormulara(p))} aria-label={`Upraviť ${p.nazov}`}>
+          <Button velkost="sm" variant="ghost" onClick={() => setUpravovana(doFormulara(p))} aria-label={tr('Upraviť {nazov}', { nazov: p.nazov })}>
             <Icon nazov="upravit" velkost={14} />
           </Button>
-          <Button velkost="sm" variant="ghost" onClick={() => setNaZmazanie(p)} aria-label={`Odstrániť ${p.nazov}`}>
+          <Button velkost="sm" variant="ghost" onClick={() => setNaZmazanie(p)} aria-label={tr('Odstrániť {nazov}', { nazov: p.nazov })}>
             <Icon nazov="zmazat" velkost={14} />
           </Button>
         </div>
@@ -246,12 +247,12 @@ export const MenuWebu: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Menu a odkazy"
-        podnadpis="Hlavné menu verejného webu a presmerovanie starých odkazov."
+        nadpis={tr('Menu a odkazy')}
+        podnadpis={tr('Hlavné menu verejného webu a presmerovanie starých odkazov.')}
         akcie={
           karta === 'menu' ? (
-            <Button ikona={<Icon nazov="plus" velkost={16} />} onClick={() => setUpravovana({ ...PRAZDNY, nazov: 'Články' })}>
-              Pridať položku
+            <Button ikona={<Icon nazov="plus" velkost={16} />} onClick={() => setUpravovana({ ...PRAZDNY, nazov: tr('Články') })}>
+              {tr('Pridať položku')}
             </Button>
           ) : undefined
         }
@@ -259,10 +260,10 @@ export const MenuWebu: React.FC = () => {
 
       <div className="cw-menu__karty">
         <FilterChips
-          popisSkupiny="Časť obrazovky"
+          popisSkupiny={tr('Časť obrazovky')}
           moznosti={[
-            { hodnota: 'menu', popis: 'Menu webu' },
-            { hodnota: 'presmerovania', popis: 'Presmerovania' },
+            { hodnota: 'menu', popis: tr('Menu webu') },
+            { hodnota: 'presmerovania', popis: tr('Presmerovania') },
           ]}
           zvolena={karta}
           onZmena={(h) => setKarta(h as 'menu' | 'presmerovania')}
@@ -275,7 +276,7 @@ export const MenuWebu: React.FC = () => {
       <>
 
       {menu.chyba ? (
-        <ErrorState sprava="Menu sa nepodarilo načítať" detail={menu.chyba} onSkusZnova={menu.obnov} />
+        <ErrorState sprava={tr('Menu sa nepodarilo načítať')} detail={menu.chyba} onSkusZnova={menu.obnov} />
       ) : menu.nacitava && !menu.data ? (
         <div className="cw-menu__panel">
           <Skeleton riadkov={5} />
@@ -284,9 +285,9 @@ export const MenuWebu: React.FC = () => {
         <div className="cw-menu__panel">
           <EmptyState
             ikona={<Icon nazov="menu" velkost={36} />}
-            nadpis="Menu zatiaľ nie je nastavené"
-            popis="Kým ho nenastavíte, web ukazuje predvolené odkazy (Domov, Články, Turnaje, Dokumenty, Partneri) a stránky označené Zobraziť v menu."
-            akcia={<Button onClick={vytvorOdporucane}>Vytvoriť odporúčané menu</Button>}
+            nadpis={tr('Menu zatiaľ nie je nastavené')}
+            popis={tr('Kým ho nenastavíte, web ukazuje predvolené odkazy (Domov, Články, Turnaje, Dokumenty, Partneri) a stránky označené Zobraziť v menu.')}
+            akcia={<Button onClick={vytvorOdporucane}>{tr('Vytvoriť odporúčané menu')}</Button>}
           />
         </div>
       ) : (
@@ -303,15 +304,15 @@ export const MenuWebu: React.FC = () => {
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={upravovana?.id ? 'Upraviť položku menu' : 'Nová položka menu'}
+        nadpis={upravovana?.id ? tr('Upraviť položku menu') : tr('Nová položka menu')}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {upravovana?.id ? 'Uložiť' : 'Pridať'}
+              {upravovana?.id ? tr('Uložiť') : tr('Pridať')}
             </Button>
           </>
         }
@@ -319,19 +320,19 @@ export const MenuWebu: React.FC = () => {
         {upravovana && (
           <>
             <Select
-              menovka="Kam položka vedie"
+              menovka={tr('Kam položka vedie')}
               value={upravovana.druh}
               onChange={(e) => setUpravovana({ ...upravovana, druh: e.target.value as Druh })}
               moznosti={[
-                { hodnota: 'sekcia', popis: 'Sekcia webu (zápasy, turnaje…)' },
-                { hodnota: 'stranka', popis: 'Stránka' },
-                { hodnota: 'rubrika', popis: 'Rubrika článkov' },
-                { hodnota: 'url', popis: 'Vlastná adresa' },
+                { hodnota: 'sekcia', popis: tr('Sekcia webu (zápasy, turnaje…)') },
+                { hodnota: 'stranka', popis: tr('Stránka') },
+                { hodnota: 'rubrika', popis: tr('Rubrika článkov') },
+                { hodnota: 'url', popis: tr('Vlastná adresa') },
               ]}
             />
             {upravovana.druh === 'sekcia' && (
               <Select
-                menovka="Sekcia"
+                menovka={tr('Sekcia')}
                 value={upravovana.sekcia}
                 onChange={(e) =>
                   zmenCiel({ sekcia: e.target.value }, SEKCIE_WEBU.find((s) => s.url === e.target.value)?.nazov)
@@ -341,61 +342,61 @@ export const MenuWebu: React.FC = () => {
             )}
             {upravovana.druh === 'stranka' && (
               <Select
-                menovka="Stránka"
+                menovka={tr('Stránka')}
                 value={upravovana.stranka_id ?? ''}
                 onChange={(e) => {
                   const id = e.target.value ? Number(e.target.value) : null;
                   zmenCiel({ stranka_id: id }, zoznamStranok.find((s) => s.id === id)?.nazov);
                 }}
-                prazdna="Vyberte stránku"
-                moznosti={zoznamStranok.map((s) => ({ hodnota: s.id, popis: s.publikovany ? s.nazov : `${s.nazov} (nepublikovaná)` }))}
+                prazdna={tr('Vyberte stránku')}
+                moznosti={zoznamStranok.map((s) => ({ hodnota: s.id, popis: s.publikovany ? s.nazov : tr('{nazov} (nepublikovaná)', { nazov: s.nazov }) }))}
               />
             )}
             {upravovana.druh === 'rubrika' && (
               <Select
-                menovka="Rubrika"
+                menovka={tr('Rubrika')}
                 value={upravovana.rubrika_id ?? ''}
                 onChange={(e) => {
                   const id = e.target.value ? Number(e.target.value) : null;
                   zmenCiel({ rubrika_id: id }, zoznamRubrik.find((r) => r.id === id)?.nazov);
                 }}
-                prazdna="Vyberte rubriku"
+                prazdna={tr('Vyberte rubriku')}
                 moznosti={zoznamRubrik.map((r) => ({ hodnota: r.id, popis: r.nazov }))}
               />
             )}
             {upravovana.druh === 'url' && (
               <Input
-                menovka="Adresa"
+                menovka={tr('Adresa')}
                 value={upravovana.url}
                 onChange={(e) => setUpravovana({ ...upravovana, url: e.target.value })}
                 placeholder="/formular/prihlaska alebo https://…"
-                napoveda="Začína / (stránka tohto webu) alebo https:// (iný web)"
+                napoveda={tr('Začína / (stránka tohto webu) alebo https:// (iný web)')}
               />
             )}
             <Input
-              menovka="Názov v menu"
+              menovka={tr('Názov v menu')}
               value={upravovana.nazov}
               onChange={(e) => setUpravovana({ ...upravovana, nazov: e.target.value, nazovRucne: true })}
               povinne
             />
             <Select
-              menovka="Umiestnenie"
+              menovka={tr('Umiestnenie')}
               value={upravovana.rodic_id ?? ''}
               onChange={(e) => setUpravovana({ ...upravovana, rodic_id: e.target.value ? Number(e.target.value) : null })}
-              prazdna="Hlavné menu"
-              moznosti={moznyRodic.map((p) => ({ hodnota: p.id, popis: `Podmenu: ${p.nazov}` }))}
+              prazdna={tr('Hlavné menu')}
+              moznosti={moznyRodic.map((p) => ({ hodnota: p.id, popis: tr('Podmenu: {nazov}', { nazov: p.nazov }) }))}
               disabled={maDeti}
-              napoveda={maDeti ? 'Položka má vlastné podmenu, preto zostáva v hlavnom menu' : undefined}
+              napoveda={maDeti ? tr('Položka má vlastné podmenu, preto zostáva v hlavnom menu') : undefined}
             />
             <Switch
               zapnute={upravovana.otvorit_v_novom}
               onZmena={(v) => setUpravovana({ ...upravovana, otvorit_v_novom: v })}
-              menovka="Otvoriť v novom okne"
+              menovka={tr('Otvoriť v novom okne')}
             />
             <Switch
               zapnute={upravovana.aktivity}
               onZmena={(v) => setUpravovana({ ...upravovana, aktivity: v })}
-              menovka="Zobraziť na webe"
+              menovka={tr('Zobraziť na webe')}
             />
           </>
         )}
@@ -403,13 +404,13 @@ export const MenuWebu: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Odstrániť položku menu?"
+        nadpis={tr('Odstrániť položku menu?')}
         sprava={
           naZmazanie?.deti?.length
-            ? `Položka ${naZmazanie.nazov} bude odstránená aj s podmenu (${naZmazanie.deti.length}). Stránky samotné zostanú.`
-            : `Položka ${naZmazanie?.nazov ?? ''} bude odstránená z menu. Stránka alebo sekcia zostane.`
+            ? tr('Položka {nazov} bude odstránená aj s podmenu ({length}). Stránky samotné zostanú.', { nazov: naZmazanie.nazov, length: naZmazanie.deti.length })
+            : tr('Položka {hodnota} bude odstránená z menu. Stránka alebo sekcia zostane.', { hodnota: naZmazanie?.nazov ?? '' })
         }
-        potvrdit="Odstrániť"
+        potvrdit={tr('Odstrániť')}
         nebezpecne
         onPotvrd={zmaz}
         onZrus={() => setNaZmazanie(null)}

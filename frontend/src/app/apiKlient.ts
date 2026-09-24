@@ -13,6 +13,7 @@
 
 import { apiUrl } from '../config/api';
 import type { Strankovanie } from '../api/typy';
+import { tr, hlavickaJazyka } from '../i18n';
 
 /** Chyba z API s prístupom k stavovému kódu a podrobnostiam. */
 export class ApiChyba extends Error {
@@ -178,7 +179,7 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
   // ho musí doplniť aj s hranicou (boundary), inak server telo neprečíta.
   const jeSubor = typeof FormData !== 'undefined' && telo instanceof FormData;
 
-  const hlavicky: Record<string, string> = {};
+  const hlavicky: Record<string, string> = { ...hlavickaJazyka() };
   if (telo !== undefined && !jeSubor) hlavicky['Content-Type'] = 'application/json';
 
   if (!bezTokenu) {
@@ -201,7 +202,7 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
 
     throw new ApiChyba(
       0,
-      'Server neodpovedá. Skontrolujte pripojenie k internetu.'
+      tr('Server neodpovedá. Skontrolujte pripojenie k internetu.')
     );
   }
 
@@ -227,17 +228,17 @@ async function zavolajCele<T>(cesta: string, moznosti: Moznosti = {}, jePokusOZo
 
   // Vývojový proxy (Vite) vracia 500/502/504 bez tela, keď backend nebeží
   if (!obsah && [500, 502, 503, 504].includes(odpoved.status)) {
-    throw new ApiChyba(odpoved.status, 'Server neodpovedá. Skontrolujte, či je backend spustený.');
+    throw new ApiChyba(odpoved.status, tr('Server neodpovedá. Skontrolujte, či je backend spustený.'));
   }
 
   if (!odpoved.ok || obsah?.success === false) {
     const sprava =
       obsah?.message ||
       (odpoved.status === 403
-        ? 'Na túto akciu nemáte oprávnenie.'
+        ? tr('Na túto akciu nemáte oprávnenie.')
         : odpoved.status === 404
-          ? 'Záznam sa nenašiel.'
-          : `Chyba servera (${odpoved.status})`);
+          ? tr('Záznam sa nenašiel.')
+          : tr('Chyba servera ({status})', { status: odpoved.status }));
 
     throw new ApiChyba(odpoved.status, sprava, chybyNaText(obsah?.errors));
   }

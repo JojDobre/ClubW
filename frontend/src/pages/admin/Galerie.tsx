@@ -12,11 +12,12 @@ import { galerieApi } from '../../api/obsah';
 import { formatujDatum } from '../../utils/datum';
 import { souborUrl } from '../../config/api';
 import type { Galeria } from '../../api/typy';
+import { tr, trn } from '../../i18n';
 import './Galerie.css';
 
 /** Krátky popis, ku čomu galéria patrí. */
 const priradenie = (g: Galeria): string | null =>
-  g.zapas_id ? 'Zápas' : g.tim_id ? 'Tím' : g.clanok_id ? 'Článok' : null;
+  g.zapas_id ? tr('Zápas') : g.tim_id ? tr('Tím') : g.clanok_id ? tr('Článok') : null;
 
 export const Galerie: React.FC = () => {
   const { uspech, chyba: hlasChybu } = useToast();
@@ -44,11 +45,11 @@ export const Galerie: React.FC = () => {
     setMaze(true);
     try {
       await galerieApi.zmaz(naZmazanie.id);
-      uspech('Galéria bola zmazaná');
+      uspech(tr('Galéria bola zmazaná'));
       setNaZmazanie(null);
       galerie.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Galériu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Galériu sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -57,11 +58,11 @@ export const Galerie: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Galérie"
-        podnadpis="Fotogalérie zo zápasov, turnajov a klubových podujatí."
+        nadpis={tr('Galérie')}
+        podnadpis={tr('Fotogalérie zo zápasov, turnajov a klubových podujatí.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={nova}>
-            Nová galéria
+            {tr('Nová galéria')}
           </Button>
         }
       />
@@ -70,15 +71,15 @@ export const Galerie: React.FC = () => {
         <Input
           value={hladanie}
           onChange={(e) => setHladanie(e.target.value)}
-          placeholder="Hľadať galériu…"
+          placeholder={tr('Hľadať galériu…')}
           ikona={<Icon nazov="hladat" velkost={15} />}
-          aria-label="Hľadať galériu"
+          aria-label={tr('Hľadať galériu')}
         />
       </div>
 
       {galerie.chyba ? (
         <ErrorState
-          sprava="Galérie sa nepodarilo načítať"
+          sprava={tr('Galérie sa nepodarilo načítať')}
           detail={galerie.chyba}
           onSkusZnova={galerie.obnov}
         />
@@ -94,19 +95,19 @@ export const Galerie: React.FC = () => {
         <div className="cw-gal__prazdne">
           <EmptyState
             ikona={<Icon nazov="galerie" velkost={40} />}
-            nadpis={hladanie ? 'Nič sme nenašli' : 'Zatiaľ žiadne galérie'}
+            nadpis={hladanie ? tr('Nič sme nenašli') : tr('Zatiaľ žiadne galérie')}
             popis={
               hladanie
-                ? 'Skúste zmeniť hľadaný text.'
-                : 'Vytvorte galériu a nahrajte do nej fotky zo zápasu alebo podujatia.'
+                ? tr('Skúste zmeniť hľadaný text.')
+                : tr('Vytvorte galériu a nahrajte do nej fotky zo zápasu alebo podujatia.')
             }
             akcia={
               hladanie ? (
                 <Button variant="secondary" onClick={() => setHladanie('')}>
-                  Vymazať hľadanie
+                  {tr('Vymazať hľadanie')}
                 </Button>
               ) : (
-                <Button onClick={nova}>Vytvoriť galériu</Button>
+                <Button onClick={nova}>{tr('Vytvoriť galériu')}</Button>
               )
             }
           />
@@ -127,7 +128,7 @@ export const Galerie: React.FC = () => {
                 )}
 
                 {g.pocet_obrazkov !== undefined && (
-                  <span className="cw-gal__pocet">{g.pocet_obrazkov} fotiek</span>
+                  <span className="cw-gal__pocet">{trn(g.pocet_obrazkov, '{n} fotka', '{n} fotky', '{n} fotiek')}</span>
                 )}
               </button>
 
@@ -137,7 +138,7 @@ export const Galerie: React.FC = () => {
                 </div>
                 {(g.zobrazit_na_webe === false || priradenie(g)) && (
                   <div className="cw-gal__stitky">
-                    {g.zobrazit_na_webe === false && <Badge>Skrytá</Badge>}
+                    {g.zobrazit_na_webe === false && <Badge>{tr('Skrytá')}</Badge>}
                     {priradenie(g) && <Badge ton="info">{priradenie(g)}</Badge>}
                   </div>
                 )}
@@ -151,14 +152,14 @@ export const Galerie: React.FC = () => {
                   <div className="cw-gal__akcie">
                     <button
                       onClick={() => otvor(g)}
-                      aria-label={`Upraviť galériu ${g.nazov}`}
+                      aria-label={tr('Upraviť galériu {nazov}', { nazov: g.nazov })}
                     >
                       <Icon nazov="upravit" velkost={15} />
                     </button>
                     <button
                       className="is-danger"
                       onClick={() => setNaZmazanie(g)}
-                      aria-label={`Zmazať galériu ${g.nazov}`}
+                      aria-label={tr('Zmazať galériu {nazov}', { nazov: g.nazov })}
                     >
                       <Icon nazov="zmazat" velkost={15} />
                     </button>
@@ -172,9 +173,9 @@ export const Galerie: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať galériu?"
-        sprava={`Galéria ${naZmazanie?.nazov} bude zmazaná aj so všetkými fotkami. Súbory v Media knižnici zostanú.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať galériu?')}
+        sprava={tr('Galéria {nazov} bude zmazaná aj so všetkými fotkami. Súbory v Media knižnici zostanú.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

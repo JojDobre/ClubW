@@ -21,6 +21,7 @@ import { udalostNaUlozenie } from '../../api/typy';
 import type {
   Zapas, Hrac, UdalostZapasu, TypUdalosti, UdalostNaUlozenie,
 } from '../../api/typy';
+import { tr } from '../../i18n';
 import './ZapasLive.css';
 
 /** Interval automatickej obnovy údajov. */
@@ -72,7 +73,7 @@ export const ZapasLive: React.FC = () => {
         if (!zivyRef.current) return;
         // Pri tichej obnove chybu nezobrazujeme na celú obrazovku —
         // údaje na displeji sú stále použiteľné
-        if (!tiche) setChyba(e?.message || 'Údaje sa nepodarilo načítať');
+        if (!tiche) setChyba(e?.message || tr('Údaje sa nepodarilo načítať'));
       } finally {
         if (zivyRef.current && !tiche) setNacitava(false);
       }
@@ -144,7 +145,7 @@ export const ZapasLive: React.FC = () => {
       await nacitaj(true);
       return true;
     } catch (e: any) {
-      hlasChybu(e?.message || 'Udalosť sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Udalosť sa nepodarilo uložiť'));
       return false;
     } finally {
       setUklada(false);
@@ -157,13 +158,13 @@ export const ZapasLive: React.FC = () => {
 
   const pridaj = async () => {
     if (!hracId) {
-      varovanie('Vyberte hráča');
+      varovanie(tr('Vyberte hráča'));
       return;
     }
 
     const m = minuta ? Number(minuta) : null;
     if (m !== null && (m < 1 || m > 130)) {
-      varovanie('Minúta musí byť medzi 1 a 130');
+      varovanie(tr('Minúta musí byť medzi 1 a 130'));
       return;
     }
 
@@ -173,7 +174,7 @@ export const ZapasLive: React.FC = () => {
     ]);
 
     if (ok) {
-      uspech(`${TYPY_UDALOSTI[typ].popis} zaznamenaný`);
+      uspech(tr('{popis} zaznamenaný', { popis: TYPY_UDALOSTI[typ].popis }));
       setMinuta('');
     }
   };
@@ -184,7 +185,7 @@ export const ZapasLive: React.FC = () => {
       .map(udalostNaUlozenie);
 
     const ok = await ulozUdalosti(zvysne);
-    if (ok) uspech('Udalosť bola odobratá');
+    if (ok) uspech(tr('Udalosť bola odobratá'));
   };
 
   /** Zmena skóre priamo z tejto obrazovky. */
@@ -206,7 +207,7 @@ export const ZapasLive: React.FC = () => {
       });
       await nacitaj(true);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Skóre sa nepodarilo zmeniť');
+      hlasChybu(e?.message || tr('Skóre sa nepodarilo zmeniť'));
     }
   };
 
@@ -215,29 +216,29 @@ export const ZapasLive: React.FC = () => {
     if (!zapas) return;
 
     if (zapas.goly_domaci === null || zapas.goly_hostia === null) {
-      varovanie('Pred ukončením zadajte výsledok');
+      varovanie(tr('Pred ukončením zadajte výsledok'));
       return;
     }
 
     try {
       await zapasyApi.uprav(idCislo, { status: 'ukonceny' });
-      uspech('Zápas ukončený, tabuľka sa prepočítala');
+      uspech(tr('Zápas ukončený, tabuľka sa prepočítala'));
       navigate(`/admin/zapasy/${idCislo}`);
     } catch (e: any) {
-      hlasChybu(e?.message || 'Zápas sa nepodarilo ukončiť');
+      hlasChybu(e?.message || tr('Zápas sa nepodarilo ukončiť'));
     }
   };
 
   const menovkaHraca = (hId: number): string => {
     const h = hraci.find((x) => x.id === hId);
-    if (!h) return `Hráč #${hId}`;
+    if (!h) return tr('Hráč #{hId}', { hId });
     return `${h.meno} ${h.priezvisko}${h.cislo_dresu ? ` (${h.cislo_dresu})` : ''}`;
   };
 
   // ===== Stavy =====
 
   if (chyba && !zapas) {
-    return <ErrorState sprava="Zápas sa nepodarilo načítať" detail={chyba} onSkusZnova={() => nacitaj()} />;
+    return <ErrorState sprava={tr('Zápas sa nepodarilo načítať')} detail={chyba} onSkusZnova={() => nacitaj()} />;
   }
 
   if (nacitava) {
@@ -265,25 +266,25 @@ export const ZapasLive: React.FC = () => {
           onClick={() => navigate(`/admin/zapasy/${idCislo}`)}
           ikona={<Icon nazov="sipkaVlavo" velkost={16} />}
         >
-          Späť na zápas
+          {tr('Späť na zápas')}
         </Button>
 
         <div className="cw-live__bar-right">
           <span className="cw-live__obnova">
             {poslednaObnova
-              ? `Obnovené ${formatujCas(poslednaObnova)}`
-              : 'Načítava sa…'}
+              ? tr('Obnovené {hodnota}', { hodnota: formatujCas(poslednaObnova) })
+              : tr('Načítava sa…')}
           </span>
           <Button
             variant="ghost"
             velkost="sm"
             onClick={() => void nacitaj(true)}
-            aria-label="Obnoviť teraz"
+            aria-label={tr('Obnoviť teraz')}
           >
             <Icon nazov="live" velkost={15} />
           </Button>
           <Button variant="danger" onClick={ukonci}>
-            Ukončiť zápas
+            {tr('Ukončiť zápas')}
           </Button>
         </div>
       </div>
@@ -294,11 +295,11 @@ export const ZapasLive: React.FC = () => {
           <div className="cw-live__tim">
             <div className="cw-live__tim-nazov">{domaci}</div>
             <div className="cw-live__ovladanie">
-              <button onClick={() => zmenSkore('domaci', -1)} aria-label="Odobrať gól domácim">
+              <button onClick={() => zmenSkore('domaci', -1)} aria-label={tr('Odobrať gól domácim')}>
                 −
               </button>
               <span className="cw-live__goly">{zapas.goly_domaci ?? 0}</span>
-              <button onClick={() => zmenSkore('domaci', 1)} aria-label="Pridať gól domácim">
+              <button onClick={() => zmenSkore('domaci', 1)} aria-label={tr('Pridať gól domácim')}>
                 +
               </button>
             </div>
@@ -306,10 +307,10 @@ export const ZapasLive: React.FC = () => {
 
           <div className="cw-live__stred">
             {zapas.status === 'prebieha' ? (
-              <Badge ton="danger" zivy>Prebieha</Badge>
+              <Badge ton="danger" zivy>{tr('Prebieha')}</Badge>
             ) : (
               <Badge ton="info">
-                {zapas.status === 'naplanovany' ? 'Pred zápasom' : zapas.status}
+                {zapas.status === 'naplanovany' ? tr('Pred zápasom') : zapas.status}
               </Badge>
             )}
             {zapas.liga_nazov && <span className="cw-live__liga">{zapas.liga_nazov}</span>}
@@ -318,11 +319,11 @@ export const ZapasLive: React.FC = () => {
           <div className="cw-live__tim">
             <div className="cw-live__tim-nazov">{hostia}</div>
             <div className="cw-live__ovladanie">
-              <button onClick={() => zmenSkore('hostia', -1)} aria-label="Odobrať gól hosťom">
+              <button onClick={() => zmenSkore('hostia', -1)} aria-label={tr('Odobrať gól hosťom')}>
                 −
               </button>
               <span className="cw-live__goly">{zapas.goly_hostia ?? 0}</span>
-              <button onClick={() => zmenSkore('hostia', 1)} aria-label="Pridať gól hosťom">
+              <button onClick={() => zmenSkore('hostia', 1)} aria-label={tr('Pridať gól hosťom')}>
                 +
               </button>
             </div>
@@ -331,13 +332,13 @@ export const ZapasLive: React.FC = () => {
       </Card>
 
       {/* ===== Zápis udalosti ===== */}
-      <Card nadpis="Pridať udalosť">
+      <Card nadpis={tr('Pridať udalosť')}>
         <div className="cw-live__form">
           <Select
-            menovka="Hráč"
+            menovka={tr('Hráč')}
             value={hracId}
             onChange={(e) => setHracId(e.target.value)}
-            prazdna="Vyberte hráča"
+            prazdna={tr('Vyberte hráča')}
             moznosti={hraci.map((h) => ({
               hodnota: h.id,
               popis: `${h.meno} ${h.priezvisko}${h.cislo_dresu ? ` (${h.cislo_dresu})` : ''}`,
@@ -345,7 +346,7 @@ export const ZapasLive: React.FC = () => {
           />
 
           <Select
-            menovka="Udalosť"
+            menovka={tr('Udalosť')}
             value={typ}
             onChange={(e) => setTyp(e.target.value as TypUdalosti)}
             moznosti={(Object.keys(TYPY_UDALOSTI) as TypUdalosti[]).map((t) => ({
@@ -355,7 +356,7 @@ export const ZapasLive: React.FC = () => {
           />
 
           <Input
-            menovka="Minúta"
+            menovka={tr('Minúta')}
             type="number"
             min={1}
             max={130}
@@ -369,16 +370,16 @@ export const ZapasLive: React.FC = () => {
           />
 
           <Button onClick={pridaj} nacitava={uklada} ikona={<Icon nazov="plus" velkost={15} />}>
-            Zapísať
+            {tr('Zapísať')}
           </Button>
         </div>
       </Card>
 
       {/* ===== Časová os ===== */}
-      <Card nadpis="Časová os" podnadpis={`${udalosti.length} udalostí`} bezOdsadenia>
+      <Card nadpis={tr('Časová os')} podnadpis={tr('{length} udalostí', { length: udalosti.length })} bezOdsadenia>
         {zoradene.length === 0 ? (
           <p className="cw-live__prazdne">
-            Zatiaľ sa nič nestalo. Zapíšte prvý gól, asistenciu alebo kartu.
+            {tr('Zatiaľ sa nič nestalo. Zapíšte prvý gól, asistenciu alebo kartu.')}
           </p>
         ) : (
           <ul className="cw-live__os">
@@ -402,7 +403,7 @@ export const ZapasLive: React.FC = () => {
                   className="cw-live__odobrat"
                   onClick={() => odober(u)}
                   disabled={uklada}
-                  aria-label="Odobrať udalosť"
+                  aria-label={tr('Odobrať udalosť')}
                 >
                   <Icon nazov="zavriet" velkost={14} />
                 </button>

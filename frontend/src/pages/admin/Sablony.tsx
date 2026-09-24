@@ -28,6 +28,7 @@ import { useAuth } from '../../app/AuthContext';
 import { souborUrl } from '../../config/api';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import { sablonyApi, type HodnotaNastaveniaSablony, type NastavenieSablony, type SablonaWebu } from '../../api/sablony';
+import { tr } from '../../i18n';
 import './Sablony.css';
 
 /** Jedno pole nastavenia podľa typu z sablona.json. */
@@ -55,7 +56,7 @@ const PoleNastavenia: React.FC<{
               onChange={(e) => onZmena(e.target.value)}
               maxLength={7}
               placeholder="#RRGGBB"
-              aria-label={`${n.menovka} - kód farby`}
+              aria-label={tr('{menovka} - kód farby', { menovka: n.menovka })}
             />
           </div>
           {n.napoveda && <small>{n.napoveda}</small>}
@@ -148,10 +149,10 @@ export const Sablony: React.FC = () => {
     setAktivuje(s.slug);
     try {
       await sablonyApi.aktivuj(s.slug);
-      uspech(`Web má teraz vzhľad ${s.nazov}`);
+      uspech(tr('Web má teraz vzhľad {nazov}', { nazov: s.nazov }));
       sablony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Šablónu sa nepodarilo aktivovať');
+      hlasChybu(e?.message || tr('Šablónu sa nepodarilo aktivovať'));
     } finally {
       setAktivuje(null);
     }
@@ -174,11 +175,11 @@ export const Sablony: React.FC = () => {
     setUklada(true);
     try {
       await sablonyApi.ulozNastavenia(upravovana.slug, hodnoty);
-      uspech(`Nastavenia šablóny ${upravovana.nazov} boli uložené`);
+      uspech(tr('Nastavenia šablóny {nazov} boli uložené', { nazov: upravovana.nazov }));
       setUpravovana(null);
       sablony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Nastavenia sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Nastavenia sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -187,27 +188,27 @@ export const Sablony: React.FC = () => {
   const vyberSubor = (f: File | null | undefined) => {
     if (!f) return;
     if (!/\.zip$/i.test(f.name)) {
-      varovanie('Šablóna sa nahráva ako balík .zip');
+      varovanie(tr('Šablóna sa nahráva ako balík .zip'));
       return;
     }
     setSubor(f);
   };
 
   const nahraj = async () => {
-    if (!subor) return varovanie('Vyberte balík šablóny (.zip)');
+    if (!subor) return varovanie(tr('Vyberte balík šablóny (.zip)'));
     setNahrava(true);
     try {
       const v = await sablonyApi.nahraj(subor);
       uspech(
         v.predchadzajuca_verzia
-          ? `Šablóna ${v.nazov} bola aktualizovaná z verzie ${v.predchadzajuca_verzia} na ${v.verzia}`
-          : `Šablóna ${v.nazov} bola nainštalovaná`
+          ? tr('Šablóna {nazov} bola aktualizovaná z verzie {predchadzajuca_verzia} na {verzia}', { nazov: v.nazov, predchadzajuca_verzia: v.predchadzajuca_verzia, verzia: v.verzia })
+          : tr('Šablóna {nazov} bola nainštalovaná', { nazov: v.nazov })
       );
       setNahravanieOtvorene(false);
       setSubor(null);
       sablony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Šablónu sa nepodarilo nahrať');
+      hlasChybu(e?.message || tr('Šablónu sa nepodarilo nahrať'));
     } finally {
       setNahrava(false);
     }
@@ -218,11 +219,11 @@ export const Sablony: React.FC = () => {
     setMaze(true);
     try {
       await sablonyApi.zmaz(naZmazanie.slug);
-      uspech(`Šablóna ${naZmazanie.nazov} bola zmazaná`);
+      uspech(tr('Šablóna {nazov} bola zmazaná', { nazov: naZmazanie.nazov }));
       setNaZmazanie(null);
       sablony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Šablónu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Šablónu sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -231,23 +232,23 @@ export const Sablony: React.FC = () => {
   return (
     <div className="cw-screen cw-sab">
       <PageHeader
-        nadpis="Šablóny"
+        nadpis={tr('Šablóny')}
         podnadpis={
           aktivna
-            ? `Vzhľad verejného webu. Aktívna je šablóna ${aktivna.nazov}.`
-            : 'Vzhľad verejného webu - vyberte, ktorá šablóna je aktívna.'
+            ? tr('Vzhľad verejného webu. Aktívna je šablóna {nazov}.', { nazov: aktivna.nazov })
+            : tr('Vzhľad verejného webu - vyberte, ktorá šablóna je aktívna.')
         }
         akcie={
           jeSpravca && (
             <Button ikona={<Icon nazov="nahrat" velkost={16} />} onClick={() => setNahravanieOtvorene(true)}>
-              Pridať šablónu
+              {tr('Pridať šablónu')}
             </Button>
           )
         }
       />
 
       {sablony.chyba ? (
-        <ErrorState sprava="Šablóny sa nepodarilo načítať" detail={sablony.chyba} onSkusZnova={sablony.obnov} />
+        <ErrorState sprava={tr('Šablóny sa nepodarilo načítať')} detail={sablony.chyba} onSkusZnova={sablony.obnov} />
       ) : sablony.nacitava && !sablony.data ? (
         <div className="cw-sab__mriezka">
           {[0, 1, 2].map((i) => (
@@ -259,8 +260,8 @@ export const Sablony: React.FC = () => {
       ) : zoznam.length === 0 ? (
         <EmptyState
           ikona={<Icon nazov="sablony" velkost={40} />}
-          nadpis="Žiadne šablóny"
-          popis="Priečinok so šablónami je prázdny. Web beží so vstavaným vzhľadom."
+          nadpis={tr('Žiadne šablóny')}
+          popis={tr('Priečinok so šablónami je prázdny. Web beží so vstavaným vzhľadom.')}
         />
       ) : (
         <div className="cw-sab__mriezka">
@@ -268,13 +269,13 @@ export const Sablony: React.FC = () => {
             <article key={s.slug} className={`cw-sab__karta${s.aktivna ? ' is-aktivna' : ''}${s.chyba ? ' is-poskodena' : ''}`}>
               <div className="cw-sab__nahlad">
                 {s.nahlad ? (
-                  <img src={souborUrl(s.nahlad)} alt={`Náhľad šablóny ${s.nazov}`} loading="lazy" />
+                  <img src={souborUrl(s.nahlad)} alt={tr('Náhľad šablóny {nazov}', { nazov: s.nazov })} loading="lazy" />
                 ) : (
                   <span className="cw-sab__bez-nahladu">
                     <Icon nazov="sablony" velkost={36} />
                   </span>
                 )}
-                {s.aktivna && <span className="cw-sab__aktivna-znacka">Aktívna</span>}
+                {s.aktivna && <span className="cw-sab__aktivna-znacka">{tr('Aktívna')}</span>}
               </div>
 
               <div className="cw-sab__telo">
@@ -283,9 +284,9 @@ export const Sablony: React.FC = () => {
                   {s.verzia && <span className="cw-sab__verzia">v{s.verzia}</span>}
                 </div>
                 <div className="cw-sab__stitky">
-                  {s.vstavana && <Badge>Dodaná so systémom</Badge>}
-                  {s.chyba && <Badge ton="danger">Poškodená</Badge>}
-                  {!s.chyba && s.nastavenia.length > 0 && <Badge ton="info">{s.nastavenia.length} nastavení</Badge>}
+                  {s.vstavana && <Badge>{tr('Dodaná so systémom')}</Badge>}
+                  {s.chyba && <Badge ton="danger">{tr('Poškodená')}</Badge>}
+                  {!s.chyba && s.nastavenia.length > 0 && <Badge ton="info">{s.nastavenia.length} {tr('nastavení')}</Badge>}
                 </div>
                 {s.chyba ? (
                   <p className="cw-sab__chyba">{s.chyba}</p>
@@ -294,7 +295,7 @@ export const Sablony: React.FC = () => {
                 )}
                 {s.autor && (
                   <p className="cw-sab__autor">
-                    Autor:{' '}
+                    {tr('Autor:')}{' '}
                     {s.web_autora ? (
                       <a href={s.web_autora} target="_blank" rel="noopener noreferrer">
                         {s.autor}
@@ -309,26 +310,26 @@ export const Sablony: React.FC = () => {
               <div className="cw-sab__akcie">
                 {!s.chyba && !s.aktivna && smieUpravovat && (
                   <Button velkost="sm" onClick={() => aktivuj(s)} nacitava={aktivuje === s.slug} disabled={aktivuje !== null}>
-                    Aktivovať
+                    {tr('Aktivovať')}
                   </Button>
                 )}
                 {!s.chyba && !s.aktivna && (
                   <Button velkost="sm" variant="secondary" ikona={<Icon nazov="oko" velkost={14} />} onClick={() => otvorNahlad(s.slug)}>
-                    Náhľad
+                    {tr('Náhľad')}
                   </Button>
                 )}
                 {s.aktivna && (
                   <Button velkost="sm" variant="secondary" ikona={<Icon nazov="oko" velkost={14} />} onClick={() => window.open('/', '_blank', 'noopener')}>
-                    Zobraziť web
+                    {tr('Zobraziť web')}
                   </Button>
                 )}
                 {!s.chyba && s.nastavenia.length > 0 && smieUpravovat && (
                   <Button velkost="sm" variant="secondary" ikona={<Icon nazov="nastavenia" velkost={14} />} onClick={() => otvorNastavenia(s)}>
-                    Prispôsobiť
+                    {tr('Prispôsobiť')}
                   </Button>
                 )}
                 {!s.vstavana && !s.aktivna && jeSpravca && (
-                  <Button velkost="sm" variant="ghost" onClick={() => setNaZmazanie(s)} aria-label={`Zmazať šablónu ${s.nazov}`}>
+                  <Button velkost="sm" variant="ghost" onClick={() => setNaZmazanie(s)} aria-label={tr('Zmazať šablónu {nazov}', { nazov: s.nazov })}>
                     <Icon nazov="zmazat" velkost={14} />
                   </Button>
                 )}
@@ -339,28 +340,27 @@ export const Sablony: React.FC = () => {
       )}
 
       <p className="cw-sab__navod">
-        Novú šablónu nahráte ako balík <code>.zip</code> so súborom <code>sablona.json</code>. Nahratím balíka so
-        šablónou, ktorá už existuje, ju aktualizujete na novšiu verziu. Ako šablónu vytvoriť, popisuje súbor{' '}
-        <code>sablony/README.md</code>.
+        {tr('Novú šablónu nahráte ako balík')} <code>{tr('.zip')}</code> {tr('so súborom')} <code>{tr('sablona.json')}</code>{tr('. Nahratím balíka so šablónou, ktorá už existuje, ju aktualizujete na novšiu verziu. Ako šablónu vytvoriť, popisuje súbor')}{' '}
+        <code>{tr('sablony/README.md')}</code>.
       </p>
 
       {/* ===== Prispôsobenie ===== */}
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={upravovana ? `Prispôsobiť: ${upravovana.nazov}` : ''}
-        podnadpis={upravovana?.aktivna ? 'Zmeny sa na webe prejavia hneď po uložení.' : 'Šablóna nie je aktívna - zmeny uvidíte v náhľade.'}
+        nadpis={upravovana ? tr('Prispôsobiť: {nazov}', { nazov: upravovana.nazov }) : ''}
+        podnadpis={upravovana?.aktivna ? tr('Zmeny sa na webe prejavia hneď po uložení.') : tr('Šablóna nie je aktívna - zmeny uvidíte v náhľade.')}
         sirka="md"
         pata={
           <>
             <Button variant="ghost" onClick={obnovPredvolene} disabled={uklada}>
-              Predvolené hodnoty
+              {tr('Predvolené hodnoty')}
             </Button>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={ulozNastavenia} nacitava={uklada}>
-              Uložiť
+              {tr('Uložiť')}
             </Button>
           </>
         }
@@ -381,15 +381,15 @@ export const Sablony: React.FC = () => {
           setNahravanieOtvorene(false);
           setSubor(null);
         }}
-        nadpis="Pridať šablónu"
-        podnadpis="Balík .zip so šablónou (najviac 15 MB)"
+        nadpis={tr('Pridať šablónu')}
+        podnadpis={tr('Balík .zip so šablónou (najviac 15 MB)')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setNahravanieOtvorene(false)} disabled={nahrava}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={nahraj} nacitava={nahrava} disabled={!subor}>
-              Nahrať šablónu
+              {tr('Nahrať šablónu')}
             </Button>
           </>
         }
@@ -413,17 +413,17 @@ export const Sablony: React.FC = () => {
               <strong>{subor.name}</strong> ({(subor.size / 1024).toFixed(0)} kB)
             </p>
           ) : (
-            <p>Pretiahnite sem balík šablóny alebo ho vyberte z počítača.</p>
+            <p>{tr('Pretiahnite sem balík šablóny alebo ho vyberte z počítača.')}</p>
           )}
           <Button variant="secondary" velkost="sm" onClick={() => vstupRef.current?.click()}>
-            Vybrať súbor
+            {tr('Vybrať súbor')}
           </Button>
           <input
             ref={vstupRef}
             type="file"
             accept=".zip,application/zip"
             hidden
-            aria-label="Balík šablóny"
+            aria-label={tr('Balík šablóny')}
             onChange={(e) => {
               vyberSubor(e.target.files?.[0]);
               e.target.value = '';
@@ -431,15 +431,15 @@ export const Sablony: React.FC = () => {
           />
         </div>
         <p className="cw-sab__upozornenie">
-          Šablóna môže obsahovať kód, ktorý sa spustí na webe. Nahrávajte len šablóny od autorov, ktorým dôverujete.
+          {tr('Šablóna môže obsahovať kód, ktorý sa spustí na webe. Nahrávajte len šablóny od autorov, ktorým dôverujete.')}
         </p>
       </Modal>
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať šablónu?"
-        sprava={`Šablóna ${naZmazanie?.nazov ?? ''} a jej nastavenia budú zmazané. Neskôr ju môžete nahrať znova.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať šablónu?')}
+        sprava={tr('Šablóna {hodnota} a jej nastavenia budú zmazané. Neskôr ju môžete nahrať znova.', { hodnota: naZmazanie?.nazov ?? '' })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

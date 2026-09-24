@@ -12,40 +12,41 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { rolyApi } from '../../api/sprava';
 import type { AkciaOpravnenia, MapaOpravneni, RolaSOpravneniami } from '../../api/typy';
+import { tr } from '../../i18n';
 
 /** Názvy modulov pre tabuľku oprávnení. */
 export const NAZVY_MODULOV: Record<string, string> = {
-  clanky: 'Články',
-  rubriky: 'Kategórie',
-  komentare: 'Komentáre',
-  stranky: 'Stránky',
-  galerie: 'Galérie',
-  videa: 'Videá',
-  media: 'Knižnica médií',
-  stadiony: 'Štadióny',
-  sezony: 'Sezóny a súpisky',
-  timy: 'Tímy',
-  hraci: 'Hráči',
-  realizacny_tim: 'Realizačný tím',
-  ligy: 'Ligy a tabuľky',
-  turnaje: 'Turnaje',
-  zapasy: 'Zápasy',
-  kalendar: 'Kalendár',
-  sponzori: 'Sponzori',
-  dokumenty: 'Dokumenty',
-  formulare: 'Formuláre',
-  pouzivatelia: 'Používatelia',
-  archiv: 'Archív',
-  nastavenia: 'Nastavenia',
-  sablony: 'Šablóny webu',
-  logy: 'Logy',
-  licencia: 'Licencia',
+  clanky: tr('Články'),
+  rubriky: tr('Kategórie'),
+  komentare: tr('Komentáre'),
+  stranky: tr('Stránky'),
+  galerie: tr('Galérie'),
+  videa: tr('Videá'),
+  media: tr('Knižnica médií'),
+  stadiony: tr('Štadióny'),
+  sezony: tr('Sezóny a súpisky'),
+  timy: tr('Tímy'),
+  hraci: tr('Hráči'),
+  realizacny_tim: tr('Realizačný tím'),
+  ligy: tr('Ligy a tabuľky'),
+  turnaje: tr('Turnaje'),
+  zapasy: tr('Zápasy'),
+  kalendar: tr('Kalendár'),
+  sponzori: tr('Sponzori'),
+  dokumenty: tr('Dokumenty'),
+  formulare: tr('Formuláre'),
+  pouzivatelia: tr('Používatelia'),
+  archiv: tr('Archív'),
+  nastavenia: tr('Nastavenia'),
+  sablony: tr('Šablóny webu'),
+  logy: tr('Logy'),
+  licencia: tr('Licencia'),
 };
 
 const AKCIE: Array<{ kluc: AkciaOpravnenia; popis: string }> = [
-  { kluc: 'citat', popis: 'Vidí' },
-  { kluc: 'pisat', popis: 'Upravuje' },
-  { kluc: 'mazat', popis: 'Maže' },
+  { kluc: 'citat', popis: tr('Vidí') },
+  { kluc: 'pisat', popis: tr('Upravuje') },
+  { kluc: 'mazat', popis: tr('Maže') },
 ];
 
 /**
@@ -76,9 +77,9 @@ interface UpravovanaRola {
 const suhrnPrav = (r: RolaSOpravneniami, moduly: string[]) => {
   const vidi = moduly.filter((m) => r.opravnenia?.[m]?.citat).length;
   const upravuje = moduly.filter((m) => r.opravnenia?.[m]?.pisat).length;
-  if (vidi === 0) return 'Bez prístupu do administrácie';
-  if (vidi === moduly.length && upravuje === moduly.length) return 'Plný prístup';
-  return `Vidí ${vidi} sekcií, upravuje ${upravuje}`;
+  if (vidi === 0) return tr('Bez prístupu do administrácie');
+  if (vidi === moduly.length && upravuje === moduly.length) return tr('Plný prístup');
+  return tr('Vidí {vidi} sekcií, upravuje {upravuje}', { vidi, upravuje });
 };
 
 export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => void }> = ({ smieUpravovat, onZmena }) => {
@@ -103,7 +104,7 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
 
   const uloz = async () => {
     if (!upravovana) return;
-    if (upravovana.nazov.trim().length < 2) return varovanie('Názov roly musí mať aspoň 2 znaky');
+    if (upravovana.nazov.trim().length < 2) return varovanie(tr('Názov roly musí mať aspoň 2 znaky'));
     setUklada(true);
     try {
       const telo: Partial<RolaSOpravneniami> = {
@@ -114,46 +115,45 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
       if (!jeSpravca) telo.opravnenia = upravovana.opravnenia;
       if (upravovana.id) {
         await rolyApi.uprav(upravovana.id, telo);
-        uspech('Rola bola uložená');
+        uspech(tr('Rola bola uložená'));
       } else {
         await rolyApi.vytvor(telo);
-        uspech('Rola bola vytvorená');
+        uspech(tr('Rola bola vytvorená'));
       }
       setUpravovana(null);
       roly.obnov();
       onZmena?.();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Rolu sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Rolu sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
   };
 
   const zmaz = async (r: RolaSOpravneniami) => {
-    if (!window.confirm(`Zmazať rolu ${r.nazov}?`)) return;
+    if (!window.confirm(tr('Zmazať rolu {nazov}?', { nazov: r.nazov }))) return;
     try {
       await rolyApi.zmaz(r.id);
-      uspech('Rola bola zmazaná');
+      uspech(tr('Rola bola zmazaná'));
       roly.obnov();
       onZmena?.();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Rolu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Rolu sa nepodarilo zmazať'));
     }
   };
 
-  if (roly.chyba) return <ErrorState sprava="Roly sa nepodarilo načítať" detail={roly.chyba} onSkusZnova={roly.obnov} />;
+  if (roly.chyba) return <ErrorState sprava={tr('Roly sa nepodarilo načítať')} detail={roly.chyba} onSkusZnova={roly.obnov} />;
   if (roly.nacitava && !roly.data) return <Skeleton riadkov={6} />;
 
   return (
     <>
       <div className="cw-roly__lista">
         <p>
-          Rola určuje, ktoré sekcie administrácie človek vidí, upravuje a maže. Systémové roly sa nedajú zmazať,
-          ich oprávnenia (okrem Správcu) sa však dajú upraviť.
+          {tr('Rola určuje, ktoré sekcie administrácie človek vidí, upravuje a maže. Systémové roly sa nedajú zmazať, ich oprávnenia (okrem Správcu) sa však dajú upraviť.')}
         </p>
         {smieUpravovat && (
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => otvor()}>
-            Nová rola
+            {tr('Nová rola')}
           </Button>
         )}
       </div>
@@ -162,19 +162,19 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
         {zoznam.map((r) => (
           <div key={r.id} className="cw-roly__karta">
             <div className="cw-roly__hlava">
-              <strong>{r.nazov}</strong>
-              {r.je_systemova && <Badge>Systémová</Badge>}
+              <strong>{tr(r.nazov)}</strong>
+              {r.je_systemova && <Badge>{tr('Systémová')}</Badge>}
             </div>
-            {r.popis && <p className="cw-roly__popis">{r.popis}</p>}
+            {r.popis && <p className="cw-roly__popis">{tr(r.popis)}</p>}
             <p className="cw-roly__suhrn">{suhrnPrav(r, moduly)}</p>
             <div className="cw-roly__pata">
-              <span>{r.pocet_pouzivatelov ?? 0} používateľov</span>
+              <span>{r.pocet_pouzivatelov ?? 0} {tr('používateľov')}</span>
               <div>
                 <Button velkost="sm" variant="secondary" onClick={() => otvor(r)}>
-                  {smieUpravovat ? 'Upraviť' : 'Zobraziť'}
+                  {smieUpravovat ? tr('Upraviť') : tr('Zobraziť')}
                 </Button>
                 {smieUpravovat && !r.je_systemova && (
-                  <Button velkost="sm" variant="ghost" onClick={() => zmaz(r)} aria-label={`Zmazať rolu ${r.nazov}`}>
+                  <Button velkost="sm" variant="ghost" onClick={() => zmaz(r)} aria-label={tr('Zmazať rolu {nazov}', { nazov: r.nazov })}>
                     <Icon nazov="zmazat" velkost={14} />
                   </Button>
                 )}
@@ -187,16 +187,16 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={upravovana?.id ? `Rola ${upravovana.nazov}` : 'Nová rola'}
+        nadpis={upravovana?.id ? tr('Rola {nazov}', { nazov: upravovana.nazov }) : tr('Nová rola')}
         sirka="lg"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              {smieUpravovat ? 'Zrušiť' : 'Zavrieť'}
+              {smieUpravovat ? tr('Zrušiť') : tr('Zavrieť')}
             </Button>
             {smieUpravovat && (
               <Button onClick={uloz} nacitava={uklada}>
-                {upravovana?.id ? 'Uložiť rolu' : 'Vytvoriť rolu'}
+                {upravovana?.id ? tr('Uložiť rolu') : tr('Vytvoriť rolu')}
               </Button>
             )}
           </>
@@ -206,15 +206,15 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
           <>
             <div className="cw-roly__polia">
               <Input
-                menovka="Názov roly"
+                menovka={tr('Názov roly')}
                 value={upravovana.nazov}
                 onChange={(e) => setUpravovana({ ...upravovana, nazov: e.target.value })}
-                placeholder="Tréner mládeže"
+                placeholder={tr('Tréner mládeže')}
                 disabled={!smieUpravovat}
                 povinne
               />
               <Textarea
-                menovka="Popis"
+                menovka={tr('Popis')}
                 value={upravovana.popis}
                 onChange={(e) => setUpravovana({ ...upravovana, popis: e.target.value })}
                 rows={2}
@@ -222,23 +222,23 @@ export const RolyOpravnenia: React.FC<{ smieUpravovat: boolean; onZmena?: () => 
               />
             </div>
             {jeSpravca && (
-              <p className="cw-roly__poznamka">Správca má vždy plný prístup - je to poistka proti zamknutiu sa mimo administrácie.</p>
+              <p className="cw-roly__poznamka">{tr('Správca má vždy plný prístup - je to poistka proti zamknutiu sa mimo administrácie.')}</p>
             )}
             <div className="cw-roly__tabulka">
               <table>
                 <thead>
                   <tr>
-                    <th>Sekcia</th>
+                    <th>{tr('Sekcia')}</th>
                     {AKCIE.map((a) => (
                       <th key={a.kluc}>
                         {a.popis}
                         {smieUpravovat && !jeSpravca && (
                           <span className="cw-roly__vsetko">
-                            <button type="button" onClick={() => celyStlpec(a.kluc, true)} aria-label={`${a.popis} - všetko`}>
-                              všetko
+                            <button type="button" onClick={() => celyStlpec(a.kluc, true)} aria-label={tr('{popis} - všetko', { popis: a.popis })}>
+                              {tr('všetko')}
                             </button>
-                            <button type="button" onClick={() => celyStlpec(a.kluc, false)} aria-label={`${a.popis} - nič`}>
-                              nič
+                            <button type="button" onClick={() => celyStlpec(a.kluc, false)} aria-label={tr('{popis} - nič', { popis: a.popis })}>
+                              {tr('nič')}
                             </button>
                           </span>
                         )}

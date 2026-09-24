@@ -3,6 +3,7 @@
 
 import api from '../app/apiKlient';
 import type { AuditnyZaznam } from './typy';
+import { tr } from '../i18n';
 
 export interface ZaznamLogu extends AuditnyZaznam {
   pouzivatel: { id: number; meno: string } | null;
@@ -33,16 +34,16 @@ export const logyApi = {
 
 /** Názvy akcií v administrácii. */
 export const NAZVY_AKCII: Record<string, string> = {
-  vytvorenie: 'Vytvorenie',
-  uprava: 'Úprava',
-  zmazanie: 'Zmazanie',
-  anonymizacia: 'Anonymizácia',
-  export_udajov: 'Export údajov',
-  zmena_suhlasu: 'Zmena súhlasu',
-  prihlasenie: 'Prihlásenie',
-  zmena_hesla: 'Zmena hesla',
+  vytvorenie: tr('Vytvorenie'),
+  uprava: tr('Úprava'),
+  zmazanie: tr('Zmazanie'),
+  anonymizacia: tr('Anonymizácia'),
+  export_udajov: tr('Export údajov'),
+  zmena_suhlasu: tr('Zmena súhlasu'),
+  prihlasenie: tr('Prihlásenie'),
+  zmena_hesla: tr('Zmena hesla'),
 };
 
 /** Čitateľný opis záznamu: „Článok #12" namiesto „PUT /api/admin/articles/12". */
 export const opisZaznamu = (z: Pick<AuditnyZaznam, 'entita' | 'entita_id' | 'akcia'>): string =>
-  z.akcia === 'prihlasenie' ? 'Prihlásenie do administrácie' : `${z.entita}${z.entita_id ? ` #${z.entita_id}` : ''}`;
+  z.akcia === 'prihlasenie' ? tr('Prihlásenie do administrácie') : `${tr(z.entita)}${z.entita_id ? ` #${z.entita_id}` : ''}`;

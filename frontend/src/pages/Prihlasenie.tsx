@@ -6,6 +6,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button, Input, Icon } from '../ui';
 import { useAuth } from '../app/AuthContext';
 import { useNastavenia } from '../context/NastaveniaContext';
+import { tr, JAZYKY, jazyk, zmenJazyk } from '../i18n';
 import './Prihlasenie.css';
 
 export const Prihlasenie: React.FC = () => {
@@ -34,7 +35,7 @@ export const Prihlasenie: React.FC = () => {
     setChyba(null);
 
     if (!email.trim() || !heslo) {
-      setChyba('Vyplňte e-mail aj heslo');
+      setChyba(tr('Vyplňte e-mail aj heslo'));
       return;
     }
 
@@ -43,7 +44,7 @@ export const Prihlasenie: React.FC = () => {
       await prihlas(email.trim(), heslo);
       navigate(kamPotom, { replace: true });
     } catch (e: any) {
-      setChyba(e?.message || 'Prihlásenie zlyhalo');
+      setChyba(e?.message || tr('Prihlásenie zlyhalo'));
       // Heslo po neúspechu vyprázdnime, e-mail necháme
       setHeslo('');
     } finally {
@@ -63,12 +64,12 @@ export const Prihlasenie: React.FC = () => {
             </div>
             <div>
               <div className="cw-login__brand-name">{nastavenia.nazov}</div>
-              <div className="cw-login__brand-sub">Redakčný systém klubu</div>
+              <div className="cw-login__brand-sub">{tr('Redakčný systém klubu')}</div>
             </div>
           </div>
 
-          <h1 className="cw-login__title">Prihláste sa</h1>
-          <p className="cw-login__lead">Vitajte späť. Zadajte svoje prihlasovacie údaje.</p>
+          <h1 className="cw-login__title">{tr('Prihláste sa')}</h1>
+          <p className="cw-login__lead">{tr('Vitajte späť. Zadajte svoje prihlasovacie údaje.')}</p>
 
           <form onSubmit={odosli} noValidate>
             <Input
@@ -84,7 +85,7 @@ export const Prihlasenie: React.FC = () => {
             />
 
             <Input
-              menovka="Heslo"
+              menovka={tr('Heslo')}
               type="password"
               value={heslo}
               onChange={(e) => setHeslo(e.target.value)}
@@ -101,13 +102,29 @@ export const Prihlasenie: React.FC = () => {
             )}
 
             <Button type="submit" plnaSirka nacitava={odosielam}>
-              Prihlásiť sa
+              {tr('Prihlásiť sa')}
             </Button>
           </form>
 
           <Link to="/zabudnute-heslo" className="cw-login__forgot">
-            Zabudli ste heslo?
+            {tr('Zabudli ste heslo?')}
           </Link>
+
+          {/* Jazyk sa dá zvoliť ešte pred prihlásením */}
+          <div className="cw-login__jazyky" role="group" aria-label={tr('Jazyk')}>
+            {JAZYKY.map((j) => (
+              <button
+                key={j.kod}
+                type="button"
+                className={j.kod === jazyk() ? 'is-aktivny' : undefined}
+                aria-pressed={j.kod === jazyk()}
+                onClick={() => zmenJazyk(j.kod)}
+                lang={j.kod}
+              >
+                {j.nazov}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -120,7 +137,7 @@ export const Prihlasenie: React.FC = () => {
             <div className="cw-login__aside-slogan">{nastavenia.slogan}</div>
           )}
           {nastavenia.rok_zalozenia && (
-            <div className="cw-login__aside-year">od {nastavenia.rok_zalozenia}</div>
+            <div className="cw-login__aside-year">{tr('od')} {nastavenia.rok_zalozenia}</div>
           )}
         </div>
       </div>

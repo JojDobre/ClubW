@@ -14,6 +14,7 @@ import { timyApi } from '../../api/sport';
 import { formatujDatumCas } from '../../utils/datum';
 import { useAuth } from '../../app/AuthContext';
 import type { Pouzivatel, RolaSOpravneniami } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Pouzivatelia.css';
 
 /** Farba štítku podľa kódu roly; vlastné roly sú neutrálne. */
@@ -65,21 +66,21 @@ export const Pouzivatelia: React.FC = () => {
     if (!upravovany) return;
 
     if (!upravovany.meno?.trim()) {
-      varovanie('Zadajte meno');
+      varovanie(tr('Zadajte meno'));
       return;
     }
     if (!upravovany.rola_id) {
-      varovanie('Vyberte rolu');
+      varovanie(tr('Vyberte rolu'));
       return;
     }
     if (!upravovany.email?.trim()) {
-      varovanie('Zadajte e-mail');
+      varovanie(tr('Zadajte e-mail'));
       return;
     }
     // Heslo je povinné len pri novom účte — pri úprave znamená prázdne
     // pole „nemeniť"
     if (jeNovy && !upravovany.heslo) {
-      varovanie('Zadajte heslo pre nový účet');
+      varovanie(tr('Zadajte heslo pre nový účet'));
       return;
     }
 
@@ -94,7 +95,7 @@ export const Pouzivatelia: React.FC = () => {
           tim_id: upravovany.tim_id ?? null,
           heslo: upravovany.heslo!,
         });
-        uspech('Používateľ bol vytvorený');
+        uspech(tr('Používateľ bol vytvorený'));
       } else {
         const zmeny: FormularPouzivatela = {
           meno: upravovany.meno.trim(),
@@ -108,13 +109,13 @@ export const Pouzivatelia: React.FC = () => {
         if (upravovany.heslo) zmeny.heslo = upravovany.heslo;
 
         await pouzivateliaApi.uprav(upravovany.id!, zmeny);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovany(null);
       pouzivatelia.obnov();
       roly.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Používateľa sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Používateľa sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -125,11 +126,11 @@ export const Pouzivatelia: React.FC = () => {
     setMaze(true);
     try {
       await pouzivateliaApi.zmaz(naZmazanie.id);
-      uspech('Používateľ bol vymazaný');
+      uspech(tr('Používateľ bol vymazaný'));
       setNaZmazanie(null);
       pouzivatelia.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Používateľa sa nepodarilo vymazať');
+      hlasChybu(e?.message || tr('Používateľa sa nepodarilo vymazať'));
     } finally {
       setMaze(false);
     }
@@ -138,7 +139,7 @@ export const Pouzivatelia: React.FC = () => {
   const stlpce: Stlpec<Pouzivatel>[] = [
     {
       kluc: 'meno',
-      popis: 'Používateľ',
+      popis: tr('Používateľ'),
       obsah: (u) => (
         <div className="cw-pouzivatelia__osoba">
           <span className="cw-pouzivatelia__avatar" aria-hidden="true">
@@ -148,7 +149,7 @@ export const Pouzivatelia: React.FC = () => {
             <span className="cw-pouzivatelia__meno">
               {u.meno} {u.priezvisko ?? ''}
               {/* Vlastný účet zvýrazníme — pomáha vyhnúť sa omylom */}
-              {u.id === prihlaseny?.id && <span className="cw-pouzivatelia__ja">vy</span>}
+              {u.id === prihlaseny?.id && <span className="cw-pouzivatelia__ja">{tr('vy')}</span>}
             </span>
             <span className="cw-pouzivatelia__email">{u.email}</span>
           </span>
@@ -158,17 +159,17 @@ export const Pouzivatelia: React.FC = () => {
     },
     {
       kluc: 'rola',
-      popis: 'Rola',
+      popis: tr('Rola'),
       obsah: (u) => {
         const r = rolaPouzivatela(u);
-        return <Badge ton={TON_ROLY[r?.kod ?? u.rola] ?? 'neutral'}>{r?.nazov ?? u.rola}</Badge>;
+        return <Badge ton={TON_ROLY[r?.kod ?? u.rola] ?? 'neutral'}>{r ? tr(r.nazov) : u.rola}</Badge>;
       },
       hodnotaNaZoradenie: (u) => rolaPouzivatela(u)?.nazov ?? u.rola,
       sirka: '150px',
     },
     {
       kluc: 'tim',
-      popis: 'Tím',
+      popis: tr('Tím'),
       obsah: (u) => {
         const t = zoznamTimov.find((x) => x.id === u.tim_id);
         return t ? t.nazov : <span style={{ color: 'var(--muted)' }}>—</span>;
@@ -178,15 +179,15 @@ export const Pouzivatelia: React.FC = () => {
     },
     {
       kluc: 'stav',
-      popis: 'Stav',
+      popis: tr('Stav'),
       obsah: (u) =>
-        u.aktivity ? <Badge ton="success">Aktívny</Badge> : <Badge>Deaktivovaný</Badge>,
+        u.aktivity ? <Badge ton="success">{tr('Aktívny')}</Badge> : <Badge>{tr('Deaktivovaný')}</Badge>,
       hodnotaNaZoradenie: (u) => (u.aktivity ? 1 : 0),
       sirka: '130px',
     },
     {
       kluc: 'prihlasenie',
-      popis: 'Naposledy prihlásený',
+      popis: tr('Naposledy prihlásený'),
       obsah: (u) => (
         <span style={{ color: 'var(--muted)' }}>
           {u.posledne_prihlasenie ? formatujDatumCas(u.posledne_prihlasenie) : 'nikdy'}
@@ -200,9 +201,9 @@ export const Pouzivatelia: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<Pouzivatel>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (u) => setUpravovany({ ...u, heslo: '' }) },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (u) => setUpravovany({ ...u, heslo: '' }) },
     {
-      popis: 'Vymazať',
+      popis: tr('Vymazať'),
       ikona: 'zmazat',
       nebezpecna: true,
       // Vlastný účet sa zmazať nedá — správca by sa odstrihol od systému
@@ -214,15 +215,15 @@ export const Pouzivatelia: React.FC = () => {
   return (
     <>
       <PageHeader
-        nadpis="Používatelia"
-        podnadpis="Účty s prístupom do administrácie a roly s oprávneniami."
+        nadpis={tr('Používatelia')}
+        podnadpis={tr('Účty s prístupom do administrácie a roly s oprávneniami.')}
         akcie={
           karta === 'pouzivatelia' ? (
             <Button
               ikona={<Icon nazov="plus" velkost={15} />}
               onClick={() => setUpravovany({ ...PRAZDNY, rola_id: zoznamRol.find((r) => r.kod === 'redaktor')?.id ?? null })}
             >
-              Nový používateľ
+              {tr('Nový používateľ')}
             </Button>
           ) : undefined
         }
@@ -230,10 +231,10 @@ export const Pouzivatelia: React.FC = () => {
 
       <div className="cw-pouzivatelia__karty">
         <FilterChips
-          popisSkupiny="Časť obrazovky"
+          popisSkupiny={tr('Časť obrazovky')}
           moznosti={[
-            { hodnota: 'pouzivatelia', popis: 'Používatelia', pocet: zoznam.length },
-            { hodnota: 'roly', popis: 'Roly a oprávnenia', pocet: zoznamRol.length },
+            { hodnota: 'pouzivatelia', popis: tr('Používatelia'), pocet: zoznam.length },
+            { hodnota: 'roly', popis: tr('Roly a oprávnenia'), pocet: zoznamRol.length },
           ]}
           zvolena={karta}
           onZmena={(h) => setKarta(h as 'pouzivatelia' | 'roly')}
@@ -253,15 +254,15 @@ export const Pouzivatelia: React.FC = () => {
         chyba={pouzivatelia.chyba}
         onSkusZnova={pouzivatelia.obnov}
         hladatV={(u) => `${u.meno} ${u.priezvisko ?? ''} ${u.email}`}
-        hladatPlaceholder="Hľadať podľa mena alebo e-mailu…"
+        hladatPlaceholder={tr('Hľadať podľa mena alebo e-mailu…')}
         filtre={[
-          { kluc: 'rola', popis: 'Všetky roly', moznosti: zoznamRol.map((r) => ({ hodnota: String(r.id), popis: r.nazov })) },
+          { kluc: 'rola', popis: tr('Všetky roly'), moznosti: zoznamRol.map((r) => ({ hodnota: String(r.id), popis: tr(r.nazov) })) },
           {
             kluc: 'stav',
-            popis: 'Všetky stavy',
+            popis: tr('Všetky stavy'),
             moznosti: [
-              { hodnota: 'aktivny', popis: 'Aktívni' },
-              { hodnota: 'neaktivny', popis: 'Deaktivovaní' },
+              { hodnota: 'aktivny', popis: tr('Aktívni') },
+              { hodnota: 'neaktivny', popis: tr('Deaktivovaní') },
             ],
           },
         ]}
@@ -272,7 +273,7 @@ export const Pouzivatelia: React.FC = () => {
         }}
         akcieRiadku={akcieRiadku}
         onKlikNaRiadok={(u) => setUpravovany({ ...u, heslo: '' })}
-        prazdnyNadpis="Žiadni používatelia"
+        prazdnyNadpis={tr('Žiadni používatelia')}
       />
       </>
       )}
@@ -280,14 +281,14 @@ export const Pouzivatelia: React.FC = () => {
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový používateľ' : `${upravovany?.meno ?? ''} ${upravovany?.priezvisko ?? ''}`.trim() || 'Používateľ'}
+        nadpis={jeNovy ? tr('Nový používateľ') : `${upravovany?.meno ?? ''} ${upravovany?.priezvisko ?? ''}`.trim() || tr('Používateľ')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Vytvoriť účet' : 'Uložiť zmeny'}
+              {jeNovy ? tr('Vytvoriť účet') : tr('Uložiť zmeny')}
             </Button>
           </>
         }
@@ -296,13 +297,13 @@ export const Pouzivatelia: React.FC = () => {
           <>
             <div className="cw-pouzivatelia__riadok">
               <Input
-                menovka="Meno"
+                menovka={tr('Meno')}
                 value={upravovany.meno ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, meno: e.target.value }))}
                 povinne
               />
               <Input
-                menovka="Priezvisko"
+                menovka={tr('Priezvisko')}
                 value={upravovany.priezvisko ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, priezvisko: e.target.value }))}
               />
@@ -318,7 +319,7 @@ export const Pouzivatelia: React.FC = () => {
             />
 
             <Input
-              menovka={jeNovy ? 'Heslo' : 'Nové heslo'}
+              menovka={jeNovy ? tr('Heslo') : tr('Nové heslo')}
               type="password"
               value={upravovany.heslo ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, heslo: e.target.value }))}
@@ -326,18 +327,18 @@ export const Pouzivatelia: React.FC = () => {
               autoComplete="new-password"
               napoveda={
                 jeNovy
-                  ? 'Aspoň 10 znakov. Dlhá zapamätateľná fráza je bezpečnejšia než krátka zmes znakov.'
-                  : 'Nechajte prázdne, ak heslo nemeníte'
+                  ? tr('Aspoň 10 znakov. Dlhá zapamätateľná fráza je bezpečnejšia než krátka zmes znakov.')
+                  : tr('Nechajte prázdne, ak heslo nemeníte')
               }
             />
 
             <Select
-              menovka="Rola"
+              menovka={tr('Rola')}
               value={upravovany.rola_id ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, rola_id: e.target.value ? Number(e.target.value) : null }))}
-              prazdna="Vyberte rolu"
+              prazdna={tr('Vyberte rolu')}
               moznosti={ponukaRol.map((r) => ({ hodnota: r.id, popis: r.nazov }))}
-              napoveda={zvolenaRola?.popis ?? 'Oprávnenia rolí nastavíte v časti Roly a oprávnenia'}
+              napoveda={zvolenaRola?.popis ?? tr('Oprávnenia rolí nastavíte v časti Roly a oprávnenia')}
               povinne
               disabled={!jeSpravca && upravovany.rola === 'admin'}
             />
@@ -345,12 +346,12 @@ export const Pouzivatelia: React.FC = () => {
             {/* Tím má zmysel pri trénerských roliach */}
             {ukazTim && (
               <Select
-                menovka="Tím trénera"
+                menovka={tr('Tím trénera')}
                 value={upravovany.tim_id ?? ''}
                 onChange={(e) =>
                   setUpravovany((d) => ({ ...d!, tim_id: e.target.value ? Number(e.target.value) : null }))
                 }
-                prazdna="Bez zaradenia"
+                prazdna={tr('Bez zaradenia')}
                 moznosti={zoznamTimov.map((t) => ({
                   hodnota: t.id,
                   popis: `${t.nazov} (${t.vekova_kategoria})`,
@@ -362,8 +363,8 @@ export const Pouzivatelia: React.FC = () => {
               <Switch
                 zapnute={Boolean(upravovany.aktivity)}
                 onZmena={(v) => setUpravovany((d) => ({ ...d!, aktivity: v }))}
-                menovka="Aktívny účet"
-                popis="Deaktivovaný používateľ sa nemôže prihlásiť a existujúce relácie sa zrušia"
+                menovka={tr('Aktívny účet')}
+                popis={tr('Deaktivovaný používateľ sa nemôže prihlásiť a existujúce relácie sa zrušia')}
                 // Vlastný účet nesmie správca deaktivovať
                 disabled={upravovany.id === prihlaseny?.id}
               />
@@ -374,9 +375,9 @@ export const Pouzivatelia: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Vymazať používateľa?"
-        sprava={`Účet ${naZmazanie?.meno} ${naZmazanie?.priezvisko ?? ''} (${naZmazanie?.email}) bude odstránený. Články, ktoré napísal, zostanú zachované.`}
-        potvrdit="Vymazať"
+        nadpis={tr('Vymazať používateľa?')}
+        sprava={tr('Účet {meno} {hodnota} ({email}) bude odstránený. Články, ktoré napísal, zostanú zachované.', { meno: naZmazanie?.meno, hodnota: naZmazanie?.priezvisko ?? '', email: naZmazanie?.email })}
+        potvrdit={tr('Vymazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

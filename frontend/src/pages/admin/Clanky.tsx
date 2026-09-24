@@ -11,12 +11,13 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { clankyApi, kategorieApi } from '../../api/clanky';
 import { formatujDatum } from '../../utils/datum';
 import type { ClanokVoVypise, Kategoria, StavClanku } from '../../api/typy';
+import { tr, lokalita } from '../../i18n';
 
 /** Popisné názvy stavov a ich farebné tóny. */
 const STAVY: Record<StavClanku, { popis: string; ton: 'success' | 'neutral' | 'warning' }> = {
-  published: { popis: 'Publikované', ton: 'success' },
-  draft: { popis: 'Koncept', ton: 'neutral' },
-  archived: { popis: 'Archivované', ton: 'warning' },
+  published: { popis: tr('Publikované'), ton: 'success' },
+  draft: { popis: tr('Koncept'), ton: 'neutral' },
+  archived: { popis: tr('Archivované'), ton: 'warning' },
 };
 
 export const Clanky: React.FC = () => {
@@ -43,11 +44,11 @@ export const Clanky: React.FC = () => {
     setMaze(true);
     try {
       await clankyApi.zmaz(naZmazanie.id);
-      uspech(`Článok „${naZmazanie.nazov}" bol vymazaný`);
+      uspech(tr('Článok „{nazov}" bol vymazaný', { nazov: naZmazanie.nazov }));
       setNaZmazanie(null);
       clanky.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Článok sa nepodarilo vymazať');
+      hlasChybu(e?.message || tr('Článok sa nepodarilo vymazať'));
     } finally {
       setMaze(false);
     }
@@ -66,8 +67,8 @@ export const Clanky: React.FC = () => {
     const uspesne = vysledky.filter((v) => v.status === 'fulfilled').length;
     const zlyhane = vysledky.length - uspesne;
 
-    if (uspesne > 0) uspech(`Vymazaných článkov: ${uspesne}`);
-    if (zlyhane > 0) hlasChybu(`Nepodarilo sa vymazať: ${zlyhane}`);
+    if (uspesne > 0) uspech(tr('Vymazaných článkov: {uspesne}', { uspesne }));
+    if (zlyhane > 0) hlasChybu(tr('Nepodarilo sa vymazať: {zlyhane}', { zlyhane }));
 
     setHromadneNaZmazanie(null);
     setMaze(false);
@@ -79,13 +80,13 @@ export const Clanky: React.FC = () => {
   const stlpce: Stlpec<ClanokVoVypise>[] = [
     {
       kluc: 'nazov',
-      popis: 'Názov',
+      popis: tr('Názov'),
       obsah: (c) => (
         <div className="cw-clanky__nazov">
           <span className="cw-clanky__nazov-text">{c.nazov}</span>
           {c.featured && (
-            <span title="Odporúčaný článok">
-              <Badge ton="primary">Odporúčaný</Badge>
+            <span title={tr('Odporúčaný článok')}>
+              <Badge ton="primary">{tr('Odporúčaný')}</Badge>
             </span>
           )}
         </div>
@@ -94,21 +95,21 @@ export const Clanky: React.FC = () => {
     },
     {
       kluc: 'kategoria',
-      popis: 'Kategória',
+      popis: tr('Kategória'),
       obsah: (c) => (c.kategoria ? <Badge>{c.kategoria.nazov}</Badge> : <span style={{ color: 'var(--muted)' }}>—</span>),
       hodnotaNaZoradenie: (c) => c.kategoria?.nazov ?? null,
       sirka: '160px',
     },
     {
       kluc: 'autor',
-      popis: 'Autor',
+      popis: tr('Autor'),
       obsah: (c) => c.autor?.meno ?? '—',
       hodnotaNaZoradenie: (c) => c.autor?.meno ?? null,
       sirka: '150px',
     },
     {
       kluc: 'status',
-      popis: 'Stav',
+      popis: tr('Stav'),
       obsah: (c) => {
         const stav = STAVY[c.status ?? 'draft'];
         return <Badge ton={stav.ton}>{stav.popis}</Badge>;
@@ -118,7 +119,7 @@ export const Clanky: React.FC = () => {
     },
     {
       kluc: 'datum',
-      popis: 'Dátum',
+      popis: tr('Dátum'),
       obsah: (c) => (
         <span style={{ color: 'var(--muted)' }}>
           {formatujDatum(c.publikovany_datum || c.vytvoreny)}
@@ -130,8 +131,8 @@ export const Clanky: React.FC = () => {
     },
     {
       kluc: 'views',
-      popis: 'Zobrazení',
-      obsah: (c) => c.views.toLocaleString('sk-SK'),
+      popis: tr('Zobrazení'),
+      obsah: (c) => c.views.toLocaleString(lokalita()),
       hodnotaNaZoradenie: (c) => c.views,
       zarovnanie: 'right',
       sirka: '110px',
@@ -141,19 +142,19 @@ export const Clanky: React.FC = () => {
 
   const akcieRiadku: AkciaRiadku<ClanokVoVypise>[] = [
     {
-      popis: 'Upraviť',
+      popis: tr('Upraviť'),
       ikona: 'upravit',
       onKlik: (c) => navigate(`/admin/clanky/${c.id}`),
     },
     {
-      popis: 'Zobraziť na webe',
+      popis: tr('Zobraziť na webe'),
       ikona: 'oko',
       // Koncept na verejnom webe neexistuje, odkaz by viedol na chybu
       zobrazit: (c) => c.status === 'published',
       onKlik: (c) => window.open(`/clanky/${c.slug}`, '_blank', 'noopener'),
     },
     {
-      popis: 'Vymazať',
+      popis: tr('Vymazať'),
       ikona: 'zmazat',
       nebezpecna: true,
       onKlik: (c) => setNaZmazanie(c),
@@ -162,7 +163,7 @@ export const Clanky: React.FC = () => {
 
   const hromadneAkcie: HromadnaAkcia[] = [
     {
-      popis: 'Vymazať',
+      popis: tr('Vymazať'),
       ikona: 'zmazat',
       nebezpecna: true,
       onKlik: (ids) => setHromadneNaZmazanie(ids),
@@ -172,14 +173,14 @@ export const Clanky: React.FC = () => {
   return (
     <>
       <PageHeader
-        nadpis="Články"
-        podnadpis="Spravujte novinky a reportáže na webe klubu."
+        nadpis={tr('Články')}
+        podnadpis={tr('Spravujte novinky a reportáže na webe klubu.')}
         akcie={
           <Button
             ikona={<Icon nazov="plus" velkost={15} />}
             onClick={() => navigate('/admin/clanky/novy')}
           >
-            Nový článok
+            {tr('Nový článok')}
           </Button>
         }
       />
@@ -192,20 +193,20 @@ export const Clanky: React.FC = () => {
         chyba={clanky.chyba}
         onSkusZnova={clanky.obnov}
         hladatV={(c) => `${c.nazov} ${c.autor?.meno ?? ''} ${c.kategoria?.nazov ?? ''}`}
-        hladatPlaceholder="Hľadať podľa názvu, autora alebo kategórie…"
+        hladatPlaceholder={tr('Hľadať podľa názvu, autora alebo kategórie…')}
         filtre={[
           {
             kluc: 'status',
-            popis: 'Všetky stavy',
+            popis: tr('Všetky stavy'),
             moznosti: [
-              { hodnota: 'published', popis: 'Publikované' },
-              { hodnota: 'draft', popis: 'Koncepty' },
-              { hodnota: 'archived', popis: 'Archivované' },
+              { hodnota: 'published', popis: tr('Publikované') },
+              { hodnota: 'draft', popis: tr('Koncepty') },
+              { hodnota: 'archived', popis: tr('Archivované') },
             ],
           },
           {
             kluc: 'kategoria',
-            popis: 'Všetky kategórie',
+            popis: tr('Všetky kategórie'),
             moznosti: zoznamKategorii.map((k) => ({
               hodnota: String(k.id),
               popis: k.nazov,
@@ -220,18 +221,18 @@ export const Clanky: React.FC = () => {
         akcieRiadku={akcieRiadku}
         hromadneAkcie={hromadneAkcie}
         onKlikNaRiadok={(c) => navigate(`/admin/clanky/${c.id}`)}
-        prazdnyNadpis="Zatiaľ žiadne články"
-        prazdnyPopis="Keď napíšete prvý článok, objaví sa v tomto zozname."
+        prazdnyNadpis={tr('Zatiaľ žiadne články')}
+        prazdnyPopis={tr('Keď napíšete prvý článok, objaví sa v tomto zozname.')}
         prazdnaAkcia={
-          <Button onClick={() => navigate('/admin/clanky/novy')}>Napísať prvý článok</Button>
+          <Button onClick={() => navigate('/admin/clanky/novy')}>{tr('Napísať prvý článok')}</Button>
         }
       />
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Vymazať článok?"
-        sprava={`Článok „${naZmazanie?.nazov}" bude odstránený. Túto akciu nemožno vrátiť späť.`}
-        potvrdit="Vymazať"
+        nadpis={tr('Vymazať článok?')}
+        sprava={tr('Článok „{nazov}" bude odstránený. Túto akciu nemožno vrátiť späť.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Vymazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}
@@ -240,9 +241,9 @@ export const Clanky: React.FC = () => {
 
       <ConfirmDialog
         otvorene={hromadneNaZmazanie !== null}
-        nadpis="Vymazať označené články?"
-        sprava={`Bude odstránených ${hromadneNaZmazanie?.length ?? 0} článkov. Túto akciu nemožno vrátiť späť.`}
-        potvrdit="Vymazať všetky"
+        nadpis={tr('Vymazať označené články?')}
+        sprava={tr('Bude odstránených {hodnota} článkov. Túto akciu nemožno vrátiť späť.', { hodnota: hromadneNaZmazanie?.length ?? 0 })}
+        potvrdit={tr('Vymazať všetky')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmazHromadne}

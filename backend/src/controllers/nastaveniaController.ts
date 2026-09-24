@@ -13,7 +13,7 @@ const UPRAVITELNE_POLIA = [
   'farba_primarna_kontrast', 'farba_akcent_kontrast',
   'email', 'telefon', 'adresa', 'ico', 'dic', 'pravny_nazov', 'ic_dph', 'iban',
   'facebook_url', 'instagram_url', 'youtube_url', 'x_url', 'tiktok_url',
-  'meta_popis', 'google_analytics_id',
+  'meta_popis', 'google_analytics_id', 'jazyk_administracie',
   // Sady nastavení ako JSON: dodatkové farby podľa šablóny, globálne
   // nastavenia komentárov, GDPR a širšie SEO. Doteraz z nich bol
   // v nastaveniach len meta_popis.
@@ -275,6 +275,11 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
 
       if (pole === 'google_analytics_id' && hodnota !== null && !/^(G|GT|UA|AW)-[A-Z0-9-]{4,24}$/i.test(String(hodnota).trim())) {
         res.status(400).json({ success: false, message: 'Google Analytics ID má tvar G-XXXXXXXXXX' });
+        return;
+      }
+
+      if (pole === 'jazyk_administracie' && !['sk', 'cs', 'en'].includes(String(hodnota))) {
+        res.status(400).json({ success: false, message: 'Nepodporovaný jazyk administrácie' });
         return;
       }
 

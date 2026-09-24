@@ -9,6 +9,8 @@ import { apiUrl } from '../config/api';
 import type { Formular, PoleFormulara } from '../api/typy';
 import './FormularWeb.css';
 import AnketaWeb from './AnketaWeb';
+// V náhľade v administrácii sa text prekladá, na verejnom webe ostáva slovenský
+import { tr } from '../i18n';
 
 type Hodnoty = Record<string, string | string[] | boolean>;
 
@@ -198,7 +200,7 @@ export const FormularWeb: React.FC<Props> = ({ kluc, formular: zadany, nahlad = 
       <button type="submit" className="fw__odoslat" disabled={nahlad || odosiela || !formular.aktivny}>
         {odosiela ? 'Odosielam...' : 'Odoslať'}
       </button>
-      {nahlad && <small className="fw__napoveda">Náhľad - odoslanie je vypnuté.</small>}
+      {nahlad && <small className="fw__napoveda">{tr('Náhľad - odoslanie je vypnuté.')}</small>}
     </form>
   );
 };

@@ -12,17 +12,18 @@ import { sezonyApi } from '../../api/sprava';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import { souborUrl } from '../../config/api';
 import type { Tim } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Timy.css';
 
 const TYPY = [
-  { hodnota: 'muzi', popis: 'Dospelí (muži)' },
-  { hodnota: 'zeny', popis: 'Ženy' },
-  { hodnota: 'mladez', popis: 'Mládež' },
+  { hodnota: 'muzi', popis: tr('Dospelí (muži)') },
+  { hodnota: 'zeny', popis: tr('Ženy') },
+  { hodnota: 'mladez', popis: tr('Mládež') },
 ];
 
 const KATEGORIE = [
   'seniori', 'U19', 'U17', 'U15', 'U13', 'U11', 'U9', 'prípravka',
-].map((k) => ({ hodnota: k, popis: k }));
+].map((k) => ({ hodnota: k, popis: tr(k) }));
 
 const PRAZDNY: Partial<Tim> = {
   nazov: '',
@@ -73,7 +74,7 @@ export const Timy: React.FC = () => {
     if (!upravovany) return;
 
     if (!upravovany.nazov?.trim()) {
-      varovanie('Zadajte názov tímu');
+      varovanie(tr('Zadajte názov tímu'));
       return;
     }
 
@@ -94,15 +95,15 @@ export const Timy: React.FC = () => {
     try {
       if (jeNovy) {
         await timyApi.vytvor(naUlozenie);
-        uspech('Tím bol vytvorený');
+        uspech(tr('Tím bol vytvorený'));
       } else {
         await timyApi.uprav(upravovany.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovany(null);
       timy.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Tím sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Tím sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -113,11 +114,11 @@ export const Timy: React.FC = () => {
     setMaze(true);
     try {
       await timyApi.zmaz(naZmazanie.id);
-      uspech('Tím bol presunutý do archívu');
+      uspech(tr('Tím bol presunutý do archívu'));
       setNaZmazanie(null);
       timy.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Tím sa nepodarilo archivovať');
+      hlasChybu(e?.message || tr('Tím sa nepodarilo archivovať'));
     } finally {
       setMaze(false);
     }
@@ -126,17 +127,17 @@ export const Timy: React.FC = () => {
   return (
     <>
       <PageHeader
-        nadpis="Tímy"
-        podnadpis="Mužstvá klubu podľa vekových kategórií."
+        nadpis={tr('Tímy')}
+        podnadpis={tr('Mužstvá klubu podľa vekových kategórií.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-            Nový tím
+            {tr('Nový tím')}
           </Button>
         }
       />
 
       {timy.chyba ? (
-        <ErrorState sprava="Tímy sa nepodarilo načítať" detail={timy.chyba} onSkusZnova={timy.obnov} />
+        <ErrorState sprava={tr('Tímy sa nepodarilo načítať')} detail={timy.chyba} onSkusZnova={timy.obnov} />
       ) : timy.nacitava ? (
         <div className="cw-timy__mriezka">
           {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -152,9 +153,9 @@ export const Timy: React.FC = () => {
         <div className="cw-timy__prazdne">
           <EmptyState
             ikona={<Icon nazov="timy" velkost={40} />}
-            nadpis="Zatiaľ žiadne tímy"
-            popis="Vytvorte mužstvá podľa vekových kategórií klubu."
-            akcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>Vytvoriť prvý tím</Button>}
+            nadpis={tr('Zatiaľ žiadne tímy')}
+            popis={tr('Vytvorte mužstvá podľa vekových kategórií klubu.')}
+            akcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>{tr('Vytvoriť prvý tím')}</Button>}
           />
         </div>
       ) : (
@@ -195,7 +196,7 @@ export const Timy: React.FC = () => {
                       {TYPY.find((x) => x.hodnota === t.typ)?.popis ?? t.typ} · {t.vekova_kategoria}
                     </div>
                   </div>
-                  <span className="cw-timy__pocet">{pocetHracov(t.id)} hráčov</span>
+                  <span className="cw-timy__pocet">{pocetHracov(t.id)} {tr('hráčov')}</span>
                 </div>
 
                 {(nazovStadiona(t.stadion_id) || nazovSezony(t.sezona_id)) && (
@@ -213,13 +214,13 @@ export const Timy: React.FC = () => {
 
                 <div className="cw-timy__tlacidla">
                   <button className="cw-timy__upravit" onClick={() => setUpravovany({ ...t })}>
-                    Upraviť tím
+                    {tr('Upraviť tím')}
                   </button>
                   <button
                     className="cw-timy__archiv"
                     onClick={() => setNaZmazanie(t)}
-                    aria-label={`Archivovať ${t.nazov}`}
-                    title="Presunúť do archívu"
+                    aria-label={tr('Archivovať {nazov}', { nazov: t.nazov })}
+                    title={tr('Presunúť do archívu')}
                   >
                     <Icon nazov="archiv" velkost={15} />
                   </button>
@@ -233,14 +234,14 @@ export const Timy: React.FC = () => {
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový tím' : upravovany?.nazov ?? 'Tím'}
+        nadpis={jeNovy ? tr('Nový tím') : upravovany?.nazov ?? tr('Tím')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Vytvoriť tím' : 'Uložiť zmeny'}
+              {jeNovy ? tr('Vytvoriť tím') : tr('Uložiť zmeny')}
             </Button>
           </>
         }
@@ -248,22 +249,22 @@ export const Timy: React.FC = () => {
         {upravovany && (
           <>
             <Input
-              menovka="Názov tímu"
+              menovka={tr('Názov tímu')}
               value={upravovany.nazov ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: FC Slovan Dolina U15"
+              placeholder={tr('Napríklad: FC Slovan Dolina U15')}
               povinne
             />
 
             <div className="cw-timy__row">
               <Select
-                menovka="Kategória"
+                menovka={tr('Kategória')}
                 value={upravovany.typ ?? 'muzi'}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, typ: e.target.value }))}
                 moznosti={TYPY}
               />
               <Select
-                menovka="Veková kategória"
+                menovka={tr('Veková kategória')}
                 value={upravovany.vekova_kategoria ?? 'seniori'}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, vekova_kategoria: e.target.value }))}
                 moznosti={KATEGORIE}
@@ -272,13 +273,13 @@ export const Timy: React.FC = () => {
 
             <div className="cw-timy__row">
               <Input
-                menovka="Prvá farba"
+                menovka={tr('Prvá farba')}
                 type="color"
                 value={upravovany.farba_prva || '#1b5e20'}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, farba_prva: e.target.value }))}
               />
               <Input
-                menovka="Druhá farba"
+                menovka={tr('Druhá farba')}
                 type="color"
                 value={upravovany.farba_druha || '#ffffff'}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, farba_druha: e.target.value }))}
@@ -287,40 +288,40 @@ export const Timy: React.FC = () => {
 
             <div className="cw-timy__row">
               <Select
-                menovka="Štadión"
+                menovka={tr('Štadión')}
                 value={upravovany.stadion_id ?? ''}
                 onChange={(e) =>
                   setUpravovany((d) => ({ ...d!, stadion_id: e.target.value ? Number(e.target.value) : null }))
                 }
-                prazdna="Bez štadióna"
+                prazdna={tr('Bez štadióna')}
                 moznosti={(stadiony.data ?? []).map((st) => ({ hodnota: st.id, popis: st.nazov }))}
-                napoveda="Domáce zápasy dostanú miesto automaticky"
+                napoveda={tr('Domáce zápasy dostanú miesto automaticky')}
               />
               <Select
-                menovka="Sezóna"
+                menovka={tr('Sezóna')}
                 value={upravovany.sezona_id ?? ''}
                 onChange={(e) =>
                   setUpravovany((d) => ({ ...d!, sezona_id: e.target.value ? Number(e.target.value) : null }))
                 }
-                prazdna="Bez sezóny"
+                prazdna={tr('Bez sezóny')}
                 moznosti={(sezony.data ?? []).map((se) => ({
                   hodnota: se.id,
-                  popis: `${se.nazov}${se.aktualna ? ' (aktuálna)' : ''}`,
+                  popis: `${se.nazov}${se.aktualna ? tr(' (aktuálna)') : ''}`,
                 }))}
               />
             </div>
 
             <PoleObrazka
-              menovka="Logo tímu"
+              menovka={tr('Logo tímu')}
               hodnota={upravovany.logo}
               onZmena={(cesta) => setUpravovany((d) => ({ ...d!, logo: cesta }))}
             />
 
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={upravovany.popis ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, popis: e.target.value }))}
-              placeholder="Krátky popis tímu pre verejný web…"
+              placeholder={tr('Krátky popis tímu pre verejný web…')}
               rows={3}
             />
           </>
@@ -329,13 +330,13 @@ export const Timy: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Archivovať tím?"
+        nadpis={tr('Archivovať tím?')}
         sprava={
           naZmazanie && pocetHracov(naZmazanie.id) > 0
-            ? `Tím ${naZmazanie.nazov} má ${pocetHracov(naZmazanie.id)} hráčov. Najprv ich presuňte do iného tímu, inak server archiváciu odmietne.`
-            : `Tím ${naZmazanie?.nazov} sa presunie do archívu, odkiaľ sa dá obnoviť.`
+            ? tr('Tím {nazov} má {hodnota} hráčov. Najprv ich presuňte do iného tímu, inak server archiváciu odmietne.', { nazov: naZmazanie.nazov, hodnota: pocetHracov(naZmazanie.id) })
+            : tr('Tím {nazov} sa presunie do archívu, odkiaľ sa dá obnoviť.', { nazov: naZmazanie?.nazov })
         }
-        potvrdit="Archivovať"
+        potvrdit={tr('Archivovať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

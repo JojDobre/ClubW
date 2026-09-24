@@ -175,3 +175,12 @@
   line-height: 1.45;
   margin-bottom: 8px;
 }
+
+/* Voľba jazyka pod formulárom */
+.cw-login__jazyky { display: flex; justify-content: center; gap: 4px; margin-top: 22px; flex-wrap: wrap; }
+.cw-login__jazyky button {
+  border: 0; background: none; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--muted);
+}
+.cw-login__jazyky button:hover { color: var(--text); background: var(--card2); }
+.cw-login__jazyky button.is-aktivny { color: var(--pri); font-weight: 700; }

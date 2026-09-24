@@ -5,6 +5,7 @@
 // zoznamu je na prvý pohľad vidieť, ktoré možnosti existujú a ktorá je zvolená.
 
 import React from 'react';
+import { tr } from '../i18n';
 import './FilterChips.css';
 
 export interface Chip {
@@ -24,7 +25,7 @@ interface FilterChipsProps {
 }
 
 export const FilterChips: React.FC<FilterChipsProps> = ({
-  moznosti, zvolena, onZmena, popisSkupiny = 'Filter',
+  moznosti, zvolena, onZmena, popisSkupiny = tr('Filter'),
 }) => (
   <div className="cw-chips" role="group" aria-label={popisSkupiny}>
     {moznosti.map((m) => (

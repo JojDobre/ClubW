@@ -16,6 +16,7 @@ import { zapasyApi } from '../../api/sport';
 import { kategorieSpravaApi } from '../../api/obsah';
 import { formatujDatum, formatujDatumCas } from '../../utils/datum';
 import type { Video, ZisteneVideo } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Videa.css';
 
 const PRAZDNE: Partial<Video> = {
@@ -78,13 +79,13 @@ export const Videa: React.FC = () => {
   const chipy: Chip[] = useMemo(() => {
     const pouzite = (rubriky.data ?? []).filter((r) => vsetky.some((v) => v.rubrika_id === r.id));
     return [
-      { hodnota: '', popis: 'Všetky', pocet: vsetky.length },
+      { hodnota: '', popis: tr('Všetky'), pocet: vsetky.length },
       ...pouzite.map((r) => ({
         hodnota: String(r.id),
         popis: r.nazov,
         pocet: vsetky.filter((v) => v.rubrika_id === r.id).length,
       })),
-      { hodnota: 'skryte', popis: 'Skryté', pocet: vsetky.filter((v) => !v.publikovane).length },
+      { hodnota: 'skryte', popis: tr('Skryté'), pocet: vsetky.filter((v) => !v.publikovane).length },
     ];
   }, [vsetky, rubriky.data]);
 
@@ -121,7 +122,7 @@ export const Videa: React.FC = () => {
   const zistiZVidea = async (vynutit = false) => {
     const url = upravovane?.url?.trim() ?? '';
     if (!/^https?:\/\/\S+$/i.test(url)) {
-      if (vynutit) varovanie('Najprv vložte odkaz na video');
+      if (vynutit) varovanie(tr('Najprv vložte odkaz na video'));
       return;
     }
     if (!vynutit && url === poslednaAdresa.current) return;
@@ -143,12 +144,12 @@ export const Videa: React.FC = () => {
       );
       if (udaje.dlzka !== null) setDlzkaVstup(dlzkaText(udaje.dlzka));
       if (udaje.zdroj === 'ine') {
-        varovanie('Odkaz nie je z YouTube ani Vimeo - názov a dĺžku zadajte ručne');
+        varovanie(tr('Odkaz nie je z YouTube ani Vimeo - názov a dĺžku zadajte ručne'));
       } else if (vynutit) {
-        uspech(udaje.dlzka !== null ? 'Údaje z videa boli načítané' : 'Názov načítaný, dĺžku sa nepodarilo zistiť');
+        uspech(udaje.dlzka !== null ? tr('Údaje z videa boli načítané') : tr('Názov načítaný, dĺžku sa nepodarilo zistiť'));
       }
     } catch (e: any) {
-      if (vynutit) hlasChybu(e?.message || 'Údaje z videa sa nepodarilo zistiť');
+      if (vynutit) hlasChybu(e?.message || tr('Údaje z videa sa nepodarilo zistiť'));
     } finally {
       setZistuje(false);
     }
@@ -167,16 +168,16 @@ export const Videa: React.FC = () => {
 
     const url = upravovane.url?.trim() ?? '';
     if (!url) {
-      varovanie('Zadajte odkaz na video');
+      varovanie(tr('Zadajte odkaz na video'));
       return;
     }
     if (!/^https?:\/\/\S+$/i.test(url)) {
-      varovanie('Odkaz musí začínať https://');
+      varovanie(tr('Odkaz musí začínať https://'));
       return;
     }
     const dlzka = textNaDlzku(dlzkaVstup);
     if (Number.isNaN(dlzka)) {
-      varovanie('Dĺžku zadajte v tvare minúty:sekundy, napríklad 4:35');
+      varovanie(tr('Dĺžku zadajte v tvare minúty:sekundy, napríklad 4:35'));
       return;
     }
 
@@ -199,15 +200,15 @@ export const Videa: React.FC = () => {
 
       if (jeNove) {
         await videaApi.vytvor(naUlozenie);
-        uspech('Video bolo pridané');
+        uspech(tr('Video bolo pridané'));
       } else {
         await videaApi.uprav(upravovane.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovane(null);
       videa.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Video sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Video sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -217,10 +218,10 @@ export const Videa: React.FC = () => {
   const prepniZverejnenie = async (v: Video) => {
     try {
       await videaApi.uprav(v.id, { publikovane: !v.publikovane });
-      uspech(v.publikovane ? 'Video je skryté' : 'Video je zverejnené');
+      uspech(v.publikovane ? tr('Video je skryté') : tr('Video je zverejnené'));
       videa.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Zmena sa nepodarila');
+      hlasChybu(e?.message || tr('Zmena sa nepodarila'));
     }
   };
 
@@ -229,11 +230,11 @@ export const Videa: React.FC = () => {
     setMaze(true);
     try {
       await videaApi.zmaz(naZmazanie.id);
-      uspech('Video bolo odstránené');
+      uspech(tr('Video bolo odstránené'));
       setNaZmazanie(null);
       videa.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Video sa nepodarilo odstrániť');
+      hlasChybu(e?.message || tr('Video sa nepodarilo odstrániť'));
     } finally {
       setMaze(false);
     }
@@ -245,11 +246,11 @@ export const Videa: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Videá"
-        podnadpis="Zostrihy, rozhovory a záznamy zápasov z YouTube a Vimeo."
+        nadpis={tr('Videá')}
+        podnadpis={tr('Zostrihy, rozhovory a záznamy zápasov z YouTube a Vimeo.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => otvor(PRAZDNE)}>
-            Pridať video
+            {tr('Pridať video')}
           </Button>
         }
       />
@@ -259,18 +260,18 @@ export const Videa: React.FC = () => {
           <Input
             value={hladanie}
             onChange={(e) => setHladanie(e.target.value)}
-            placeholder="Hľadať video…"
+            placeholder={tr('Hľadať video…')}
             ikona={<Icon nazov="hladat" velkost={15} />}
-            aria-label="Hľadať video"
+            aria-label={tr('Hľadať video')}
           />
         </div>
         {vsetky.length > 0 && (
-          <FilterChips moznosti={chipy} zvolena={filter} onZmena={setFilter} popisSkupiny="Filtrovať videá" />
+          <FilterChips moznosti={chipy} zvolena={filter} onZmena={setFilter} popisSkupiny={tr('Filtrovať videá')} />
         )}
       </div>
 
       {videa.chyba ? (
-        <ErrorState sprava="Videá sa nepodarilo načítať" detail={videa.chyba} onSkusZnova={videa.obnov} />
+        <ErrorState sprava={tr('Videá sa nepodarilo načítať')} detail={videa.chyba} onSkusZnova={videa.obnov} />
       ) : videa.nacitava ? (
         <div className="cw-vid__mriezka">
           {[0, 1, 2, 3].map((i) => (
@@ -283,19 +284,19 @@ export const Videa: React.FC = () => {
         <div className="cw-vid__prazdne">
           <EmptyState
             ikona={<Icon nazov="videa" velkost={40} />}
-            nadpis={hladanie || filter ? 'Nič sme nenašli' : 'Zatiaľ žiadne videá'}
+            nadpis={hladanie || filter ? tr('Nič sme nenašli') : tr('Zatiaľ žiadne videá')}
             popis={
               hladanie || filter
-                ? 'Skúste zmeniť hľadaný text alebo filter.'
-                : 'Pridajte odkaz na YouTube alebo Vimeo — názov, náhľad a dĺžka sa doplnia automaticky.'
+                ? tr('Skúste zmeniť hľadaný text alebo filter.')
+                : tr('Pridajte odkaz na YouTube alebo Vimeo — názov, náhľad a dĺžka sa doplnia automaticky.')
             }
             akcia={
               hladanie || filter ? (
                 <Button variant="secondary" onClick={() => { setHladanie(''); setFilter(''); }}>
-                  Zrušiť filter
+                  {tr('Zrušiť filter')}
                 </Button>
               ) : (
-                <Button onClick={() => otvor(PRAZDNE)}>Pridať video</Button>
+                <Button onClick={() => otvor(PRAZDNE)}>{tr('Pridať video')}</Button>
               )
             }
           />
@@ -307,7 +308,7 @@ export const Videa: React.FC = () => {
               <button
                 className="cw-vid__nahlad"
                 onClick={() => window.open(v.url, '_blank', 'noopener')}
-                aria-label={`Prehrať ${v.nazov}`}
+                aria-label={tr('Prehrať {nazov}', { nazov: v.nazov })}
               >
                 {v.nahlad_url || v.nahlad ? (
                   <img
@@ -333,7 +334,7 @@ export const Videa: React.FC = () => {
                 <span className="cw-vid__nazov" title={v.nazov}>{v.nazov}</span>
 
                 <div className="cw-vid__stitky">
-                  {!v.publikovane && <Badge>Skryté</Badge>}
+                  {!v.publikovane && <Badge>{tr('Skryté')}</Badge>}
                   {v.rubrika ? (
                     <Badge ton="info">{v.rubrika.nazov}</Badge>
                   ) : v.kategoria ? (
@@ -342,7 +343,7 @@ export const Videa: React.FC = () => {
                 </div>
 
                 {v.zapas && (
-                  <div className="cw-vid__zapas" title="Priradený zápas">
+                  <div className="cw-vid__zapas" title={tr('Priradený zápas')}>
                     <Icon nazov="zapasy" velkost={13} /> {v.zapas.nazov}
                   </div>
                 )}
@@ -352,19 +353,19 @@ export const Videa: React.FC = () => {
                   <div className="cw-vid__akcie">
                     <button
                       onClick={() => prepniZverejnenie(v)}
-                      aria-label={v.publikovane ? `Skryť ${v.nazov}` : `Zverejniť ${v.nazov}`}
-                      title={v.publikovane ? 'Skryť z webu' : 'Zobraziť na webe'}
+                      aria-label={v.publikovane ? tr('Skryť {nazov}', { nazov: v.nazov }) : tr('Zverejniť {nazov}', { nazov: v.nazov })}
+                      title={v.publikovane ? tr('Skryť z webu') : tr('Zobraziť na webe')}
                     >
                       <Icon nazov="oko" velkost={15} />
                     </button>
-                    <button onClick={() => otvor(v)} aria-label={`Upraviť ${v.nazov}`} title="Upraviť">
+                    <button onClick={() => otvor(v)} aria-label={tr('Upraviť {nazov}', { nazov: v.nazov })} title={tr('Upraviť')}>
                       <Icon nazov="upravit" velkost={15} />
                     </button>
                     <button
                       className="is-danger"
                       onClick={() => setNaZmazanie(v)}
-                      aria-label={`Odstrániť ${v.nazov}`}
-                      title="Odstrániť"
+                      aria-label={tr('Odstrániť {nazov}', { nazov: v.nazov })}
+                      title={tr('Odstrániť')}
                     >
                       <Icon nazov="zmazat" velkost={15} />
                     </button>
@@ -379,15 +380,15 @@ export const Videa: React.FC = () => {
       <Modal
         otvorene={upravovane !== null}
         onZavri={() => setUpravovane(null)}
-        nadpis={jeNove ? 'Nové video' : upravovane?.nazov || 'Video'}
+        nadpis={jeNove ? tr('Nové video') : upravovane?.nazov || tr('Video')}
         sirka="md"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovane(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNove ? 'Pridať video' : 'Uložiť'}
+              {jeNove ? tr('Pridať video') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -396,7 +397,7 @@ export const Videa: React.FC = () => {
           <div className="cw-vid__formular">
             <div className="cw-vid__odkaz">
               <Input
-                menovka="Odkaz na video"
+                menovka={tr('Odkaz na video')}
                 value={upravovane.url ?? ''}
                 onChange={(e) => setUpravovane((d) => ({ ...d!, url: e.target.value }))}
                 onBlur={() => zistiZVidea(false)}
@@ -404,8 +405,8 @@ export const Videa: React.FC = () => {
                 povinne
                 napoveda={
                   zistuje
-                    ? 'Zisťujem údaje z videa…'
-                    : 'YouTube alebo Vimeo. Názov, náhľad a dĺžka sa doplnia automaticky.'
+                    ? tr('Zisťujem údaje z videa…')
+                    : tr('YouTube alebo Vimeo. Názov, náhľad a dĺžka sa doplnia automaticky.')
                 }
               />
               <Button
@@ -414,7 +415,7 @@ export const Videa: React.FC = () => {
                 onClick={() => zistiZVidea(true)}
                 nacitava={zistuje}
               >
-                Načítať z videa
+                {tr('Načítať z videa')}
               </Button>
             </div>
 
@@ -430,7 +431,7 @@ export const Videa: React.FC = () => {
                 ) : (
                   <span>
                     <Icon nazov="videa" velkost={26} />
-                    Náhľad sa zobrazí po vložení odkazu
+                    {tr('Náhľad sa zobrazí po vložení odkazu')}
                   </span>
                 )}
                 {textNaDlzku(dlzkaVstup) ? (
@@ -440,24 +441,24 @@ export const Videa: React.FC = () => {
 
               <div className="cw-vid__stlpec">
                 <Input
-                  menovka="Názov"
+                  menovka={tr('Názov')}
                   value={upravovane.nazov ?? ''}
                   onChange={(e) => setUpravovane((d) => ({ ...d!, nazov: e.target.value }))}
-                  placeholder="Zostrih: Slovan – Rača 3:1"
-                  napoveda={jeNove ? 'Keď ostane prázdny, použije sa názov z YouTube' : undefined}
+                  placeholder={tr('Zostrih: Slovan – Rača 3:1')}
+                  napoveda={jeNove ? tr('Keď ostane prázdny, použije sa názov z YouTube') : undefined}
                 />
                 <Input
-                  menovka="Dĺžka"
+                  menovka={tr('Dĺžka')}
                   value={dlzkaVstup}
                   onChange={(e) => setDlzkaVstup(e.target.value)}
                   placeholder="4:35"
-                  napoveda="Doplní sa z videa; môžete ju zadať ručne (min:sek)"
+                  napoveda={tr('Doplní sa z videa; môžete ju zadať ručne (min:sek)')}
                 />
               </div>
             </div>
 
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={upravovane.popis ?? ''}
               onChange={(e) => setUpravovane((d) => ({ ...d!, popis: e.target.value }))}
               rows={3}
@@ -465,22 +466,22 @@ export const Videa: React.FC = () => {
 
             <div className="cw-vid__dva">
               <Select
-                menovka="Rubrika"
+                menovka={tr('Rubrika')}
                 value={upravovane.rubrika_id ?? ''}
                 onChange={(e) =>
                   setUpravovane((d) => ({ ...d!, rubrika_id: e.target.value ? Number(e.target.value) : null }))
                 }
-                prazdna="Bez rubriky"
+                prazdna={tr('Bez rubriky')}
                 moznosti={(rubriky.data ?? []).map((r) => ({ hodnota: r.id, popis: r.nazov }))}
               />
 
               <Select
-                menovka="Priradený zápas"
+                menovka={tr('Priradený zápas')}
                 value={upravovane.zapas_id ?? ''}
                 onChange={(e) =>
                   setUpravovane((d) => ({ ...d!, zapas_id: e.target.value ? Number(e.target.value) : null }))
                 }
-                prazdna="Bez zápasu"
+                prazdna={tr('Bez zápasu')}
                 moznosti={moznostiZapasov}
               />
             </div>
@@ -488,8 +489,8 @@ export const Videa: React.FC = () => {
             <Switch
               zapnute={Boolean(upravovane.publikovane)}
               onZmena={(v) => setUpravovane((d) => ({ ...d!, publikovane: v }))}
-              menovka="Zobraziť na webe"
-              popis={upravovane.publikovane ? 'Video uvidia návštevníci webu' : 'Video je skryté, vidí ho len administrácia'}
+              menovka={tr('Zobraziť na webe')}
+              popis={upravovane.publikovane ? tr('Video uvidia návštevníci webu') : tr('Video je skryté, vidí ho len administrácia')}
             />
           </div>
         )}
@@ -497,9 +498,9 @@ export const Videa: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Odstrániť video?"
-        sprava={`Video ${naZmazanie?.nazov} bude odstránené zo zoznamu. Samotné video na YouTube zostane.`}
-        potvrdit="Odstrániť"
+        nadpis={tr('Odstrániť video?')}
+        sprava={tr('Video {nazov} bude odstránené zo zoznamu. Samotné video na YouTube zostane.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Odstrániť')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

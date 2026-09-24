@@ -14,6 +14,7 @@ import { stadionyApi, timyApi } from '../../api/sport';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import { souborUrl } from '../../config/api';
 import type { Stadion } from '../../api/typy';
+import { tr, lokalita } from '../../i18n';
 import './Stadiony.css';
 
 const PRAZDNY: Partial<Stadion> = { nazov: '', adresa: '', fotka: null, kapacita: null, poznamka: '' };
@@ -45,12 +46,12 @@ export const Stadiony: React.FC = () => {
 
     const nazov = upravovany.nazov?.trim() ?? '';
     if (nazov.length < 2) {
-      varovanie('Názov štadióna musí mať aspoň 2 znaky');
+      varovanie(tr('Názov štadióna musí mať aspoň 2 znaky'));
       return;
     }
     const kapacita = kapacitaVstup.trim() === '' ? null : Number(kapacitaVstup.replace(/\s/g, ''));
     if (kapacita !== null && (!Number.isInteger(kapacita) || kapacita < 0)) {
-      varovanie('Kapacita musí byť celé číslo');
+      varovanie(tr('Kapacita musí byť celé číslo'));
       return;
     }
 
@@ -65,15 +66,15 @@ export const Stadiony: React.FC = () => {
       };
       if (jeNovy) {
         await stadionyApi.vytvor(naUlozenie);
-        uspech('Štadión bol pridaný');
+        uspech(tr('Štadión bol pridaný'));
       } else {
         await stadionyApi.uprav(upravovany.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovany(null);
       stadiony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Štadión sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Štadión sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -84,11 +85,11 @@ export const Stadiony: React.FC = () => {
     setMaze(true);
     try {
       await stadionyApi.zmaz(naZmazanie.id);
-      uspech('Štadión bol presunutý do archívu');
+      uspech(tr('Štadión bol presunutý do archívu'));
       setNaZmazanie(null);
       stadiony.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Štadión sa nepodarilo archivovať');
+      hlasChybu(e?.message || tr('Štadión sa nepodarilo archivovať'));
     } finally {
       setMaze(false);
     }
@@ -97,17 +98,17 @@ export const Stadiony: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Štadióny"
-        podnadpis="Ihriská, na ktorých hrávajú tímy klubu."
+        nadpis={tr('Štadióny')}
+        podnadpis={tr('Ihriská, na ktorých hrávajú tímy klubu.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => otvor(PRAZDNY)}>
-            Nový štadión
+            {tr('Nový štadión')}
           </Button>
         }
       />
 
       {stadiony.chyba ? (
-        <ErrorState sprava="Štadióny sa nepodarilo načítať" detail={stadiony.chyba} onSkusZnova={stadiony.obnov} />
+        <ErrorState sprava={tr('Štadióny sa nepodarilo načítať')} detail={stadiony.chyba} onSkusZnova={stadiony.obnov} />
       ) : stadiony.nacitava ? (
         <div className="cw-stad__mriezka">
           {[0, 1, 2].map((i) => (
@@ -120,9 +121,9 @@ export const Stadiony: React.FC = () => {
         <div className="cw-stad__prazdne">
           <EmptyState
             ikona={<Icon nazov="stadion" velkost={40} />}
-            nadpis="Zatiaľ žiadne štadióny"
-            popis="Pridajte štadión a priraďte ho tímom - domáce zápasy potom dostanú miesto automaticky."
-            akcia={<Button onClick={() => otvor(PRAZDNY)}>Pridať štadión</Button>}
+            nadpis={tr('Zatiaľ žiadne štadióny')}
+            popis={tr('Pridajte štadión a priraďte ho tímom - domáce zápasy potom dostanú miesto automaticky.')}
+            akcia={<Button onClick={() => otvor(PRAZDNY)}>{tr('Pridať štadión')}</Button>}
           />
         </div>
       ) : (
@@ -142,23 +143,23 @@ export const Stadiony: React.FC = () => {
                   <h3 className="cw-stad__nazov">{s.nazov}</h3>
                   {s.adresa && <div className="cw-stad__adresa">{s.adresa}</div>}
                   <div className="cw-stad__udaje">
-                    {s.kapacita != null && <span>Kapacita {s.kapacita.toLocaleString('sk-SK')}</span>}
+                    {s.kapacita != null && <span>{tr('Kapacita')} {s.kapacita.toLocaleString(lokalita())}</span>}
                     <span>
                       {timyTu.length === 0
-                        ? 'Žiadny tím'
+                        ? tr('Žiadny tím')
                         : timyTu.map((t) => t.nazov).join(', ')}
                     </span>
                   </div>
                   <div className="cw-stad__tlacidla">
                     <Button variant="secondary" velkost="sm" onClick={() => otvor(s)}>
-                      Upraviť
+                      {tr('Upraviť')}
                     </Button>
                     <Button
                       variant="ghost"
                       velkost="sm"
                       onClick={() => setNaZmazanie(s)}
-                      aria-label={`Archivovať ${s.nazov}`}
-                      title="Presunúť do archívu"
+                      aria-label={tr('Archivovať {nazov}', { nazov: s.nazov })}
+                      title={tr('Presunúť do archívu')}
                     >
                       <Icon nazov="archiv" velkost={15} />
                     </Button>
@@ -173,14 +174,14 @@ export const Stadiony: React.FC = () => {
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový štadión' : upravovany?.nazov || 'Štadión'}
+        nadpis={jeNovy ? tr('Nový štadión') : upravovany?.nazov || tr('Štadión')}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Pridať štadión' : 'Uložiť zmeny'}
+              {jeNovy ? tr('Pridať štadión') : tr('Uložiť zmeny')}
             </Button>
           </>
         }
@@ -188,37 +189,37 @@ export const Stadiony: React.FC = () => {
         {upravovany && (
           <>
             <Input
-              menovka="Názov štadióna"
+              menovka={tr('Názov štadióna')}
               value={upravovany.nazov ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: Štadión pod Horou"
+              placeholder={tr('Napríklad: Štadión pod Horou')}
               povinne
             />
             <Input
-              menovka="Adresa"
+              menovka={tr('Adresa')}
               value={upravovany.adresa ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, adresa: e.target.value }))}
-              placeholder="Ulica 12, 831 01 Bratislava"
+              placeholder={tr('Ulica 12, 831 01 Bratislava')}
             />
             <PoleObrazka
-              menovka="Fotka štadióna"
+              menovka={tr('Fotka štadióna')}
               tvar="siroky"
               hodnota={upravovany.fotka}
               onZmena={(cesta) => setUpravovany((d) => ({ ...d!, fotka: cesta }))}
             />
             <Input
-              menovka="Kapacita (divákov)"
+              menovka={tr('Kapacita (divákov)')}
               inputMode="numeric"
               value={kapacitaVstup}
               onChange={(e) => setKapacitaVstup(e.target.value)}
               placeholder="1500"
             />
             <Textarea
-              menovka="Poznámka"
+              menovka={tr('Poznámka')}
               value={upravovany.poznamka ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, poznamka: e.target.value }))}
               rows={2}
-              placeholder="Parkovanie, vstup pre hostí…"
+              placeholder={tr('Parkovanie, vstup pre hostí…')}
             />
           </>
         )}
@@ -226,13 +227,13 @@ export const Stadiony: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Archivovať štadión?"
+        nadpis={tr('Archivovať štadión?')}
         sprava={
           naZmazanie && timyNaStadione(naZmazanie.id).length > 0
-            ? `Na štadióne ${naZmazanie.nazov} hrajú tímy (${timyNaStadione(naZmazanie.id).map((t) => t.nazov).join(', ')}). Najprv im nastavte iný štadión.`
-            : `Štadión ${naZmazanie?.nazov} sa presunie do archívu, odkiaľ sa dá obnoviť.`
+            ? tr('Na štadióne {nazov} hrajú tímy ({hodnota}). Najprv im nastavte iný štadión.', { nazov: naZmazanie.nazov, hodnota: timyNaStadione(naZmazanie.id).map((t) => t.nazov).join(', ') })
+            : tr('Štadión {nazov} sa presunie do archívu, odkiaľ sa dá obnoviť.', { nazov: naZmazanie?.nazov })
         }
-        potvrdit="Archivovať"
+        potvrdit={tr('Archivovať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

@@ -16,6 +16,7 @@ import React, {
 } from 'react';
 import { apiUrl } from '../config/api';
 import { UDALOST_RELACIA_SKONCILA } from './apiKlient';
+import { tr, hlavickaJazyka, jazyk, jeJazyk, zmenJazyk } from '../i18n';
 
 export type Rola = 'admin' | 'redaktor' | 'trener' | 'uzivatel';
 
@@ -31,6 +32,10 @@ export interface Pouzivatel {
   rola_nazov?: string;
   /** Oprávnenia roly po moduloch - posiela ich server */
   opravnenia?: Record<string, { citat?: boolean; pisat?: boolean; mazat?: boolean }>;
+  /** Vlastný jazyk; null = podľa klubu */
+  jazyk?: string | null;
+  /** Jazyk, v ktorom sa má administrácia zobraziť (vlastný alebo klubu) */
+  jazyk_administracie?: string;
 }
 
 interface HodnotaKontextu {
@@ -83,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const odpoved = await fetch(apiUrl('/auth/refresh'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...hlavickaJazyka() },
         credentials: 'include',
         body: JSON.stringify({ refreshToken: refresh }),
       });
@@ -114,7 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       const odpoved = await fetch(apiUrl('/auth/me'), {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, ...hlavickaJazyka() },
         credentials: 'include',
       });
 
@@ -139,6 +144,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     void overRelaciu();
   }, [overRelaciu]);
 
+  // Po prihlásení prevezmeme jazyk používateľa (alebo klubu). Iný jazyk
+  // znamená nové načítanie stránky - texty sa vyberajú pri štarte.
+  useEffect(() => {
+    const ziadany = pouzivatel?.jazyk_administracie;
+    if (jeJazyk(ziadany) && ziadany !== jazyk()) zmenJazyk(ziadany);
+  }, [pouzivatel?.jazyk_administracie]);
+
   // Server reláciu odmietol (napr. po reštarte s novou databázou) -
   // odhlásime aj rozhranie, chránené cesty presmerujú na prihlásenie
   useEffect(() => {
@@ -150,7 +162,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const prihlas = useCallback(async (email: string, heslo: string) => {
     const odpoved = await fetch(apiUrl('/auth/login'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...hlavickaJazyka() },
       credentials: 'include',
       body: JSON.stringify({ email, heslo }),
     });
@@ -160,7 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!odpoved.ok || !telo?.success) {
       // Hlášku berieme zo servera, ale nikdy neprezradíme,
       // či zlyhal e-mail alebo heslo
-      throw new Error(telo?.message || 'Prihlásenie zlyhalo');
+      throw new Error(telo?.message || tr('Prihlásenie zlyhalo'));
     }
 
     ulozTokeny(telo.data.token, telo.data.refreshToken);
@@ -174,7 +186,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Zrušenie relácie na serveri, aby sa nedala obnoviť
       await fetch(apiUrl('/auth/logout'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...hlavickaJazyka() },
         credentials: 'include',
         body: JSON.stringify({ refreshToken: refresh }),
       });

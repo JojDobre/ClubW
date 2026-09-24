@@ -9,6 +9,7 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { kategorieSpravaApi } from '../../api/obsah';
 import type { Kategoria } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Kategorie.css';
 
 const PRAZDNA: Partial<Kategoria> = {
@@ -52,7 +53,7 @@ export const Kategorie: React.FC = () => {
     if (!upravovana) return;
 
     if (!upravovana.nazov?.trim()) {
-      varovanie('Zadajte názov kategórie');
+      varovanie(tr('Zadajte názov kategórie'));
       return;
     }
 
@@ -65,15 +66,15 @@ export const Kategorie: React.FC = () => {
 
       if (jeNova) {
         await kategorieSpravaApi.vytvor(naUlozenie);
-        uspech('Kategória bola vytvorená');
+        uspech(tr('Kategória bola vytvorená'));
       } else {
         await kategorieSpravaApi.uprav(upravovana.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovana(null);
       kategorie.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Kategóriu sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Kategóriu sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -85,16 +86,16 @@ export const Kategorie: React.FC = () => {
     try {
       const maClanky = pocetClankov(naZmazanie.id) > 0;
       if (maClanky && !presunutDo) {
-        varovanie('Vyberte kategóriu, do ktorej sa články presunú');
+        varovanie(tr('Vyberte kategóriu, do ktorej sa články presunú'));
         setMaze(false);
         return;
       }
       await kategorieSpravaApi.zmaz(naZmazanie.id, maClanky ? presunutDo : null);
-      uspech(maClanky ? 'Kategória bola zmazaná a články presunuté' : 'Kategória bola zmazaná');
+      uspech(maClanky ? tr('Kategória bola zmazaná a články presunuté') : tr('Kategória bola zmazaná'));
       setNaZmazanie(null);
       kategorie.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Kategóriu sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Kategóriu sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -103,7 +104,7 @@ export const Kategorie: React.FC = () => {
   const stlpce: Stlpec<Kategoria>[] = [
     {
       kluc: 'nazov',
-      popis: 'Kategória',
+      popis: tr('Kategória'),
       obsah: (k) => (
         <div className="cw-kat__nazov">
           {/* Farebný bod ukazuje, ako sa kategória zobrazí na webe */}
@@ -119,21 +120,21 @@ export const Kategorie: React.FC = () => {
     },
     {
       kluc: 'slug',
-      popis: 'Adresa',
+      popis: tr('Adresa'),
       obsah: (k) => <code className="cw-kat__slug">/{k.slug}</code>,
       sirka: '200px',
       skryTNaMobile: true,
     },
     {
       kluc: 'popis',
-      popis: 'Popis',
+      popis: tr('Popis'),
       obsah: (k) =>
         k.popis ? k.popis : <span style={{ color: 'var(--muted)' }}>—</span>,
       skryTNaMobile: true,
     },
     {
       kluc: 'clanky',
-      popis: 'Článkov',
+      popis: tr('Článkov'),
       obsah: (k) => {
         const pocet = pocetClankov(k.id);
         return pocet > 0 ? <Badge ton="primary">{pocet}</Badge> : <span style={{ color: 'var(--muted)' }}>0</span>;
@@ -144,7 +145,7 @@ export const Kategorie: React.FC = () => {
     },
     {
       kluc: 'poradie',
-      popis: 'Poradie',
+      popis: tr('Poradie'),
       obsah: (k) => k.poradie,
       hodnotaNaZoradenie: (k) => k.poradie,
       zarovnanie: 'center',
@@ -154,18 +155,18 @@ export const Kategorie: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<Kategoria>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (k) => setUpravovana({ ...k }) },
-    { popis: 'Zmazať', ikona: 'zmazat', nebezpecna: true, onKlik: otvorMazanie },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (k) => setUpravovana({ ...k }) },
+    { popis: tr('Zmazať'), ikona: 'zmazat', nebezpecna: true, onKlik: otvorMazanie },
   ];
 
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Kategórie"
-        podnadpis="Rubriky, do ktorých sa zaraďujú články."
+        nadpis={tr('Kategórie')}
+        podnadpis={tr('Rubriky, do ktorých sa zaraďujú články.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setUpravovana({ ...PRAZDNA })}>
-            Nová kategória
+            {tr('Nová kategória')}
           </Button>
         }
       />
@@ -178,26 +179,26 @@ export const Kategorie: React.FC = () => {
         chyba={kategorie.chyba}
         onSkusZnova={kategorie.obnov}
         hladatV={(k) => `${k.nazov} ${k.popis ?? ''}`}
-        hladatPlaceholder="Hľadať kategóriu…"
+        hladatPlaceholder={tr('Hľadať kategóriu…')}
         akcieRiadku={akcieRiadku}
         onKlikNaRiadok={(k) => setUpravovana({ ...k })}
-        prazdnyNadpis="Zatiaľ žiadne kategórie"
-        prazdnyPopis="Vytvorte rubriky, do ktorých budete zaraďovať články."
-        prazdnaAkcia={<Button onClick={() => setUpravovana({ ...PRAZDNA })}>Vytvoriť kategóriu</Button>}
+        prazdnyNadpis={tr('Zatiaľ žiadne kategórie')}
+        prazdnyPopis={tr('Vytvorte rubriky, do ktorých budete zaraďovať články.')}
+        prazdnaAkcia={<Button onClick={() => setUpravovana({ ...PRAZDNA })}>{tr('Vytvoriť kategóriu')}</Button>}
       />
 
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={jeNova ? 'Nová kategória' : upravovana?.nazov ?? 'Kategória'}
+        nadpis={jeNova ? tr('Nová kategória') : upravovana?.nazov ?? tr('Kategória')}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNova ? 'Vytvoriť' : 'Uložiť'}
+              {jeNova ? tr('Vytvoriť') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -205,24 +206,24 @@ export const Kategorie: React.FC = () => {
         {upravovana && (
           <>
             <Input
-              menovka="Názov"
+              menovka={tr('Názov')}
               value={upravovana.nazov ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, nazov: e.target.value }))}
-              placeholder="Napríklad: Zápasy"
+              placeholder={tr('Napríklad: Zápasy')}
               povinne
             />
 
             <Textarea
-              menovka="Popis"
+              menovka={tr('Popis')}
               value={upravovana.popis ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, popis: e.target.value }))}
-              placeholder="Krátky popis rubriky…"
+              placeholder={tr('Krátky popis rubriky…')}
               rows={2}
             />
 
             <div className="cw-kat__row">
               <div className="cw-field">
-                <label className="cw-field__label" htmlFor="kat-farba">Farba</label>
+                <label className="cw-field__label" htmlFor="kat-farba">{tr('Farba')}</label>
                 <input
                   id="kat-farba"
                   type="color"
@@ -233,12 +234,12 @@ export const Kategorie: React.FC = () => {
               </div>
 
               <Input
-                menovka="Poradie"
+                menovka={tr('Poradie')}
                 type="number"
                 min={0}
                 value={upravovana.poradie ?? 0}
                 onChange={(e) => setUpravovana((d) => ({ ...d!, poradie: Number(e.target.value) }))}
-                napoveda="Nižšie číslo = vyššie v zozname"
+                napoveda={tr('Nižšie číslo = vyššie v zozname')}
               />
             </div>
           </>
@@ -250,15 +251,15 @@ export const Kategorie: React.FC = () => {
       <Modal
         otvorene={naZmazanie !== null}
         onZavri={() => setNaZmazanie(null)}
-        nadpis="Zmazať kategóriu?"
+        nadpis={tr('Zmazať kategóriu?')}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setNaZmazanie(null)} disabled={maze}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button variant="danger" onClick={zmaz} nacitava={maze}>
-              {naZmazanie && pocetClankov(naZmazanie.id) > 0 ? 'Presunúť a zmazať' : 'Zmazať'}
+              {naZmazanie && pocetClankov(naZmazanie.id) > 0 ? tr('Presunúť a zmazať') : tr('Zmazať')}
             </Button>
           </>
         }
@@ -267,12 +268,12 @@ export const Kategorie: React.FC = () => {
           zoznam.length > 1 ? (
             <>
               <p className="cw-kat__upozornenie">
-                Kategória <strong>{naZmazanie.nazov}</strong> obsahuje{' '}
-                {pocetClankov(naZmazanie.id)} článkov. Pred zmazaním ich presuňte do inej kategórie.
+                {tr('Kategória')} <strong>{naZmazanie.nazov}</strong> {tr('obsahuje')}{' '}
+                {pocetClankov(naZmazanie.id)} {tr('článkov. Pred zmazaním ich presuňte do inej kategórie.')}
               </p>
               <div className="cw-field">
                 <label className="cw-field__label" htmlFor="kat-presun">
-                  Presunúť články do
+                  {tr('Presunúť články do')}
                 </label>
                 <select
                   id="kat-presun"
@@ -292,13 +293,12 @@ export const Kategorie: React.FC = () => {
             </>
           ) : (
             <p className="cw-kat__upozornenie">
-              Kategória <strong>{naZmazanie.nazov}</strong> obsahuje {pocetClankov(naZmazanie.id)} článkov
-              a inú kategóriu, kam by sa dali presunúť, zatiaľ nemáte. Najprv vytvorte novú kategóriu.
+              {tr('Kategória')} <strong>{naZmazanie.nazov}</strong> {tr('obsahuje')} {pocetClankov(naZmazanie.id)} {tr('článkov a inú kategóriu, kam by sa dali presunúť, zatiaľ nemáte. Najprv vytvorte novú kategóriu.')}
             </p>
           )
         ) : (
           <p className="cw-kat__upozornenie">
-            Kategória <strong>{naZmazanie?.nazov}</strong> bude zmazaná.
+            {tr('Kategória')} <strong>{naZmazanie?.nazov}</strong> {tr('bude zmazaná.')}
           </p>
         )}
       </Modal>

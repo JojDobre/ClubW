@@ -15,37 +15,38 @@ import { gdprApi } from '../../api/sprava';
 import { hraciApi } from '../../api/sport';
 import { formatujDatum, formatujDatumCas } from '../../utils/datum';
 import type { DruhSuhlasu, Suhlas } from '../../api/typy';
+import { tr } from '../../i18n';
 import './OchranaUdajov.css';
 
 /** Popisy druhov súhlasu a vysvetlenie, čo znamenajú. */
 const DRUHY: Record<DruhSuhlasu, { popis: string; vysvetlenie: string }> = {
   zverejnenie_fotky: {
-    popis: 'Zverejnenie fotky',
-    vysvetlenie: 'Fotka hráča sa môže zobraziť na verejnom webe',
+    popis: tr('Zverejnenie fotky'),
+    vysvetlenie: tr('Fotka hráča sa môže zobraziť na verejnom webe'),
   },
   zverejnenie_mena: {
-    popis: 'Zverejnenie mena',
-    vysvetlenie: 'Celé meno sa môže zobraziť na verejnom webe',
+    popis: tr('Zverejnenie mena'),
+    vysvetlenie: tr('Celé meno sa môže zobraziť na verejnom webe'),
   },
   spracovanie_udajov: {
-    popis: 'Vedenie evidencie',
-    vysvetlenie: 'Základný súhlas s vedením údajov v klube',
+    popis: tr('Vedenie evidencie'),
+    vysvetlenie: tr('Základný súhlas s vedením údajov v klube'),
   },
   kontaktne_udaje: {
-    popis: 'Kontaktné údaje',
-    vysvetlenie: 'Telefón a e-mail zákonného zástupcu',
+    popis: tr('Kontaktné údaje'),
+    vysvetlenie: tr('Telefón a e-mail zákonného zástupcu'),
   },
   marketing: {
-    popis: 'Oznamy a newsletter',
-    vysvetlenie: 'Zasielanie klubových oznamov',
+    popis: tr('Oznamy a newsletter'),
+    vysvetlenie: tr('Zasielanie klubových oznamov'),
   },
 };
 
 const VZTAHY = [
-  { hodnota: 'matka', popis: 'Matka' },
-  { hodnota: 'otec', popis: 'Otec' },
-  { hodnota: 'zakonny_zastupca', popis: 'Iný zákonný zástupca' },
-  { hodnota: 'hrac', popis: 'Hráč sám (dospelý)' },
+  { hodnota: 'matka', popis: tr('Matka') },
+  { hodnota: 'otec', popis: tr('Otec') },
+  { hodnota: 'zakonny_zastupca', popis: tr('Iný zákonný zástupca') },
+  { hodnota: 'hrac', popis: tr('Hráč sám (dospelý)') },
 ];
 
 export const OchranaUdajov: React.FC = () => {
@@ -99,7 +100,7 @@ export const OchranaUdajov: React.FC = () => {
     setUklada(true);
     try {
       await gdprApi.nastavSuhlas(vybranyHrac, { druh, udeleny, ...detaily });
-      uspech(udeleny ? 'Súhlas bol zaznamenaný' : 'Súhlas bol odvolaný');
+      uspech(udeleny ? tr('Súhlas bol zaznamenaný') : tr('Súhlas bol odvolaný'));
       setUdelovany(null);
       suhlasy.obnov();
       audit.obnov();
@@ -107,7 +108,7 @@ export const OchranaUdajov: React.FC = () => {
       // zobrazenie fotky na verejnom webe
       hraci.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Súhlas sa nepodarilo zmeniť');
+      hlasChybu(e?.message || tr('Súhlas sa nepodarilo zmeniť'));
     } finally {
       setUklada(false);
     }
@@ -138,7 +139,7 @@ export const OchranaUdajov: React.FC = () => {
     if (!udelovany) return;
 
     if (!udelovany.udelil_meno.trim()) {
-      varovanie('Zadajte meno zákonného zástupcu');
+      varovanie(tr('Zadajte meno zákonného zástupcu'));
       return;
     }
 
@@ -166,10 +167,10 @@ export const OchranaUdajov: React.FC = () => {
       odkaz.click();
       URL.revokeObjectURL(url);
 
-      uspech('Export bol stiahnutý. Odovzdajte ho dotknutej osobe.');
+      uspech(tr('Export bol stiahnutý. Odovzdajte ho dotknutej osobe.'));
       audit.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Export sa nepodarilo vytvoriť');
+      hlasChybu(e?.message || tr('Export sa nepodarilo vytvoriť'));
     }
   };
 
@@ -179,13 +180,13 @@ export const OchranaUdajov: React.FC = () => {
     setUklada(true);
     try {
       await gdprApi.anonymizuj(vybranyHrac);
-      uspech('Osobné údaje boli odstránené. Športová história zostala zachovaná.');
+      uspech(tr('Osobné údaje boli odstránené. Športová história zostala zachovaná.'));
       setAnonymizovat(false);
       suhlasy.obnov();
       hraci.obnov();
       audit.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Anonymizáciu sa nepodarilo vykonať');
+      hlasChybu(e?.message || tr('Anonymizáciu sa nepodarilo vykonať'));
     } finally {
       setUklada(false);
     }
@@ -195,26 +196,26 @@ export const OchranaUdajov: React.FC = () => {
 
   return (
     <div className="cw-gdpr">
-      <PageHeader nadpis="Ochrana údajov" podnadpis="Súhlasy, práva dotknutých osôb a záznam o spracovaní." />
+      <PageHeader nadpis={tr('Ochrana údajov')} podnadpis={tr('Súhlasy, práva dotknutých osôb a záznam o spracovaní.')} />
 
       {/* ===== Prehľad ===== */}
       <div className="cw-gdpr__karty">
         <StatCard
-          menovka="Doba uchovávania"
+          menovka={tr('Doba uchovávania')}
           hodnota={r ? `${r.doba_uchovavania_rokov} r.` : '—'}
           ikona={<Icon nazov="hodiny" velkost={16} />}
           nacitava={retencia.nacitava}
         />
         <StatCard
-          menovka="Na posúdenie"
+          menovka={tr('Na posúdenie')}
           hodnota={r?.pocet_na_posudenie ?? '—'}
-          zmena={r && r.pocet_na_posudenie > 0 ? 'presiahli dobu uchovávania' : undefined}
+          zmena={r && r.pocet_na_posudenie > 0 ? tr('presiahli dobu uchovávania') : undefined}
           zmenaKladna={false}
           ikona={<Icon nazov="gdpr" velkost={16} />}
           nacitava={retencia.nacitava}
         />
         <StatCard
-          menovka="Vypršané súhlasy"
+          menovka={tr('Vypršané súhlasy')}
           hodnota={r?.vyprsane_suhlasy ?? '—'}
           ikona={<Icon nazov="licencia" velkost={16} />}
           nacitava={retencia.nacitava}
@@ -223,14 +224,14 @@ export const OchranaUdajov: React.FC = () => {
 
       {/* ===== Súhlasy hráča ===== */}
       <Card
-        nadpis="Súhlasy so spracovaním údajov"
-        podnadpis="Pri hráčoch do 18 rokov je na zverejnenie potrebný súhlas zákonného zástupcu"
+        nadpis={tr('Súhlasy so spracovaním údajov')}
+        podnadpis={tr('Pri hráčoch do 18 rokov je na zverejnenie potrebný súhlas zákonného zástupcu')}
       >
         <Select
-          menovka="Hráč"
+          menovka={tr('Hráč')}
           value={vybranyHrac ?? ''}
           onChange={(e) => setVybranyHrac(e.target.value ? Number(e.target.value) : null)}
-          prazdna="Vyberte hráča"
+          prazdna={tr('Vyberte hráča')}
           moznosti={zoznamHracov.map((h) => ({
             hodnota: h.id,
             popis: `${h.meno} ${h.priezvisko}`,
@@ -240,8 +241,8 @@ export const OchranaUdajov: React.FC = () => {
         {vybranyHrac === null ? (
           <EmptyState
             ikona={<Icon nazov="gdpr" velkost={36} />}
-            nadpis="Vyberte hráča"
-            popis="Po výbere hráča uvidíte prehľad jeho súhlasov a možnosti spracovania údajov."
+            nadpis={tr('Vyberte hráča')}
+            popis={tr('Po výbere hráča uvidíte prehľad jeho súhlasov a možnosti spracovania údajov.')}
           />
         ) : suhlasy.nacitava ? (
           <Skeleton riadkov={5} vyska="20px" />
@@ -252,9 +253,9 @@ export const OchranaUdajov: React.FC = () => {
                 {prehlad.hrac.meno} {prehlad.hrac.priezvisko}
               </span>
               {jeMaloletý ? (
-                <Badge ton="warning">Maloletý — vyžaduje súhlas zástupcu</Badge>
+                <Badge ton="warning">{tr('Maloletý — vyžaduje súhlas zástupcu')}</Badge>
               ) : (
-                <Badge ton="neutral">Dospelý</Badge>
+                <Badge ton="neutral">{tr('Dospelý')}</Badge>
               )}
             </div>
 
@@ -268,7 +269,7 @@ export const OchranaUdajov: React.FC = () => {
                     </span>
                     {s.platny && s.udelil_meno && (
                       <span className="cw-gdpr__suhlas-udelil">
-                        Udelil: {s.udelil_meno}
+                        {tr('Udelil:')} {s.udelil_meno}
                         {s.udelil_vztah && ` (${VZTAHY.find((v) => v.hodnota === s.udelil_vztah)?.popis ?? s.udelil_vztah})`}
                         {s.datum_udelenia && ` · ${formatujDatum(s.datum_udelenia)}`}
                         {s.zdroj && ` · ${s.zdroj}`}
@@ -276,7 +277,7 @@ export const OchranaUdajov: React.FC = () => {
                     )}
                     {!s.platny && s.datum_odvolania && (
                       <span className="cw-gdpr__suhlas-udelil">
-                        Odvolaný {formatujDatum(s.datum_odvolania)}
+                        {tr('Odvolaný')} {formatujDatum(s.datum_odvolania)}
                       </span>
                     )}
                   </div>
@@ -294,25 +295,23 @@ export const OchranaUdajov: React.FC = () => {
             <div className="cw-gdpr__prava">
               <div className="cw-gdpr__pravo">
                 <div>
-                  <strong>Právo na prístup</strong>
-                  <p>Stiahnutie všetkých údajov, ktoré o hráčovi vedieme.</p>
+                  <strong>{tr('Právo na prístup')}</strong>
+                  <p>{tr('Stiahnutie všetkých údajov, ktoré o hráčovi vedieme.')}</p>
                 </div>
                 <Button variant="secondary" velkost="sm" onClick={exportuj} ikona={<Icon nazov="ulozit" velkost={14} />}>
-                  Stiahnuť údaje
+                  {tr('Stiahnuť údaje')}
                 </Button>
               </div>
 
               <div className="cw-gdpr__pravo">
                 <div>
-                  <strong>Právo na výmaz</strong>
+                  <strong>{tr('Právo na výmaz')}</strong>
                   <p>
-                    Odstráni osobné údaje. Štatistiky odohraných zápasov zostanú
-                    zachované pod anonymným označením, aby sa nerozpadli výsledky
-                    minulých sezón.
+                    {tr('Odstráni osobné údaje. Štatistiky odohraných zápasov zostanú zachované pod anonymným označením, aby sa nerozpadli výsledky minulých sezón.')}
                   </p>
                 </div>
                 <Button variant="danger" velkost="sm" onClick={() => setAnonymizovat(true)}>
-                  Anonymizovať
+                  {tr('Anonymizovať')}
                 </Button>
               </div>
             </div>
@@ -323,8 +322,8 @@ export const OchranaUdajov: React.FC = () => {
       {/* ===== Retencia ===== */}
       {r && r.pocet_na_posudenie > 0 && (
         <Card
-          nadpis="Údaje po dobe uchovávania"
-          podnadpis={`Neaktívni hráči bez zmeny od ${r.hranica}. Posúďte, či ich údaje ešte potrebujete.`}
+          nadpis={tr('Údaje po dobe uchovávania')}
+          podnadpis={tr('Neaktívni hráči bez zmeny od {hranica}. Posúďte, či ich údaje ešte potrebujete.', { hranica: r.hranica })}
         >
           <ul className="cw-gdpr__retencia">
             {r.na_posudenie.map((h) => (
@@ -341,8 +340,8 @@ export const OchranaUdajov: React.FC = () => {
 
       {/* ===== Audit ===== */}
       <Card
-        nadpis="Záznam o spracovaní"
-        podnadpis="Kto a kedy pracoval s osobnými údajmi"
+        nadpis={tr('Záznam o spracovaní')}
+        podnadpis={tr('Kto a kedy pracoval s osobnými údajmi')}
         bezOdsadenia
       >
         {audit.nacitava ? (
@@ -350,7 +349,7 @@ export const OchranaUdajov: React.FC = () => {
             <Skeleton riadkov={4} vyska="16px" />
           </div>
         ) : (audit.data ?? []).length === 0 ? (
-          <p className="cw-gdpr__prazdne">Zatiaľ žiadne záznamy.</p>
+          <p className="cw-gdpr__prazdne">{tr('Zatiaľ žiadne záznamy.')}</p>
         ) : (
           <ul className="cw-gdpr__audit">
             {(audit.data ?? []).map((z) => (
@@ -365,8 +364,8 @@ export const OchranaUdajov: React.FC = () => {
                 >
                   {z.akcia.replace(/_/g, ' ')}
                 </Badge>
-                <span className="cw-gdpr__audit-popis">{z.popis ?? `${z.entita} #${z.entita_id}`}</span>
-                <span className="cw-gdpr__audit-kto">{z.pouzivatel_email ?? 'systém'}</span>
+                <span className="cw-gdpr__audit-popis">{z.popis ? tr(z.popis) : `${tr(z.entita)} #${z.entita_id}`}</span>
+                <span className="cw-gdpr__audit-kto">{z.pouzivatel_email ?? tr('systém')}</span>
               </li>
             ))}
           </ul>
@@ -377,16 +376,16 @@ export const OchranaUdajov: React.FC = () => {
       <Modal
         otvorene={udelovany !== null}
         onZavri={() => setUdelovany(null)}
-        nadpis="Zaznamenať súhlas"
+        nadpis={tr('Zaznamenať súhlas')}
         podnadpis={udelovany ? DRUHY[udelovany.druh]?.popis : undefined}
         sirka="sm"
         pata={
           <>
             <Button variant="secondary" onClick={() => setUdelovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={potvrdUdelenie} nacitava={uklada}>
-              Zaznamenať
+              {tr('Zaznamenať')}
             </Button>
           </>
         }
@@ -394,20 +393,19 @@ export const OchranaUdajov: React.FC = () => {
         {udelovany && (
           <>
             <p className="cw-gdpr__vysvetlenie">
-              Hráč je maloletý. Zaznamenajte, kto súhlas udelil — bez tejto informácie
-              nie je možné jeho platnosť preukázať.
+              {tr('Hráč je maloletý. Zaznamenajte, kto súhlas udelil — bez tejto informácie nie je možné jeho platnosť preukázať.')}
             </p>
 
             <Input
-              menovka="Meno zákonného zástupcu"
+              menovka={tr('Meno zákonného zástupcu')}
               value={udelovany.udelil_meno}
               onChange={(e) => setUdelovany((d) => ({ ...d!, udelil_meno: e.target.value }))}
-              placeholder="Anna Nováková"
+              placeholder={tr('Anna Nováková')}
               povinne
             />
 
             <Select
-              menovka="Vzťah k dieťaťu"
+              menovka={tr('Vzťah k dieťaťu')}
               value={udelovany.udelil_vztah}
               onChange={(e) => setUdelovany((d) => ({ ...d!, udelil_vztah: e.target.value }))}
               moznosti={VZTAHY}
@@ -415,11 +413,11 @@ export const OchranaUdajov: React.FC = () => {
             />
 
             <Input
-              menovka="Podklad"
+              menovka={tr('Podklad')}
               value={udelovany.zdroj}
               onChange={(e) => setUdelovany((d) => ({ ...d!, zdroj: e.target.value }))}
-              placeholder="papierový formulár"
-              napoveda="Na základe čoho súhlas zaznamenávate — formulár, e-mail, prihláška"
+              placeholder={tr('papierový formulár')}
+              napoveda={tr('Na základe čoho súhlas zaznamenávate — formulár, e-mail, prihláška')}
             />
           </>
         )}
@@ -427,9 +425,9 @@ export const OchranaUdajov: React.FC = () => {
 
       <ConfirmDialog
         otvorene={anonymizovat}
-        nadpis="Anonymizovať údaje hráča?"
-        sprava="Meno, dátum narodenia, fotka a telesné údaje budú nezvratne odstránené. Góly a súpisky zostanú pod anonymným označením, aby sa nerozpadli výsledky minulých sezón. Túto akciu nemožno vrátiť späť."
-        potvrdit="Anonymizovať"
+        nadpis={tr('Anonymizovať údaje hráča?')}
+        sprava={tr('Meno, dátum narodenia, fotka a telesné údaje budú nezvratne odstránené. Góly a súpisky zostanú pod anonymným označením, aby sa nerozpadli výsledky minulých sezón. Túto akciu nemožno vrátiť späť.')}
+        potvrdit={tr('Anonymizovať')}
         nebezpecne
         nacitava={uklada}
         onPotvrd={anonymizuj}

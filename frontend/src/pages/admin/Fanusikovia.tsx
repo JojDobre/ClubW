@@ -10,12 +10,13 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { fanusikoviaApi } from '../../api/klub';
 import { formatujDatum } from '../../utils/datum';
 import type { Fanusik, TypClenstva } from '../../api/typy';
+import { tr } from '../../i18n';
 
 const TYPY: Array<{ hodnota: TypClenstva; popis: string; ton: TonStitka }> = [
-  { hodnota: 'fanusik', popis: 'Fanúšik', ton: 'neutral' },
-  { hodnota: 'clen', popis: 'Člen klubu', ton: 'primary' },
+  { hodnota: 'fanusik', popis: tr('Fanúšik'), ton: 'neutral' },
+  { hodnota: 'clen', popis: tr('Člen klubu'), ton: 'primary' },
   { hodnota: 'vip', popis: 'VIP', ton: 'warning' },
-  { hodnota: 'cestny', popis: 'Čestný člen', ton: 'success' },
+  { hodnota: 'cestny', popis: tr('Čestný člen'), ton: 'success' },
 ];
 
 const PRAZDNY: Partial<Fanusik> = {
@@ -44,7 +45,7 @@ export const Fanusikovia: React.FC = () => {
 
   const chipy: Chip[] = useMemo(
     () => [
-      { hodnota: '', popis: 'Všetci', pocet: zoznam.length },
+      { hodnota: '', popis: tr('Všetci'), pocet: zoznam.length },
       ...TYPY.map((t) => ({
         hodnota: t.hodnota,
         popis: t.popis,
@@ -65,11 +66,11 @@ export const Fanusikovia: React.FC = () => {
     if (!upravovany) return;
 
     if (!upravovany.meno?.trim() || !upravovany.priezvisko?.trim()) {
-      varovanie('Zadajte meno aj priezvisko');
+      varovanie(tr('Zadajte meno aj priezvisko'));
       return;
     }
     if (!upravovany.email?.trim() || !upravovany.email.includes('@')) {
-      varovanie('Zadajte platnú e-mailovú adresu');
+      varovanie(tr('Zadajte platnú e-mailovú adresu'));
       return;
     }
 
@@ -85,15 +86,15 @@ export const Fanusikovia: React.FC = () => {
 
       if (jeNovy) {
         await fanusikoviaApi.vytvor(naUlozenie);
-        uspech('Fanúšik bol pridaný');
+        uspech(tr('Fanúšik bol pridaný'));
       } else {
         await fanusikoviaApi.uprav(upravovany.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovany(null);
       fanusikovia.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Záznam sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Záznam sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -104,11 +105,11 @@ export const Fanusikovia: React.FC = () => {
     setMaze(true);
     try {
       await fanusikoviaApi.zmaz(naZmazanie.id);
-      uspech('Záznam bol odstránený');
+      uspech(tr('Záznam bol odstránený'));
       setNaZmazanie(null);
       fanusikovia.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Záznam sa nepodarilo odstrániť');
+      hlasChybu(e?.message || tr('Záznam sa nepodarilo odstrániť'));
     } finally {
       setMaze(false);
     }
@@ -117,7 +118,7 @@ export const Fanusikovia: React.FC = () => {
   const stlpce: Stlpec<Fanusik>[] = [
     {
       kluc: 'osoba',
-      popis: 'Meno',
+      popis: tr('Meno'),
       obsah: (f) => (
         <div className="cw-hraci__hrac">
           <div className="cw-hraci__avatar" aria-hidden="true">
@@ -135,7 +136,7 @@ export const Fanusikovia: React.FC = () => {
     },
     {
       kluc: 'typ',
-      popis: 'Členstvo',
+      popis: tr('Členstvo'),
       obsah: (f) => {
         const t = TYPY.find((x) => x.hodnota === f.typ_clenstva);
         return <Badge ton={t?.ton ?? 'neutral'}>{t?.popis ?? f.typ_clenstva}</Badge>;
@@ -145,7 +146,7 @@ export const Fanusikovia: React.FC = () => {
     },
     {
       kluc: 'karta',
-      popis: 'Číslo karty',
+      popis: tr('Číslo karty'),
       obsah: (f) =>
         f.cislo_karty ? (
           <code className="cw-kat__slug">{f.cislo_karty}</code>
@@ -157,9 +158,9 @@ export const Fanusikovia: React.FC = () => {
     },
     {
       kluc: 'platnost',
-      popis: 'Členstvo do',
+      popis: tr('Členstvo do'),
       obsah: (f) => {
-        if (!f.clenstvo_do) return <span style={{ color: 'var(--muted)' }}>neobmedzene</span>;
+        if (!f.clenstvo_do) return <span style={{ color: 'var(--muted)' }}>{tr('neobmedzene')}</span>;
         const vyprsalo = new Date(f.clenstvo_do) < new Date();
         return (
           <span style={{ color: vyprsalo ? 'var(--danger)' : 'var(--muted)' }}>
@@ -173,12 +174,12 @@ export const Fanusikovia: React.FC = () => {
     },
     {
       kluc: 'oznamy',
-      popis: 'Oznamy',
+      popis: tr('Oznamy'),
       obsah: (f) =>
         f.suhlas_oznamy ? (
-          <Badge ton="success">Súhlas</Badge>
+          <Badge ton="success">{tr('Súhlas')}</Badge>
         ) : (
-          <span style={{ color: 'var(--muted)' }}>nie</span>
+          <span style={{ color: 'var(--muted)' }}>{tr('nie')}</span>
         ),
       hodnotaNaZoradenie: (f) => (f.suhlas_oznamy ? 1 : 0),
       zarovnanie: 'center',
@@ -187,8 +188,8 @@ export const Fanusikovia: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<Fanusik>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: (f) => setUpravovany({ ...f }) },
-    { popis: 'Odstrániť', ikona: 'zmazat', nebezpecna: true, onKlik: (f) => setNaZmazanie(f) },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (f) => setUpravovany({ ...f }) },
+    { popis: tr('Odstrániť'), ikona: 'zmazat', nebezpecna: true, onKlik: (f) => setNaZmazanie(f) },
   ];
 
   // Koľko ľudí súhlasilo so zasielaním oznamov — podklad pre rozposielanie
@@ -197,11 +198,11 @@ export const Fanusikovia: React.FC = () => {
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Fanúšikovia"
-        podnadpis={`Registrovaní priaznivci klubu · ${soSuhlasom} so súhlasom na zasielanie oznamov.`}
+        nadpis={tr('Fanúšikovia')}
+        podnadpis={tr('Registrovaní priaznivci klubu · {soSuhlasom} so súhlasom na zasielanie oznamov.', { soSuhlasom })}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-            Pridať fanúšika
+            {tr('Pridať fanúšika')}
           </Button>
         }
       />
@@ -210,7 +211,7 @@ export const Fanusikovia: React.FC = () => {
         moznosti={chipy}
         zvolena={filterTypu}
         onZmena={setFilterTypu}
-        popisSkupiny="Filtrovať podľa typu členstva"
+        popisSkupiny={tr('Filtrovať podľa typu členstva')}
       />
 
       <DataTable<Fanusik>
@@ -221,25 +222,25 @@ export const Fanusikovia: React.FC = () => {
         chyba={fanusikovia.chyba}
         onSkusZnova={fanusikovia.obnov}
         hladatV={(f) => `${f.meno} ${f.priezvisko} ${f.email} ${f.cislo_karty ?? ''}`}
-        hladatPlaceholder="Hľadať podľa mena, e-mailu alebo čísla karty…"
+        hladatPlaceholder={tr('Hľadať podľa mena, e-mailu alebo čísla karty…')}
         akcieRiadku={akcieRiadku}
         onKlikNaRiadok={(f) => setUpravovany({ ...f })}
-        prazdnyNadpis="Zatiaľ žiadni fanúšikovia"
-        prazdnyPopis="Evidujte členov klubu a priaznivcov, ktorým chcete posielať oznamy."
-        prazdnaAkcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>Pridať prvého</Button>}
+        prazdnyNadpis={tr('Zatiaľ žiadni fanúšikovia')}
+        prazdnyPopis={tr('Evidujte členov klubu a priaznivcov, ktorým chcete posielať oznamy.')}
+        prazdnaAkcia={<Button onClick={() => setUpravovany({ ...PRAZDNY })}>{tr('Pridať prvého')}</Button>}
       />
 
       <Modal
         otvorene={upravovany !== null}
         onZavri={() => setUpravovany(null)}
-        nadpis={jeNovy ? 'Nový fanúšik' : `${upravovany?.meno} ${upravovany?.priezvisko}`}
+        nadpis={jeNovy ? tr('Nový fanúšik') : `${upravovany?.meno} ${upravovany?.priezvisko}`}
         pata={
           <>
             <Button variant="secondary" onClick={() => setUpravovany(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNovy ? 'Pridať' : 'Uložiť'}
+              {jeNovy ? tr('Pridať') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -248,13 +249,13 @@ export const Fanusikovia: React.FC = () => {
           <>
             <div className="cw-hraci__row">
               <Input
-                menovka="Meno"
+                menovka={tr('Meno')}
                 value={upravovany.meno ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, meno: e.target.value }))}
                 povinne
               />
               <Input
-                menovka="Priezvisko"
+                menovka={tr('Priezvisko')}
                 value={upravovany.priezvisko ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, priezvisko: e.target.value }))}
                 povinne
@@ -270,7 +271,7 @@ export const Fanusikovia: React.FC = () => {
                 povinne
               />
               <Input
-                menovka="Telefón"
+                menovka={tr('Telefón')}
                 value={upravovany.telefon ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, telefon: e.target.value }))}
               />
@@ -278,7 +279,7 @@ export const Fanusikovia: React.FC = () => {
 
             <div className="cw-hraci__row">
               <Select
-                menovka="Typ členstva"
+                menovka={tr('Typ členstva')}
                 value={upravovany.typ_clenstva ?? 'fanusik'}
                 onChange={(e) =>
                   setUpravovany((d) => ({ ...d!, typ_clenstva: e.target.value as TypClenstva }))
@@ -286,22 +287,22 @@ export const Fanusikovia: React.FC = () => {
                 moznosti={TYPY.map((t) => ({ hodnota: t.hodnota, popis: t.popis }))}
               />
               <Input
-                menovka="Číslo karty"
+                menovka={tr('Číslo karty')}
                 value={upravovany.cislo_karty ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, cislo_karty: e.target.value }))}
-                placeholder="Napríklad: 2026-0042"
+                placeholder={tr('Napríklad: 2026-0042')}
               />
             </div>
 
             <div className="cw-hraci__row">
               <Input
-                menovka="Členstvo od"
+                menovka={tr('Členstvo od')}
                 type="date"
                 value={upravovany.clenstvo_od?.slice(0, 10) ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, clenstvo_od: e.target.value || null }))}
               />
               <Input
-                menovka="Členstvo do"
+                menovka={tr('Členstvo do')}
                 type="date"
                 value={upravovany.clenstvo_do?.slice(0, 10) ?? ''}
                 onChange={(e) => setUpravovany((d) => ({ ...d!, clenstvo_do: e.target.value || null }))}
@@ -309,7 +310,7 @@ export const Fanusikovia: React.FC = () => {
             </div>
 
             <Textarea
-              menovka="Poznámka"
+              menovka={tr('Poznámka')}
               value={upravovany.poznamka ?? ''}
               onChange={(e) => setUpravovany((d) => ({ ...d!, poznamka: e.target.value }))}
               rows={2}
@@ -318,8 +319,8 @@ export const Fanusikovia: React.FC = () => {
             <Switch
               zapnute={Boolean(upravovany.suhlas_oznamy)}
               onZmena={(v) => setUpravovany((d) => ({ ...d!, suhlas_oznamy: v }))}
-              menovka="Súhlas so zasielaním oznamov"
-              popis="Bez súhlasu nesmiete posielať klubové novinky — súhlas sa dá kedykoľvek odvolať"
+              menovka={tr('Súhlas so zasielaním oznamov')}
+              popis={tr('Bez súhlasu nesmiete posielať klubové novinky — súhlas sa dá kedykoľvek odvolať')}
             />
           </>
         )}
@@ -327,9 +328,9 @@ export const Fanusikovia: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Odstrániť záznam?"
-        sprava={`${naZmazanie?.meno} ${naZmazanie?.priezvisko} bude odstránený z evidencie fanúšikov.`}
-        potvrdit="Odstrániť"
+        nadpis={tr('Odstrániť záznam?')}
+        sprava={tr('{meno} {priezvisko} bude odstránený z evidencie fanúšikov.', { meno: naZmazanie?.meno, priezvisko: naZmazanie?.priezvisko })}
+        potvrdit={tr('Odstrániť')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}

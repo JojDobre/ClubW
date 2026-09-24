@@ -7,6 +7,8 @@
 // čas začiatku zápasu. Preto prepočet vždy vynucujeme na Europe/Bratislava,
 // ktoré samo rieši prechod medzi letným a zimným časom.
 
+import { lokalita } from '../i18n';
+
 // Časové pásmo klubu - jedno miesto pre prípadnú zmenu
 const CASOVE_PASMO = 'Europe/Bratislava';
 
@@ -25,7 +27,7 @@ const naDatum = (hodnota: string | Date | null | undefined): Date | null => {
 export const formatujDatum = (hodnota: string | Date | null | undefined): string => {
   const d = naDatum(hodnota);
   if (!d) return '';
-  return d.toLocaleDateString('sk-SK', { timeZone: CASOVE_PASMO });
+  return d.toLocaleDateString(lokalita(), { timeZone: CASOVE_PASMO });
 };
 
 /**
@@ -34,7 +36,7 @@ export const formatujDatum = (hodnota: string | Date | null | undefined): string
 export const formatujCas = (hodnota: string | Date | null | undefined): string => {
   const d = naDatum(hodnota);
   if (!d) return '';
-  return d.toLocaleTimeString('sk-SK', {
+  return d.toLocaleTimeString(lokalita(), {
     timeZone: CASOVE_PASMO,
     hour: '2-digit',
     minute: '2-digit',
@@ -47,7 +49,7 @@ export const formatujCas = (hodnota: string | Date | null | undefined): string =
 export const formatujDatumCas = (hodnota: string | Date | null | undefined): string => {
   const d = naDatum(hodnota);
   if (!d) return '';
-  return d.toLocaleString('sk-SK', {
+  return d.toLocaleString(lokalita(), {
     timeZone: CASOVE_PASMO,
     day: 'numeric',
     month: 'numeric',
@@ -63,7 +65,7 @@ export const formatujDatumCas = (hodnota: string | Date | null | undefined): str
 export const formatujDatumDlho = (hodnota: string | Date | null | undefined): string => {
   const d = naDatum(hodnota);
   if (!d) return '';
-  return d.toLocaleDateString('sk-SK', {
+  return d.toLocaleDateString(lokalita(), {
     timeZone: CASOVE_PASMO,
     weekday: 'long',
     day: 'numeric',

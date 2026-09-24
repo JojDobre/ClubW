@@ -10,6 +10,7 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { strankyApi } from '../../api/obsah';
 import { formatujDatum } from '../../utils/datum';
 import type { Stranka } from '../../api/typy';
+import { tr } from '../../i18n';
 import './Stranky.css';
 
 const PRAZDNA: Partial<Stranka> = {
@@ -68,7 +69,7 @@ export const Stranky: React.FC = () => {
       const detail = await strankyApi.detail(s.id);
       setUpravovana({ ...s, ...detail });
     } catch {
-      hlasChybu('Obsah stránky sa nepodarilo načítať');
+      hlasChybu(tr('Obsah stránky sa nepodarilo načítať'));
     }
   };
 
@@ -89,12 +90,12 @@ export const Stranky: React.FC = () => {
     if (!upravovana) return;
 
     if (!upravovana.nazov?.trim()) {
-      varovanie('Zadajte názov stránky');
+      varovanie(tr('Zadajte názov stránky'));
       return;
     }
     // Editor vracia HTML - dĺžku posudzujeme podľa textu bez značiek
     if (bezZnaciek(upravovana.obsah ?? '').length < 10) {
-      varovanie('Obsah stránky musí mať aspoň 10 znakov');
+      varovanie(tr('Obsah stránky musí mať aspoň 10 znakov'));
       return;
     }
 
@@ -111,15 +112,15 @@ export const Stranky: React.FC = () => {
 
       if (jeNova) {
         await strankyApi.vytvor(naUlozenie);
-        uspech('Stránka bola vytvorená');
+        uspech(tr('Stránka bola vytvorená'));
       } else {
         await strankyApi.uprav(upravovana.id!, naUlozenie);
-        uspech('Zmeny boli uložené');
+        uspech(tr('Zmeny boli uložené'));
       }
       setUpravovana(null);
       stranky.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Stránku sa nepodarilo uložiť');
+      hlasChybu(e?.message || tr('Stránku sa nepodarilo uložiť'));
     } finally {
       setUklada(false);
     }
@@ -130,11 +131,11 @@ export const Stranky: React.FC = () => {
     setMaze(true);
     try {
       await strankyApi.zmaz(naZmazanie.id);
-      uspech('Stránka bola zmazaná');
+      uspech(tr('Stránka bola zmazaná'));
       setNaZmazanie(null);
       stranky.obnov();
     } catch (e: any) {
-      hlasChybu(e?.message || 'Stránku sa nepodarilo zmazať');
+      hlasChybu(e?.message || tr('Stránku sa nepodarilo zmazať'));
     } finally {
       setMaze(false);
     }
@@ -143,13 +144,13 @@ export const Stranky: React.FC = () => {
   const stlpce: Stlpec<Stranka>[] = [
     {
       kluc: 'nazov',
-      popis: 'Stránka',
+      popis: tr('Stránka'),
       obsah: (s) => <strong>{s.nazov}</strong>,
       hodnotaNaZoradenie: (s) => s.nazov,
     },
     {
       kluc: 'slug',
-      popis: 'Adresa',
+      popis: tr('Adresa'),
       obsah: (s) => <code className="cw-kat__slug">/{s.slug}</code>,
       sirka: '190px',
       skryTNaMobile: true,
@@ -159,24 +160,24 @@ export const Stranky: React.FC = () => {
       popis: 'V menu',
       obsah: (s) =>
         s.v_menu ? (
-          <Badge ton="primary">{s.poradie_menu ?? '—'}. pozícia</Badge>
+          <Badge ton="primary">{s.poradie_menu ?? '—'}{tr('. pozícia')}</Badge>
         ) : (
-          <span style={{ color: 'var(--muted)' }}>nie</span>
+          <span style={{ color: 'var(--muted)' }}>{tr('nie')}</span>
         ),
       hodnotaNaZoradenie: (s) => (s.v_menu ? s.poradie_menu ?? 999 : 9999),
       sirka: '140px',
     },
     {
       kluc: 'stav',
-      popis: 'Stav',
+      popis: tr('Stav'),
       obsah: (s) =>
-        s.publikovany ? <Badge ton="success">Publikovaná</Badge> : <Badge>Koncept</Badge>,
+        s.publikovany ? <Badge ton="success">{tr('Publikovaná')}</Badge> : <Badge>{tr('Koncept')}</Badge>,
       hodnotaNaZoradenie: (s) => (s.publikovany ? 1 : 0),
       sirka: '130px',
     },
     {
       kluc: 'datum',
-      popis: 'Vytvorená',
+      popis: tr('Vytvorená'),
       obsah: (s) => <span style={{ color: 'var(--muted)' }}>{formatujDatum(s.vytvoreny)}</span>,
       hodnotaNaZoradenie: (s) => new Date(s.vytvoreny).getTime(),
       sirka: '130px',
@@ -185,25 +186,25 @@ export const Stranky: React.FC = () => {
   ];
 
   const akcieRiadku: AkciaRiadku<Stranka>[] = [
-    { popis: 'Upraviť', ikona: 'upravit', onKlik: otvor },
-    { popis: 'Náhľad', ikona: 'oko', onKlik: otvorNahlad },
+    { popis: tr('Upraviť'), ikona: 'upravit', onKlik: otvor },
+    { popis: tr('Náhľad'), ikona: 'oko', onKlik: otvorNahlad },
     {
-      popis: 'Zobraziť na webe',
+      popis: tr('Zobraziť na webe'),
       ikona: 'live',
       zobrazit: (s) => s.publikovany,
       onKlik: (s) => window.open(`/${s.slug}`, '_blank', 'noopener'),
     },
-    { popis: 'Zmazať', ikona: 'zmazat', nebezpecna: true, onKlik: (s) => setNaZmazanie(s) },
+    { popis: tr('Zmazať'), ikona: 'zmazat', nebezpecna: true, onKlik: (s) => setNaZmazanie(s) },
   ];
 
   return (
     <div className="cw-screen">
       <PageHeader
-        nadpis="Stránky"
-        podnadpis="Statické stránky webu ako O klube, História alebo Kontakt."
+        nadpis={tr('Stránky')}
+        podnadpis={tr('Statické stránky webu ako O klube, História alebo Kontakt.')}
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={15} />} onClick={novaStranka}>
-            Nová stránka
+            {tr('Nová stránka')}
           </Button>
         }
       />
@@ -216,14 +217,14 @@ export const Stranky: React.FC = () => {
         chyba={stranky.chyba}
         onSkusZnova={stranky.obnov}
         hladatV={(s) => `${s.nazov} ${s.slug}`}
-        hladatPlaceholder="Hľadať stránku…"
+        hladatPlaceholder={tr('Hľadať stránku…')}
         filtre={[
           {
             kluc: 'stav',
-            popis: 'Všetky stavy',
+            popis: tr('Všetky stavy'),
             moznosti: [
-              { hodnota: 'publikovana', popis: 'Publikované' },
-              { hodnota: 'koncept', popis: 'Koncepty' },
+              { hodnota: 'publikovana', popis: tr('Publikované') },
+              { hodnota: 'koncept', popis: tr('Koncepty') },
             ],
           },
         ]}
@@ -232,15 +233,15 @@ export const Stranky: React.FC = () => {
         }
         akcieRiadku={akcieRiadku}
         onKlikNaRiadok={otvor}
-        prazdnyNadpis="Zatiaľ žiadne stránky"
-        prazdnyPopis="Vytvorte stránky ako O klube, História alebo Kontakt."
-        prazdnaAkcia={<Button onClick={novaStranka}>Vytvoriť stránku</Button>}
+        prazdnyNadpis={tr('Zatiaľ žiadne stránky')}
+        prazdnyPopis={tr('Vytvorte stránky ako O klube, História alebo Kontakt.')}
+        prazdnaAkcia={<Button onClick={novaStranka}>{tr('Vytvoriť stránku')}</Button>}
       />
 
       <Modal
         otvorene={upravovana !== null}
         onZavri={() => setUpravovana(null)}
-        nadpis={jeNova ? 'Nová stránka' : upravovana?.nazov ?? 'Stránka'}
+        nadpis={jeNova ? tr('Nová stránka') : upravovana?.nazov ?? tr('Stránka')}
         sirka="lg"
         pata={
           <>
@@ -251,14 +252,14 @@ export const Stranky: React.FC = () => {
                 onClick={() => otvorNahlad(upravovana)}
                 disabled={uklada}
               >
-                Náhľad
+                {tr('Náhľad')}
               </Button>
             )}
             <Button variant="secondary" onClick={() => setUpravovana(null)} disabled={uklada}>
-              Zrušiť
+              {tr('Zrušiť')}
             </Button>
             <Button onClick={uloz} nacitava={uklada}>
-              {jeNova ? 'Vytvoriť' : 'Uložiť'}
+              {jeNova ? tr('Vytvoriť') : tr('Uložiť')}
             </Button>
           </>
         }
@@ -266,7 +267,7 @@ export const Stranky: React.FC = () => {
         {upravovana && (
           <>
             <Input
-              menovka="Názov stránky"
+              menovka={tr('Názov stránky')}
               value={upravovana.nazov ?? ''}
               onChange={(e) => zmenNazov(e.target.value)}
               placeholder="O klube"
@@ -274,7 +275,7 @@ export const Stranky: React.FC = () => {
             />
 
             <Input
-              menovka="Adresa stránky"
+              menovka={tr('Adresa stránky')}
               value={upravovana.slug ?? ''}
               onChange={(e) => {
                 adresaUpravena.current = true;
@@ -282,15 +283,15 @@ export const Stranky: React.FC = () => {
               }}
               onBlur={(e) => setUpravovana((d) => ({ ...d!, slug: naAdresu(e.target.value) }))}
               placeholder="o-klube"
-              napoveda={`Na webe: /${naAdresu(upravovana.slug ?? '') || '…'} · prázdne = odvodí sa z názvu`}
+              napoveda={tr('Na webe: /{adresa} · prázdne = odvodí sa z názvu', { adresa: naAdresu(upravovana.slug ?? '') || '…' })}
             />
 
             <div className="cw-field">
-              <span className="cw-field__label">Obsah</span>
+              <span className="cw-field__label">{tr('Obsah')}</span>
               <Editor
                 hodnota={upravovana.obsah ?? ''}
                 onZmena={(html) => setUpravovana((d) => ({ ...d!, obsah: html }))}
-                placeholder="Text stránky…"
+                placeholder={tr('Text stránky…')}
               />
             </div>
 
@@ -299,13 +300,13 @@ export const Stranky: React.FC = () => {
               <Switch
                 zapnute={Boolean(upravovana.v_menu)}
                 onZmena={(v) => setUpravovana((d) => ({ ...d!, v_menu: v }))}
-                menovka="Zobraziť v menu"
-                popis="Stránka sa objaví v hlavnej navigácii"
+                menovka={tr('Zobraziť v menu')}
+                popis={tr('Stránka sa objaví v hlavnej navigácii')}
               />
 
               {upravovana.v_menu && (
                 <Input
-                  menovka="Poradie v menu"
+                  menovka={tr('Poradie v menu')}
                   type="number"
                   min={1}
                   value={upravovana.poradie_menu ?? 10}
@@ -319,28 +320,28 @@ export const Stranky: React.FC = () => {
             <Switch
               zapnute={Boolean(upravovana.publikovany)}
               onZmena={(v) => setUpravovana((d) => ({ ...d!, publikovany: v }))}
-              menovka="Publikovaná"
-              popis="Nepublikovanú stránku návštevníci nevidia"
+              menovka={tr('Publikovaná')}
+              popis={tr('Nepublikovanú stránku návštevníci nevidia')}
             />
             </div>
 
             <Input
-              menovka="Titulok pre vyhľadávače"
+              menovka={tr('Titulok pre vyhľadávače')}
               value={upravovana.meta_title ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, meta_title: e.target.value }))}
-              placeholder={upravovana.nazov || 'Ak nevyplníte, použije sa názov'}
+              placeholder={upravovana.nazov || tr('Ak nevyplníte, použije sa názov')}
               maxLength={70}
-              napoveda="Prázdne = doplní sa automaticky z názvu"
+              napoveda={tr('Prázdne = doplní sa automaticky z názvu')}
             />
 
             <Textarea
-              menovka="Popis pre vyhľadávače"
+              menovka={tr('Popis pre vyhľadávače')}
               value={upravovana.meta_description ?? ''}
               onChange={(e) => setUpravovana((d) => ({ ...d!, meta_description: e.target.value }))}
               rows={2}
               maxLength={160}
-              placeholder="Ak nevyplníte, použije sa začiatok textu stránky"
-              napoveda={`${(upravovana.meta_description ?? '').length} / 160 znakov · prázdne = doplní sa automaticky`}
+              placeholder={tr('Ak nevyplníte, použije sa začiatok textu stránky')}
+              napoveda={tr('{pocet} / 160 znakov · prázdne = doplní sa automaticky', { pocet: (upravovana.meta_description ?? '').length })}
             />
           </>
         )}
@@ -348,9 +349,9 @@ export const Stranky: React.FC = () => {
 
       <ConfirmDialog
         otvorene={naZmazanie !== null}
-        nadpis="Zmazať stránku?"
-        sprava={`Stránka ${naZmazanie?.nazov} bude odstránená aj z menu webu.`}
-        potvrdit="Zmazať"
+        nadpis={tr('Zmazať stránku?')}
+        sprava={tr('Stránka {nazov} bude odstránená aj z menu webu.', { nazov: naZmazanie?.nazov })}
+        potvrdit={tr('Zmazať')}
         nebezpecne
         nacitava={maze}
         onPotvrd={zmaz}
