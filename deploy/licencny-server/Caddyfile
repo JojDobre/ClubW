@@ -1,0 +1,23 @@
+# Umiestnenie: deploy/licencny-server/Caddyfile
+# Caddy vybaví certifikát Let's Encrypt pre DOMENA automaticky
+# (doména musí smerovať na tento server a porty 80 a 443 musia byť otvorené).
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMENA} {
+	encode zstd gzip
+	reverse_proxy licencny-server:3001
+	# API prijíma len malé JSON požiadavky (sťahovanie balíkov sa to netýka)
+	request_body {
+		max_size 1MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	log {
+		output stdout
+		format console
+	}
+}

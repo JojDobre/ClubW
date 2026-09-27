@@ -40,11 +40,32 @@ export interface VerziaSystemu {
   bezi_sekund: number;
 }
 
+export interface BehAktualizacie {
+  stav: 'prebieha' | 'hotovo' | 'chyba';
+  verzia: string;
+  z_verzie?: string | null;
+  krok?: string | null;
+  sprava?: string | null;
+  zaciatok?: string;
+  koniec?: string | null;
+}
+
+export interface StavAktualizacii {
+  verzia: string;
+  povolene: boolean;
+  dostupna: { verzia: string; povinna: boolean; poznamky: string | null; velkost: number | null } | null;
+  beh: BehAktualizacie | null;
+  log: string;
+}
+
 export const licenciaApi = {
   stav: (signal?: AbortSignal) => api.ziskaj<StavLicencie>('/license/status', { signal }),
   /** Overí licenciu na licenčnom serveri hneď teraz. */
   over: () => api.vytvor<StavLicencie>('/license/check', {}),
   verzia: (signal?: AbortSignal) => api.ziskaj<VerziaSystemu>('/license/version', { signal }),
+  aktualizacie: (signal?: AbortSignal) => api.ziskaj<StavAktualizacii>('/license/update', { signal }),
+  /** Spustí aktualizáciu na verziu, ktorú ponúka licenčný server. */
+  aktualizuj: () => api.vytvor<BehAktualizacie>('/license/update', {}),
 };
 
 export const nastaveniaApi = {

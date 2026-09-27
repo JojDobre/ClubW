@@ -111,6 +111,29 @@ jobs:
     name: Licenčný server
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: clubw_licenses_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: clubw_licenses_test
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+
     steps:
       - uses: actions/checkout@v4
 
@@ -124,3 +147,34 @@ jobs:
 
       - name: Kontrola typov
         run: npm run build --workspace=license-server
+
+      - name: Migrácie, rollback a opätovné spustenie
+        working-directory: license-server
+        run: |
+          npx sequelize-cli db:migrate
+          npx sequelize-cli db:migrate:undo:all
+          npx sequelize-cli db:migrate
+
+      - name: Testy (API, prihlásenie, podpisy, aktualizácie)
+        working-directory: license-server
+        run: npm test
+
+      - name: Webová administrácia (typy + build)
+        run: npm run build --workspace=@clubw/license-admin
+
+  docker:
+    name: Docker obraz licenčného servera
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zostavenie obrazu
+        run: docker build -f license-server/Dockerfile -t clubw-licencie:ci .
+
+      - name: Kontrola docker compose
+        working-directory: deploy/licencny-server
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=ci/; s/^LICENSE_PRIVATE_KEY=.*/LICENSE_PRIVATE_KEY=x/; s/^LICENSE_PUBLIC_KEY=.*/LICENSE_PUBLIC_KEY=x/' .env
+          docker compose config --quiet

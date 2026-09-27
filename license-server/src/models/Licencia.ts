@@ -4,8 +4,8 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-// Podporované licenčné plány (podľa zadania: Pro na rok, Enterprise na 2 roky)
-export type LicencnyPlan = 'pro' | 'enterprise';
+// Plán licencie - kód plánu z produktu (napr. pro, enterprise)
+export type LicencnyPlan = string;
 
 // Stav licencie. 'pozastavena' použijeme napríklad pri nezaplatenej faktúre -
 // licencia sa dá znovu zapnúť bez toho, aby sa vytvárala nová.
@@ -27,6 +27,14 @@ interface LicenciaAttributes {
   poznamka: string | null;
   posledna_kontrola: Date | null;
   pocet_kontrol: number;
+  produkt_id: number;
+  // Verzia, ktorú inštalácia naposledy nahlásila
+  nainstalovana_verzia: string | null;
+  posledna_ip: string | null;
+  // Čo o sebe inštalácia hlási (adresa webu, Node, systém)
+  instalacia: Record<string, unknown> | null;
+  automaticke_aktualizacie: boolean;
+  pripnuta_verzia_id: number | null;
   vytvoreny: Date;
   aktualizovany: Date;
 }
@@ -36,6 +44,7 @@ interface LicenciaCreationAttributes
     LicenciaAttributes,
     'id' | 'domena' | 'funkcie' | 'stav' | 'poznamka' | 'posledna_kontrola'
     | 'pocet_kontrol' | 'vytvoreny' | 'aktualizovany' | 'platna_od'
+    | 'nainstalovana_verzia' | 'posledna_ip' | 'instalacia' | 'automaticke_aktualizacie' | 'pripnuta_verzia_id'
   > {}
 
 class Licencia
@@ -55,6 +64,12 @@ class Licencia
   public poznamka!: string | null;
   public posledna_kontrola!: Date | null;
   public pocet_kontrol!: number;
+  public produkt_id!: number;
+  public nainstalovana_verzia!: string | null;
+  public posledna_ip!: string | null;
+  public instalacia!: Record<string, unknown> | null;
+  public automaticke_aktualizacie!: boolean;
+  public pripnuta_verzia_id!: number | null;
   public vytvoreny!: Date;
   public aktualizovany!: Date;
 
@@ -122,7 +137,7 @@ Licencia.init(
       comment: 'Doména, na ktorej smie licencia bežať (prázdne = neviazaná)',
     },
     plan: {
-      type: DataTypes.ENUM('pro', 'enterprise'),
+      type: DataTypes.STRING(40),
       allowNull: false,
       defaultValue: 'pro',
     },
@@ -160,6 +175,12 @@ Licencia.init(
       allowNull: false,
       defaultValue: 0,
     },
+    produkt_id: { type: DataTypes.INTEGER, allowNull: false },
+    nainstalovana_verzia: { type: DataTypes.STRING(40), allowNull: true },
+    posledna_ip: { type: DataTypes.STRING(64), allowNull: true },
+    instalacia: { type: DataTypes.JSONB, allowNull: true },
+    automaticke_aktualizacie: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    pripnuta_verzia_id: { type: DataTypes.INTEGER, allowNull: true },
     vytvoreny: {
       type: DataTypes.DATE,
       allowNull: false,

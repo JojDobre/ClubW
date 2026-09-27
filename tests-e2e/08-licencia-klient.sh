@@ -9,7 +9,10 @@ export LICENCNY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../license-server" && pwd)
 
 API="http://localhost:3000"
 LIC="http://localhost:3001"
-ADMIN_KEY="test_admin_kluc_pre_sandbox_12345"
+ADMIN_EMAIL="${ADMIN_EMAIL:-test@clubw.sk}"
+ADMIN_HESLO="${ADMIN_HESLO:-dlhe heslo pre testy licencii}"
+KOLACE=$(mktemp)
+H=(-H "Content-Type: application/json" -H "X-Poziadavka: 1" -b "$KOLACE" -c "$KOLACE")
 JSON="Content-Type: application/json"
 PASS=0; FAIL=0
 
@@ -31,8 +34,9 @@ curl -s -m 2 $LIC/health >/dev/null 2>&1 || { echo "❌ Licenčný server nenaš
 echo "✅ Licenčný server beží"
 
 # ===== 3. Vytvorenie licencie pre klienta =====
-NOVA=$(curl -s -m 5 -X POST $LIC/api/admin/licenses -H "$JSON" -H "X-Admin-Key: $ADMIN_KEY" -d '{
-  "nazov_klienta":"FC Slovan Dolina","email_klienta":"admin@slovandolina.sk","plan":"pro"
+curl -s -m 5 -X POST $LIC/api/sprava/prihlasenie "${H[@]}" -d "{\"email\":\"$ADMIN_EMAIL\",\"heslo\":\"$ADMIN_HESLO\"}" > /dev/null
+NOVA=$(curl -s -m 5 -X POST $LIC/api/sprava/licencie "${H[@]}" -d '{
+  "produkt_id":1,"nazov_klienta":"FC Slovan Dolina","email_klienta":"admin@slovandolina.sk","plan":"pro"
 }')
 KLUC=$(echo "$NOVA" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['kluc'])" 2>/dev/null)
 [ -z "$KLUC" ] && { echo "❌ Licenciu sa nepodarilo vytvoriť"; echo "$NOVA" | head -c 200; exit 1; }

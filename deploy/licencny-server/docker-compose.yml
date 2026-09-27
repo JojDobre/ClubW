@@ -1,0 +1,77 @@
+# Umiestnenie: deploy/licencny-server/docker-compose.yml
+# Licenčný server ClubW na vlastnom VPS: databáza, server s administráciou
+# a Caddy, ktorý sám vybaví HTTPS certifikát pre vašu doménu.
+#
+#   ./priprav.sh licencie.vasadomena.sk vas@email.sk    (raz - vytvorí .env)
+#   docker compose up -d --build
+#   docker compose exec licencny-server npm run vytvor-admina -- --email vas@email.sk --meno "Vaše meno"
+#
+# Podrobný postup: NASADENIE.md
+
+name: clubw-licencie
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: licencie
+      POSTGRES_USER: licencie
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Chýba DB_PASSWORD v .env - spustite ./priprav.sh}
+    volumes:
+      - databaza:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U licencie -d licencie']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  licencny-server:
+    build:
+      context: ../..
+      dockerfile: license-server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: licencie
+      DB_USER: licencie
+      DB_PASSWORD: ${DB_PASSWORD}
+      LICENSE_PRIVATE_KEY: ${LICENSE_PRIVATE_KEY:?Chýba LICENSE_PRIVATE_KEY v .env - spustite ./priprav.sh}
+      LICENSE_PUBLIC_KEY: ${LICENSE_PUBLIC_KEY:?Chýba LICENSE_PUBLIC_KEY v .env}
+      # Súkromný repozitár na GitHube potrebuje token s právom čítať obsah
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      BALIKY_DIR: /data/baliky
+    volumes:
+      - baliky:/data/baliky
+    # Von sa nepublikuje - prístup len cez Caddy (HTTPS)
+    expose:
+      - '3001'
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - licencny-server
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMENA: ${DOMENA:?Chýba DOMENA v .env}
+      ACME_EMAIL: ${ACME_EMAIL:?Chýba ACME_EMAIL v .env - e-mail pre Let's Encrypt}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  databaza:
+  baliky:
+  caddy_data:
+  caddy_config:

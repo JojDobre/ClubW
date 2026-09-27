@@ -20,6 +20,13 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import {
+  VERZIA_APLIKACIE,
+  spracujPrikaz,
+  udajeInstalacie,
+  type PrikazServera,
+  type VerziaNaStiahnutie,
+} from '../services/aktualizacie';
 
 // Ako často sa licencia overuje
 const INTERVAL_KONTROLY_MS = 24 * 60 * 60 * 1000; // 24 hodín
@@ -51,6 +58,9 @@ interface StavLicencie {
   poslednyUspesnyKontakt: number | null;
   // Kedy prebehol posledný pokus (aj neúspešný)
   poslednyPokus: number;
+  // Dostupná aktualizácia a príkaz z podpísanej odpovede servera
+  aktualizacia: (VerziaNaStiahnutie & { povinna?: boolean }) | null;
+  prikaz: PrikazServera | null;
 }
 
 let stav: StavLicencie = {
@@ -62,6 +72,8 @@ let stav: StavLicencie = {
   dniDoVyprsania: null,
   poslednyUspesnyKontakt: null,
   poslednyPokus: 0,
+  aktualizacia: null,
+  prikaz: null,
 };
 
 /**
@@ -190,6 +202,8 @@ export const overLicenciu = async (): Promise<void> => {
       body: JSON.stringify({
         licenseKey: kluc,
         domena: process.env.CLIENT_DOMAIN || null,
+        verzia: VERZIA_APLIKACIE,
+        instalacia: udajeInstalacie(),
       }),
       signal: prerusenie.signal,
     });
@@ -218,6 +232,8 @@ export const overLicenciu = async (): Promise<void> => {
     stav.platnaDo = telo.data.platnaDo ?? null;
     stav.dniDoVyprsania = telo.data.dniDoVyprsania ?? null;
     stav.poslednyUspesnyKontakt = Date.now();
+    stav.aktualizacia = telo.data.aktualizacia && typeof telo.data.aktualizacia === 'object' ? telo.data.aktualizacia : null;
+    stav.prikaz = telo.data.prikaz && typeof telo.data.prikaz === 'object' ? telo.data.prikaz : null;
 
     // Uloženie na disk, aby ochranná lehota prežila reštart servera
     ulozStavNaDisk();
@@ -230,6 +246,11 @@ export const overLicenciu = async (): Promise<void> => {
       if (dni !== null && dni <= 30) {
         console.warn(`⚠️  Licencia vyprší o ${dni} dní. Kontaktujte dodávateľa.`);
       }
+      if (stav.aktualizacia) {
+        console.log(`ℹ️  Dostupná aktualizácia na verziu ${stav.aktualizacia.verzia}${stav.aktualizacia.povinna ? ' (povinná)' : ''}`);
+      }
+      // Príkaz administrátora licencií (aktualizácia) - podpis už je overený
+      await spracujPrikaz(stav.prikaz);
     } else {
       console.error(`❌ Licencia nie je platná. Dôvod: ${stav.dovod}`);
     }
@@ -368,6 +389,9 @@ export const stavLicencie = () => {
       : null,
   };
 };
+
+/** Dostupná aktualizácia z posledného overenia (s údajmi na stiahnutie). */
+export const dostupnaAktualizacia = () => stav.aktualizacia;
 
 /**
  * Nastavenie stavu pre testy. V bežnej prevádzke sa nepoužíva.

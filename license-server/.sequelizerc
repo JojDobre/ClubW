@@ -1,0 +1,8 @@
+// Umiestnenie: license-server/.sequelizerc
+// sequelize-cli: konfigurácia databázy a priečinok migrácií
+const path = require('path');
+
+module.exports = {
+  config: path.resolve('config', 'database.js'),
+  'migrations-path': path.resolve('migrations'),
+};

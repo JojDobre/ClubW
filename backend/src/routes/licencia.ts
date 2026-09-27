@@ -7,7 +7,15 @@ import fs from 'fs';
 import path from 'path';
 import { Router } from 'express';
 import sequelize from '../config/database';
-import { overLicenciu, stavLicencie } from '../middleware/licencia';
+import { dostupnaAktualizacia, overLicenciu, stavLicencie } from '../middleware/licencia';
+import {
+  AktualizaciaError,
+  VERZIA_APLIKACIE,
+  aktualizacieZapnute,
+  koniecLogu,
+  nacitajBeh,
+  spustiAktualizator,
+} from '../services/aktualizacie';
 import { authenticateToken, requirePermission } from '../middleware/auth';
 
 const router = Router();
@@ -42,9 +50,6 @@ router.post('/check', authenticateToken, requirePermission('licencia', 'citat'),
  */
 router.get('/version', authenticateToken, requirePermission('licencia', 'citat'), async (_req, res) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const balicek = require('../../package.json');
-
     const [riadky] = await sequelize.query('SELECT name FROM "SequelizeMeta" ORDER BY name');
     const dobehnute = new Set((riadky as any[]).map((r) => r.name));
 
@@ -62,7 +67,7 @@ router.get('/version', authenticateToken, requirePermission('licencia', 'citat')
     res.json({
       success: true,
       data: {
-        verzia_aplikacie: balicek.version,
+        verzia_aplikacie: VERZIA_APLIKACIE,
         node: process.version,
         prostredie: process.env.NODE_ENV || 'development',
         schema: {
@@ -77,6 +82,68 @@ router.get('/version', authenticateToken, requirePermission('licencia', 'citat')
   } catch (chyba) {
     console.error('Chyba pri zisťovaní verzie:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera pri zisťovaní verzie' });
+  }
+});
+
+/**
+ * @route GET /api/license/update - dostupná aktualizácia a priebeh aktualizácie
+ *
+ * Aktualizáciu ponúka licenčný server v podpísanej odpovedi na overenie
+ * licencie. Priebeh a záznam zapisuje aktualizátor (scripts/aktualizuj.mjs).
+ */
+router.get('/update', authenticateToken, requirePermission('licencia', 'citat'), (_req, res) => {
+  const a = dostupnaAktualizacia();
+  res.json({
+    success: true,
+    data: {
+      verzia: VERZIA_APLIKACIE,
+      povolene: aktualizacieZapnute(),
+      dostupna: a
+        ? { verzia: a.verzia, povinna: Boolean(a.povinna), poznamky: a.poznamky ?? null, velkost: a.velkost ?? null }
+        : null,
+      beh: nacitajBeh(),
+      log: koniecLogu(),
+    },
+  });
+});
+
+/**
+ * @route POST /api/license/update - spustí aktualizáciu na dostupnú verziu
+ *
+ * Nainštalovať sa dá len verzia, ktorú ponúkol licenčný server v podpísanej
+ * odpovedi - klient si nevyberá, čo sa stiahne.
+ */
+router.post('/update', authenticateToken, requirePermission('licencia', 'pisat'), async (_req, res) => {
+  try {
+    if (!aktualizacieZapnute()) {
+      res.status(400).json({
+        success: false,
+        message: 'Aktualizácie sú na tomto serveri vypnuté. Zapnete ich v backend/.env: AKTUALIZACIE_POVOLENE=true',
+      });
+      return;
+    }
+    // Čerstvé overenie - ponuka mohla medzitým zmiznúť alebo sa zmeniť
+    await overLicenciu();
+    // Overenie mohlo doručiť príkaz licenčného servera, ktorý aktualizáciu už spustil
+    const beh = nacitajBeh();
+    if (beh?.stav === 'prebieha') {
+      res.json({ success: true, data: beh, message: `Aktualizácia na verziu ${beh.verzia} sa spustila` });
+      return;
+    }
+    const a = dostupnaAktualizacia();
+    if (!a) {
+      res.status(400).json({ success: false, message: 'Žiadna aktualizácia nie je dostupná' });
+      return;
+    }
+    spustiAktualizator(a, null);
+    res.json({ success: true, data: nacitajBeh(), message: `Aktualizácia na verziu ${a.verzia} sa spustila` });
+  } catch (chyba) {
+    if (chyba instanceof AktualizaciaError) {
+      res.status(409).json({ success: false, message: chyba.message });
+      return;
+    }
+    console.error('Chyba pri spúšťaní aktualizácie:', chyba);
+    res.status(500).json({ success: false, message: 'Aktualizáciu sa nepodarilo spustiť' });
   }
 });
 
