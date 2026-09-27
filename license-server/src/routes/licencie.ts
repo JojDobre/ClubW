@@ -1,21 +1,24 @@
 // Umiestnenie: license-server/src/routes/licencie.ts
-// Endpointy licenčného servera.
+// Verejné endpointy licenčného servera - volajú ich klientske weby.
 //
-// Verejné (volá ich klientsky web):
-//   POST /api/license/verify      - overenie licencie, odpoveď je podpísaná
-//   GET  /api/license/status/:kluc - stručný stav bez podpisu
+//   POST /api/license/verify            overenie licencie; odpoveď je podpísaná
+//                                        a nesie aj dostupnú aktualizáciu a príkazy
+//   GET  /api/license/status/:kluc       stručný stav bez podpisu
+//   POST /api/license/prikaz/:id         inštalácia hlási priebeh príkazu
+//   GET  /api/license/balik/:verziaId    stiahnutie balíka verzie (hlavička X-License-Key)
 //
-// Administratívne (chránené hlavičkou X-Admin-Key):
-//   GET    /api/admin/licenses      - zoznam licencií
-//   POST   /api/admin/licenses      - vytvorenie licencie
-//   PUT    /api/admin/licenses/:id  - úprava (predĺženie, pozastavenie)
-//   DELETE /api/admin/licenses/:id  - zrušenie licencie
+// Administrácia má vlastné endpointy pod /api/sprava (routes/sprava.ts).
 
-import { Router, Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import { Router, Request, Response } from 'express';
 import { Op } from 'sequelize';
 import rateLimit from 'express-rate-limit';
 import Licencia from '../models/Licencia';
-import { podpis, vygenerujLicencnyKluc } from '../utils/podpis';
+import { NEUKONCENE_STAVY, Prikaz, Produkt, Verzia, zaznamenaj } from '../models/sprava';
+import { podpis } from '../utils/podpis';
+import { cestaBaliku } from '../utils/balicky';
+import { normalizujVerziu, porovnajVerzie } from '../utils/verzie';
+import { dostupnaAktualizacia, verziaPreKlienta, vypocitanyStav, vytvorPrikazAktualizacie, ChybaPrikazu } from '../sluzby/licencie';
 
 const router = Router();
 
@@ -28,157 +31,155 @@ const PLATNOST_ODPOVEDE_HODIN = 24;
  * Bráni skúšaniu licenčných kľúčov hrubou silou.
  */
 const limitOverovania = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minút
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Príliš veľa požiadaviek na overenie. Skúste o chvíľu znova.',
-  },
+  message: { success: false, message: 'Príliš veľa požiadaviek na overenie. Skúste o chvíľu znova.' },
 });
 
-/**
- * Prísnejší limit pre administratívne rozhranie.
- */
-const limitAdmin = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 60,
+/** Sťahovanie balíkov - každá inštalácia potrebuje najviac pár za deň. */
+const limitStahovania = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { success: false, message: 'Príliš veľa sťahovaní. Skúste o chvíľu znova.' },
 });
 
+const najdiLicenciu = (kluc: unknown) =>
+  typeof kluc === 'string' && kluc.length <= 64 ? Licencia.findOne({ where: { kluc: kluc.trim().toUpperCase() } }) : Promise.resolve(null);
+
 /**
- * Overenie administrátorského kľúča.
- * Kľúč sa nastavuje premennou ADMIN_API_KEY a posiela v hlavičke X-Admin-Key.
+ * Údaje, ktoré o sebe hlási inštalácia (adresa webu, Node, systém...).
+ * Berieme len jednoduché hodnoty s obmedzenou dĺžkou - nič z toho sa
+ * nesmie dať zneužiť na zahltenie databázy.
  */
-const vyzadujAdmina = (req: Request, res: Response, next: NextFunction): void => {
-  const ocakavany = process.env.ADMIN_API_KEY;
-
-  if (!ocakavany) {
-    res.status(500).json({
-      success: false,
-      message: 'Administratívne rozhranie nie je nastavené (chýba ADMIN_API_KEY)',
-    });
-    return;
+const ocistiInstalaciu = (vstup: unknown): Record<string, string | number | boolean> | null => {
+  if (!vstup || typeof vstup !== 'object' || Array.isArray(vstup)) return null;
+  const vysledok: Record<string, string | number | boolean> = {};
+  for (const [kluc, hodnota] of Object.entries(vstup as Record<string, unknown>).slice(0, 25)) {
+    if (!/^[a-z0-9_]{1,40}$/i.test(kluc)) continue;
+    if (typeof hodnota === 'string') vysledok[kluc] = hodnota.slice(0, 200);
+    else if (typeof hodnota === 'number' && Number.isFinite(hodnota)) vysledok[kluc] = hodnota;
+    else if (typeof hodnota === 'boolean') vysledok[kluc] = hodnota;
   }
-
-  const poslany = req.header('X-Admin-Key');
-
-  // Porovnanie s rovnakým časom pre všetky vstupy - bežné porovnanie
-  // reťazcov skončí pri prvom rozdiele a prezradilo by, koľko znakov sedí
-  const sedi =
-    typeof poslany === 'string' &&
-    poslany.length === ocakavany.length &&
-    require('crypto').timingSafeEqual(Buffer.from(poslany), Buffer.from(ocakavany));
-
-  if (!sedi) {
-    res.status(401).json({ success: false, message: 'Neplatný administrátorský kľúč' });
-    return;
-  }
-
-  next();
+  return vysledok;
 };
 
-// ===================== VEREJNÉ ENDPOINTY =====================
+// ===================== OVERENIE LICENCIE =====================
 
 /**
  * POST /api/license/verify
  *
- * Telo požiadavky: { licenseKey: "CLUBW-...", domena?: "klub.sk" }
+ * Telo: { licenseKey, domena?, verzia?, instalacia? }
  *
  * Odpoveď obsahuje údaje o licencii a ich podpis. Klient podpis overí
- * verejným kľúčom, takže odpoveď sa nedá podvrhnúť.
+ * verejným kľúčom, takže odpoveď sa nedá podvrhnúť - ani dostupná
+ * aktualizácia a jej kontrolný súčet.
  */
 router.post('/license/verify', limitOverovania, async (req: Request, res: Response) => {
   try {
     const { licenseKey, domena } = req.body;
+    const verzia = typeof req.body.verzia === 'string' && req.body.verzia.length <= 40 ? normalizujVerziu(req.body.verzia) : null;
 
     if (!licenseKey || typeof licenseKey !== 'string') {
       res.status(400).json({ success: false, message: 'Chýba licenseKey' });
       return;
     }
 
-    const licencia = await Licencia.findOne({
-      where: { kluc: licenseKey.trim().toUpperCase() },
-    });
+    const licencia = await najdiLicenciu(licenseKey);
 
-    // Zostavenie odpovede. Aj zamietavá odpoveď je podpísaná, aby útočník
-    // nemohol zablokovaním komunikácie predstierať dostupnosť servera.
-    const zostavOdpoved = (
-      platna: boolean,
-      dovod: string | null,
-      detaily: Record<string, unknown> = {}
-    ) => {
+    // Aj zamietavá odpoveď je podpísaná, aby útočník nemohol zablokovaním
+    // komunikácie predstierať dostupnosť servera.
+    const zostavOdpoved = (platna: boolean, dovod: string | null, detaily: Record<string, unknown> = {}) => {
       const udaje = {
         platna,
         dovod,
         kluc: licenseKey,
         overene: new Date().toISOString(),
-        // Do kedy smie klient túto odpoveď považovať za aktuálnu
-        platneDo: new Date(
-          Date.now() + PLATNOST_ODPOVEDE_HODIN * 60 * 60 * 1000
-        ).toISOString(),
+        platneDo: new Date(Date.now() + PLATNOST_ODPOVEDE_HODIN * 60 * 60 * 1000).toISOString(),
         ...detaily,
       };
-
       const sukromnyKluc = process.env.LICENSE_PRIVATE_KEY;
-      if (!sukromnyKluc) {
-        throw new Error('Chýba LICENSE_PRIVATE_KEY - server nemôže podpisovať odpovede');
-      }
-
-      // DÔLEŽITÉ: podpisujeme až podobu, ktorú klient reálne dostane.
-      // Hodnoty typu Date sa pri odoslaní cez res.json() zmenia na reťazec,
-      // takže podpis nad pôvodným objektom by klientovi nikdy nesedel.
+      if (!sukromnyKluc) throw new Error('Chýba LICENSE_PRIVATE_KEY - server nemôže podpisovať odpovede');
+      // Podpisujeme až podobu, ktorú klient reálne dostane (dátumy ako text)
       const udajeNaOdoslanie = JSON.parse(JSON.stringify(udaje));
-
-      return {
-        success: true,
-        data: udajeNaOdoslanie,
-        podpis: podpis(udajeNaOdoslanie, sukromnyKluc.replace(/\\n/g, '\n')),
-      };
+      return { success: true, data: udajeNaOdoslanie, podpis: podpis(udajeNaOdoslanie, sukromnyKluc.replace(/\\n/g, '\n')) };
     };
 
-    // Kľúč neexistuje
     if (!licencia) {
       res.status(404).json(zostavOdpoved(false, 'neexistujuca_licencia'));
       return;
     }
 
-    // Zaznamenáme, že sa klient ozval (užitočné pri riešení problémov)
-    await licencia.update({
+    // Čo inštalácia hlási o sebe
+    const zmeny: Record<string, unknown> = {
       posledna_kontrola: new Date(),
       pocet_kontrol: licencia.pocet_kontrol + 1,
-    });
+      posledna_ip: req.ip ?? null,
+    };
+    const instalacia = ocistiInstalaciu(req.body.instalacia);
+    if (instalacia) zmeny.instalacia = { ...instalacia, domena: typeof domena === 'string' ? domena.slice(0, 200) : null };
+    const predoslaVerzia = licencia.nainstalovana_verzia;
+    if (verzia) zmeny.nainstalovana_verzia = verzia;
+    if (licencia.pocet_kontrol === 0) {
+      await zaznamenaj({ typ: 'instalacia_prvy_kontakt', popis: `Prvé overenie licencie - ${licencia.nazov_klienta}`, licencia_id: licencia.id, produkt_id: licencia.produkt_id, ip: req.ip ?? null, detaily: { verzia, domena } });
+    }
+    await licencia.update(zmeny);
 
-    // Licencia je zrušená alebo pozastavená
+    // Inštalácia hlási novú verziu - rozpracovaný príkaz na túto verziu je hotový
+    if (verzia && predoslaVerzia && porovnajVerzie(verzia, predoslaVerzia) !== 0) {
+      await zaznamenaj({ typ: 'instalacia_verzia', popis: `${licencia.nazov_klienta}: verzia ${predoslaVerzia} → ${verzia}`, licencia_id: licencia.id, produkt_id: licencia.produkt_id, ip: req.ip ?? null });
+    }
+    if (verzia) {
+      const rozpracovane = await Prikaz.findAll({
+        where: { licencia_id: licencia.id, stav: { [Op.in]: NEUKONCENE_STAVY } },
+        include: [{ model: Verzia, as: 'verzia' }],
+      });
+      for (const p of rozpracovane) {
+        if (p.verzia && porovnajVerzie(p.verzia.verzia, verzia) === 0) {
+          await p.update({ stav: 'hotovo', dokonceny: new Date(), sprava: p.sprava ?? 'Inštalácia hlási novú verziu' });
+        }
+      }
+    }
+
     if (licencia.stav !== 'aktivna') {
       res.json(zostavOdpoved(false, `licencia_${licencia.stav}`, { plan: licencia.plan }));
       return;
     }
-
-    // Licencia vypršala
     if (!licencia.jePlatna()) {
-      res.json(
-        zostavOdpoved(false, 'vyprsana_licencia', {
-          plan: licencia.plan,
-          platnaDo: licencia.platna_do,
-        })
-      );
+      res.json(zostavOdpoved(false, 'vyprsana_licencia', { plan: licencia.plan, platnaDo: licencia.platna_do }));
       return;
     }
-
-    // Licencia je viazaná na inú doménu
     if (!licencia.sediDomena(domena)) {
-      res.json(
-        zostavOdpoved(false, 'nespravna_domena', {
-          ocakavanaDomena: licencia.domena,
-        })
-      );
+      res.json(zostavOdpoved(false, 'nespravna_domena', { ocakavanaDomena: licencia.domena }));
       return;
     }
 
-    // Všetko v poriadku
+    // Dostupná aktualizácia; pri automatických aktualizáciách z nej rovno príkaz
+    const aktualizacia = await dostupnaAktualizacia(licencia, verzia);
+    if (aktualizacia && licencia.automaticke_aktualizacie) {
+      const uzBol = await Prikaz.findOne({ where: { licencia_id: licencia.id, verzia_id: aktualizacia.id, stav: { [Op.ne]: 'zruseny' } } });
+      const verziaModel = await Verzia.findByPk(aktualizacia.id);
+      if (!uzBol && verziaModel) {
+        try {
+          await vytvorPrikazAktualizacie(licencia, verziaModel, { automaticky: true, ip: req.ip ?? null });
+        } catch (chyba) {
+          if (!(chyba instanceof ChybaPrikazu)) throw chyba;
+        }
+      }
+    }
+
+    // Príkaz čakajúci na inštaláciu (najstarší nedokončený)
+    const prikaz = await Prikaz.findOne({
+      where: { licencia_id: licencia.id, stav: { [Op.in]: ['caka', 'prevzaty'] } },
+      include: [{ model: Verzia, as: 'verzia' }],
+      order: [['vytvoreny', 'ASC']],
+    });
+    const prikazPreKlienta =
+      prikaz?.verzia && prikaz.verzia.balik_stav === 'pripraveny' ? { id: prikaz.id, typ: prikaz.typ, verzia: verziaPreKlienta(prikaz.verzia) } : null;
+
     res.json(
       zostavOdpoved(true, null, {
         plan: licencia.plan,
@@ -186,6 +187,8 @@ router.post('/license/verify', limitOverovania, async (req: Request, res: Respon
         platnaDo: licencia.platna_do,
         dniDoVyprsania: licencia.dniDoVyprsania(),
         nazovKlienta: licencia.nazov_klienta,
+        aktualizacia,
+        prikaz: prikazPreKlienta,
       })
     );
   } catch (error) {
@@ -200,17 +203,11 @@ router.post('/license/verify', limitOverovania, async (req: Request, res: Respon
  */
 router.get('/license/status/:kluc', limitOverovania, async (req: Request, res: Response) => {
   try {
-    const licencia = await Licencia.findOne({
-      where: { kluc: String(req.params.kluc).trim().toUpperCase() },
-      // Zámerne neposielame e-mail ani poznámky - to sú interné údaje
-      attributes: ['plan', 'stav', 'platna_do', 'funkcie'],
-    });
-
+    const licencia = await najdiLicenciu(String(req.params.kluc));
     if (!licencia) {
       res.status(404).json({ success: false, message: 'Licencia nenájdená' });
       return;
     }
-
     res.json({
       success: true,
       data: {
@@ -227,142 +224,93 @@ router.get('/license/status/:kluc', limitOverovania, async (req: Request, res: R
   }
 });
 
-// ===================== ADMINISTRATÍVNE ENDPOINTY =====================
+// ===================== PRÍKAZY A BALÍKY =====================
+
+const STAVY_Z_INSTALACIE = ['prevzaty', 'prebieha', 'hotovo', 'chyba'] as const;
 
 /**
- * GET /api/admin/licenses
- * Zoznam licencií s možnosťou filtrovania.
+ * POST /api/license/prikaz/:id
+ * Telo: { licenseKey, stav: prevzaty | prebieha | hotovo | chyba, sprava? }
+ *
+ * Inštalácia hlási priebeh príkazu. Príkaz musí patriť licencii
+ * s týmto kľúčom a nesmie byť už ukončený.
  */
-router.get('/admin/licenses', limitAdmin, vyzadujAdmina, async (req: Request, res: Response) => {
+router.post('/license/prikaz/:id', limitOverovania, async (req: Request, res: Response) => {
   try {
-    const kde: any = {};
-
-    if (req.query.stav) kde.stav = req.query.stav;
-    if (req.query.plan) kde.plan = req.query.plan;
-
-    // Licencie, ktoré čoskoro vypršia - podklad pre upozornenia klientom
-    if (req.query.vyprsiaDo) {
-      const dni = Math.min(Number(req.query.vyprsiaDo) || 30, 365);
-      kde.platna_do = {
-        [Op.between]: [new Date(), new Date(Date.now() + dni * 24 * 60 * 60 * 1000)],
-      };
+    const licencia = await najdiLicenciu(req.body?.licenseKey);
+    const prikaz = await Prikaz.findByPk(Number(req.params.id), { include: [{ model: Verzia, as: 'verzia' }] });
+    if (!licencia || !prikaz || prikaz.licencia_id !== licencia.id) {
+      res.status(404).json({ success: false, message: 'Príkaz nenájdený' });
+      return;
     }
+    const stav = req.body.stav;
+    if (!STAVY_Z_INSTALACIE.includes(stav)) {
+      res.status(400).json({ success: false, message: 'Neplatný stav príkazu' });
+      return;
+    }
+    if (!NEUKONCENE_STAVY.includes(prikaz.stav)) {
+      res.status(409).json({ success: false, message: 'Príkaz je už ukončený' });
+      return;
+    }
+    const sprava = typeof req.body.sprava === 'string' ? req.body.sprava.slice(-20000) : prikaz.sprava;
+    const zmeny: Record<string, unknown> = { stav, sprava };
+    if (stav === 'prevzaty' && !prikaz.prevzaty) zmeny.prevzaty = new Date();
+    if (stav === 'hotovo' || stav === 'chyba') zmeny.dokonceny = new Date();
+    await prikaz.update(zmeny);
 
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
-
-    const licencie = await Licencia.findAll({
-      where: kde,
-      order: [['platna_do', 'ASC']],
-      limit,
-    });
-
-    res.json({ success: true, data: licencie, pocet: licencie.length });
-  } catch (error) {
-    console.error('Chyba pri načítaní licencií:', error);
-    res.status(500).json({ success: false, message: 'Chyba servera' });
-  }
-});
-
-/**
- * POST /api/admin/licenses
- * Vytvorenie novej licencie. Kľúč sa generuje automaticky.
- */
-router.post('/admin/licenses', limitAdmin, vyzadujAdmina, async (req: Request, res: Response) => {
-  try {
-    const { nazov_klienta, email_klienta, domena, plan, funkcie, poznamka, platna_do } = req.body;
-
-    if (!nazov_klienta || !email_klienta) {
-      res.status(400).json({
-        success: false,
-        message: 'Názov klienta a e-mail sú povinné',
+    if (stav === 'hotovo' || stav === 'chyba') {
+      await zaznamenaj({
+        typ: stav === 'hotovo' ? 'aktualizacia_hotova' : 'aktualizacia_chyba',
+        popis:
+          stav === 'hotovo'
+            ? `${licencia.nazov_klienta}: aktualizácia na ${prikaz.verzia?.verzia ?? '?'} dokončená`
+            : `${licencia.nazov_klienta}: aktualizácia na ${prikaz.verzia?.verzia ?? '?'} zlyhala`,
+        licencia_id: licencia.id,
+        produkt_id: licencia.produkt_id,
+        ip: req.ip ?? null,
+        detaily: { prikaz_id: prikaz.id },
       });
-      return;
     }
-
-    const zvolenyPlan = plan === 'enterprise' ? 'enterprise' : 'pro';
-
-    // Predvolená dĺžka podľa plánu: Pro 1 rok, Enterprise 2 roky
-    const rokov = zvolenyPlan === 'enterprise' ? 2 : 1;
-    const predvolenaPlatnost = new Date();
-    predvolenaPlatnost.setFullYear(predvolenaPlatnost.getFullYear() + rokov);
-
-    const licencia = await Licencia.create({
-      kluc: vygenerujLicencnyKluc(),
-      nazov_klienta: String(nazov_klienta).trim(),
-      email_klienta: String(email_klienta).trim().toLowerCase(),
-      domena: domena ? String(domena).trim().toLowerCase() : null,
-      plan: zvolenyPlan,
-      funkcie: Array.isArray(funkcie) ? funkcie : [],
-      platna_do: platna_do ? new Date(platna_do) : predvolenaPlatnost,
-      poznamka: poznamka ? String(poznamka) : null,
-    });
-
-    res.status(201).json({
-      success: true,
-      data: licencia,
-      message: 'Licencia vytvorená',
-    });
+    res.json({ success: true });
   } catch (error) {
-    console.error('Chyba pri vytváraní licencie:', error);
-    res.status(500).json({ success: false, message: 'Chyba servera pri vytváraní licencie' });
-  }
-});
-
-/**
- * PUT /api/admin/licenses/:id
- * Úprava licencie - predĺženie platnosti, pozastavenie, zmena plánu.
- */
-router.put('/admin/licenses/:id', limitAdmin, vyzadujAdmina, async (req: Request, res: Response) => {
-  try {
-    const licencia = await Licencia.findByPk(Number(req.params.id));
-
-    if (!licencia) {
-      res.status(404).json({ success: false, message: 'Licencia nenájdená' });
-      return;
-    }
-
-    // Meníme len polia, ktoré klient poslal
-    const zmeny: any = {};
-    const povolene = ['nazov_klienta', 'email_klienta', 'domena', 'plan', 'funkcie', 'stav', 'poznamka', 'platna_do'];
-
-    for (const pole of povolene) {
-      if (req.body[pole] !== undefined) {
-        zmeny[pole] = req.body[pole];
-      }
-    }
-
-    // Kľúč sa nikdy nemení - klient ho má zadaný vo svojom webe
-    delete zmeny.kluc;
-
-    await licencia.update(zmeny);
-
-    res.json({ success: true, data: licencia, message: 'Licencia aktualizovaná' });
-  } catch (error) {
-    console.error('Chyba pri úprave licencie:', error);
+    console.error('Chyba pri hlásení príkazu:', error);
     res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 
 /**
- * DELETE /api/admin/licenses/:id
- * Zrušenie licencie. Záznam ostáva v databáze kvôli histórii,
- * len sa nastaví stav na 'zrusena'.
+ * GET /api/license/balik/:verziaId  (hlavička X-License-Key)
+ *
+ * Balík verzie pre inštaláciu s platnou licenciou. Kontrolný súčet
+ * dostala inštalácia v podpísanej odpovedi pri overení licencie.
  */
-router.delete('/admin/licenses/:id', limitAdmin, vyzadujAdmina, async (req: Request, res: Response) => {
+router.get('/license/balik/:verziaId', limitStahovania, async (req: Request, res: Response) => {
   try {
-    const licencia = await Licencia.findByPk(Number(req.params.id));
-
-    if (!licencia) {
-      res.status(404).json({ success: false, message: 'Licencia nenájdená' });
+    const licencia = await najdiLicenciu(req.header('X-License-Key'));
+    if (!licencia || vypocitanyStav(licencia) !== 'aktivna') {
+      res.status(403).json({ success: false, message: 'Balík je dostupný len s platnou licenciou' });
       return;
     }
-
-    await licencia.update({ stav: 'zrusena' });
-
-    res.json({ success: true, message: 'Licencia zrušená' });
+    const verzia = await Verzia.findByPk(Number(req.params.verziaId));
+    const produkt = verzia ? await Produkt.findByPk(verzia.produkt_id) : null;
+    if (!verzia || !produkt || verzia.produkt_id !== licencia.produkt_id || verzia.balik_stav !== 'pripraveny') {
+      res.status(404).json({ success: false, message: 'Balík nenájdený' });
+      return;
+    }
+    const cesta = cestaBaliku(produkt.kod, verzia.tag);
+    const info = await fs.promises.stat(cesta).catch(() => null);
+    if (!info) {
+      res.status(404).json({ success: false, message: 'Balík na serveri chýba - pripravte ho v administrácii znova' });
+      return;
+    }
+    res.setHeader('Content-Type', 'application/gzip');
+    res.setHeader('Content-Length', String(info.size));
+    res.setHeader('Content-Disposition', `attachment; filename="${produkt.kod}-${verzia.verzia}.tar.gz"`);
+    if (verzia.balik_sha256) res.setHeader('X-SHA256', verzia.balik_sha256);
+    fs.createReadStream(cesta).pipe(res);
   } catch (error) {
-    console.error('Chyba pri rušení licencie:', error);
-    res.status(500).json({ success: false, message: 'Chyba servera' });
+    console.error('Chyba pri sťahovaní balíka:', error);
+    if (!res.headersSent) res.status(500).json({ success: false, message: 'Chyba servera' });
   }
 });
 

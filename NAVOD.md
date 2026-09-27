@@ -272,58 +272,50 @@ frontend/src/
 
 Potrebujete ho len vtedy, ak systém prevádzkujete pre viacero klubov. Pre jeden klub stačí `LICENSE_CHECK_DISABLED=true` v backende.
 
+Licenčný server má vlastnú webovú administráciu. V nej vytvárate licenčné kľúče, sledujete inštalácie, určujete aktuálnu verziu CMS z GitHubu a spúšťate aktualizácie webov klubov. **Nasadenie na VPS s doménou a HTTPS je v [deploy/licencny-server/NASADENIE.md](deploy/licencny-server/NASADENIE.md).** Nasledujúce kroky sú pre lokálny vývoj.
+
 ### 6.1 Vygenerovanie podpisových kľúčov
 
 ```bash
 cd license-server
-node scripts/generuj-kluce.js
+npm run generuj-kluce
 ```
 
 Skript vypíše dvojicu kľúčov. **Súkromný** patrí do `license-server/.env`, **verejný** do `backend/.env` každého klienta.
 
 ### 6.2 Súbor `license-server/.env`
 
+Skopírujte `license-server/.env.example` a doplňte databázu a kľúče z kroku 6.1:
+
 ```env
 NODE_ENV=development
 PORT=3001
-
 DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=clubw_licencie
+DB_PORT=5435
+DB_NAME=clubw_licenses_dev
 DB_USER=client_dev
-DB_PASSWORD=zvolte_si_silne_heslo
-
-# Kľúč pre administratívne rozhranie (vygenerujte náhodný reťazec)
-ADMIN_API_KEY=dlhy_nahodny_retazec
-
-# Z kroku 6.1
+DB_PASSWORD=client_dev_password
 LICENSE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 LICENSE_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 ```
 
-### 6.3 Spustenie
+### 6.3 Spustenie a prvý administrátor
 
 ```bash
 cd license-server
-npx sequelize-cli db:migrate
-npm run dev
+npm run db:migrate
+npm run build && npm run build:admin
+npm run vytvor-admina -- --email vas@email.sk --meno "Vaše meno"
+npm start                      # administrácia na http://localhost:3001
 ```
 
-### 6.4 Vytvorenie licencie pre klub
+Pri vývoji administrácie spustite `npm run dev` (server) a `npm run dev --workspace=@clubw/license-admin` (administrácia na http://localhost:5299 so živým obnovovaním). Testy: `npm test` (potrebujú databázu `clubw_licenses_test`).
 
-```bash
-curl -X POST http://localhost:3001/api/admin/licenses \
-  -H "Content-Type: application/json" \
-  -H "X-Admin-Key: dlhy_nahodny_retazec" \
-  -d '{
-    "nazov_klienta": "FC Slovan Dolina",
-    "email_klienta": "admin@slovandolina.sk",
-    "plan": "pro",
-    "domena": "slovandolina.sk"
-  }'
-```
+Bez HTTPS nastavte v `.env` aj `COOKIE_SECURE=false`, inak sa v produkčnom režime neprihlásite.
 
-Vrátený kľúč (`CLUBW-XXXX-XXXX-XXXX-XXXX`) vložte do `backend/.env` klienta:
+### 6.4 Licencia pre klub
+
+V administrácii **Licencie → Nová licencia**. V detaile licencie je karta **Nastavenie pre klienta** s riadkami pre `backend/.env` klienta:
 
 ```env
 LICENSE_KEY=CLUBW-XXXX-XXXX-XXXX-XXXX
@@ -331,6 +323,24 @@ LICENSE_SERVER_URL=http://localhost:3001
 LICENSE_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 # a odstráňte LICENSE_CHECK_DISABLED
 ```
+
+### 6.5 Aktualizácie z licenčného servera
+
+Web klubu pri overení licencie pošle svoju verziu (z `package.json` v koreni projektu). Licenčný server mu ponúkne aktuálnu verziu produktu alebo pošle príkaz na aktualizáciu. Inštaláciu vykoná skript `scripts/aktualizuj.mjs`:
+
+1. stiahne balík verzie a overí kontrolný súčet z podpísanej odpovede;
+2. zálohuje súbory aj databázu do `zalohy/`;
+3. nahrá novú verziu, spustí `npm ci`, build a migrácie;
+4. reštartuje backend.
+
+Pri chybe vráti pôvodnú verziu. Zapína sa v `backend/.env`:
+
+```env
+AKTUALIZACIE_POVOLENE=true
+AKTUALIZACIA_RESTART=pm2 restart clubw-backend    # alebo "ukoncit" pri pm2/systemd, prázdne = ručne
+```
+
+Stav a tlačidlo aktualizácie sú v administrácii CMS: **Licencia → Aktualizácie**. Súbory `.env`, `backend/uploads` a `backend/sablony` sa pri aktualizácii nikdy neprepisujú. Podrobnosti sú v [NASADENIE.md](deploy/licencny-server/NASADENIE.md#10-aktualizácie-webov-klubov).
 
 **Ako sa licencia správa:**
 - Overuje sa raz za 24 hodín, výsledok sa drží v pamäti aj na disku

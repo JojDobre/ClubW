@@ -1,0 +1,6 @@
+# Skripty sa spúšťajú na Linuxe (VPS) - vždy s unixovými koncami riadkov,
+# aj keď sa repozitár upravuje na Windows
+*.sh text eol=lf
+*.mjs text eol=lf
+Caddyfile text eol=lf
+Dockerfile text eol=lf
