@@ -14,6 +14,7 @@ import {
   jePrihlaseny,
   otvorNastaveniaCookies,
   souborUrl,
+  useKosik,
   useMenuWebu,
   useNastavenia,
 } from '@clubw/jadro';
@@ -74,6 +75,7 @@ export const Hlavicka: React.FC = () => {
               )}
             </div>
           ))}
+          {nastavenia.eshop?.zapnuty && <OdkazKosika />}
           {jePrihlaseny() && (
             <Link to="/admin" className="zk-menu__admin">
               Administrácia
@@ -82,6 +84,16 @@ export const Hlavicka: React.FC = () => {
         </nav>
       </div>
     </header>
+  );
+};
+
+/** Košík v menu - zobrazí sa, len keď je obchod zapnutý. */
+const OdkazKosika: React.FC = () => {
+  const { pocet } = useKosik();
+  return (
+    <Link to="/kosik" className="zk-menu__kosik">
+      Košík{pocet > 0 && <span className="zk-menu__pocet">{pocet}</span>}
+    </Link>
   );
 };
 

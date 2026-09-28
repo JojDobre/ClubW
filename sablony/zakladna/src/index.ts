@@ -7,6 +7,8 @@
 // kód kalendára či turnajov.
 
 import { lazy } from 'react';
+
+const obchod = () => import('./stranky/Obchod');
 import type { CastiSablony } from '@clubw/jadro';
 import { Rozlozenie, Hlavicka, Paticka, Nacitavanie } from './Rozlozenie';
 
@@ -36,6 +38,11 @@ export const casti: CastiSablony = {
   Sponzori: lazy(() => import('./stranky/SponzoriVerejne')),
   Formular: lazy(() => import('./stranky/FormularStranka')),
   Statistiky: lazy(() => import('./stranky/Stats')),
+  Obchod: lazy(() => obchod().then((m) => ({ default: m.Obchod }))),
+  Produkt: lazy(() => obchod().then((m) => ({ default: m.Produkt }))),
+  Kosik: lazy(() => obchod().then((m) => ({ default: m.Kosik }))),
+  Pokladna: lazy(() => obchod().then((m) => ({ default: m.Pokladna }))),
+  Objednavka: lazy(() => obchod().then((m) => ({ default: m.Objednavka }))),
   Nenajdena: lazy(() => import('./stranky/Nenajdena')),
 };
 

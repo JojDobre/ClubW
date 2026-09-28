@@ -41,6 +41,12 @@ import RealizacnyTim from '../pages/admin/RealizacnyTim';
 import Ligy from '../pages/admin/Ligy';
 // Sekcia KLUB
 import Sponzori from '../pages/admin/Sponzori';
+import EshopObjednavky from '../pages/admin/eshop/Objednavky';
+import EshopObjednavkaDetail from '../pages/admin/eshop/ObjednavkaDetail';
+import EshopProdukty from '../pages/admin/eshop/Produkty';
+import EshopProduktEditor from '../pages/admin/eshop/ProduktEditor';
+import EshopDopravaPlatby from '../pages/admin/eshop/DopravaPlatby';
+import EshopNastavenia from '../pages/admin/eshop/NastaveniaObchodu';
 import Dokumenty from '../pages/admin/Dokumenty';
 import Ankety from '../pages/admin/Ankety';
 import Fanusikovia from '../pages/admin/Fanusikovia';
@@ -115,6 +121,14 @@ export const App: React.FC = () => (
 
                 {/* Sekcia KLUB */}
                 <Route path="sponzori" element={<Sponzori />} />
+                <Route path="eshop" element={<Navigate to="/admin/eshop/objednavky" replace />} />
+                <Route path="eshop/objednavky" element={<EshopObjednavky />} />
+                <Route path="eshop/objednavky/:id" element={<EshopObjednavkaDetail />} />
+                <Route path="eshop/produkty" element={<EshopProdukty />} />
+                <Route path="eshop/produkty/novy" element={<EshopProduktEditor />} />
+                <Route path="eshop/produkty/:id" element={<EshopProduktEditor />} />
+                <Route path="eshop/doprava-platba" element={<EshopDopravaPlatby />} />
+                <Route path="eshop/nastavenia" element={<EshopNastavenia />} />
                 <Route path="dokumenty" element={<Dokumenty />} />
                 <Route path="formulare" element={<Formulare />} />
                 <Route path="formulare/novy" element={<FormularEditor />} />

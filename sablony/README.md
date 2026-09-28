@@ -151,11 +151,17 @@ Balík `.zip` potom nahrajte v administrácii tlačidlom **Pridať šablónu**.
 | `Ligy`, `Liga`, `Zapasy`, `Zapas`, `Kalendar` | `/leagues`, `/leagues/:id`, `/matches`, `/matches/:id`, `/calendar` |
 | `Galerie`, `Galeria`, `Videa` | `/galleries`, `/galleries/:id`, `/videa` |
 | `Turnaje`, `Dokumenty`, `Sponzori`, `Formular`, `Statistiky` | `/turnaje`, `/dokumenty`, `/sponzori`, `/formular/:kluc`, `/stats` |
+| `Obchod`, `Produkt`, `Kosik`, `Pokladna`, `Objednavka` | `/obchod`, `/obchod/:slug`, `/kosik`, `/pokladna`, `/objednavka/:token` |
 | `Nenajdena` | neexistujúca adresa |
 
 Parametre z adresy čítajte cez `useParams()` z `react-router-dom`.
 
 ### Čo poskytuje `@clubw/jadro`
+
+Obchod (E-shop v administrácii) má zobraziť každá šablóna - košík, ceny a objednávku
+rieši jadro, šablóna len vzhľad. Ceny v košíku sú len na zobrazenie; server ich pri
+objednávke prepočíta a overí sklad. Odkaz na košík v hlavičke ukazujte len pri
+`useNastavenia().nastavenia.eshop?.zapnuty`.
 
 | Čo | Na čo |
 |---|---|
@@ -170,6 +176,11 @@ Parametre z adresy čítajte cez `useParams()` z `react-router-dom`.
 | `FormularWeb`, `AnketaWeb`, `KomentarePodClankom`, `ZapasPriebeh` | hotové súčasti webu |
 | `sanitizeHtml()` | bezpečné HTML z obsahu |
 | `otvorNastaveniaCookies()`, `jePrihlaseny()` | odkaz v pätičke, odkaz do administrácie |
+| `useObchod()` | nastavenia obchodu: zapnutý, mena, spôsoby doručenia a platby |
+| `useKosik()` | košík (v prehliadači, zdieľaný hlavičkou a kartami): `polozky`, `pocet`, `medzisucet`, `pridaj(produkt, volby, pocet)`, `zmenPocet`, `odstran` |
+| `cenaSVolbami()`, `hodnotaVypredana()`, `cenaText()` | cena so zvolenými vlastnosťami a chýbajúce povinné voľby, formát „49,90 €“ |
+| `usePokladna()` | celá pokladňa: údaje zákazníka, doručenie, platba, súčty, `odosli()` vráti token objednávky |
+| `useObjednavka(token)`, `PlatobnaBrana` | stav objednávky (po návrate z brány sa chvíľu obnovuje) a kód brány v izolovanom rámci |
 
 Časť základnej šablóny sa dá aj obaliť: `import { casti } from '@clubw/zakladna'`
 a v novej časti vykresliť `<casti.Uvod />` s vlastným doplnkom okolo.
@@ -230,6 +241,11 @@ stránky webu.
   tri produkty fanshopu, pozadie videí, tím hráčov, úspechy (riadok = „počet názov“),
   počty sledujúcich, tri karty odkazu klubu, partneri na stránkach a text pätičky.
   Sekcie bez obsahu sa neukážu.
+- **Fanshop** - obchod s kategóriami, produkt s galériou a výberom vlastností
+  (veľkosti ako pilulky, text na dres), košík, pokladňa v krokoch a stav objednávky
+  s pokynmi k platbe alebo platobnou bránou. Košík s počtom kusov je v hlavičke, na
+  mobile má produkt lištu „Pridať do košíka“ nad záložkami. Úvod so zapnutým obchodom
+  ukáže odporúčané produkty; bez obchodu tri produkty z nastavení šablóny.
 - **Písma** Poppins a Inter sú pribalené v `klubova/pisma` (bez Google Fonts).
 
 Zdrojové súbory: `klubova/src/Rozlozenie.tsx` (hlavička, menu, pätička, záložky),

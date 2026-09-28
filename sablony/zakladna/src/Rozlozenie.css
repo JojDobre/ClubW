@@ -41,6 +41,12 @@
   text-decoration: none; color: var(--club-primary, #1b5e20); font-weight: 600; font-size: 14px;
   padding: 7px 14px; border: 1px solid currentColor; border-radius: 8px;
 }
+.zk-menu__kosik { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: #1a202c; font-weight: 600; }
+.zk-menu__pocet {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; font-size: 12px;
+  display: inline-grid; place-items: center; box-sizing: border-box;
+  background: var(--club-primary, #1b5e20); color: var(--club-primary-contrast, #fff);
+}
 .zk-menu-tlacidlo { display: none; background: none; border: 0; font-size: 1.5rem; cursor: pointer; padding: 8px; color: inherit; }
 
 @media (max-width: 860px) {
@@ -54,6 +60,7 @@
   .zk-menu__polozka { flex-direction: column; align-items: stretch; }
   .zk-menu__odkaz { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
   .zk-menu__podmenu { position: static; display: flex; box-shadow: none; padding: 0 0 0 16px; min-width: 0; }
+  .zk-menu__kosik { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
   .zk-menu__admin { margin-top: 12px; text-align: center; }
 }
 

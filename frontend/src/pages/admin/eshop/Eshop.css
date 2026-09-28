@@ -1,0 +1,161 @@
+/* Umiestnenie: frontend/src/pages/admin/eshop/Eshop.css
+   Obrazovky e-shopu v administrácii (triedy cw-es__). */
+
+.cw-es__tlmene { color: var(--muted); }
+.cw-es__male { font-size: var(--fs-xs); }
+.cw-es__odsadene { padding: 0 var(--sp-4) var(--sp-4); }
+.cw-es__vpravo { text-align: right; justify-content: flex-end; }
+.cw-es__medzera { flex: 1; }
+.cw-es__menovka { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--text); margin: var(--sp-2) 0; }
+.cw-es__stavy { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cw-es__riadok-akcii { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.cw-es__riadok-poli { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+.cw-es__odkaz {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--pri); font-size: var(--fs-sm); font-weight: 600; text-decoration: none;
+}
+.cw-es__odkaz:hover { text-decoration: underline; }
+
+/* Prehľad a filtre */
+.cw-es__staty { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.cw-es__filtre { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.cw-es__hladat {
+  display: flex; align-items: center; gap: 8px; min-width: 240px; height: var(--control-h, 38px); padding: 0 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--muted);
+}
+.cw-es__hladat:focus-within { border-color: var(--pri); }
+.cw-es__hladat input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); }
+
+/* Tabuľka objednávok */
+.cw-es__tabulka { display: flex; flex-direction: column; gap: 6px; }
+.cw-es__riadok {
+  display: grid; grid-template-columns: 110px minmax(0, 1.4fr) 150px minmax(0, 1.2fr) 110px 200px; gap: var(--sp-3); align-items: center;
+  width: 100%; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); font: inherit; font-size: var(--fs-sm); text-align: left; cursor: pointer; transition: border-color var(--t-fast, 0.15s);
+}
+.cw-es__riadok:hover { border-color: var(--pri); }
+.cw-es__riadok--hlava { background: none; border-color: transparent; cursor: default; padding-top: 0; padding-bottom: 0; color: var(--muted); font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.cw-es__riadok--hlava:hover { border-color: transparent; }
+.cw-es__cislo { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cw-es__zakaznik { display: flex; flex-direction: column; min-width: 0; }
+.cw-es__zakaznik > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-es__zakaznik small { color: var(--muted); font-size: var(--fs-xs); }
+.cw-es__suma { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cw-es__strany { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--muted); font-size: var(--fs-sm); }
+
+/* Detail a editor */
+.cw-es__lista, .cw-es__spat-riadok { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-4); }
+.cw-es__spat {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.cw-es__spat svg { transform: rotate(180deg); }
+.cw-es__spat:hover { background: var(--card2); }
+.cw-es__nadpis { font-family: var(--font-head); font-size: var(--fs-lg, 20px); margin: 0; }
+.cw-es__detail { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sp-4); align-items: start; }
+.cw-es__hlavne, .cw-es__bok { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.cw-es__bok .cw-card__body > * + *, .cw-es__hlavne .cw-card__body > * + * { margin-top: var(--sp-3); }
+
+.cw-es__polozky { display: flex; flex-direction: column; }
+.cw-es__polozka { display: grid; grid-template-columns: minmax(0, 1fr) auto 110px; gap: var(--sp-3); align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: var(--fs-sm); }
+.cw-es__polozka > div { display: flex; flex-direction: column; min-width: 0; }
+.cw-es__polozka small { color: var(--muted); font-size: var(--fs-xs); }
+.cw-es__polozka .cw-es__suma { text-align: right; }
+.cw-es__sucty { margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
+.cw-es__sucty > div { display: flex; justify-content: space-between; gap: var(--sp-3); }
+.cw-es__sucty dt { color: var(--muted); }
+.cw-es__sucty dd { margin: 0; font-variant-numeric: tabular-nums; }
+.cw-es__spolu { padding-top: 8px; border-top: 1px solid var(--border); font-weight: 700; font-size: var(--fs-md, 15px); }
+.cw-es__spolu dt { color: var(--text); }
+.cw-es__udaje { margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: var(--fs-sm); }
+.cw-es__udaje > div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: var(--sp-3); }
+.cw-es__udaje dt { color: var(--muted); }
+.cw-es__udaje dd { margin: 0; overflow-wrap: anywhere; }
+.cw-es__udaje a { color: var(--pri); }
+.cw-es__poznamka { white-space: pre-line; }
+
+/* Produkty */
+.cw-es__produkty { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-3); }
+.cw-es__produkt {
+  display: flex; flex-direction: column; padding: 0; background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--t-fast, 0.15s);
+}
+.cw-es__produkt:hover { border-color: var(--pri); }
+.cw-es__produkt.is-skryty { opacity: 0.6; }
+.cw-es__produkt-obrazok { position: relative; aspect-ratio: 4 / 3; background: var(--card2); display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.cw-es__produkt-obrazok img { width: 100%; height: 100%; object-fit: cover; }
+.cw-es__odporucany { position: absolute; top: 8px; left: 8px; background: var(--pri); color: var(--on-pri, #fff); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.cw-es__produkt-text { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; font-size: var(--fs-sm); }
+.cw-es__produkt-text strong { font-size: var(--fs-base, 14px); }
+.cw-es__produkt-cena { font-weight: 700; display: flex; gap: 8px; align-items: baseline; margin: 2px 0 4px; }
+.cw-es__produkt-cena s { color: var(--muted); font-weight: 500; font-size: var(--fs-xs); }
+
+.cw-es__zoznam-kategorii { list-style: none; margin: var(--sp-3) 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cw-es__zoznam-kategorii > li { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
+.cw-es__zoznam-kategorii > li > div:first-child { display: flex; flex-direction: column; }
+.cw-es__kategoria-uprava { flex-direction: column; align-items: stretch !important; }
+.cw-es__nova-kategoria { display: flex; align-items: flex-end; gap: var(--sp-3); }
+.cw-es__nova-kategoria > :first-child { flex: 1; }
+
+/* Vlastnosti produktu */
+.cw-es__dalsi-obrazok { display: flex; align-items: flex-start; gap: var(--sp-2); }
+.cw-es__dalsi-obrazok > :first-child { flex: 1; }
+.cw-es__vlastnost { border: 1px solid var(--border); border-radius: 12px; padding: var(--sp-3); background: var(--card2); }
+.cw-es__vlastnost + .cw-es__vlastnost { margin-top: var(--sp-3); }
+.cw-es__vlastnost-hlava { display: grid; grid-template-columns: minmax(0, 1fr) 190px auto; gap: var(--sp-3); align-items: end; }
+.cw-es__hodnoty { display: flex; flex-direction: column; gap: 6px; margin-top: var(--sp-3); }
+.cw-es__hodnota { display: grid; grid-template-columns: minmax(0, 1fr) 110px 90px 36px; gap: 8px; align-items: center; }
+.cw-es__hodnota--hlava { color: var(--muted); font-size: var(--fs-xs); font-weight: 600; }
+.cw-es__hodnoty > .cw-btn, .cw-es__hodnoty > button { align-self: flex-start; }
+.cw-es__text-vlastnost { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); margin-top: var(--sp-3); align-items: end; }
+.cw-es__text-vlastnost > :last-child { grid-column: 1 / -1; }
+.cw-es__predvolby { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
+
+/* Doprava a platba */
+.cw-es__dva-stlpce { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); align-items: start; }
+.cw-es__dva-stlpce .cw-card__body > * + * { margin-top: var(--sp-3); }
+.cw-es__sposoby { list-style: none; margin: 0; padding: 0; }
+.cw-es__sposoby > li { display: flex; align-items: center; gap: var(--sp-3); padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.cw-es__sposoby > li:last-child { border-bottom: 0; }
+.cw-es__sposoby > li.is-skryty { opacity: 0.6; }
+.cw-es__sposob-ikona { width: 36px; height: 36px; border-radius: 10px; background: var(--pri-softer, var(--card2)); color: var(--pri); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cw-es__sposob-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: var(--fs-sm); }
+.cw-es__sposob-text small { color: var(--muted); font-size: var(--fs-xs); }
+.cw-es__brana { margin: var(--sp-3) 0; padding: var(--sp-3); border: 1px dashed var(--border); border-radius: 12px; }
+.cw-es__brana h3 { margin: 0 0 6px; font-size: var(--fs-md, 15px); }
+.cw-es__kod { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+.cw-es__znacky { margin: var(--sp-2) 0; font-size: var(--fs-sm); }
+.cw-es__znacky summary { cursor: pointer; color: var(--pri); font-weight: 600; }
+.cw-es__znacky dl { margin: 8px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+.cw-es__znacky dl > div { display: flex; gap: 8px; }
+.cw-es__znacky dt code { font-size: 12px; }
+.cw-es__znacky dd { margin: 0; color: var(--muted); font-size: var(--fs-xs); }
+.cw-es__oznamenie { margin-top: var(--sp-3); display: flex; flex-direction: column; gap: 6px; }
+.cw-es__kopia { display: flex; align-items: center; gap: 6px; background: var(--card2); border-radius: 8px; padding: 4px 4px 4px 10px; }
+.cw-es__kopia code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.cw-es__povolene { margin: var(--sp-3) 0; }
+.cw-es__zaskrtnutie { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: var(--fs-sm); cursor: pointer; }
+
+@media (max-width: 1100px) {
+  .cw-es__detail { grid-template-columns: 1fr; }
+  .cw-es__riadok { grid-template-columns: 100px minmax(0, 1fr) 110px 180px; }
+  .cw-es__riadok > :nth-child(3), .cw-es__riadok > :nth-child(4) { display: none; }
+}
+
+@media (max-width: 760px) {
+  .cw-es__staty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cw-es__dva-stlpce, .cw-es__riadok-poli { grid-template-columns: 1fr; }
+  .cw-es__hladat { width: 100%; }
+  .cw-es__riadok--hlava { display: none; }
+  .cw-es__riadok { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .cw-es__riadok > :nth-child(1) { order: 1; }
+  .cw-es__riadok > :nth-child(5) { order: 2; }
+  .cw-es__riadok > :nth-child(2) { order: 3; }
+  .cw-es__riadok > :nth-child(6) { order: 4; justify-content: flex-end; }
+  .cw-es__vlastnost-hlava { grid-template-columns: minmax(0, 1fr) auto; }
+  .cw-es__vlastnost-hlava > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .cw-es__hodnota { grid-template-columns: minmax(0, 1fr) 76px 64px 32px; }
+  .cw-es__znacky dl { grid-template-columns: 1fr; }
+  .cw-es__polozka { grid-template-columns: minmax(0, 1fr) auto; }
+  .cw-es__polozka > .cw-es__tlmene { grid-column: 1; grid-row: 2; }
+  .cw-es__udaje > div { grid-template-columns: 1fr; gap: 2px; }
+}

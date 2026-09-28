@@ -47,6 +47,8 @@ import Video from './Video';
 import Page from './Page';
 import Galeria from './Galeria';              // NOVÉ - FÁZA 7
 import GaleriaObrazok from './GaleriaObrazok'; // NOVÉ - FÁZA 7
+// E-shop - vzťahy sú definované priamo v súbore modelov
+import { EshopKategoria, EshopProdukt, EshopDorucenie, EshopPlatba, EshopObjednavka, EshopPolozka } from './Eshop';
 
 // ===== DEFINÍCIA VZŤAHOV MEDZI MODELMI =====
 
@@ -579,6 +581,12 @@ export default {
   Page,
   Galeria,           
   GaleriaObrazok,
+  EshopKategoria,
+  EshopProdukt,
+  EshopDorucenie,
+  EshopPlatba,
+  EshopObjednavka,
+  EshopPolozka,
 };
 
 // ===== HELPER FUNKCIE PRE VZŤAHY =====

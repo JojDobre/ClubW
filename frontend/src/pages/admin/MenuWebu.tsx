@@ -30,6 +30,7 @@ export const SEKCIE_WEBU: Array<{ url: string; nazov: string }> = [
   { url: '/videa', nazov: tr('Videá') },
   { url: '/dokumenty', nazov: tr('Dokumenty') },
   { url: '/sponzori', nazov: tr('Partneri') },
+  { url: '/obchod', nazov: tr('Fanshop') },
 ];
 
 /** Odporúčané menu pre prázdny web. */

@@ -35,6 +35,7 @@ export const NAZVY_MODULOV: Record<string, string> = {
   sponzori: tr('Sponzori'),
   dokumenty: tr('Dokumenty'),
   formulare: tr('Formuláre'),
+  eshop: tr('E-shop'),
   pouzivatelia: tr('Používatelia'),
   archiv: tr('Archív'),
   nastavenia: tr('Nastavenia'),

@@ -50,5 +50,32 @@ export { AnketaWeb } from '../components/AnketaWeb';
 export { KomentarePodClankom } from '../components/KomentarePodClankom';
 export { default as ZapasPriebeh } from '../components/ZapasPriebeh';
 
+// E-shop: košík, nastavenia obchodu, objednávka, rámec platobnej brány
+export {
+  useKosik,
+  useObchod,
+  cenaText,
+  cenaSVolbami,
+  hodnotaVypredana,
+  odosliObjednavku,
+  usePokladna,
+  useObjednavka,
+  PlatobnaBrana,
+  NAZVY_STAVOV_OBJEDNAVKY,
+} from './eshop';
+export type {
+  ProduktObchodu,
+  KategoriaObchodu,
+  VlastnostProduktu,
+  HodnotaVlastnosti,
+  SposobDorucenia,
+  SposobPlatby,
+  NastaveniaObchodu,
+  PolozkaKosika,
+  ObjednavkaZakaznika,
+  UdajeObjednavky,
+  UdajeZakaznika,
+} from './eshop';
+
 /** Verzia rozhrania šablón (zhodná s API_SABLON na serveri). */
 export const VERZIA_ROZHRANIA = 1;

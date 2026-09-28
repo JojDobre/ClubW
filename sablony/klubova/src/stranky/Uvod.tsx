@@ -8,7 +8,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
 import { SIETE, useSiete } from '../Rozlozenie';
 import { KartaHraca, KartaZapasu, MetaClanku, Obrazok, Partneri, embedVidea, useOknoVidea } from '../casti';
 import {
@@ -293,7 +293,46 @@ const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
 
 // ===== Fanshop =====
 
+/**
+ * Fanshop: so zapnutým obchodom odporúčané produkty (inak najnovšie)
+ * s odkazom do obchodu; bez obchodu tri produkty z nastavení šablóny.
+ */
 const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
+  const { nastavenia } = useNastavenia();
+  const zapnuty = Boolean(nastavenia.eshop?.zapnuty);
+  const odporucane = useApi<ProduktObchodu[]>(zapnuty ? '/eshop/produkty?odporucane=1&limit=3' : null);
+  const bezOdporucanych = zapnuty && !odporucane.nacitava && !odporucane.chyba && odporucane.data?.length === 0;
+  const najnovsie = useApi<ProduktObchodu[]>(bezOdporucanych ? '/eshop/produkty?limit=3' : null);
+  const zObchodu = (odporucane.data?.length ? odporucane.data : najnovsie.data) ?? [];
+
+  if (zapnuty) {
+    if (zObchodu.length === 0) return null;
+    const mena = nastavenia.eshop?.mena ?? 'EUR';
+    return (
+      <section className="kl-sekcia kl-fanshop" aria-labelledby="kl-fanshop-nadpis">
+        <div className="kl-kontajner">
+          <NadpisSekcie nadpis="Fanshop" odkaz="/obchod" id="kl-fanshop-nadpis" />
+          <div className="kl-mriezka-3 kl-pas-mobil">
+            {zObchodu.map((p) => (
+              <div key={p.id} className="kl-produkt">
+                <Link to={`/obchod/${p.slug}`} className="kl-produkt__odkaz" tabIndex={-1} aria-hidden="true">
+                  <Obrazok src={p.obrazok} className="kl-produkt__obrazok" alt={p.nazov} />
+                </Link>
+                <span className="kl-produkt__nazov">{p.nazov}</span>
+                <div className="kl-produkt__spodok">
+                  <span className="kl-produkt__cena">{cenaText(p.cena, mena)}</span>
+                  <Link to={`/obchod/${p.slug}`} className="kl-tlacidlo kl-tlacidlo--tmave" aria-label={`Kúpiť ${p.nazov}`}>
+                    Kúpiť
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const obchod = String(s.fanshop_odkaz || '').trim() || null;
   const produkty = [1, 2, 3]
     .map((i) => ({
