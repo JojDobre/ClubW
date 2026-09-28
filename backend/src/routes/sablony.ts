@@ -18,6 +18,7 @@ import {
   ChybaSablony,
   MAX_VELKOST_ZIP,
   ZAKLADNA_SABLONA,
+  PREDVOLENA_SABLONA,
   Sablona,
   hodnotyNastaveni,
   najdiSablonu,
@@ -78,9 +79,11 @@ const odpovedzChybou = (res: Response, chyba: unknown, kontext: string) => {
   res.status(500).json({ success: false, message: 'Chyba servera' });
 };
 
-/** Aktívna šablóna; ak zmizla alebo je poškodená, web ostane na základnej. */
+/** Aktívna šablóna; ak zmizla alebo je poškodená, web prejde na predvolenú, inak na základnú. */
 const aktivnaSablona = async (nastavenia: NastaveniaKlubu): Promise<Sablona | null> =>
-  (await najdiSablonu(nastavenia.aktivna_sablona)) ?? (await najdiSablonu(ZAKLADNA_SABLONA));
+  (await najdiSablonu(nastavenia.aktivna_sablona)) ??
+  (await najdiSablonu(PREDVOLENA_SABLONA)) ??
+  (await najdiSablonu(ZAKLADNA_SABLONA));
 
 /**
  * GET /api/sablony/aktivna

@@ -9,6 +9,10 @@ import Stadion from '../models/Stadion';
 import Sezona from '../models/Sezona';
 import Player from '../models/Player';
 import Staff from '../models/Staff';
+import Zapas from '../models/Zapas';
+import ZapasZostava from '../models/ZapasZostava';
+import ZapasStatistika from '../models/ZapasStatistika';
+import { fn, col } from 'sequelize';
 
 // ===== HELPER FUNCTIONS =====
 
@@ -253,6 +257,81 @@ export const getTeamPlayers = async (req: Request, res: Response): Promise<void>
       message: 'Chyba servera pri načítaní hráčov',
       debug: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
+  }
+};
+
+/**
+ * GET /api/teams/:id/players/stats - štatistiky hráčov tímu
+ *
+ * Pre karty hráčov na webe: počet odohraných zápasov (zo zostáv),
+ * góly, asistencie a karty (z udalostí zápasov). Voliteľne len
+ * v jednej súťaži (?liga_id=), inak zo všetkých zápasov.
+ */
+export const getTeamPlayerStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validation = validateTeamId(req.params.id);
+    if (!validation.valid) {
+      res.status(400).json({ success: false, message: validation.error });
+      return;
+    }
+    const ligaId = req.query.liga_id !== undefined ? Number(req.query.liga_id) : null;
+    if (ligaId !== null && (!Number.isInteger(ligaId) || ligaId <= 0)) {
+      res.status(400).json({ success: false, message: 'Neplatné ID ligy' });
+      return;
+    }
+
+    const hraci = await Player.findAll({ where: { tim_id: validation.id!, aktivity: true }, attributes: ['id'] });
+    const idHracov = hraci.map((h) => h.id);
+    if (idHracov.length === 0) {
+      res.json({ success: true, data: [] });
+      return;
+    }
+
+    const zapas = {
+      model: Zapas,
+      as: 'zapas',
+      attributes: [],
+      where: { aktivity: true, ...(ligaId ? { liga_id: ligaId } : {}) },
+      required: true,
+    };
+
+    // Odohrané zápasy: hráč bol v zostave ukončeného zápasu
+    const zostavy = (await ZapasZostava.findAll({
+      attributes: ['hrac_id', [fn('COUNT', fn('DISTINCT', col('ZapasZostava.zapas_id'))), 'zapasy']],
+      where: { hrac_id: idHracov },
+      include: [{ ...zapas, where: { ...zapas.where, status: 'ukonceny' } }],
+      group: ['ZapasZostava.hrac_id'],
+      raw: true,
+    })) as unknown as Array<{ hrac_id: number; zapasy: string }>;
+
+    const udalosti = (await ZapasStatistika.findAll({
+      attributes: ['hrac_id', 'typ', [fn('COUNT', col('ZapasStatistika.id')), 'pocet']],
+      where: { hrac_id: idHracov, aktivity: true, typ: ['gol', 'asistencia', 'zlta_karta', 'cervena_karta'] },
+      include: [zapas],
+      group: ['ZapasStatistika.hrac_id', 'ZapasStatistika.typ'],
+      raw: true,
+    })) as unknown as Array<{ hrac_id: number; typ: string; pocet: string }>;
+
+    const podlaHraca = new Map<number, { hrac_id: number; zapasy: number; goly: number; asistencie: number; zlte_karty: number; cervene_karty: number }>();
+    const zaznam = (id: number) => {
+      if (!podlaHraca.has(id)) podlaHraca.set(id, { hrac_id: id, zapasy: 0, goly: 0, asistencie: 0, zlte_karty: 0, cervene_karty: 0 });
+      return podlaHraca.get(id)!;
+    };
+    idHracov.forEach(zaznam);
+    // COUNT vracia pg driver ako reťazec
+    zostavy.forEach((r) => (zaznam(r.hrac_id).zapasy = Number(r.zapasy)));
+    const STLPCE: Record<string, 'goly' | 'asistencie' | 'zlte_karty' | 'cervene_karty'> = {
+      gol: 'goly',
+      asistencia: 'asistencie',
+      zlta_karta: 'zlte_karty',
+      cervena_karta: 'cervene_karty',
+    };
+    udalosti.forEach((r) => (zaznam(r.hrac_id)[STLPCE[r.typ]] = Number(r.pocet)));
+
+    res.json({ success: true, data: [...podlaHraca.values()] });
+  } catch (error) {
+    console.error('Chyba pri načítaní štatistík hráčov:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri načítaní štatistík hráčov' });
   }
 };
 

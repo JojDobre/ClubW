@@ -32,6 +32,9 @@ export const API_SABLON = 1;
 /** Šablóna, ktorá je vždy k dispozícii (verejný web, ako ho dodáva ClubW). */
 export const ZAKLADNA_SABLONA = 'zakladna';
 
+/** Predvolená šablóna webu (pre nové inštalácie a keď aktívna zmizne). */
+export const PREDVOLENA_SABLONA = 'klubova';
+
 export const VSTAVANE_DIR = path.resolve(process.env.SABLONY_VSTAVANE_DIR || path.join(process.cwd(), '..', 'sablony'));
 export const NAHRATE_DIR = path.resolve(process.env.SABLONY_DIR || path.join(process.cwd(), 'sablony'));
 
@@ -302,9 +305,10 @@ export const zoznamSablon = async (): Promise<PolozkaZoznamu[]> => {
     }
   }
 
-  // Základná vždy prvá, ostatné podľa názvu
-  return vysledok.sort((a, b) =>
-    a.slug === ZAKLADNA_SABLONA ? -1 : b.slug === ZAKLADNA_SABLONA ? 1 : (a.sablona?.nazov ?? a.slug).localeCompare(b.sablona?.nazov ?? b.slug, 'sk')
+  // Predvolená a základná vždy prvé, ostatné podľa názvu
+  const poradie = (slug: string) => (slug === PREDVOLENA_SABLONA ? 0 : slug === ZAKLADNA_SABLONA ? 1 : 2);
+  return vysledok.sort(
+    (a, b) => poradie(a.slug) - poradie(b.slug) || (a.sablona?.nazov ?? a.slug).localeCompare(b.sablona?.nazov ?? b.slug, 'sk')
   );
 };
 

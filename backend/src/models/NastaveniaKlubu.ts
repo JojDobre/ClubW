@@ -359,7 +359,7 @@ NastaveniaKlubu.init(
     aktivna_sablona: {
       type: DataTypes.STRING(60),
       allowNull: false,
-      defaultValue: 'zakladna',
+      defaultValue: 'klubova',
     },
     nastavenia_sablon: {
       type: DataTypes.JSONB,
