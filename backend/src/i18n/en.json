@@ -156,6 +156,7 @@
  "Chyba servera pri načítaní štadiónov": "Server error while loading stadiums",
  "Chyba servera pri načítaní štatistík": "Server error while loading statistics",
  "Chyba servera pri načítaní štatistík hráčov": "Server error while loading player statistics",
+ "Chyba servera pri načítaní štatistík hráča": "Server error while loading the player statistics",
  "Chyba servera pri obnove hesla": "Server error during password reset",
  "Chyba servera pri obnove položky": "Server error while restoring the item",
  "Chyba servera pri obnove tokenu": "Server error while refreshing the token",

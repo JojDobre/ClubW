@@ -10,26 +10,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 import { SIETE, useSiete } from '../Rozlozenie';
+import { KartaHraca, KartaZapasu, MetaClanku, Obrazok, Partneri, embedVidea, useOknoVidea } from '../casti';
 import {
-  Erb,
   Ikona,
   NadpisSekcie,
   NadpisStredovy,
   Odkaz,
-  cas,
-  datum,
-  datumKratky,
   dlzkaVidea,
   dnes,
-  hrameDoma,
-  logoStrany,
-  maVysledok,
-  nazovDomacich,
-  nazovHosti,
   obrazokUrl,
-  pozicia,
-  skryObrazok,
-  stavZapasu,
   useApi,
   useTitulok,
   type Clanok,
@@ -155,62 +144,6 @@ const Slider: React.FC<{ clanky: Clanok[]; stitok: string; nahradnaFotka: string
 
 // ===== Zápasy a výsledky =====
 
-const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky: string | null }> = ({ zapas: z, vstupenky }) => {
-  const { nastavenia } = useNastavenia();
-  const stav = stavZapasu(z);
-  const odohrany = stav === 'ukonceny' || (stav === 'prebieha' && maVysledok(z));
-  const skore = maVysledok(z) && stav !== 'naplanovany';
-  const doma = hrameDoma(z);
-  const STAV: Record<string, { text: string; trieda: string }> = {
-    ukonceny: { text: 'Odohraný', trieda: 'is-odohrany' },
-    prebieha: { text: 'Prebieha', trieda: 'is-zivy' },
-    odlozeny: { text: 'Odložený', trieda: '' },
-    zruseny: { text: 'Zrušený', trieda: '' },
-    naplanovany: { text: 'Nadchádzajúci', trieda: '' },
-  };
-  const stavText = STAV[stav] ?? STAV.naplanovany;
-
-  return (
-    <article className="kl-zapas">
-      <div className="kl-zapas__hlava">
-        <span className={`kl-zapas__tag${doma ? ' is-doma' : ''}`}>{doma ? 'Doma' : 'Vonku'}</span>
-        <span className="kl-zapas__datum">{datumKratky(z.datum_cas)}</span>
-        {z.miesto && <span className="kl-zapas__miesto">{z.miesto}</span>}
-        <span className={`kl-zapas__stav ${stavText.trieda}`}>{stavText.text}</span>
-      </div>
-      <div className="kl-zapas__timy">
-        <div className="kl-zapas__tim">
-          <Erb nazov={nazovDomacich(z)} logo={logoStrany(z, 'domaci', nastavenia.logo)} ton="tmavy" />
-          <span className="kl-zapas__nazov">{nazovDomacich(z)}</span>
-          {skore && <span className="kl-zapas__skore">{z.goly_domaci}</span>}
-        </div>
-        <div className="kl-zapas__tim">
-          <Erb nazov={nazovHosti(z)} logo={logoStrany(z, 'hostia', nastavenia.logo)} ton="akcent" />
-          <span className="kl-zapas__nazov">{nazovHosti(z)}</span>
-          {skore && <span className="kl-zapas__skore">{z.goly_hostia}</span>}
-        </div>
-        {!skore && <span className="kl-zapas__cas">{cas(z.datum_cas)}</span>}
-      </div>
-      <div className="kl-zapas__ciara" />
-      <div className="kl-zapas__akcie">
-        {z.video_url && (
-          <a href={z.video_url} target="_blank" rel="noopener noreferrer" className="kl-zapas__tlacidlo kl-zapas__tlacidlo--tmave">
-            Video
-          </a>
-        )}
-        {!odohrany && vstupenky && (
-          <Odkaz to={vstupenky} className="kl-zapas__tlacidlo">
-            Vstupenky
-          </Odkaz>
-        )}
-        <Link to={`/matches/${z.id}`} className={`kl-zapas__tlacidlo${!z.video_url && (odohrany || !vstupenky) ? ' kl-zapas__tlacidlo--tmave' : ''}`}>
-          Detail
-        </Link>
-      </div>
-    </article>
-  );
-};
-
 const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ timy, vstupenky }) => {
   const [timId, setTimId] = useState<number | null>(timy[0]?.id ?? null);
   const pas = useRef<HTMLDivElement>(null);
@@ -305,22 +238,6 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
 
 // ===== Články =====
 
-const Obrazok: React.FC<{ src?: string | null; className: string; alt?: string }> = ({ src, className, alt = '' }) => {
-  const url = obrazokUrl(src);
-  return (
-    <span className={`${className} kl-obrazok${url ? '' : ' kl-obrazok--prazdny'}`}>
-      {url && <img src={url} alt={alt} loading="lazy" onError={skryObrazok} />}
-    </span>
-  );
-};
-
-const MetaClanku: React.FC<{ clanok: Clanok }> = ({ clanok }) => (
-  <div className="kl-clanok__meta">
-    {clanok.kategoria && <span className="kl-clanok__kategoria">{clanok.kategoria.nazov}</span>}
-    <span className="kl-clanok__datum">{datum(clanok.publikovany_datum || clanok.vytvoreny)}</span>
-  </div>
-);
-
 const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
   const [hlavny, ...ostatne] = clanky;
   const bocne = ostatne.slice(0, 3);
@@ -414,6 +331,7 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
 // ===== Videá =====
 
 const Videa: React.FC<{ videa: Video[]; pozadie: string | null }> = ({ videa, pozadie }) => {
+  const { otvor, okno } = useOknoVidea();
   if (videa.length === 0) return null;
   const vlastne = obrazokUrl(pozadie);
   return (
@@ -428,7 +346,19 @@ const Videa: React.FC<{ videa: Video[]; pozadie: string | null }> = ({ videa, po
           {videa.map((v) => {
             const dlzka = dlzkaVidea(v.dlzka);
             return (
-              <a key={v.id} href={v.url} target="_blank" rel="noopener noreferrer" className="kl-video">
+              <a
+                key={v.id}
+                href={v.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="kl-video"
+                onClick={(e) => {
+                  // Video z YouTube / Vimeo sa prehrá v okne priamo na stránke
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || !embedVidea(v)) return;
+                  e.preventDefault();
+                  otvor(v);
+                }}
+              >
                 <span className="kl-video__nahlad">
                   <Obrazok src={v.nahlad_url || v.nahlad} className="kl-video__obrazok" />
                   <span className="kl-video__prechod" aria-hidden="true" />
@@ -443,6 +373,7 @@ const Videa: React.FC<{ videa: Video[]; pozadie: string | null }> = ({ videa, po
           })}
         </div>
       </div>
+      {okno}
     </section>
   );
 };
@@ -472,40 +403,9 @@ const Hraci: React.FC<{ tim: Tim; nadpis: string }> = ({ tim, nadpis }) => {
       <div className="kl-kontajner">
         <NadpisSekcie nadpis={nadpis} odkaz={`/teams/${tim.id}`} id="kl-hraci-nadpis" />
         <div className="kl-mriezka-3 kl-pas-mobil">
-          {vybrani.map((h) => {
-            const st = podlaId.get(h.id);
-            const fotka = obrazokUrl(h.fotka);
-            return (
-              <Link key={h.id} to={`/players/${h.id}`} className="kl-hrac">
-                {fotka ? <img src={fotka} alt="" loading="lazy" className="kl-hrac__fotka" onError={skryObrazok} /> : <span className="kl-hrac__silueta" aria-hidden="true" />}
-                <span className="kl-hrac__prechod" aria-hidden="true" />
-                {h.narodnost && <span className="kl-hrac__narodnost">{h.narodnost}</span>}
-                <div className="kl-hrac__spodok">
-                  <div className="kl-hrac__meno">
-                    {h.cislo_dresu !== null && <span className="kl-hrac__cislo">{h.cislo_dresu}</span>}
-                    <div>
-                      <span className="kl-hrac__krstne">{h.meno}</span>
-                      <span className="kl-hrac__priezvisko">{h.priezvisko}</span>
-                    </div>
-                  </div>
-                  <span className="kl-hrac__pozicia">{pozicia(h.pozicia) || ' '}</span>
-                  <div className="kl-hrac__staty">
-                    {[
-                      [st?.zapasy ?? 0, 'Zápasy'],
-                      [st?.goly ?? 0, 'Góly'],
-                      [st?.asistencie ?? 0, 'Asist.'],
-                      [st?.zlte_karty ?? 0, 'Karty'],
-                    ].map(([hodnota, nazov]) => (
-                      <div key={nazov}>
-                        <strong>{hodnota}</strong>
-                        <span>{nazov}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {vybrani.map((h) => (
+            <KartaHraca key={h.id} hrac={h} statistika={podlaId.get(h.id)} karty />
+          ))}
         </div>
       </div>
     </section>
@@ -633,54 +533,6 @@ const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null>
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-};
-
-// ===== Partneri =====
-
-const HLAVNE_UROVNE = ['generalny', 'hlavny'];
-
-const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ partner: p, velke = false }) => {
-  const logo = obrazokUrl(p.logo);
-  const obsah = logo ? <img src={logo} alt={p.nazov} loading="lazy" onError={skryObrazok} /> : <span>{p.nazov}</span>;
-  const trieda = `kl-partner${velke ? ' kl-partner--velky' : ''}`;
-  return p.web_url ? (
-    <a href={p.web_url} target="_blank" rel="noopener noreferrer" className={trieda} title={p.nazov}>
-      {obsah}
-    </a>
-  ) : (
-    <span className={trieda} title={p.nazov}>
-      {obsah}
-    </span>
-  );
-};
-
-const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
-  if (partneri.length === 0) return null;
-  const hlavni = partneri.filter((p) => p.uroven && HLAVNE_UROVNE.includes(p.uroven));
-  const prvi = (hlavni.length > 0 ? hlavni : partneri).slice(0, 4);
-  const ostatni = partneri.filter((p) => !prvi.includes(p)).slice(0, 6);
-  return (
-    <section className="kl-sekcia kl-partneri" aria-label="Partneri">
-      <div className="kl-kontajner">
-        <NadpisStredovy nadpis="Partneri" />
-        <div className="kl-partneri__rad kl-partneri__rad--hlavny">
-          {prvi.map((p) => (
-            <LogoPartnera key={p.id} partner={p} velke />
-          ))}
-        </div>
-        {ostatni.length > 0 && (
-          <div className="kl-partneri__rad">
-            {ostatni.map((p) => (
-              <LogoPartnera key={p.id} partner={p} />
-            ))}
-          </div>
-        )}
-        <Link to="/sponzori" className="kl-partneri__vsetci">
-          Všetci partneri
-        </Link>
       </div>
     </section>
   );

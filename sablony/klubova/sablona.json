@@ -1,9 +1,9 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.0.0",
+  "verzia": "1.1.0",
   "autor": "ClubW",
-  "popis": "Výrazná klubová šablóna: celostránkový slider najnovších článkov, zápasy a výsledky podľa tímov, správy, fanshop, videá, hráči so štatistikami, úspechy, sociálne siete a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
+  "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
   "nahlad": "nahlad.svg",
   "styl": "styl.css",
@@ -238,7 +238,7 @@
     {
       "kluc": "ukazat_partnerov",
       "typ": "prepinac",
-      "menovka": "Partneri na úvodnej stránke",
+      "menovka": "Partneri na spodku stránok",
       "predvolene": true
     },
     {
