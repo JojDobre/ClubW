@@ -19,6 +19,7 @@ import {
   type PolozkaMenu,
 } from '@clubw/jadro';
 import { Ikona, Odkaz } from './spolocne';
+import { PartneriStranky } from './casti';
 
 interface NastaveniaRozlozenia extends Record<string, string | number | boolean | null> {
   tlacidlo_text: string | null;
@@ -70,6 +71,8 @@ export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
       <Cast nazov="Hlavicka" />
       <main id="kl-obsah" className="kl-obsah">
         {children}
+        {/* Partneri na spodku každej podstránky (úvod ich má vo vlastnom poradí sekcií) */}
+        {!jeUvod && !pathname.startsWith('/sponzori') && <PartneriStranky />}
       </main>
       <Cast nazov="Paticka" />
       <SpodnaNavigacia />

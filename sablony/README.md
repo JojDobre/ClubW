@@ -202,30 +202,40 @@ Zdrojové súbory sú v `moderna/src/` (`spolocne.tsx` - karty, tabuľka, formá
 
 ## Šablóna Klubová (predvolená)
 
-Podľa návrhu z Claude Design. Nové inštalácie ju majú aktívnu a weby, ktoré ostali
-na pôvodnej základnej šablóne, sa na ňu prepnú migráciou. Zatiaľ nahrádza hlavičku,
-pätičku, mobilnú navigáciu a úvodnú stránku; ostatné stránky preberá zo základnej
-šablóny (vykreslia sa v hlavičke a pätičke Klubovej).
+Podľa návrhov z Claude Design. Nové inštalácie ju majú aktívnu a weby, ktoré ostali
+na pôvodnej základnej šablóne, sa na ňu prepnú migráciou. Nahrádza všetky verejné
+stránky webu.
 
-- **Desktop** (1:1 s návrhom) - priehľadná hlavička nad celostránkovým sliderom
-  článkov, rozbaľovacie menu cez celú šírku, Zápasy a výsledky s prepínaním tímov,
-  najnovšie články, fanshop, videá na červenom vzore, hráči so štatistikami, úspechy,
-  sociálne siete na tmavom vzore, odkaz klubu a partneri.
-- **Tablet** - menu v paneli, mriežky v dvoch stĺpcoch.
+- **Podľa návrhov 1:1** - úvod, Novinky (`/clanky`), Videá (`/videa`), Fotogaléria
+  (`/galleries`), Súpiska (`/teams`, `/teams/:id`) a Profil hráča (`/players/:id`).
+- **Dogenerované v rovnakom štýle** - detail článku, obsahová stránka, detail galérie
+  s prehliadačom fotiek, zápasy a detail zápasu (výsledok, strelci, priebeh, zostavy),
+  súťaže a detail súťaže (tabuľka, zápasy, strelci, nahrávači), kalendár, turnaje,
+  dokumenty, partneri, formulár, štatistiky, profil člena realizačného tímu a 404.
+  Všetky majú tmavú hlavičku s červeným štítkom, filtre ako pilulky, karty a tabuľky
+  z návrhov a na spodku partnerov.
+- **Desktop** - priehľadná hlavička nad sliderom (na podstránkach tmavá), rozbaľovacie
+  menu cez celú šírku.
+- **Tablet** - menu v paneli, mriežky v dvoch až troch stĺpcoch.
 - **Mobil** - ako klubová aplikácia: horná lišta s logom, spodné záložky (Domov,
-  Správy, Zápasy, Tím, Menu), karty posúvateľné prstom, slider s potiahnutím.
-- **Dáta** - slider berie zvýraznené články (inak najnovšie), zápasy podľa tímov,
-  hráčov so štatistikami z `GET /api/teams/:id/players/stats` (zápasy zo zostáv,
-  góly, asistencie, karty), sociálne siete z Nastavení klubu, partnerov podľa úrovne.
+  Správy, Zápasy, Tím, Menu), zaoblené hlavičky obrazoviek, filtre ako posúvateľné
+  čipy, novinky ako zoznam, karty posúvateľné prstom, kalendár ako zoznam dní.
+- **Dáta** - štatistiky hráčov tímu z `GET /api/teams/:id/players/stats`, tabuľka sezóny
+  v profile hráča z `GET /api/players/:id/stats` (zápasy, minúty, góly, asistencie
+  a karty po súťažiach), filtre fotogalérie z `GET /api/galleries?typ=...&pocty=1`
+  (zápasy, tímy, články, klub), kategórie videí z poľa Kategória pri videu. Videá
+  z YouTube (bez cookies) a Vimeo sa prehrajú v okne priamo na stránke.
 - **Nastavenia** (Šablóny → Klubová → Prispôsobiť) - farba zvýraznenia a tmavá farba,
   tlačidlo v hlavičke, texty a fotka úvodu, počet tímov v zápasoch, odkaz na vstupenky,
   tri produkty fanshopu, pozadie videí, tím hráčov, úspechy (riadok = „počet názov“),
-  počty sledujúcich, tri karty odkazu klubu a text pätičky. Sekcie bez obsahu sa neukážu.
+  počty sledujúcich, tri karty odkazu klubu, partneri na stránkach a text pätičky.
+  Sekcie bez obsahu sa neukážu.
 - **Písma** Poppins a Inter sú pribalené v `klubova/pisma` (bez Google Fonts).
 
 Zdrojové súbory: `klubova/src/Rozlozenie.tsx` (hlavička, menu, pätička, záložky),
-`klubova/src/stranky/Uvod.tsx`, `klubova/src/spolocne.tsx`; štýl `klubova/styl.css`
-(triedy `kl-`, tokeny na začiatku súboru).
+`klubova/src/casti.tsx` (hlavička podstránky, filtre, karty, partneri, tabuľka,
+prehrávač videa), `klubova/src/spolocne.tsx` (dáta, typy, formáty, ikony) a stránky
+v `klubova/src/stranky/`; štýl `klubova/styl.css` (triedy `kl-`, tokeny na začiatku súboru).
 
 ## Bezpečnosť
 

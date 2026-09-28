@@ -5,6 +5,7 @@ import { Router } from 'express';
 import {
   getPlayers,
   getPlayerById,
+  getPlayerStats,
   createPlayer,
   updatePlayer,
   deletePlayer
@@ -37,6 +38,13 @@ router.get('/', optionalAuth, getPlayers);
  * @example GET /api/players/1?include_team=true
  */
 router.get('/:id', optionalAuth, getPlayerById);
+
+/**
+ * @route   GET /api/players/:id/stats
+ * @desc    Štatistiky hráča podľa súťaží (zápasy, minúty, góly, asistencie, karty)
+ * @access  Verejné
+ */
+router.get('/:id/stats', getPlayerStats);
 
 // ===== ADMIN ROUTES (vyžadujú autentifikáciu) =====
 

@@ -8,6 +8,10 @@ import Player from '../models/Player';
 import Team from '../models/Team';
 import Sezona from '../models/Sezona';
 import SupiskaSezony from '../models/SupiskaSezony';
+import Liga from '../models/Liga';
+import Zapas from '../models/Zapas';
+import ZapasZostava from '../models/ZapasZostava';
+import ZapasStatistika from '../models/ZapasStatistika';
 // Filtrovanie osobných údajov maloletých pre verejné rozhranie
 import { filtrujZoznamHracov, filtrujJednehoHraca } from '../utils/gdprFilter';
 
@@ -255,6 +259,99 @@ export const getPlayerById = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+
+// GET /api/players/:id/stats - Štatistiky hráča rozdelené podľa súťaží
+// (odohrané zápasy, minúty, góly, asistencie, karty). Zápasy mimo súťaží
+// v systéme sa zoskupia podľa názvu súťaže zadaného pri zápase.
+export const getPlayerStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validation = validatePlayerId(req.params.id);
+    if (!validation.valid) {
+      res.status(400).json({ success: false, message: validation.error });
+      return;
+    }
+    const hracId = validation.id!;
+    const hrac = await Player.findOne({ where: { id: hracId, aktivity: true }, attributes: ['id'] });
+    if (!hrac) {
+      res.status(404).json({ success: false, message: 'Hráč nebol nájdený' });
+      return;
+    }
+
+    const zapas = { model: Zapas, as: 'zapas', attributes: ['id', 'liga_id', 'liga_nazov'], where: { aktivity: true }, required: true };
+
+    // Odohrané zápasy: hráč bol v zostave ukončeného zápasu
+    const zostavy = (await ZapasZostava.findAll({
+      attributes: ['zapas_id', 'odohrane_minuty'],
+      where: { hrac_id: hracId },
+      include: [{ ...zapas, where: { ...zapas.where, status: 'ukonceny' } }],
+    })) as any[];
+
+    const udalosti = (await ZapasStatistika.findAll({
+      attributes: ['typ'],
+      where: { hrac_id: hracId, aktivity: true, typ: ['gol', 'asistencia', 'zlta_karta', 'cervena_karta'] },
+      include: [zapas],
+    })) as any[];
+
+    type Riadok = {
+      liga_id: number | null;
+      liga_nazov: string | null;
+      zapasy: number;
+      minuty: number;
+      goly: number;
+      asistencie: number;
+      zlte_karty: number;
+      cervene_karty: number;
+      videne: Set<number>;
+    };
+    const riadky = new Map<string, Riadok>();
+    const riadok = (z: any) => {
+      const ligaId: number | null = z?.liga_id ?? null;
+      const nazov: string | null = ligaId ? null : String(z?.liga_nazov || '').trim() || null;
+      const kluc = ligaId ? `l${ligaId}` : `n${(nazov || '').toLowerCase()}`;
+      if (!riadky.has(kluc)) {
+        riadky.set(kluc, { liga_id: ligaId, liga_nazov: nazov, zapasy: 0, minuty: 0, goly: 0, asistencie: 0, zlte_karty: 0, cervene_karty: 0, videne: new Set() });
+      }
+      return riadky.get(kluc)!;
+    };
+    for (const z of zostavy) {
+      const r = riadok(z.zapas);
+      if (r.videne.has(z.zapas_id)) continue;
+      r.videne.add(z.zapas_id);
+      r.zapasy += 1;
+      r.minuty += Number(z.odohrane_minuty) || 0;
+    }
+    const STLPCE: Record<string, 'goly' | 'asistencie' | 'zlte_karty' | 'cervene_karty'> = {
+      gol: 'goly',
+      asistencia: 'asistencie',
+      zlta_karta: 'zlte_karty',
+      cervena_karta: 'cervene_karty',
+    };
+    for (const u of udalosti) riadok(u.zapas)[STLPCE[u.typ]] += 1;
+
+    const idLig = [...new Set([...riadky.values()].map((r) => r.liga_id).filter((id): id is number => id !== null))];
+    const ligy = idLig.length ? await Liga.findAll({ where: { id: idLig }, attributes: ['id', 'nazov', 'sezona', 'typ', 'poradie'] }) : [];
+    const ligaPodlaId = new Map(ligy.map((l) => [l.id, l]));
+
+    const data = [...riadky.values()]
+      .map(({ videne: _videne, ...r }) => {
+        const liga = r.liga_id !== null ? ligaPodlaId.get(r.liga_id) : null;
+        return {
+          ...r,
+          liga_nazov: liga?.nazov ?? r.liga_nazov ?? 'Ostatné zápasy',
+          sezona: liga?.sezona ?? null,
+          typ: liga?.typ ?? null,
+          poradie: liga?.poradie ?? 999,
+        };
+      })
+      .sort((a, b) => (b.sezona || '').localeCompare(a.sezona || '') || a.poradie - b.poradie || b.zapasy - a.zapasy)
+      .map(({ poradie: _poradie, ...r }) => r);
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Chyba pri načítaní štatistík hráča:', error);
+    res.status(500).json({ success: false, message: 'Chyba servera pri načítaní štatistík hráča' });
+  }
+};
 
 /**
  * Overí dátumy členstva v klube.

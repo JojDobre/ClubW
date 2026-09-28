@@ -53,6 +53,9 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
       if (!isNaN(objectIdNum)) {
         whereClause[`${typPriradenia}_id`] = objectIdNum;
       }
+    } else if (typPriradenia) {
+      // Typ bez ID: všetky galérie priradené k zápasom / tímom / článkom
+      whereClause[`${typPriradenia}_id`] = { [Op.ne]: null };
     }
 
     // Vyhľadávanie v názve
@@ -74,7 +77,9 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
           attributes: ['id', 'cesta_suboru', 'nahladovy_maly', 'je_nahladovy'],
           limit: 1, // Len náhľadový obrázok
           order: [['je_nahladovy', 'DESC'], ['poradie', 'ASC']]
-        }
+        },
+        // Názov tímu - web ho ukazuje ako štítok galérie
+        { model: Team, as: 'tim', attributes: ['id', 'nazov'], required: false }
       ],
       order: [['vytvoreny', 'DESC']],
       limit: limitNum,
@@ -99,14 +104,30 @@ export const getPublicGalleries = async (req: Request, res: Response) => {
       return {
         ...galeriaJson,
         nahladovy_obrazok: nahladovyObrazok,
-        pocet_obrazkov: galeria.pocet_obrazkov
+        pocet_obrazkov: galeria.pocet_obrazkov,
+        tim: galeria.tim ? { id: (galeria.tim as any).id, nazov: (galeria.tim as any).nazov } : null
       };
     });
+
+    // ?pocty=1: koľko verejných galérií je pri zápasoch, tímoch, článkoch
+    // a bez priradenia (web podľa toho ukáže filtre)
+    let pocty: Record<string, number> | undefined;
+    if (req.query.pocty === '1') {
+      const verejne = { aktivity: true, zobrazit_na_webe: true };
+      const [zapas, tim, clanok, volna] = await Promise.all([
+        Galeria.count({ where: { ...verejne, zapas_id: { [Op.ne]: null } } }),
+        Galeria.count({ where: { ...verejne, tim_id: { [Op.ne]: null } } }),
+        Galeria.count({ where: { ...verejne, clanok_id: { [Op.ne]: null } } }),
+        Galeria.count({ where: { ...verejne, tim_id: null, clanok_id: null, zapas_id: null } }),
+      ]);
+      pocty = { zapas, tim, clanok, volna };
+    }
 
     res.json({
       success: true,
       data: formattedGalleries,
       pagination: zostavStrankovanie(count, limitNum, offset),
+      ...(pocty ? { pocty } : {}),
       message: `Načítaných ${galerie.length} galérií`
     });
 
