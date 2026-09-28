@@ -1,6 +1,6 @@
 // Umiestnenie: sablony/klubova/src/index.tsx
 // Šablóna Klubová - hlavička, pätička, mobilná navigácia a všetky
-// verejné stránky webu. Úvod, Novinky, Videá, Fotogaléria, Súpiska
+// verejné stránky webu vrátane fanshopu (obchod, košík, pokladňa). Úvod, Novinky, Videá, Fotogaléria, Súpiska
 // a Profil hráča sú podľa návrhov z Claude Design, ostatné stránky
 // z nich preberajú hlavičku, filtre, karty a tabuľky.
 //
@@ -29,6 +29,7 @@ import Sponzori from './stranky/Sponzori';
 import Formular from './stranky/Formular';
 import Statistiky from './stranky/Statistiky';
 import Nenajdena from './stranky/Nenajdena';
+import { Obchod, Produkt, Kosik, Pokladna, Objednavka } from './stranky/Obchod';
 
 registrujSablonu({
   casti: {
@@ -57,6 +58,11 @@ registrujSablonu({
     Sponzori,
     Formular,
     Statistiky,
+    Obchod,
+    Produkt,
+    Kosik,
+    Pokladna,
+    Objednavka,
     Nenajdena,
   },
 });

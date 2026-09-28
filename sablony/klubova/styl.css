@@ -1673,6 +1673,336 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-bilancia + .kl-sekcia--suvisiace { padding-top: 40px; }
 }
 
+/* ===================================================================
+   Fanshop - obchod, produkt, košík, pokladňa, objednávka
+   =================================================================== */
+
+/* Košík v hlavičke */
+.kl-hlavicka__kosik {
+  position: relative; flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+  color: #ffffff; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.kl-hlavicka__kosik:hover, .kl-hlavicka__kosik.is-aktivny { background: var(--kl-akcent); border-color: var(--kl-akcent); }
+.kl-hlavicka__pocet {
+  position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--kl-tmava);
+  background: var(--kl-akcent); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 11px;
+}
+.kl-hlavicka__kosik:hover .kl-hlavicka__pocet { background: #ffffff; color: var(--kl-akcent); }
+
+/* Fanshop na úvode */
+.kl-produkt__odkaz { display: block; }
+.kl-produkt__nazov { display: block; color: var(--kl-tmava-65); font-family: var(--kl-pismo); font-weight: 600; font-size: 15px; margin: -6px 0 10px; }
+
+/* Cena */
+.kl-cena { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.kl-cena strong { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; }
+.kl-cena s { color: var(--kl-tmava-40); font-family: var(--kl-pismo); font-weight: 500; font-size: 14px; }
+.kl-cena--velka { margin: 18px 0 0; }
+.kl-cena--velka strong { font-size: clamp(28px, 3vw, 36px); color: var(--kl-akcent); }
+.kl-cena--velka s { font-size: 18px; }
+
+/* Mriežka produktov */
+.kl-obchod__mriezka { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px 24px; }
+.kl-tovar { display: flex; flex-direction: column; min-width: 0; color: var(--kl-tmava); text-decoration: none; }
+.kl-tovar__foto { position: relative; display: block; margin-bottom: 16px; }
+.kl-tovar__obrazok { width: 100%; aspect-ratio: 1 / 1; border-radius: 20px; background: var(--kl-tmava-4); }
+.kl-tovar__obrazok img { object-fit: contain; padding: 8%; transition: transform 0.4s ease; }
+.kl-tovar:hover .kl-tovar__obrazok img { transform: scale(1.05); }
+.kl-tovar.is-vypredany .kl-tovar__obrazok img { opacity: 0.45; filter: grayscale(1); }
+.kl-tovar__stitok {
+  position: absolute; top: 14px; left: 14px; padding: 6px 12px; border-radius: 999px;
+  background: var(--kl-akcent); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
+}
+.kl-tovar__stitok--tmavy { background: var(--kl-tmava); }
+.kl-tovar__text { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.kl-tovar__text small { color: var(--kl-akcent); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; }
+.kl-tovar__text strong { font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; line-height: 1.3; text-wrap: pretty; transition: color 0.2s ease; }
+.kl-tovar:hover .kl-tovar__text strong { color: var(--kl-akcent); }
+.kl-tovar__spodok { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.kl-tovar__sipka {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--kl-tmava-12); color: var(--kl-tmava); transition: all 0.2s ease;
+}
+.kl-tovar:hover .kl-tovar__sipka { background: var(--kl-akcent); border-color: var(--kl-akcent); color: #ffffff; }
+
+/* Detail produktu */
+.kl-sekcia--produkt { padding-top: 32px; padding-bottom: 80px; }
+.kl-drobceky { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; color: var(--kl-tmava-40); }
+.kl-drobceky a { color: var(--kl-tmava-55); text-decoration: none; font-family: var(--kl-nadpisy); font-weight: 600; font-size: 13px; letter-spacing: 0.4px; text-transform: uppercase; }
+.kl-drobceky a:hover { color: var(--kl-akcent); }
+.kl-produkt-detail { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 80px); align-items: start; }
+.kl-galeria-produktu { position: sticky; top: calc(var(--kl-vyska-hlavicky) + 24px); }
+.kl-galeria-produktu__obrazok { width: 100%; aspect-ratio: 1 / 1; border-radius: 28px; background: var(--kl-tmava-4); }
+.kl-galeria-produktu__obrazok img { object-fit: contain; padding: 6%; }
+.kl-galeria-produktu__nahlady { display: flex; gap: 12px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; }
+.kl-galeria-produktu__nahlady button {
+  flex: 0 0 84px; height: 84px; padding: 6px; border-radius: 16px; cursor: pointer;
+  background: var(--kl-tmava-4); border: 2px solid transparent; transition: border-color 0.2s ease;
+}
+.kl-galeria-produktu__nahlady button.is-aktivny { border-color: var(--kl-akcent); }
+.kl-galeria-produktu__nahlady img { width: 100%; height: 100%; object-fit: contain; }
+.kl-produkt-info h1 { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: clamp(30px, 3.6vw, 44px); line-height: 1.1; text-wrap: pretty; }
+.kl-produkt-info .kl-hlava__stitok { margin-bottom: 12px; }
+.kl-produkt-info__popis { margin-top: 18px !important; color: var(--kl-tmava-65); font-size: 16px; line-height: 1.65; }
+.kl-vlastnost { margin-top: 28px; }
+.kl-vlastnost__nazov { display: block; margin-bottom: 12px; color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px; letter-spacing: 0.8px; text-transform: uppercase; }
+.kl-vlastnost__nazov small { color: var(--kl-tmava-45); font-family: var(--kl-pismo); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.kl-vlastnost__hodnoty { display: flex; flex-wrap: wrap; gap: 10px; }
+.kl-volba {
+  min-width: 56px; padding: 12px 18px; border-radius: 12px; cursor: pointer; background: #ffffff;
+  border: 1.5px solid var(--kl-tmava-12); color: var(--kl-tmava);
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px; transition: all 0.15s ease;
+}
+.kl-volba small { color: var(--kl-tmava-50); font-family: var(--kl-pismo); font-weight: 600; font-size: 11px; }
+.kl-volba:hover:not(:disabled) { border-color: var(--kl-tmava); }
+.kl-volba.is-zvolena { background: var(--kl-tmava); border-color: var(--kl-tmava); color: #ffffff; }
+.kl-volba.is-zvolena small { color: rgba(255, 255, 255, 0.7); }
+.kl-volba:disabled { cursor: not-allowed; opacity: 0.35; text-decoration: line-through; }
+.kl-vlastnost.is-chyba .kl-volba, .kl-vlastnost.is-chyba .kl-pole__vstup { border-color: var(--kl-akcent); }
+.kl-vlastnost__chyba { display: block; margin-top: 8px; color: var(--kl-akcent); font-size: 13px; font-weight: 600; }
+.kl-produkt-info__kupit { display: flex; gap: 12px; margin-top: 32px; }
+.kl-produkt-info__tlacidlo { flex: 1; padding: 16px 24px; border-radius: 14px; font-size: 15px; }
+.kl-produkt-info .kl-tlacidlo--akcent:hover { background: var(--kl-tmava); color: #ffffff; }
+.kl-produkt-info__vypredane { margin-top: 28px !important; padding: 16px 20px; border-radius: 14px; background: var(--kl-tmava-4); font-weight: 600; }
+.kl-pridane {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px;
+  padding: 12px 12px 12px 18px; border-radius: 14px; background: color-mix(in srgb, var(--kl-uspech) 10%, transparent); color: var(--kl-uspech);
+  font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px;
+}
+.kl-pridane span { display: inline-flex; align-items: center; gap: 8px; }
+.kl-pridane .kl-tlacidlo { padding: 10px 18px; font-size: 13px; }
+.kl-produkt-info__vyhody { list-style: none; margin: 28px 0 0; padding: 20px 0 0; border-top: 1px solid var(--kl-tmava-8); display: flex; flex-direction: column; gap: 12px; }
+.kl-produkt-info__vyhody li { display: flex; align-items: center; gap: 12px; color: var(--kl-tmava-65); font-size: 14px; font-weight: 500; }
+.kl-produkt-info__vyhody svg { color: var(--kl-akcent); flex-shrink: 0; }
+.kl-produkt-popis { margin-top: 72px; max-width: 820px; }
+.kl-produkt-popis h2 { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 24px; text-transform: uppercase; margin-bottom: 18px; }
+.kl-lista-kupit { display: none; }
+
+/* Počítadlo kusov */
+.kl-pocitadlo {
+  display: inline-flex; align-items: center; flex-shrink: 0; border-radius: 14px; border: 1.5px solid var(--kl-tmava-12); background: #ffffff;
+}
+.kl-pocitadlo button {
+  width: 46px; height: 52px; border: 0; background: none; cursor: pointer; color: var(--kl-tmava); font-size: 20px; font-weight: 600;
+}
+.kl-pocitadlo button:disabled { color: var(--kl-tmava-40); cursor: default; }
+.kl-pocitadlo span { min-width: 28px; text-align: center; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 16px; }
+.kl-pocitadlo--male { border-radius: 999px; }
+.kl-pocitadlo--male button { width: 36px; height: 38px; font-size: 17px; }
+.kl-pocitadlo--male span { min-width: 20px; font-size: 14px; }
+
+/* Formulárové polia */
+.kl-pole { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; min-width: 0; }
+.kl-pole__menovka { color: var(--kl-tmava-65); font-family: var(--kl-nadpisy); font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+.kl-pole__menovka em { color: var(--kl-akcent); font-style: normal; }
+.kl-pole__vstup {
+  width: 100%; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--kl-tmava-12); background: #ffffff;
+  color: var(--kl-tmava); font-family: var(--kl-pismo); font-size: 16px; outline: none; transition: border-color 0.2s ease; resize: vertical;
+}
+.kl-pole__vstup:focus { border-color: var(--kl-tmava); }
+.kl-pole__dve { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.kl-pole__dve--psc { grid-template-columns: 160px 1fr; }
+
+/* Košík a pokladňa: obsah + súhrn */
+.kl-pokladna { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: clamp(24px, 4vw, 56px); align-items: start; }
+.kl-kosik { list-style: none; margin: 0 0 24px; padding: 0; border: 1px solid var(--kl-tmava-10); border-radius: 24px; overflow: hidden; }
+.kl-kosik__polozka { display: flex; align-items: center; gap: 18px; padding: 18px 20px; }
+.kl-kosik__polozka + .kl-kosik__polozka { border-top: 1px solid var(--kl-tmava-8); }
+.kl-kosik__foto { flex-shrink: 0; display: block; }
+.kl-kosik__obrazok { width: 96px; height: 96px; border-radius: 16px; background: var(--kl-tmava-4); }
+.kl-kosik__obrazok img { object-fit: contain; padding: 8%; }
+.kl-kosik__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.kl-kosik__text a { color: var(--kl-tmava); text-decoration: none; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 17px; margin-bottom: 3px; }
+.kl-kosik__text a:hover { color: var(--kl-akcent); }
+.kl-kosik__text small { color: var(--kl-tmava-55); font-size: 13px; font-weight: 500; }
+.kl-kosik__spolu { min-width: 92px; text-align: right; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 17px; }
+.kl-kosik__odstranit {
+  width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; background: none; color: var(--kl-tmava-40); transition: all 0.2s ease;
+}
+.kl-kosik__odstranit:hover { background: var(--kl-akcent-12); color: var(--kl-akcent); }
+.kl-spat--tmava { color: var(--kl-tmava-55); margin: 0; }
+.kl-spat--tmava:hover { color: var(--kl-akcent); }
+
+.kl-suhrn {
+  position: sticky; top: calc(var(--kl-vyska-hlavicky) + 24px);
+  padding: 28px; border-radius: 24px; background: var(--kl-tmava); color: #ffffff;
+}
+.kl-suhrn h2 { color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; }
+.kl-suhrn__riadok { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; color: rgba(255, 255, 255, 0.75); font-size: 15px; font-weight: 500; }
+.kl-suhrn__riadok span:last-child { color: #ffffff; font-weight: 600; text-align: right; }
+.kl-suhrn__riadok--tlmeny span:last-child { color: rgba(255, 255, 255, 0.5); font-weight: 500; }
+.kl-suhrn__spolu { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 12px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.kl-suhrn__spolu span { font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 0.6px; }
+.kl-suhrn__spolu strong { font-family: var(--kl-nadpisy); font-weight: 800; font-size: 30px; }
+.kl-suhrn__tlacidlo { width: 100%; margin-top: 22px; padding: 17px 20px; border-radius: 14px; font-size: 15px; }
+.kl-suhrn .kl-tlacidlo--akcent:hover { background: #ffffff; color: var(--kl-tmava); }
+.kl-suhrn .kl-tlacidlo--tmave { background: rgba(255, 255, 255, 0.1); }
+.kl-suhrn .kl-tlacidlo--tmave:hover { background: var(--kl-akcent); }
+.kl-suhrn__tlacidlo:disabled { opacity: 0.5; cursor: not-allowed; }
+.kl-suhrn__tip { margin: 10px 0 0 !important; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.75); font-size: 14px; line-height: 1.5; }
+.kl-suhrn__tip strong { color: #ffffff; }
+.kl-suhrn__chyba { margin-top: 14px !important; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--kl-akcent) 18%, transparent); color: #ffffff; font-size: 14px; font-weight: 600; }
+.kl-suhrn__pozn { margin-top: 12px !important; color: rgba(255, 255, 255, 0.45); font-size: 13px; text-align: center; }
+.kl-suhrn__polozky { list-style: none; margin: 0 0 12px; padding: 0 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); display: flex; flex-direction: column; gap: 14px; }
+.kl-suhrn__polozky li { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.kl-suhrn__polozky li > span:nth-last-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kl-suhrn__polozky strong { font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px; }
+.kl-suhrn__polozky small { color: rgba(255, 255, 255, 0.55); font-size: 12px; }
+.kl-suhrn__polozky li > span:last-child { font-weight: 600; white-space: nowrap; }
+.kl-suhrn__obrazok { width: 52px; height: 52px; flex-shrink: 0; border-radius: 12px; background: rgba(255, 255, 255, 0.92); }
+.kl-suhrn__obrazok img { object-fit: contain; padding: 8%; }
+.kl-suhlas { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; color: rgba(255, 255, 255, 0.75); font-size: 14px; line-height: 1.5; cursor: pointer; }
+.kl-suhlas input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--kl-akcent); flex-shrink: 0; }
+.kl-suhlas a { color: #ffffff; }
+
+/* Kroky pokladne */
+.kl-pokladna__kroky { display: flex; flex-direction: column; gap: 20px; }
+.kl-krok { margin: 0; padding: 28px; border-radius: 24px; border: 1px solid var(--kl-tmava-10); min-width: 0; }
+.kl-krok legend, .kl-krok__nadpis {
+  float: left; width: 100%; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 0;
+  color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.kl-krok legend + * { clear: both; }
+.kl-krok legend span {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--kl-akcent); color: #ffffff; font-size: 14px;
+}
+.kl-krok__pozn { color: var(--kl-tmava-65); font-size: 15px; line-height: 1.6; }
+.kl-krok__pozn + .kl-krok__pozn { margin-top: 10px; }
+.kl-krok__pozn strong { color: var(--kl-tmava); }
+.kl-krok .kl-pole:last-child { margin-bottom: 0; }
+.kl-moznosti { display: flex; flex-direction: column; gap: 10px; clear: both; }
+.kl-moznost {
+  display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 14px; cursor: pointer;
+  border: 1.5px solid var(--kl-tmava-12); transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.kl-moznost:hover { border-color: var(--kl-tmava-40); }
+.kl-moznost.is-zvolena { border-color: var(--kl-tmava); background: var(--kl-tmava-3); }
+.kl-moznost input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--kl-akcent); }
+.kl-moznost__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.kl-moznost__text strong { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px; }
+.kl-moznost__text small { color: var(--kl-tmava-55); font-size: 13px; }
+.kl-moznost__cena { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 15px; white-space: nowrap; }
+
+/* Objednávka */
+.kl-priebeh { list-style: none; margin: 0 0 32px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: krok; }
+.kl-priebeh li {
+  position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px;
+  background: var(--kl-tmava-4); color: var(--kl-tmava-45); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px;
+}
+.kl-priebeh li span {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--kl-tmava-10); color: var(--kl-tmava-55); font-size: 13px;
+}
+.kl-priebeh li.is-hotovy { color: var(--kl-tmava); }
+.kl-priebeh li.is-hotovy span { background: var(--kl-tmava); color: #ffffff; }
+.kl-priebeh li.is-aktualny { background: var(--kl-akcent); color: #ffffff; }
+.kl-priebeh li.is-aktualny span { background: #ffffff; color: var(--kl-akcent); }
+.kl-platba-box { padding: 28px; border-radius: 24px; border: 2px solid var(--kl-akcent); }
+.kl-platba-box.is-uhradena { border-color: var(--kl-uspech); }
+.kl-platba-box__hlava { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: var(--kl-tmava); }
+.kl-platba-box__hlava svg { color: var(--kl-akcent); }
+.kl-platba-box.is-uhradena .kl-platba-box__hlava svg { color: var(--kl-uspech); }
+.kl-platba-box__hlava strong { flex: 1; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; }
+.kl-platba-box__text { margin-top: 16px !important; color: var(--kl-tmava-65); font-size: 15px; line-height: 1.6; }
+.kl-platba-box__pokyny { padding: 16px 18px; border-radius: 14px; background: var(--kl-tmava-4); color: var(--kl-tmava); font-weight: 500; white-space: pre-line; }
+.kl-platba-box__brana { margin-top: 18px; }
+.kl-platba-box__udaje { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
+.kl-platba-box__udaje div { padding: 14px 16px; border-radius: 14px; background: var(--kl-tmava-4); }
+.kl-platba-box__udaje dt { color: var(--kl-tmava-55); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+.kl-platba-box__udaje dd { margin: 4px 0 0; color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 20px; }
+.kl-odznak { padding: 6px 12px; border-radius: 999px; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--kl-akcent-12); color: var(--kl-akcent); }
+.kl-odznak--uhradena { background: color-mix(in srgb, var(--kl-uspech) 12%, transparent); color: var(--kl-uspech); }
+.kl-odznak--vratena { background: var(--kl-tmava-6); color: var(--kl-tmava-65); }
+.kl-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+@media (max-width: 1180px) {
+  .kl-obchod__mriezka { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kl-pokladna { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+
+@media (max-width: 900px) {
+  .kl-obchod__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kl-produkt-detail, .kl-pokladna { grid-template-columns: 1fr; }
+  .kl-galeria-produktu, .kl-suhrn { position: static; }
+}
+
+/* Mobil: obchod ako aplikácia */
+@media (max-width: 768px) {
+  .kl-hlavicka__kosik { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  /* Globálne pravidlo webu dáva odkazom min. 44 px - v texte by rozťahovalo riadky */
+  .kl-drobceky a, .kl-kosik__text a { min-height: 0; min-width: 0; }
+  .kl-hlavicka__pocet { top: -3px; right: -3px; }
+  .kl-produkt__nazov { font-size: 14px; margin: -4px 0 8px; }
+
+  .kl-obchod__mriezka { gap: 24px 12px; }
+  .kl-tovar__foto { margin-bottom: 10px; }
+  .kl-tovar__obrazok { border-radius: 18px; }
+  .kl-tovar__stitok { top: 8px; left: 8px; padding: 4px 9px; font-size: 10px; }
+  .kl-tovar__text { margin-bottom: 6px; gap: 2px; }
+  .kl-tovar__text small { font-size: 10px; }
+  .kl-tovar__text strong { font-size: 15px; }
+  .kl-tovar__sipka { display: none; }
+  .kl-cena strong { font-size: 16px; }
+  .kl-cena s { font-size: 12px; }
+
+  .kl-sekcia--produkt { padding-top: 16px; padding-bottom: 32px; }
+  .kl-drobceky { margin-bottom: 14px; }
+  .kl-produkt-detail { gap: 22px; }
+  .kl-galeria-produktu { margin: 0 -8px; }
+  .kl-galeria-produktu__obrazok { border-radius: 24px; }
+  .kl-galeria-produktu__nahlady { gap: 8px; margin-top: 10px; padding: 0 8px; }
+  .kl-galeria-produktu__nahlady button { flex-basis: 64px; height: 64px; border-radius: 12px; }
+  .kl-produkt-info h1 { font-size: 28px; }
+  .kl-cena--velka { margin-top: 10px; }
+  .kl-cena--velka strong { font-size: 28px; }
+  .kl-vlastnost { margin-top: 22px; }
+  .kl-volba { padding: 11px 14px; font-size: 14px; }
+  .kl-produkt-info__kupit { display: none; }
+  .kl-produkt-popis { margin-top: 36px; }
+  .kl-produkt-popis h2 { font-size: 19px; }
+  .kl-lista-kupit {
+    position: fixed; left: 0; right: 0; bottom: var(--kl-zalozky); z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px 16px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--kl-tmava-8); box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+  }
+  .kl-lista-kupit .kl-tlacidlo { flex: 1; max-width: 240px; padding: 14px 16px; border-radius: 14px; }
+  .kl-lista-kupit .kl-cena strong { font-size: 20px; }
+  .kl-produkt-stranka { padding-bottom: 72px; }
+
+  .kl-kosik { border-radius: 20px; margin-bottom: 16px; }
+  .kl-kosik__polozka { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-areas: 'foto text odstranit' 'foto pocet spolu'; gap: 8px 12px; padding: 14px; }
+  .kl-kosik__foto { grid-area: foto; align-self: start; }
+  .kl-kosik__obrazok { width: 72px; height: 72px; border-radius: 14px; }
+  .kl-kosik__text { grid-area: text; }
+  .kl-kosik__text a { font-size: 15px; }
+  .kl-kosik__text small { font-size: 12px; }
+  .kl-kosik .kl-pocitadlo { grid-area: pocet; justify-self: start; }
+  .kl-kosik__spolu { grid-area: spolu; align-self: center; min-width: 0; font-size: 16px; }
+  .kl-kosik__odstranit { grid-area: odstranit; align-self: start; width: 30px; height: 30px; margin: -4px -4px 0 0; }
+
+  .kl-suhrn { padding: 22px; border-radius: 24px; margin: 0 -8px; }
+  .kl-suhrn h2 { font-size: 17px; margin-bottom: 14px; }
+  .kl-suhrn__spolu strong { font-size: 26px; }
+  .kl-krok { padding: 20px 18px; border-radius: 20px; }
+  .kl-krok legend, .kl-krok__nadpis { font-size: 16px; margin-bottom: 16px; }
+  .kl-krok legend span { width: 28px; height: 28px; font-size: 13px; }
+  .kl-pole__dve, .kl-pole__dve--psc { grid-template-columns: 1fr; }
+  .kl-moznost { padding: 14px; gap: 12px; }
+
+  .kl-priebeh { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 20px; }
+  .kl-priebeh li { flex-direction: column; gap: 6px; padding: 10px 4px; font-size: 11px; text-align: center; border-radius: 12px; }
+  .kl-platba-box { padding: 20px 18px; border-radius: 20px; }
+  .kl-platba-box__hlava strong { font-size: 16px; }
+  .kl-platba-box__udaje dd { font-size: 17px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kl *, .kl *::before, .kl *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

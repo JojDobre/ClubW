@@ -1,0 +1,90 @@
+/* sablony/zakladna/src/stranky/Obchod.css - obchod, košík, pokladňa, objednávka */
+.ob { max-width: 1100px; margin: 0 auto; padding: 32px 16px 48px; color: #1e293b; }
+.ob--uzke { max-width: 760px; }
+.ob h1 { font-size: 2rem; margin: 0 0 12px; }
+.ob a { color: var(--club-primary, #1b5e20); }
+.ob__stav { color: #64748b; text-align: center; padding: 40px 0; }
+.ob__tlmene { color: #64748b; font-size: 14px; }
+.ob__chyba { color: #b91c1c; font-size: 14px; }
+.ob__ok { color: #166534; background: #f0fdf4; border-radius: 10px; padding: 10px 14px; }
+.ob__hlava { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ob__odkaz-kosika { font-weight: 600; text-decoration: none; }
+.ob__kategorie { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.ob__kategorie button, .ob__hodnoty button { border: 1px solid #cbd5e1; background: #fff; color: inherit; border-radius: 999px; padding: 6px 14px; font: inherit; cursor: pointer; }
+.ob__kategorie button.is-aktivna, .ob__hodnoty button.is-zvolena { background: #1e293b; border-color: #1e293b; color: #fff; }
+.ob__hodnoty button:disabled { opacity: .4; text-decoration: line-through; cursor: not-allowed; }
+.ob__mriezka { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.ob__karta { display: flex; flex-direction: column; gap: 6px; background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(15,23,42,.07); padding: 12px; color: inherit !important; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+.ob__karta:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15,23,42,.12); }
+.ob__foto, .ob__hlavne-foto { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+.ob__foto img, .ob__hlavne-foto img { width: 100%; height: 100%; object-fit: contain; }
+.ob__bez-obrazka { font-size: 48px; opacity: .4; }
+.ob__stitok { position: absolute; top: 8px; left: 8px; background: #b91c1c; color: #fff; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; }
+.ob__nazov { font-weight: 600; }
+.ob__cena { font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
+.ob__cena s { color: #94a3b8; font-weight: 400; font-size: .9em; }
+.ob__cena--velka { font-size: 1.5rem; margin: 0 0 12px; }
+.ob__drobcek { font-size: 14px; color: #64748b; margin: 0 0 16px; }
+.ob__produkt { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+.ob__nahlady { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.ob__nahlady button { width: 64px; height: 64px; padding: 0; border: 2px solid transparent; border-radius: 8px; background: #f1f5f9; cursor: pointer; overflow: hidden; }
+.ob__nahlady button.is-aktivny { border-color: #1e293b; }
+.ob__nahlady img { width: 100%; height: 100%; object-fit: contain; }
+.ob__kratky { color: #475569; }
+.ob__vlastnost { margin: 14px 0; }
+.ob__menovka { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.ob__hodnoty { display: flex; flex-wrap: wrap; gap: 8px; }
+.ob__vlastnost input, .ob__pole input, .ob__pole textarea, .ob__pridat input { width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 12px; font: inherit; }
+.ob__pridat { display: flex; gap: 10px; margin: 20px 0 8px; }
+.ob__pridat input { width: 80px; }
+.ob__tlacidlo { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; padding: 11px 22px; font: inherit; font-weight: 600; background: var(--club-primary, #1b5e20); color: #fff !important; text-decoration: none; cursor: pointer; }
+.ob__tlacidlo:disabled { opacity: .5; cursor: not-allowed; }
+.ob__popis { margin-top: 24px; line-height: 1.6; }
+.ob__polozky { list-style: none; margin: 0; padding: 0; background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(15,23,42,.07); }
+.ob__polozky li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
+.ob__polozky li:last-child { border-bottom: 0; }
+.ob__mini-foto { flex: 0 0 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+.ob__mini-foto img { width: 100%; height: 100%; object-fit: contain; }
+.ob__mini-foto .ob__bez-obrazka { font-size: 22px; }
+.ob__polozka-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.ob__polozka-text small { color: #64748b; }
+.ob__pocet { display: inline-flex; align-items: center; gap: 8px; }
+.ob__pocet button, .ob__odstranit { width: 28px; height: 28px; border: 1px solid #cbd5e1; background: #fff; border-radius: 50%; cursor: pointer; font: inherit; line-height: 1; }
+.ob__odstranit { border: 0; color: #94a3b8; }
+.ob__suhrn, .ob__spolu { display: flex; justify-content: space-between; font-size: 1.1rem; margin: 16px 4px; }
+.ob__akcie { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ob__pokladna { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 32px; align-items: start; }
+.ob__pokladna fieldset { border: 0; padding: 0; margin: 0 0 22px; }
+.ob__pokladna legend { font-weight: 700; font-size: 1.1rem; margin-bottom: 10px; }
+.ob__pole { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 14px; }
+.ob__dve { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ob__volba { display: flex; gap: 12px; align-items: center; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; background: #fff; }
+.ob__volba.is-zvolena { border-color: #1e293b; box-shadow: 0 0 0 1px #1e293b; }
+.ob__volba span { flex: 1; display: flex; flex-direction: column; }
+.ob__volba small { color: #64748b; }
+.ob__volba em { font-style: normal; font-weight: 600; }
+.ob__zhrnutie { position: sticky; top: 16px; background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(15,23,42,.07); padding: 18px; }
+.ob__zhrnutie h2 { font-size: 1.1rem; margin: 0 0 10px; }
+.ob__zhrnutie ul { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.ob__zhrnutie li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+.ob__zhrnutie li small { display: block; color: #64748b; }
+.ob__zhrnutie .ob__tlacidlo { width: 100%; margin-top: 10px; }
+.ob__suhlas { display: flex; gap: 8px; font-size: 14px; align-items: flex-start; }
+.ob__stavy { display: flex; gap: 8px; flex-wrap: wrap; }
+.ob__odznak { border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; background: #e2e8f0; }
+.ob__odznak--uhradena, .ob__odznak--vybavena { background: #dcfce7; color: #166534; }
+.ob__odznak--neuhradena { background: #fef3c7; color: #92400e; }
+.ob__odznak--zrusena { background: #fee2e2; color: #991b1b; }
+.ob__pokyny { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 14px; margin: 14px 0; white-space: pre-line; }
+.ob__brana { margin: 14px 0; }
+.ob__polozky--suhrn { margin-top: 18px; }
+@media (max-width: 800px) {
+  .ob__produkt, .ob__pokladna { grid-template-columns: 1fr; }
+  .ob__zhrnutie { position: static; }
+}
+@media (max-width: 560px) {
+  .ob__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ob__dve { grid-template-columns: 1fr; }
+  .ob__polozky li { flex-wrap: wrap; }
+  .ob__polozka-text { flex-basis: calc(100% - 80px); }
+}

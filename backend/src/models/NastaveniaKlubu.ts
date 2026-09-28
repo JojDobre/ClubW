@@ -71,6 +71,8 @@ interface NastaveniaKlubuAttributes {
   nastavenia_gdpr: Record<string, unknown>;
   /** SEO nad rámec meta_popis */
   nastavenia_seo: Record<string, unknown>;
+  /** E-shop - zapnutý, mena, e-mail pre objednávky, podmienky */
+  nastavenia_eshopu: Record<string, unknown>;
 
   // ===== Šablóna verejného webu =====
   /** Priečinok (slug) aktívnej šablóny */
@@ -94,7 +96,7 @@ interface NastaveniaKlubuCreationAttributes
     | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url' | 'tiktok_url'
     | 'meta_popis' | 'google_analytics_id'
     | 'dodatkove_farby' | 'nastavenia_komentarov'
-    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'aktivna_sablona' | 'nastavenia_sablon' | 'jazyk_administracie'
+    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'nastavenia_eshopu' | 'aktivna_sablona' | 'nastavenia_sablon' | 'jazyk_administracie'
     | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -133,6 +135,7 @@ class NastaveniaKlubu
   public nastavenia_komentarov!: Record<string, unknown>;
   public nastavenia_gdpr!: Record<string, unknown>;
   public nastavenia_seo!: Record<string, unknown>;
+  public nastavenia_eshopu!: Record<string, unknown>;
   public aktivna_sablona!: string;
   public nastavenia_sablon!: Record<string, Record<string, unknown>>;
   public jazyk_administracie!: string;
@@ -201,6 +204,11 @@ class NastaveniaKlubu
       komentare: this.nastavenia_komentarov,
       gdpr: this.nastavenia_gdpr,
       seo: this.nastavenia_seo,
+      // Obchod - web podľa neho ukáže košík a stránky obchodu
+      eshop: {
+        zapnuty: this.nastavenia_eshopu?.zapnuty === true,
+        mena: (this.nastavenia_eshopu?.mena as string) || 'EUR',
+      },
       // Jazyk prihlasovacej obrazovky administrácie (pred prihlásením)
       jazyk_administracie: this.jazyk_administracie,
     };
@@ -354,6 +362,12 @@ NastaveniaKlubu.init(
         indexovat: true,
         google_search_console: null,
       },
+    },
+
+    nastavenia_eshopu: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
     },
 
     aktivna_sablona: {

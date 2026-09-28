@@ -77,6 +77,15 @@ export const SEKCIE_MENU: SekciaMenu[] = [
     ],
   },
   {
+    nazov: tr('E-SHOP'),
+    polozky: [
+      { modul: 'eshop', cesta: '/admin/eshop/objednavky', popis: tr('Objednávky'), ikona: 'kosik' },
+      { modul: 'eshop', cesta: '/admin/eshop/produkty', popis: tr('Produkty'), ikona: 'balik' },
+      { modul: 'eshop', cesta: '/admin/eshop/doprava-platba', popis: tr('Doprava a platba'), ikona: 'doprava' },
+      { modul: 'eshop', cesta: '/admin/eshop/nastavenia', popis: tr('Nastavenia obchodu'), ikona: 'nastavenia' },
+    ],
+  },
+  {
     nazov: tr('SYSTÉM'),
     polozky: [
       { modul: 'pouzivatelia', cesta: '/admin/pouzivatelia', popis: tr('Používatelia'), ikona: 'pouzivatelia', role: ['admin'] },

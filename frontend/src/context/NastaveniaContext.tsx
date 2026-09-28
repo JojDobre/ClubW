@@ -59,6 +59,11 @@ export interface NastaveniaKlubu {
     ic_dph: string | null;
     iban: string | null;
   };
+  /** Obchod - web podľa neho ukáže košík a stránky obchodu */
+  eshop?: {
+    zapnuty: boolean;
+    mena: string;
+  };
   meta_popis: string | null;
 }
 

@@ -76,7 +76,7 @@ for (const subor of subory) {
     if (ts.isPropertyAssignment(u) && KLUCE.has(u.name.getText().replace(/['"]/g, ''))) zberTextov(u.initializer, miesto());
     else if (ts.isVariableDeclaration(u) && u.initializer && /^(sprava|hlaska|message|chyba)$/.test(u.name.getText())) zberTextov(u.initializer, miesto());
     else if (ts.isCallExpression(u) && /\.withMessage$|^odpovedzChybou$/.test(u.expression.getText())) u.arguments.forEach((a) => zberTextov(a, miesto()));
-    else if (ts.isNewExpression(u) && /Error$|^ChybaSablony$/.test(u.expression.getText()) && u.arguments?.[0]) zberTextov(u.arguments[0], miesto());
+    else if (ts.isNewExpression(u) && /Error$|^Chyba(Sablony|Eshopu)$/.test(u.expression.getText()) && u.arguments?.[0]) zberTextov(u.arguments[0], miesto());
     else if (ts.isReturnStatement(u) && u.expression && ts.isObjectLiteralExpression(u.expression)) { /* spracuje PropertyAssignment */ }
     ts.forEachChild(u, navstiv);
   };

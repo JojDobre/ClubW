@@ -59,6 +59,7 @@ import rolaRoutes from './routes/roly';
 import menuRoutes from './routes/menu';
 import formularRoutes from './routes/formulare';
 import logRoutes from './routes/logy';
+import { verejnyEshopRouter, adminEshopRouter } from './routes/eshop';
 import { zaznamenajZmeny } from './middleware/auditLog';
 import { vykonajPresmerovania } from './middleware/presmerovania';
 import { spustiPlanovacClankov } from './services/planovacClankov';
@@ -370,6 +371,10 @@ app.use('/api', formularRoutes);
 
 // Logy - všetky udalosti s filtrovaním
 app.use('/api/admin/logs', logRoutes);
+
+// E-shop - produkty, objednávky, doručenie a platby
+app.use('/api/eshop', verejnyEshopRouter);
+app.use('/api/admin/eshop', adminEshopRouter);
 
 
 // ===== ŠTATISTIKY =====

@@ -40,6 +40,13 @@ export interface CastiSablony {
   Sponzori: ComponentType;
   Formular: ComponentType;
   Statistiky: ComponentType;
+  /** E-shop: zoznam produktov (/obchod), detail (/obchod/:slug), košík,
+   *  pokladňa a stav objednávky cez tajný odkaz (/objednavka/:token) */
+  Obchod: ComponentType;
+  Produkt: ComponentType;
+  Kosik: ComponentType;
+  Pokladna: ComponentType;
+  Objednavka: ComponentType;
   /** Adresa neexistuje (po neúspešnom pokuse o presmerovanie) */
   Nenajdena: ComponentType;
 }

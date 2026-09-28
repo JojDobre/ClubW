@@ -13,6 +13,7 @@ import {
   jePrihlaseny,
   otvorNastaveniaCookies,
   souborUrl,
+  useKosik,
   useMenuWebu,
   useNastavenia,
   useNastaveniaSablony,
@@ -54,6 +55,23 @@ const useZamknutyPosun = (zamknuty: boolean) => {
 
 // ===== Rozloženie =====
 
+/** Stránky bez pásu partnerov (nákup má zostať prehľadný). */
+const BEZ_PARTNEROV = ['/sponzori', '/kosik', '/pokladna', '/objednavka'];
+
+/** Košík v hlavičke s počtom kusov - len keď je obchod zapnutý. */
+const KosikHlavicky: React.FC = () => {
+  const { nastavenia } = useNastavenia();
+  const { pocet } = useKosik();
+  const { pathname } = useLocation();
+  if (!nastavenia.eshop?.zapnuty) return null;
+  return (
+    <Link to="/kosik" className={`kl-hlavicka__kosik${pathname === '/kosik' ? ' is-aktivny' : ''}`} aria-label={pocet ? `Košík, ${pocet} ks` : 'Košík'}>
+      <Ikona nazov="kosik" velkost={20} />
+      {pocet > 0 && <span className="kl-hlavicka__pocet">{pocet > 99 ? '99+' : pocet}</span>}
+    </Link>
+  );
+};
+
 export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
   const jeUvod = pathname === '/';
@@ -72,7 +90,7 @@ export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
       <main id="kl-obsah" className="kl-obsah">
         {children}
         {/* Partneri na spodku každej podstránky (úvod ich má vo vlastnom poradí sekcií) */}
-        {!jeUvod && !pathname.startsWith('/sponzori') && <PartneriStranky />}
+        {!jeUvod && !BEZ_PARTNEROV.some((c) => pathname.startsWith(c)) && <PartneriStranky />}
       </main>
       <Cast nazov="Paticka" />
       <SpodnaNavigacia />
@@ -259,6 +277,7 @@ export const Hlavicka: React.FC = () => {
               {tlacidlo.text}
             </Odkaz>
           )}
+          <KosikHlavicky />
           {jePrihlaseny() && (
             <a href="/admin" className="kl-hlavicka__admin" title="Administrácia">
               Admin
@@ -430,7 +449,7 @@ export const Paticka: React.FC = () => {
   const kontakt = nastavenia.kontakt ?? { email: null, telefon: null, adresa: null };
   const gdpr = nastavenia.gdpr ?? {};
   const text = s.paticka_text || nastavenia.slogan || nastavenia.meta_popis;
-  const fanshop = (s.fanshop_odkaz || '').trim();
+  const fanshop = nastavenia.eshop?.zapnuty ? '/obchod' : (s.fanshop_odkaz || '').trim();
 
   return (
     <footer className="kl-paticka">

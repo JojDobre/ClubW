@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.1.0",
+  "verzia": "1.2.0",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -84,7 +84,7 @@
       "kluc": "fanshop_odkaz",
       "typ": "text",
       "menovka": "Fanshop: odkaz na obchod",
-      "napoveda": "Odkaz „Zobraziť všetky“. Sekcia sa ukáže, ak má aspoň jeden produkt fotku."
+      "napoveda": "Len bez vlastného obchodu. So zapnutým obchodom (E-shop v administrácii) sa ukážu odporúčané produkty a odkaz vedie do obchodu."
     },
     {
       "kluc": "produkt_1_obrazok",

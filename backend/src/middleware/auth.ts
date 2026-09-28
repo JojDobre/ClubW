@@ -134,6 +134,7 @@ const MODUL_PODLA_CESTY: Record<string, string> = {
   sablony: 'sablony',
   logs: 'logy',
   license: 'licencia',
+  eshop: 'eshop',
 };
 
 export const modulZCesty = (cesta: string): string | null => {
