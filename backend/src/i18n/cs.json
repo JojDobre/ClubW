@@ -351,7 +351,7 @@
  "Nahratých {0} súborov": "Nahráno {0} souborů",
  "Nahrávať a mazať šablóny smie len správca": "Nahrávat a mazat šablony smí jen správce",
  "Nastavenia klubu boli uložené": "Nastavení klubu bylo uloženo",
- "Nastavenia šablóny musia byť zoznam (najviac 40 položiek)": "Nastavení šablony musí být seznam (nejvýše 40 položek)",
+ "Nastavenia šablóny musia byť zoznam (najviac {0} položiek)": "Nastavení šablony musí být seznam (nejvýše {0} položek)",
  "Nastavenia šablóny {0} boli uložené": "Nastavení šablony {0} byla uložena",
  "Nastavenie „{0}\" je v šablóne dvakrát": "Nastavení „{0}\" je v šabloně dvakrát",
  "Načítaných {0} galérií": "Načteno {0} galerií",
@@ -920,5 +920,6 @@
  "Pri tomto doručení vyplňte ulicu, mesto a PSČ": "U tohoto doručení vyplňte ulici, město a PSČ",
  "Pri doručení na adresu zadajte telefón pre kuriéra": "Při doručení na adresu zadejte telefon pro kurýra",
  "Neplatný kľúč oznámenia": "Neplatný klíč oznámení",
- "Chýba číslo objednávky alebo variabilný symbol": "Chybí číslo objednávky nebo variabilní symbol"
+ "Chýba číslo objednávky alebo variabilný symbol": "Chybí číslo objednávky nebo variabilní symbol",
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "odkaz musí začínat / (stránka webu), https://, mailto: nebo tel:"
 }

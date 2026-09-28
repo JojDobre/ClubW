@@ -57,7 +57,8 @@ na ktoré sa `styl.css` odkazuje relatívne (`url(fonts/nazov.woff2)`).
   "nastavenia": [
     { "kluc": "akcent", "typ": "farba", "menovka": "Farba zvýraznenia", "predvolene": "#F59E0B" },
     { "kluc": "uvodna_fotka", "typ": "obrazok", "menovka": "Fotka na úvode" },
-    { "kluc": "titulok", "typ": "text", "menovka": "Nadpis na úvode" },
+    { "kluc": "titulok", "typ": "text", "menovka": "Nadpis na úvode", "skupina": "Úvod" },
+    { "kluc": "vstupenky", "typ": "odkaz", "menovka": "Odkaz na vstupenky", "skupina": "Úvod" },
     { "kluc": "styl_menu", "typ": "vyber", "menovka": "Menu",
       "moznosti": [{ "hodnota": "svetle", "popis": "Svetlé" }, { "hodnota": "tmave", "popis": "Tmavé" }],
       "predvolene": "svetle" },
@@ -71,8 +72,15 @@ na ktoré sa `styl.css` odkazuje relatívne (`url(fonts/nazov.woff2)`).
   Nahratie balíka s rovnakým slugom šablónu **aktualizuje** (nastavenia ostanú).
 - `verzia` - napr. `1.0.0`; pri aktualizácii ju zvýšte, prehliadače si tak stiahnu nové súbory.
 - `api` - verzia rozhrania šablón (teraz `1`). Šablónu pre novšie rozhranie systém odmietne.
-- Typy nastavení: `farba`, `text`, `dlhy_text`, `vyber`, `prepinac`, `cislo`, `obrazok`.
+- Typy nastavení: `farba`, `text`, `dlhy_text`, `vyber`, `prepinac`, `cislo`, `obrazok`
+  a `odkaz` (stránka webu `/...`, `https://`, `mailto:` alebo `tel:`).
   Správca ich vyplní v administrácii cez **Prispôsobiť**.
+- `skupina` - nepovinný názov záložky v okne Prispôsobiť (napr. „Úvod - zápasy").
+  Pri viacerých skupinách má okno záložky a vyhľadávanie; poradie skupín je podľa
+  prvého výskytu v zozname. Šablóna môže mať najviac 200 nastavení.
+- Dobrá šablóna nemá natvrdo zapísané texty, ktoré by klub chcel zmeniť: nadpisy
+  sekcií, texty tlačidiel a zapínanie sekcií patria do nastavení (predvolená
+  hodnota = pôvodný text).
 
 ### Nastavenia v štýle
 
@@ -236,10 +244,14 @@ stránky webu.
   a karty po súťažiach), filtre fotogalérie z `GET /api/galleries?typ=...&pocty=1`
   (zápasy, tímy, články, klub), kategórie videí z poľa Kategória pri videu. Videá
   z YouTube (bez cookies) a Vimeo sa prehrajú v okne priamo na stránke.
-- **Nastavenia** (Šablóny → Klubová → Prispôsobiť) - farba zvýraznenia a tmavá farba,
-  tlačidlo v hlavičke, texty a fotka úvodu, počet tímov v zápasoch, odkaz na vstupenky,
-  tri produkty fanshopu, pozadie videí, tím hráčov, úspechy (riadok = „počet názov“),
-  počty sledujúcich, tri karty odkazu klubu, partneri na stránkach a text pätičky.
+- **Nastavenia** (Šablóny → Klubová → Prispôsobiť) - 102 nastavení v 16 záložkách:
+  farby (zvýraznenie, tmavá, pozadie) a písmo nadpisov; hlavička (tlačidlo, košík,
+  odkaz Admin); mobilné záložky (názvy a odkazy); každá sekcia úvodu sa dá vypnúť
+  a premenovať (slider, zápasy, články, fanshop, videá, hráči, úspechy, sociálne
+  siete, odkaz klubu, partneri) spolu s jej vlastnými poľami; štítky a nadpisy
+  podstránok (Novinky, Videá, Fotogaléria, Zápasy, Súťaže, Turnaje, Dokumenty,
+  Partneri, Obchod, Súpiska, Kalendár, Štatistiky); pätička (texty stĺpcov, siete,
+  copyright) a texty tlačidiel (Zobraziť všetky, Čítať viac, Detail...). Prázdny text = predvolený text šablóny, `{klub}` = názov klubu.
   Sekcie bez obsahu sa neukážu.
 - **Fanshop** - obchod s kategóriami, produkt s galériou a výberom vlastností
   (veľkosti ako pilulky, text na dres), košík, pokladňa v krokoch a stav objednávky

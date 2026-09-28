@@ -29,6 +29,7 @@
   --kl-tmava: var(--sablona-tmava, #0b0b10);
   --kl-tmava-panel: color-mix(in srgb, var(--kl-tmava), #ffffff 4%);
   --kl-biela: #ffffff;
+  --kl-pozadie: var(--sablona-pozadie, #ffffff);
   --kl-text: var(--kl-tmava);
   --kl-uspech: #15803d;
 
@@ -57,7 +58,7 @@
 
 [data-sablona='klubova'] body {
   margin: 0;
-  background: #ffffff;
+  background: var(--kl-pozadie);
   color: var(--kl-text);
   font-family: var(--kl-pismo);
   -webkit-font-smoothing: antialiased;
@@ -65,8 +66,14 @@
 }
 [data-sablona='klubova'] body.kl-bez-posunu { overflow: hidden; }
 
-.kl { min-height: 100vh; background: #ffffff; font-family: var(--kl-pismo); overflow-x: clip; }
+.kl { min-height: 100vh; background: var(--kl-pozadie); font-family: var(--kl-pismo); overflow-x: clip; }
 .kl *, .kl *::before, .kl *::after { box-sizing: border-box; }
+/* Písmo nadpisov z nastavení šablóny (Farby a písmo) */
+.kl[data-pismo='inter'] { --kl-nadpisy: var(--kl-pismo); }
+.kl[data-pismo='system'] {
+  --kl-nadpisy: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --kl-pismo: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
 .kl :where(h1, h2, h3, h4, p) { margin: 0; }
 .kl :where(a) { color: inherit; }
 .kl :where(button) { font: inherit; }
@@ -263,7 +270,7 @@ a.kl-tlacidlo-obrys:hover { background: var(--kl-akcent); color: #ffffff; }
   font-size: clamp(24px, 2.6vw, 30px); letter-spacing: 0.5px; text-transform: uppercase;
 }
 
-.kl-sekcia { padding: 0 var(--kl-okraj) 100px; background: #ffffff; }
+.kl-sekcia { padding: 0 var(--kl-okraj) 100px; background: var(--kl-pozadie); }
 
 .kl-obrazok { position: relative; display: block; overflow: hidden; background: var(--kl-tmava-6); }
 .kl-obrazok img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1087,7 +1094,7 @@ a.kl-hero__nadpis:hover { color: #ffffff; text-decoration: underline; text-decor
 .kl-profil-hero__foto img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
 .kl-profil-hero__foto .kl-hrac__silueta { position: absolute; inset: 0; }
 
-.kl-profil-o { padding: 80px var(--kl-okraj); background: #ffffff; }
+.kl-profil-o { padding: 80px var(--kl-okraj); background: var(--kl-pozadie); }
 .kl-profil-o__mriezka { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr; gap: 48px; align-items: start; }
 .kl-profil-o__mriezka--bez-udajov { grid-template-columns: 1fr; }
 /* Partneri za sivou sekciou potrebujú vlastný horný odstup */

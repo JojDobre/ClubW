@@ -14,7 +14,7 @@ import NastaveniaKlubu from '../models/NastaveniaKlubu';
  * skryje sekcie, do ktorých nesmie. Skutočnú kontrolu robí server.
  */
 /** Jazyky administrácie */
-export const JAZYKY = ['sk', 'cs', 'en'];
+export const JAZYKY = ['sk', 'cs', 'en', 'pl', 'de', 'es', 'fr'];
 
 export const sOpravneniami = async (user: User) => {
   const data: any = user.toSafeJSON();

@@ -81,6 +81,7 @@
 
 .cw-modal__foot {
   display: flex;
+  flex-wrap: wrap; /* dlhšie preklady (de, pl) sa na mobile zalomia */
   justify-content: flex-end;
   gap: var(--sp-2);
   padding: var(--sp-4) var(--sp-5);

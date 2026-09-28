@@ -6,7 +6,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
-import { Ikona, mesiacRok, useApi, useTitulok } from '../spolocne';
+import { Ikona, mesiacRok, useApi, useTitulok, useUpravy } from '../spolocne';
 
 interface ZapasKalendara {
   id: number;
@@ -62,6 +62,7 @@ const PolozkaKalendara: React.FC<{ p: Polozka; kompaktna?: boolean }> = ({ p, ko
 };
 
 const Kalendar: React.FC = () => {
+  const u = useUpravy();
   const [mesiac, setMesiac] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -124,7 +125,7 @@ const Kalendar: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-kalendar-stranka">
-      <HlavickaStranky stitok="Kalendár" nadpis={nazovMesiaca}>
+      <HlavickaStranky stitok={u.text('stranka_kalendar_stitok', 'Kalendár')} nadpis={nazovMesiaca}>
         <div className="kl-kal-ovladanie">
           <button type="button" className="kl-kruh-tlacidlo" onClick={() => posun(-1)} aria-label="Predchádzajúci mesiac">
             <Ikona nazov="vlavo" />

@@ -6,7 +6,7 @@
 import React, { useMemo, useState } from 'react';
 import { apiUrl } from '@clubw/jadro';
 import { Chyba, Filtre, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
-import { Ikona, datum, useApi, useTitulok } from '../spolocne';
+import { Ikona, datum, useApi, useTitulok, useUpravy } from '../spolocne';
 
 interface Dokument {
   id: number;
@@ -30,6 +30,7 @@ const velkost = (kb: number | null) => (!kb ? null : kb >= 1024 ? `${(kb / 1024)
 const typ = (d: Dokument) => (d.typ_suboru || d.subor_url?.split('.').pop() || 'súbor').toUpperCase().slice(0, 4);
 
 const Dokumenty: React.FC = () => {
+  const u = useUpravy();
   const dokumenty = useApi<Dokument[]>('/documents?limit=500');
   const kategorie = useApi<Kategoria[]>('/document-categories');
   const [hladat, setHladat] = useState('');
@@ -59,7 +60,7 @@ const Dokumenty: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-dokumenty-stranka">
-      <HlavickaStranky stitok="Na stiahnutie" nadpis="Dokumenty">
+      <HlavickaStranky stitok={u.text('stranka_dokumenty_stitok', 'Na stiahnutie')} nadpis={u.text('stranka_dokumenty_nadpis', 'Dokumenty')}>
         {(dokumenty.data ?? []).length > 0 && (
           <label className="kl-hladat">
             <Ikona nazov="hladat" />

@@ -79,7 +79,7 @@ interface NastaveniaKlubuAttributes {
   aktivna_sablona: string;
   /** Hodnoty nastavení šablón: {"stadion": {"akcent": "#f59e0b"}} */
   nastavenia_sablon: Record<string, Record<string, unknown>>;
-  /** Predvolený jazyk administrácie (sk/cs/en) */
+  /** Predvolený jazyk administrácie (sk/cs/en/pl/de/es/fr) */
   jazyk_administracie: string;
 
   vytvoreny: Date;

@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiUrl } from '@clubw/jadro';
 import { Chyba, Filtre, HlavickaStranky, NacitatDalsie, Nacitava, Obrazok, Prazdne, Sekcia } from '../casti';
-import { sklon, useStrankovanyZoznam, useTitulok } from '../spolocne';
+import { sklon, useStrankovanyZoznam, useTitulok, useUpravy } from '../spolocne';
 
 interface Galeria {
   id: number;
@@ -60,6 +60,7 @@ const usePocty = () => {
 };
 
 const Galerie: React.FC = () => {
+  const u = useUpravy();
   const [parametre, setParametre] = useSearchParams();
   const zvoleny = parametre.get('typ') ?? '';
   const typ: Typ = zvoleny in NAZVY ? (zvoleny as Typ) : '';
@@ -81,7 +82,7 @@ const Galerie: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-galerie">
-      <HlavickaStranky stitok="Médiá" nadpis="Fotogaléria" />
+      <HlavickaStranky stitok={u.text('stranka_galerie_stitok', 'Médiá')} nadpis={u.text('stranka_galerie_nadpis', 'Fotogaléria')} />
 
       {typy.length > 1 && (
         <Sekcia className="kl-sekcia--filtre">

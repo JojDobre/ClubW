@@ -3,7 +3,7 @@
 
 import api from '../app/apiKlient';
 
-export type TypNastaveniaSablony = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo';
+export type TypNastaveniaSablony = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz';
 export type HodnotaNastaveniaSablony = string | number | boolean | null;
 
 export interface NastavenieSablony {
@@ -11,6 +11,8 @@ export interface NastavenieSablony {
   typ: TypNastaveniaSablony;
   menovka: string;
   napoveda?: string;
+  /** Záložka v okne Prispôsobiť */
+  skupina?: string;
   predvolene?: HodnotaNastaveniaSablony;
   moznosti?: Array<{ hodnota: string; popis: string }>;
   min?: number;

@@ -7,7 +7,7 @@ import React from 'react';
 import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 import { Rebricek, type Poradie } from './Liga';
 import { Chyba, HlavickaStranky, Nacitava, Sekcia } from '../casti';
-import { NadpisStredovy, useApi, useTitulok, zoradTimy, type Liga, type RiadokTabulky, type Tim } from '../spolocne';
+import { NadpisStredovy, useApi, useTitulok, zoradTimy, useUpravy, type Liga, type RiadokTabulky, type Tim } from '../spolocne';
 
 interface Suhrn {
   totalArticles: number;
@@ -19,6 +19,7 @@ interface Suhrn {
 }
 
 const Statistiky: React.FC = () => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const s = useNastaveniaSablony<{ hraci_tim: number | null }>();
   const suhrn = useApi<Suhrn>('/stats');
@@ -48,7 +49,7 @@ const Statistiky: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-statistiky">
-      <HlavickaStranky stitok="Štatistiky" nadpis={`${nastavenia.nazov} v číslach`} />
+      <HlavickaStranky stitok={u.text('stranka_statistiky_stitok', 'Štatistiky')} nadpis={`${nastavenia.nazov} v číslach`} />
       {suhrn.nacitava ? (
         <Nacitava text="Načítavam štatistiky…" />
       ) : suhrn.chyba ? (

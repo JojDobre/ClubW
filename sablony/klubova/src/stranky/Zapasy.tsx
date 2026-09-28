@@ -7,11 +7,12 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useNastaveniaSablony } from '@clubw/jadro';
 import { Chyba, Filtre, HlavickaStranky, KartaZapasu, Nacitava, PasZaloziek, Prazdne, Sekcia } from '../casti';
-import { podlaMesiaca, useApi, useTitulok, useVolbaVAdrese, zoradTimy, type Tim, type Zapas } from '../spolocne';
+import { podlaMesiaca, useApi, useTitulok, useVolbaVAdrese, zoradTimy, useUpravy, type Tim, type Zapas } from '../spolocne';
 
 type Zobrazenie = 'program' | 'vysledky';
 
 const Zapasy: React.FC = () => {
+  const u = useUpravy();
   const [parametre, setParametre] = useSearchParams();
   const s = useNastaveniaSablony<{ vstupenky_odkaz: string | null }>();
   const timId = parametre.get('tim') ?? '';
@@ -41,7 +42,7 @@ const Zapasy: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-zapasy-stranka">
-      <HlavickaStranky stitok="Program a výsledky" nadpis="Zápasy" />
+      <HlavickaStranky stitok={u.text('stranka_zapasy_stitok', 'Program a výsledky')} nadpis={u.text('stranka_zapasy_nadpis', 'Zápasy')} />
 
       {zoradeneTimy.length > 1 && (
         <PasZaloziek popis="Tím">

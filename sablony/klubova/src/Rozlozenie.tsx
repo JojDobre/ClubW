@@ -19,7 +19,7 @@ import {
   useNastaveniaSablony,
   type PolozkaMenu,
 } from '@clubw/jadro';
-import { Ikona, Odkaz } from './spolocne';
+import { Ikona, Odkaz, useUpravy } from './spolocne';
 import { PartneriStranky } from './casti';
 
 interface NastaveniaRozlozenia extends Record<string, string | number | boolean | null> {
@@ -63,7 +63,8 @@ const KosikHlavicky: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const { pocet } = useKosik();
   const { pathname } = useLocation();
-  if (!nastavenia.eshop?.zapnuty) return null;
+  const u = useUpravy();
+  if (!nastavenia.eshop?.zapnuty || !u.zapnute('ukazat_kosik')) return null;
   return (
     <Link to="/kosik" className={`kl-hlavicka__kosik${pathname === '/kosik' ? ' is-aktivny' : ''}`} aria-label={pocet ? `Košík, ${pocet} ks` : 'Košík'}>
       <Ikona nazov="kosik" velkost={20} />
@@ -74,6 +75,7 @@ const KosikHlavicky: React.FC = () => {
 
 export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
+  const { s } = useUpravy();
   const jeUvod = pathname === '/';
 
   // Nová stránka začína navrchu
@@ -82,7 +84,7 @@ export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [pathname]);
 
   return (
-    <div className={`kl${jeUvod ? ' kl--uvod' : ''}`}>
+    <div className={`kl${jeUvod ? ' kl--uvod' : ''}`} data-pismo={typeof s.pismo === 'string' ? s.pismo : undefined}>
       <a href="#kl-obsah" className="kl-preskocit">
         Preskočiť na obsah
       </a>
@@ -174,6 +176,7 @@ export const Hlavicka: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const { pathname } = useLocation();
   const tlacidlo = useTlacidloHlavicky();
+  const u = useUpravy();
   const [posunute, setPosunute] = useState(false);
   const [otvorene, setOtvorene] = useState<PolozkaMenu['id'] | null>(null);
   const [mobilneMenu, setMobilneMenu] = useState(false);
@@ -278,7 +281,7 @@ export const Hlavicka: React.FC = () => {
             </Odkaz>
           )}
           <KosikHlavicky />
-          {jePrihlaseny() && (
+          {jePrihlaseny() && u.zapnute('ukazat_admin') && (
             <a href="/admin" className="kl-hlavicka__admin" title="Administrácia">
               Admin
             </a>
@@ -300,6 +303,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
   const { nastavenia } = useNastavenia();
   const { pathname } = useLocation();
   const tlacidlo = useTlacidloHlavicky();
+  const u = useUpravy();
   const [rozbalene, setRozbalene] = useState<PolozkaMenu['id'] | null>(null);
   useZamknutyPosun(true);
 
@@ -371,7 +375,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
           </Odkaz>
         )}
         <SocialneIkony />
-        {jePrihlaseny() && (
+        {jePrihlaseny() && u.zapnute('ukazat_admin') && (
           <a href="/admin" className="kl-mmenu__admin">
             Administrácia
           </a>
@@ -383,6 +387,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
 
 // ===== Spodná navigácia (mobil) =====
 
+/** Spodné záložky: Domov a Menu sú pevné, prostredné tri sa dajú nastaviť. */
 const ZALOZKY: Array<{ nazov: string; odkaz: string; ikona: string; aj?: string[] }> = [
   { nazov: 'Domov', odkaz: '/', ikona: 'domov' },
   { nazov: 'Správy', odkaz: '/clanky', ikona: 'spravy', aj: ['/clanek'] },
@@ -392,19 +397,33 @@ const ZALOZKY: Array<{ nazov: string; odkaz: string; ikona: string; aj?: string[
 
 const SpodnaNavigacia: React.FC = () => {
   const { pathname } = useLocation();
+  const u = useUpravy();
+  // Vlastný odkaz záložky ruší predvolené podadresy (napr. /clanek pri Správach)
+  const zalozky = ZALOZKY.map((z, i) => {
+    if (i === 0) return z;
+    const odkaz = u.text(`zalozka_${i + 1}_odkaz`, z.odkaz);
+    return { ...z, nazov: u.text(`zalozka_${i + 1}_nazov`, z.nazov), odkaz, aj: odkaz === z.odkaz ? z.aj : [] };
+  });
   const aktivna = (z: (typeof ZALOZKY)[number]) =>
     z.odkaz === '/' ? pathname === '/' : [z.odkaz, ...(z.aj ?? [])].some((o) => pathname === o || pathname.startsWith(`${o}/`));
   return (
     <nav className="kl-zalozky" aria-label="Rýchla navigácia">
-      {ZALOZKY.map((z) => (
-        <Link key={z.odkaz} to={z.odkaz} className={`kl-zalozky__polozka${aktivna(z) ? ' is-aktivna' : ''}`} aria-current={aktivna(z) ? 'page' : undefined}>
-          <Ikona nazov={z.ikona} velkost={22} />
-          <span>{z.nazov}</span>
-        </Link>
-      ))}
+      {zalozky.map((z) =>
+        z.odkaz.startsWith('/') ? (
+          <Link key={z.nazov + z.odkaz} to={z.odkaz} className={`kl-zalozky__polozka${aktivna(z) ? ' is-aktivna' : ''}`} aria-current={aktivna(z) ? 'page' : undefined}>
+            <Ikona nazov={z.ikona} velkost={22} />
+            <span>{z.nazov}</span>
+          </Link>
+        ) : (
+          <a key={z.nazov + z.odkaz} href={z.odkaz} className="kl-zalozky__polozka" target="_blank" rel="noopener noreferrer">
+            <Ikona nazov={z.ikona} velkost={22} />
+            <span>{z.nazov}</span>
+          </a>
+        )
+      )}
       <button type="button" className="kl-zalozky__polozka" onClick={() => window.dispatchEvent(new Event('kl:menu'))}>
         <Ikona nazov="menu" velkost={22} />
-        <span>Menu</span>
+        <span>{u.text('zalozka_menu_nazov', 'Menu')}</span>
       </button>
     </nav>
   );
@@ -445,6 +464,7 @@ const SocialneIkony: React.FC = () => {
 export const Paticka: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const s = useNastaveniaSablony<NastaveniaRozlozenia>();
+  const u = useUpravy();
   const { polozky } = useMenuWebu();
   const kontakt = nastavenia.kontakt ?? { email: null, telefon: null, adresa: null };
   const gdpr = nastavenia.gdpr ?? {};
@@ -462,16 +482,16 @@ export const Paticka: React.FC = () => {
               <strong className="kl-paticka__nazov">{nastavenia.nazov}</strong>
             )}
             {text && <p>{text}</p>}
-            <SocialneIkony />
+            {u.zapnute('ukazat_siete_paticka') && <SocialneIkony />}
           </div>
           <div className="kl-paticka__stlpec">
-            <h2>Klub</h2>
+            <h2>{u.text('paticka_klub', 'Klub')}</h2>
             {polozky.slice(0, 5).map((p) => (
               <OdkazMenu key={p.id} polozka={p} />
             ))}
           </div>
           <div className="kl-paticka__stlpec">
-            <h2>Obsah</h2>
+            <h2>{u.text('paticka_obsah', 'Obsah')}</h2>
             <Link to="/matches">Zápasy</Link>
             <Link to="/clanky">Články</Link>
             <Link to="/videa">Videá</Link>
@@ -479,7 +499,7 @@ export const Paticka: React.FC = () => {
             {fanshop && <Odkaz to={fanshop}>Obchod</Odkaz>}
           </div>
           <div className="kl-paticka__stlpec">
-            <h2>Kontakt</h2>
+            <h2>{u.text('paticka_kontakt', 'Kontakt')}</h2>
             {kontakt.email && <a href={`mailto:${kontakt.email}`}>Napíšte nám</a>}
             {kontakt.telefon && <a href={`tel:${kontakt.telefon.replace(/\s+/g, '')}`}>{kontakt.telefon}</a>}
             {kontakt.adresa && <span>{kontakt.adresa}</span>}
@@ -489,7 +509,7 @@ export const Paticka: React.FC = () => {
         </div>
         <div className="kl-paticka__spodok">
           <span>
-            © {new Date().getFullYear()} {nastavenia.nazov}. Všetky práva vyhradené.
+            © {new Date().getFullYear()} {nastavenia.nazov}. {u.text('paticka_copyright', 'Všetky práva vyhradené.')}
           </span>
           <div className="kl-paticka__pravne">
             {gdpr.odkaz_zasad && <a href={gdpr.odkaz_zasad}>Ochrana osobných údajov</a>}

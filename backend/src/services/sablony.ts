@@ -71,14 +71,20 @@ const MAX_ROZBALENE = 40 * 1024 * 1024;
 
 // ===== Manifest =====
 
-export type TypNastavenia = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo';
-const TYPY_NASTAVENI: TypNastavenia[] = ['farba', 'text', 'dlhy_text', 'vyber', 'prepinac', 'obrazok', 'cislo'];
+export type TypNastavenia = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz';
+const TYPY_NASTAVENI: TypNastavenia[] = ['farba', 'text', 'dlhy_text', 'vyber', 'prepinac', 'obrazok', 'cislo', 'odkaz'];
+/** Najviac nastavení v jednej šablóne (skupiny ich v administrácii delia na záložky). */
+const MAX_NASTAVENI = 200;
+/** Odkaz: stránka webu (/...), iný web (https://), e-mail, telefón alebo kotva. */
+const VZOR_ODKAZU = /^(\/[^\s"'<>]*|https?:\/\/[^\s"'<>]+|mailto:[^\s"'<>]+|tel:[+\d\s()-]+|#[\w-]*)$/i;
 
 export interface NastavenieSablony {
   kluc: string;
   typ: TypNastavenia;
   menovka: string;
   napoveda?: string;
+  /** Skupina v administrácii (záložka), napr. „Úvod - zápasy" */
+  skupina?: string;
   predvolene?: string | number | boolean | null;
   moznosti?: Array<{ hodnota: string; popis: string }>;
   min?: number;
@@ -141,6 +147,8 @@ const overNastavenie = (n: any, i: number): NastavenieSablony => {
   const vysledok: NastavenieSablony = { kluc: n.kluc, typ: n.typ, menovka };
   const napoveda = kratkyText(n.napoveda, 300);
   if (napoveda) vysledok.napoveda = napoveda;
+  const skupina = kratkyText(n.skupina, 60);
+  if (skupina) vysledok.skupina = skupina;
 
   if (n.typ === 'vyber') {
     if (!Array.isArray(n.moznosti) || n.moznosti.length === 0 || n.moznosti.length > 30) {
@@ -200,8 +208,8 @@ export const overManifest = (surovy: unknown, ocakavanySlug?: string): ManifestS
   if (webAutora && !/^https?:\/\//i.test(webAutora)) webAutora = null;
 
   const nastavenia = m.nastavenia === undefined ? [] : m.nastavenia;
-  if (!Array.isArray(nastavenia) || nastavenia.length > 40) {
-    throw new ChybaSablony('Nastavenia šablóny musia byť zoznam (najviac 40 položiek)');
+  if (!Array.isArray(nastavenia) || nastavenia.length > MAX_NASTAVENI) {
+    throw new ChybaSablony(`Nastavenia šablóny musia byť zoznam (najviac ${MAX_NASTAVENI} položiek)`);
   }
   const overene = nastavenia.map(overNastavenie);
   const kluce = new Set<string>();
@@ -539,6 +547,10 @@ export const overHodnotu = (n: NastavenieSablony, v: unknown): { hodnota?: unkno
       if (n.max !== undefined && c > n.max) return { chyba: `najviac ${n.max}` };
       return { hodnota: c };
     }
+    case 'odkaz':
+      return typeof v === 'string' && v.trim().length <= 500 && VZOR_ODKAZU.test(v.trim())
+        ? { hodnota: v.trim() }
+        : { chyba: 'odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:' };
     case 'obrazok':
       // Obrázok z knižnice médií alebo z webu cez https
       return typeof v === 'string' && v.length <= 500 && /^(\/uploads\/[^\s"'()<>]+|https:\/\/[^\s"'()<>]+)$/.test(v)
