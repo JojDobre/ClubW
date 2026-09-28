@@ -1,5 +1,6 @@
 // Umiestnenie: frontend/src/i18n/index.ts
-// Jazyk administrácie - slovenčina, čeština, angličtina.
+// Jazyk administrácie - slovenčina, čeština, angličtina, poľština,
+// nemčina, španielčina a francúzština.
 //
 // AKO TO FUNGUJE: texty sa v kóde píšu po slovensky a obalia sa do tr():
 //   tr('Uložiť zmeny')
@@ -14,22 +15,41 @@
 //
 // Kontrola chýbajúcich prekladov: npm run preklady (priečinok frontend).
 
-export type Jazyk = 'sk' | 'cs' | 'en';
+export type Jazyk = 'sk' | 'cs' | 'en' | 'pl' | 'de' | 'es' | 'fr';
 
+/** Názvy jazykov v ich vlastnom jazyku - tak ich spozná každý. */
 export const JAZYKY: Array<{ kod: Jazyk; nazov: string }> = [
   { kod: 'sk', nazov: 'Slovenčina' },
   { kod: 'cs', nazov: 'Čeština' },
   { kod: 'en', nazov: 'English' },
+  { kod: 'pl', nazov: 'Polski' },
+  { kod: 'de', nazov: 'Deutsch' },
+  { kod: 'es', nazov: 'Español' },
+  { kod: 'fr', nazov: 'Français' },
 ];
 
-const LOKALITY: Record<Jazyk, string> = { sk: 'sk-SK', cs: 'cs-CZ', en: 'en-GB' };
+const LOKALITY: Record<Jazyk, string> = { sk: 'sk-SK', cs: 'cs-CZ', en: 'en-GB', pl: 'pl-PL', de: 'de-DE', es: 'es-ES', fr: 'fr-FR' };
+
+/**
+ * Poradie tvarov množného čísla v slovníku (oddelené |) podľa kategórií
+ * Intl.PluralRules: čeština 1 / 2-4 / 5+, poľština 1 / 2-4 / 5+ (many),
+ * ostatné 1 / viac.
+ */
+const TVARY: Record<Exclude<Jazyk, 'sk'>, string[]> = {
+  cs: ['one', 'few', 'other'],
+  pl: ['one', 'few', 'many'],
+  en: ['one', 'other'],
+  de: ['one', 'other'],
+  es: ['one', 'other'],
+  fr: ['one', 'other'],
+};
 
 export const KLUC_JAZYKA = 'clubw_jazyk';
 
 let aktualny: Jazyk = 'sk';
 let slovnik: Record<string, string> = {};
 
-export const jeJazyk = (j: unknown): j is Jazyk => j === 'sk' || j === 'cs' || j === 'en';
+export const jeJazyk = (j: unknown): j is Jazyk => JAZYKY.some((x) => x.kod === j);
 
 /**
  * Jazyk pri štarte administrácie: z minulej návštevy, inak predvolený
@@ -92,8 +112,8 @@ export const tr = (text: string, parametre?: Record<string, string | number | nu
 
 /**
  * Text podľa počtu: trn(3, '{n} hlas', '{n} hlasy', '{n} hlasov') → „3 hlasy".
- * Slovenské tvary: 1 / 2-4 / 5 a viac. Čeština má rovnaké tri tvary,
- * angličtina dva (1 / ostatné) - v slovníku sú oddelené znakom |.
+ * Slovenské tvary: 1 / 2-4 / 5 a viac. V slovníku sú tvary daného jazyka
+ * oddelené znakom | v poradí podľa TVARY (čeština a poľština tri, ostatné dva).
  */
 export const trn = (
   pocet: number,
@@ -110,6 +130,8 @@ export const trn = (
   const preklad = slovnik[`${jeden}|${dva}|${pat}`];
   if (!preklad) return dosad(pocet === 1 ? jeden : pocet >= 2 && pocet <= 4 ? dva : pat, hodnoty);
   const tvary = preklad.split('|');
-  const index = aktualny === 'en' ? (kategoria === 'one' ? 0 : 1) : kategoria === 'one' ? 0 : kategoria === 'few' ? 1 : 2;
-  return dosad(tvary[Math.min(index, tvary.length - 1)], hodnoty);
+  const poradie = TVARY[aktualny as Exclude<Jazyk, 'sk'>];
+  // Neznáma kategória (desatinné čísla, francúzske „many") = posledný tvar
+  const index = poradie.indexOf(kategoria);
+  return dosad(tvary[index >= 0 ? Math.min(index, tvary.length - 1) : tvary.length - 1], hodnoty);
 };

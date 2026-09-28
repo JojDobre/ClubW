@@ -8,7 +8,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Chyba, Filtre, HlavickaStranky, KartaVidea, NacitatDalsie, Nacitava, Obrazok, Prazdne, Sekcia, kategoriaVidea, nahladVidea, useOknoVidea } from '../casti';
-import { Ikona, dlzkaVidea, useApi, useTitulok, type Video } from '../spolocne';
+import { Ikona, dlzkaVidea, useApi, useTitulok, useUpravy, type Video } from '../spolocne';
 
 const NA_STRANU = 6;
 
@@ -30,6 +30,7 @@ const HlavneVideo: React.FC<{ video: Video; onPrehrat: (v: Video) => void }> = (
 };
 
 const Videa: React.FC = () => {
+  const u = useUpravy();
   const [parametre, setParametre] = useSearchParams();
   const zapas = parametre.get('zapas');
   const kategoria = parametre.get('kategoria') ?? '';
@@ -61,7 +62,7 @@ const Videa: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-videa-stranka">
-      <HlavickaStranky stitok="Obsah" nadpis="Videá">
+      <HlavickaStranky stitok={u.text('stranka_videa_stitok', 'Obsah')} nadpis={u.text('stranka_videa_nadpis', 'Videá')}>
         {zapas && (
           <Link to="/videa" className="kl-hlava__odkaz">
             Videá zo zápasu · zobraziť všetky

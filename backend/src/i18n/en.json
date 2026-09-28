@@ -351,7 +351,7 @@
  "Nahratých {0} súborov": "{0} files uploaded",
  "Nahrávať a mazať šablóny smie len správca": "Only an administrator may upload and delete themes",
  "Nastavenia klubu boli uložené": "The club settings have been saved",
- "Nastavenia šablóny musia byť zoznam (najviac 40 položiek)": "Theme settings must be a list (at most 40 items)",
+ "Nastavenia šablóny musia byť zoznam (najviac {0} položiek)": "Theme settings must be a list (at most {0} items)",
  "Nastavenia šablóny {0} boli uložené": "Settings of the theme {0} have been saved",
  "Nastavenie „{0}\" je v šablóne dvakrát": "The setting “{0}” is in the theme twice",
  "Načítaných {0} galérií": "{0} galleries loaded",
@@ -920,5 +920,6 @@
  "Pri tomto doručení vyplňte ulicu, mesto a PSČ": "For this delivery, fill in the street, city and postcode",
  "Pri doručení na adresu zadajte telefón pre kuriéra": "For delivery to an address, enter a phone number for the courier",
  "Neplatný kľúč oznámenia": "Invalid notification key",
- "Chýba číslo objednávky alebo variabilný symbol": "The order number or variable symbol is missing"
+ "Chýba číslo objednávky alebo variabilný symbol": "The order number or variable symbol is missing",
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "the link must start with / (a website page), https://, mailto: or tel:"
 }

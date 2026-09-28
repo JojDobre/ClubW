@@ -26,7 +26,7 @@ import {
   type UdajeZakaznika,
 } from '@clubw/jadro';
 import { Chyba, ChybaStranky, Filtre, HlavickaStranky, Nacitava, Obrazok, Prazdne, Sekcia } from '../casti';
-import { Ikona, obrazokUrl, useApi, useTitulok } from '../spolocne';
+import { Ikona, obrazokUrl, useApi, useTitulok, useUpravy } from '../spolocne';
 
 // ===== Spoločné =====
 
@@ -87,6 +87,7 @@ export const KartaProduktu: React.FC<{ produkt: ProduktObchodu; mena: string }> 
 // ===== /obchod =====
 
 export const Obchod: React.FC = () => {
+  const u = useUpravy();
   useTitulok('Fanshop');
   const { obchod, nacitava: nacitavaObchod } = useObchod();
   const [parametre, setParametre] = useSearchParams();
@@ -102,8 +103,8 @@ export const Obchod: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-obchod">
-      <HlavickaStranky stitok="Fanshop" nadpis={aktivna?.nazov ?? 'Oficiálny fanshop'}>
-        <p className="kl-hlava__popis">{aktivna?.popis || 'Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub.'}</p>
+      <HlavickaStranky stitok={u.text('stranka_obchod_stitok', 'Fanshop')} nadpis={aktivna?.nazov ?? u.text('stranka_obchod_nadpis', 'Oficiálny fanshop')}>
+        <p className="kl-hlava__popis">{aktivna?.popis || u.text('stranka_obchod_popis', 'Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub.')}</p>
       </HlavickaStranky>
 
       {(kategorie.data?.length ?? 0) > 1 && (

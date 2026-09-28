@@ -5,7 +5,7 @@
 import React from 'react';
 import { useNastavenia } from '@clubw/jadro';
 import { Chyba, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
-import { Ikona, obrazokUrl, skryObrazok, useApi, useTitulok } from '../spolocne';
+import { Ikona, obrazokUrl, skryObrazok, useApi, useTitulok, useUpravy } from '../spolocne';
 
 interface Sponzor {
   id: number;
@@ -25,6 +25,7 @@ interface Uroven {
 }
 
 const Sponzori: React.FC = () => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const sponzori = useApi<Sponzor[]>('/sponsors?limit=500');
   const urovne = useApi<Uroven[]>('/sponsor-levels');
@@ -44,8 +45,8 @@ const Sponzori: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-sponzori">
-      <HlavickaStranky stitok="Partneri" nadpis="Ďakujeme, že ste s nami">
-        <p className="kl-hlava__popis">Bez podpory partnerov by {nastavenia.nazov} nebol tým, čím je.</p>
+      <HlavickaStranky stitok={u.text('stranka_partneri_stitok', 'Partneri')} nadpis={u.text('stranka_partneri_nadpis', 'Ďakujeme, že ste s nami')}>
+        <p className="kl-hlava__popis">{u.text('stranka_partneri_popis', 'Bez podpory partnerov by {klub} nebol tým, čím je.')}</p>
       </HlavickaStranky>
       {sponzori.nacitava ? (
         <Nacitava text="Načítavam partnerov…" />

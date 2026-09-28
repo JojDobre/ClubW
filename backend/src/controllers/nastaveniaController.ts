@@ -4,6 +4,7 @@
 import { Request, Response } from 'express';
 import NastaveniaKlubu from '../models/NastaveniaKlubu';
 import { sanitizePlainText } from '../utils/sanitize';
+import { JAZYKY } from './authController';
 
 // Polia, ktoré smie správca meniť. Zoznam je zámerne úplný a explicitný -
 // bez neho by sa cez req.body dalo prepísať id alebo časové značky.
@@ -278,7 +279,7 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
         return;
       }
 
-      if (pole === 'jazyk_administracie' && !['sk', 'cs', 'en'].includes(String(hodnota))) {
+      if (pole === 'jazyk_administracie' && !JAZYKY.includes(String(hodnota))) {
         res.status(400).json({ success: false, message: 'Nepodporovaný jazyk administrácie' });
         return;
       }

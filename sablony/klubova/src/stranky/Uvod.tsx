@@ -21,6 +21,7 @@ import {
   obrazokUrl,
   useApi,
   useTitulok,
+  useUpravy,
   type Clanok,
   type Hrac,
   type Partner,
@@ -145,6 +146,7 @@ const Slider: React.FC<{ clanky: Clanok[]; stitok: string; nahradnaFotka: string
 // ===== Zápasy a výsledky =====
 
 const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ timy, vstupenky }) => {
+  const u = useUpravy();
   const [timId, setTimId] = useState<number | null>(timy[0]?.id ?? null);
   const pas = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -187,7 +189,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
       <div className="kl-zapasy__pozadie" aria-hidden="true" />
       <div className="kl-kontajner kl-zapasy__vnutro">
         <div className="kl-zapasy__hlava">
-          <h2 id="kl-zapasy-nadpis">Zápasy a výsledky</h2>
+          <h2 id="kl-zapasy-nadpis">{u.text('zapasy_nadpis', 'Zápasy a výsledky')}</h2>
           {timy.length > 1 && (
             <div className="kl-zapasy__timy" role="tablist" aria-label="Tím">
               {timy.map((t) => (
@@ -239,6 +241,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
 // ===== Články =====
 
 const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
+  const u = useUpravy();
   const [hlavny, ...ostatne] = clanky;
   const bocne = ostatne.slice(0, 3);
   const spodne = ostatne.slice(3, 7);
@@ -246,7 +249,7 @@ const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
   return (
     <section className="kl-sekcia kl-clanky" aria-labelledby="kl-clanky-nadpis">
       <div className="kl-kontajner">
-        <NadpisSekcie nadpis="Najnovšie články" odkaz="/clanky" id="kl-clanky-nadpis" />
+        <NadpisSekcie nadpis={u.text('clanky_nadpis', 'Najnovšie články')} odkaz="/clanky" id="kl-clanky-nadpis" />
         <div className="kl-clanky__horne">
           <Link to={`/clanek/${hlavny.slug}`} className="kl-clanok-hlavny">
             <Obrazok src={hlavny.obrazok} className="kl-clanok-hlavny__obrazok" />
@@ -256,7 +259,7 @@ const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
                 <MetaClanku clanok={hlavny} />
               </div>
               <span className="kl-tlacidlo-obrys">
-                Čítať viac
+                {u.text('text_citat_viac', 'Čítať viac')}
                 <Ikona nazov="sipka" velkost={14} />
               </span>
             </div>
@@ -299,6 +302,9 @@ const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
  */
 const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
   const { nastavenia } = useNastavenia();
+  const u = useUpravy();
+  const nadpis = u.text('fanshop_nadpis', 'Fanshop');
+  const kupit = u.text('fanshop_tlacidlo', 'Kúpiť');
   const zapnuty = Boolean(nastavenia.eshop?.zapnuty);
   const odporucane = useApi<ProduktObchodu[]>(zapnuty ? '/eshop/produkty?odporucane=1&limit=3' : null);
   const bezOdporucanych = zapnuty && !odporucane.nacitava && !odporucane.chyba && odporucane.data?.length === 0;
@@ -311,7 +317,7 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
     return (
       <section className="kl-sekcia kl-fanshop" aria-labelledby="kl-fanshop-nadpis">
         <div className="kl-kontajner">
-          <NadpisSekcie nadpis="Fanshop" odkaz="/obchod" id="kl-fanshop-nadpis" />
+          <NadpisSekcie nadpis={nadpis} odkaz="/obchod" id="kl-fanshop-nadpis" />
           <div className="kl-mriezka-3 kl-pas-mobil">
             {zObchodu.map((p) => (
               <div key={p.id} className="kl-produkt">
@@ -321,8 +327,8 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
                 <span className="kl-produkt__nazov">{p.nazov}</span>
                 <div className="kl-produkt__spodok">
                   <span className="kl-produkt__cena">{cenaText(p.cena, mena)}</span>
-                  <Link to={`/obchod/${p.slug}`} className="kl-tlacidlo kl-tlacidlo--tmave" aria-label={`Kúpiť ${p.nazov}`}>
-                    Kúpiť
+                  <Link to={`/obchod/${p.slug}`} className="kl-tlacidlo kl-tlacidlo--tmave" aria-label={`${kupit} ${p.nazov}`}>
+                    {kupit}
                   </Link>
                 </div>
               </div>
@@ -346,7 +352,7 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
   return (
     <section className="kl-sekcia kl-fanshop" aria-labelledby="kl-fanshop-nadpis">
       <div className="kl-kontajner">
-        <NadpisSekcie nadpis="Fanshop" odkaz={obchod} id="kl-fanshop-nadpis" />
+        <NadpisSekcie nadpis={nadpis} odkaz={obchod} id="kl-fanshop-nadpis" />
         <div className="kl-mriezka-3 kl-pas-mobil">
           {produkty.map((p) => (
             <div key={p.i} className="kl-produkt">
@@ -355,7 +361,7 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
                 <span className="kl-produkt__cena">{p.cena}</span>
                 {p.odkaz && (
                   <Odkaz to={p.odkaz} className="kl-tlacidlo kl-tlacidlo--tmave">
-                    Kúpiť
+                    {kupit}
                   </Odkaz>
                 )}
               </div>
@@ -370,6 +376,7 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
 // ===== Videá =====
 
 const Videa: React.FC<{ videa: Video[]; pozadie: string | null }> = ({ videa, pozadie }) => {
+  const u = useUpravy();
   const { otvor, okno } = useOknoVidea();
   if (videa.length === 0) return null;
   const vlastne = obrazokUrl(pozadie);
@@ -380,7 +387,7 @@ const Videa: React.FC<{ videa: Video[]; pozadie: string | null }> = ({ videa, po
       style={vlastne ? ({ '--kl-videa-pozadie': `url("${vlastne.replace(/"/g, '%22')}")` } as React.CSSProperties) : undefined}
     >
       <div className="kl-kontajner">
-        <NadpisSekcie nadpis="Videá" odkaz="/videa" svetly id="kl-videa-nadpis" />
+        <NadpisSekcie nadpis={u.text('videa_nadpis', 'Videá')} odkaz="/videa" svetly id="kl-videa-nadpis" />
         <div className="kl-mriezka-3 kl-pas-mobil">
           {videa.map((v) => {
             const dlzka = dlzkaVidea(v.dlzka);
@@ -465,12 +472,13 @@ const citajUspechy = (text: string | null) =>
     });
 
 const Uspechy: React.FC<{ text: string | null }> = ({ text }) => {
+  const u = useUpravy();
   const uspechy = citajUspechy(text);
   if (uspechy.length === 0) return null;
   return (
     <section className="kl-sekcia kl-uspechy" aria-label="Úspechy">
       <div className="kl-kontajner">
-        <NadpisStredovy nadpis="Úspechy" />
+        <NadpisStredovy nadpis={u.text('uspechy_nadpis', 'Úspechy')} />
         <div className="kl-uspechy__zoznam">
           {uspechy.map((u, i) => (
             <div key={i} className="kl-uspech">
@@ -499,13 +507,14 @@ const menoProfilu = (url: string, siet: string, nazovKlubu: string) => {
 };
 
 const SledujNas: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const siete = useSiete();
   if (siete.length === 0) return null;
   return (
     <section className="kl-sekcia kl-socialne" aria-labelledby="kl-socialne-nadpis">
       <div className="kl-kontajner">
-        <NadpisSekcie nadpis="Sleduj nás" svetly id="kl-socialne-nadpis" />
+        <NadpisSekcie nadpis={u.text('siete_nadpis', 'Sleduj nás')} svetly id="kl-socialne-nadpis" />
         <div className="kl-socialne__mriezka">
           {siete.map((siet) => {
             const pocet = String(s[`sledujuci_${siet.kluc}`] || '').trim();
@@ -535,6 +544,7 @@ const SledujNas: React.FC<{ s: Record<string, string | number | boolean | null> 
 const TONY = ['var(--kl-tmava)', 'var(--kl-akcent)', '#c8862a'];
 
 const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const karty = [1, 2, 3]
     .map((i) => ({
@@ -548,7 +558,7 @@ const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null>
   return (
     <section className="kl-sekcia kl-odkaz" aria-labelledby="kl-odkaz-nadpis">
       <div className="kl-kontajner">
-        <NadpisSekcie nadpis="Odkaz klubu" id="kl-odkaz-nadpis" />
+        <NadpisSekcie nadpis={u.text('odkazy_nadpis', 'Odkaz klubu')} id="kl-odkaz-nadpis" />
         <div className="kl-mriezka-3 kl-pas-mobil">
           {karty.map((k) => (
             <div key={k.i} className="kl-odkaz-karta">
@@ -564,7 +574,7 @@ const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null>
                 <span>{k.nazov}</span>
                 {k.odkaz && (
                   <Odkaz to={k.odkaz} className="kl-tlacidlo-obrys kl-tlacidlo-obrys--male">
-                    Objaviť
+                    {u.text('text_objavit', 'Objaviť')}
                     <Ikona nazov="sipka" velkost={12} />
                   </Odkaz>
                 )}
@@ -594,7 +604,8 @@ const Uvod: React.FC = () => {
   const clanky = useApi<Clanok[]>(`/articles?limit=${Math.max(pocetClankov, pocetSlidov)}`);
   const timy = useApi<Tim[]>('/teams');
   const videa = useApi<Video[]>('/videos?limit=3');
-  const partneri = useApi<Partner[]>(s.ukazat_partnerov ? '/sponsors' : null);
+  const u = useUpravy();
+  const partneri = useApi<Partner[]>(u.zapnute('ukazat_partnerov_uvod') ? '/sponsors' : null);
 
   const zoradeneTimy = useMemo(
     () => [...(timy.data ?? [])].sort((a, b) => (a.poradie ?? 0) - (b.poradie ?? 0) || a.id - b.id),
@@ -614,18 +625,19 @@ const Uvod: React.FC = () => {
       ) : (
         <Slider clanky={slidy} stitok={s.uvod_stitok || 'Najnovšie články'} nahradnaFotka={s.uvod_fotka} />
       )}
-      {timyZapasov.length > 0 ? (
-        <ZapasyAVysledky timy={timyZapasov} vstupenky={(s.vstupenky_odkaz || '').trim() || null} />
-      ) : (
-        <div className="kl-zapasy kl-zapasy--prazdne" aria-hidden="true" />
-      )}
-      <NajnovsieClanky clanky={(clanky.data ?? []).slice(0, pocetClankov)} />
-      <Fanshop s={s} />
-      <Videa videa={videa.data ?? []} pozadie={s.videa_pozadie} />
-      {timHracov && <Hraci tim={timHracov} nadpis={(s.hraci_nadpis || '').trim() || timHracov.nazov} />}
+      {u.zapnute('ukazat_zapasy') &&
+        (timyZapasov.length > 0 ? (
+          <ZapasyAVysledky timy={timyZapasov} vstupenky={(s.vstupenky_odkaz || '').trim() || null} />
+        ) : (
+          <div className="kl-zapasy kl-zapasy--prazdne" aria-hidden="true" />
+        ))}
+      {u.zapnute('ukazat_clanky') && <NajnovsieClanky clanky={(clanky.data ?? []).slice(0, pocetClankov)} />}
+      {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      {u.zapnute('ukazat_videa') && <Videa videa={videa.data ?? []} pozadie={s.videa_pozadie} />}
+      {u.zapnute('ukazat_hracov') && timHracov && <Hraci tim={timHracov} nadpis={(s.hraci_nadpis || '').trim() || timHracov.nazov} />}
       <Uspechy text={s.uspechy} />
-      <SledujNas s={s} />
-      <OdkazKlubu s={s} />
+      {u.zapnute('ukazat_siete') && <SledujNas s={s} />}
+      {u.zapnute('ukazat_odkazy') && <OdkazKlubu s={s} />}
       <Partneri partneri={partneri.data ?? []} />
     </div>
   );

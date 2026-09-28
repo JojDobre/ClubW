@@ -5,11 +5,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Chyba, HlavickaStranky, Nacitava, Prazdne, Sekcia, TabulkaSutaze, vyrezTabulky } from '../casti';
-import { Ikona, useApi, useTitulok, type Liga, type RiadokTabulky } from '../spolocne';
+import { Ikona, useApi, useTitulok, useUpravy, type Liga, type RiadokTabulky } from '../spolocne';
 
 export const TYPY_SUTAZI: Record<string, string> = { sutaz: 'Súťaž', pohar: 'Pohár', priatelska: 'Prípravné zápasy' };
 
 const KartaLigy: React.FC<{ liga: Liga }> = ({ liga }) => {
+  const u = useUpravy();
   const tabulka = useApi<RiadokTabulky[]>(liga.format !== 'turnaj' ? `/leagues/${liga.id}/table` : null);
   const riadky = tabulka.data ?? [];
   return (
@@ -20,7 +21,7 @@ const KartaLigy: React.FC<{ liga: Liga }> = ({ liga }) => {
           <h2>{liga.nazov}</h2>
         </div>
         <Link to={`/leagues/${liga.id}`} className="kl-tlacidlo-obrys kl-tlacidlo-obrys--male">
-          Detail
+          {u.text('text_detail', 'Detail')}
           <Ikona nazov="sipka" velkost={12} />
         </Link>
       </div>
@@ -36,12 +37,13 @@ const KartaLigy: React.FC<{ liga: Liga }> = ({ liga }) => {
 };
 
 const Ligy: React.FC = () => {
+  const u = useUpravy();
   const ligy = useApi<Liga[]>('/leagues');
   useTitulok('Súťaže a tabuľky');
 
   return (
     <div className="kl-stranka kl-ligy">
-      <HlavickaStranky stitok="Súťaže" nadpis="Tabuľky" />
+      <HlavickaStranky stitok={u.text('stranka_ligy_stitok', 'Súťaže')} nadpis={u.text('stranka_ligy_nadpis', 'Tabuľky')} />
       <Sekcia className="kl-sekcia--hore kl-sekcia--mriezka">
         {ligy.nacitava ? (
           <Nacitava text="Načítavam súťaže…" />

@@ -30,6 +30,35 @@ beforeAll(() => {
 });
 afterAll(() => fs.rmSync(koren, { recursive: true, force: true }));
 
+describe('skupiny a odkazy v nastaveniach', () => {
+  it('prenesie skupinu a overí odkaz', () => {
+    const m = overManifest({
+      ...zakladny,
+      nastavenia: [{ kluc: 'vstupenky', typ: 'odkaz', menovka: 'Vstupenky', skupina: 'Úvod - zápasy', predvolene: '/vstupenky' }],
+    });
+    expect(m.nastavenia[0].skupina).toBe('Úvod - zápasy');
+    const n = m.nastavenia[0];
+    for (const ok of ['/kontakt', 'https://listky.sk/fk', 'mailto:info@klub.sk', 'tel:+421 900 123 456', '#kontakt']) {
+      expect(overHodnotu(n, ok).hodnota).toBe(ok);
+    }
+    for (const zle of ['javascript:alert(1)', 'kontakt', 'https://a b', '/"><script>']) {
+      expect(overHodnotu(n, zle).chyba).toBeTruthy();
+    }
+  });
+  it('dovolí až 200 nastavení', () => {
+    const nastavenia = Array.from({ length: 200 }, (_, i) => ({ kluc: `pole_${i}`, typ: 'text', menovka: `Pole ${i}` }));
+    expect(overManifest({ ...zakladny, nastavenia }).nastavenia).toHaveLength(200);
+    expect(() => overManifest({ ...zakladny, nastavenia: [...nastavenia, { kluc: 'navyse', typ: 'text', menovka: 'X' }] })).toThrow(ChybaSablony);
+  });
+  it('vstavané šablóny majú platný manifest', () => {
+    const korenRepo = path.resolve(__dirname, '../../../sablony');
+    for (const slug of ['klubova', 'moderna', 'stadion', 'zakladna']) {
+      const surovy = JSON.parse(fs.readFileSync(path.join(korenRepo, slug, 'sablona.json'), 'utf8'));
+      expect(() => overManifest(surovy, slug)).not.toThrow();
+    }
+  });
+});
+
 describe('overManifest', () => {
   it('prijme platný manifest', () => {
     const m = overManifest({ ...zakladny, nastavenia: [{ kluc: 'akcent', typ: 'farba', menovka: 'Akcent', predvolene: '#f59e0b' }] });

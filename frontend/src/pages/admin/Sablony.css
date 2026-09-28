@@ -31,7 +31,28 @@
 .cw-sab__navod { margin: var(--sp-5) 0 0; color: var(--muted); font-size: var(--fs-sm); line-height: 1.5; }
 .cw-sab__navod code { background: var(--card2); padding: 1px 5px; border-radius: 4px; }
 
-.cw-sab__formular { display: flex; flex-direction: column; gap: var(--sp-4); }
+.cw-sab__formular { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.cw-sab__skupiny { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+.cw-sab__bocne { position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.cw-sab__zalozky { display: flex; flex-direction: column; gap: 2px; }
+.cw-sab__zalozka {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  padding: 8px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); text-align: left;
+}
+.cw-sab__zalozka:hover { background: var(--card2); }
+.cw-sab__zalozka.is-aktivna { background: var(--pri-soft); color: var(--pri); font-weight: 600; }
+.cw-sab__zalozka small { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.cw-sab__nadpis-skupiny { margin: 0; font-family: var(--font-head); font-size: var(--fs-md); color: var(--text); }
+.cw-sab__pole { display: flex; flex-direction: column; gap: 4px; }
+.cw-sab__pole-skupina { color: var(--muted); font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.cw-sab__prazdne { margin: 0; color: var(--muted); }
+@media (max-width: 760px) {
+  .cw-sab__skupiny { grid-template-columns: minmax(0, 1fr); }
+  .cw-sab__bocne { position: static; }
+  .cw-sab__zalozky { flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 6px; }
+  .cw-sab__zalozka { width: auto; flex-shrink: 0; white-space: nowrap; border: 1px solid var(--border); }
+}
 .cw-sab__farba { display: flex; flex-direction: column; gap: 6px; }
 .cw-sab__farba label { font-weight: 600; font-size: var(--fs-sm); color: var(--text); }
 .cw-sab__farba small { color: var(--muted); font-size: var(--fs-xs); }

@@ -7,7 +7,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Chyba, Filtre, HlavickaStranky, HlavnyClanok, KartaClanku, NacitatDalsie, Nacitava, Prazdne, Sekcia } from '../casti';
-import { useApi, useStrankovanyZoznam, useTitulok, type Clanok } from '../spolocne';
+import { useApi, useStrankovanyZoznam, useTitulok, type Clanok, useUpravy } from '../spolocne';
 
 interface Rubrika {
   id: number;
@@ -20,6 +20,7 @@ const NA_STRANU = 9;
 const STLPCE = 4;
 
 const Clanky: React.FC = () => {
+  const u = useUpravy();
   const [parametre, setParametre] = useSearchParams();
   const rubrika = parametre.get('rubrika') ?? '';
   const hladat = (parametre.get('hladat') ?? '').trim();
@@ -48,7 +49,7 @@ const Clanky: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-novinky">
-      <HlavickaStranky stitok={hladat ? 'Hľadanie' : 'Aktuality'} nadpis={hladat ? `„${hladat}"` : 'Novinky'} />
+      <HlavickaStranky stitok={hladat ? 'Hľadanie' : u.text('stranka_clanky_stitok', 'Aktuality')} nadpis={hladat ? `„${hladat}"` : u.text('stranka_clanky_nadpis', 'Novinky')} />
 
       <Sekcia className="kl-sekcia--filtre">
         <Filtre

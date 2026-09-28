@@ -6,7 +6,7 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { NenajdenyObsah } from './Nenajdena';
 import { Chyba, ChybaStranky, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
-import { Erb, Ikona, datum, useApi, useTitulok } from '../spolocne';
+import { Erb, Ikona, datum, useApi, useTitulok, useUpravy } from '../spolocne';
 
 interface TimTurnaja {
   nazov: string;
@@ -71,11 +71,12 @@ const ZapasVPavuku: React.FC<{ z: ZapasPavuka }> = ({ z }) => (
 );
 
 const ZoznamTurnajov: React.FC = () => {
+  const u = useUpravy();
   const turnaje = useApi<Turnaj[]>('/tournaments');
   useTitulok('Turnaje');
   return (
     <div className="kl-stranka kl-turnaje">
-      <HlavickaStranky stitok="Súťaže" nadpis="Turnaje" />
+      <HlavickaStranky stitok={u.text('stranka_turnaje_stitok', 'Súťaže')} nadpis={u.text('stranka_turnaje_nadpis', 'Turnaje')} />
       <Sekcia className="kl-sekcia--hore kl-sekcia--mriezka">
         {turnaje.nacitava ? (
           <Nacitava text="Načítavam turnaje…" />

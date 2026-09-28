@@ -1,7 +1,7 @@
 // Umiestnenie: backend/src/i18n/preklad.ts
 // Preklad hlášok servera do jazyka administrácie.
 //
-// Administrácia posiela hlavičku X-Jazyk (cs, en). Hlášky v odpovedi
+// Administrácia posiela hlavičku X-Jazyk (cs, en, pl, de, es, fr). Hlášky v odpovedi
 // (message, errors) sa preložia podľa slovníka - slovenský text je kľúčom,
 // rovnako ako na frontende. Kontroléry tak ostávajú bez zmeny a píšu
 // hlášky po slovensky.
@@ -15,6 +15,10 @@
 import { Request, Response, NextFunction } from 'express';
 import en from './en.json';
 import cs from './cs.json';
+import pl from './pl.json';
+import de from './de.json';
+import es from './es.json';
+import fr from './fr.json';
 
 type Slovnik = Record<string, string>;
 
@@ -52,7 +56,9 @@ const priprav = (slovnik: Slovnik): PripravenySlovnik => {
   return { presne, vzory };
 };
 
-const SLOVNIKY: Record<string, PripravenySlovnik> = { en: priprav(en as Slovnik), cs: priprav(cs as Slovnik) };
+const SLOVNIKY: Record<string, PripravenySlovnik> = Object.fromEntries(
+  Object.entries({ en, cs, pl, de, es, fr }).map(([j, s]) => [j, priprav(s as Slovnik)])
+);
 
 /** Preloží jednu hlášku; neznámu vráti bez zmeny. */
 export const prelozHlasku = (text: string, jazyk: string): string => {

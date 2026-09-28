@@ -2,9 +2,9 @@
 // Spoločné súčasti šablóny Klubová: načítanie dát, typy z verejného API,
 // formáty dátumov, erby tímov, ikony a nadpis sekcie.
 
-import React, { useEffect, useState, type ReactNode } from 'react';
+import React, { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { apiUrl, skusPresmerovat, souborUrl, useNastavenia } from '@clubw/jadro';
+import { apiUrl, skusPresmerovat, souborUrl, useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 
 // ===== Typy dát z verejného API =====
 
@@ -303,6 +303,31 @@ export const useMetaPopis = (popis: string | null | undefined) => {
   }, [popis]);
 };
 
+/**
+ * Texty, odkazy a prepínače z nastavení šablóny (Šablóny → Klubová →
+ * Prispôsobiť). Prázdny text znamená predvolený text šablóny, v texte
+ * sa {klub} nahradí názvom klubu.
+ *
+ * @example
+ *   const u = useUpravy();
+ *   u.zapnute('ukazat_videa') && <h2>{u.text('videa_nadpis', 'Videá')}</h2>
+ */
+export const useUpravy = () => {
+  const s = useNastaveniaSablony();
+  const { nastavenia } = useNastavenia();
+  const text = useCallback(
+    (kluc: string, predvolene: string) => {
+      const v = s[kluc];
+      const t = typeof v === 'string' && v.trim() ? v.trim() : predvolene;
+      return t.replace(/\{klub\}/g, nastavenia.nazov);
+    },
+    [s, nastavenia.nazov]
+  );
+  /** Prepínač; chýbajúca hodnota (staršia šablóna) = predvolená. */
+  const zapnute = useCallback((kluc: string, predvolene = true) => (typeof s[kluc] === 'boolean' ? (s[kluc] as boolean) : predvolene), [s]);
+  return { s, text, zapnute };
+};
+
 /** Titulok karty prehliadača. */
 export const useTitulok = (titulok: string | null | undefined) => {
   const { nastavenia } = useNastavenia();
@@ -559,17 +584,20 @@ export const Odkaz: React.FC<{ to: string; className?: string; children: ReactNo
   );
 
 /** Nadpis sekcie: VEĽKÝ NADPIS | Zobraziť všetky (podľa návrhu). */
-export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; svetly?: boolean; id?: string }> = ({ nadpis, odkaz, svetly = false, id }) => (
+export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; svetly?: boolean; id?: string }> = ({ nadpis, odkaz, svetly = false, id }) => {
+  const u = useUpravy();
+  return (
   <div className={`kl-nadpis${svetly ? ' kl-nadpis--svetly' : ''}`}>
     <h2 id={id}>{nadpis}</h2>
     <span className="kl-nadpis__ciara" aria-hidden="true" />
     {odkaz && (
       <Odkaz to={odkaz} className="kl-nadpis__odkaz">
-        Zobraziť všetky
+        {u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
       </Odkaz>
     )}
   </div>
-);
+  );
+};
 
 /** Nadpis medzi dvoma čiarami (Úspechy, Partneri). */
 export const NadpisStredovy: React.FC<{ nadpis: string }> = ({ nadpis }) => (

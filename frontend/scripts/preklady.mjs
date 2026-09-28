@@ -1,7 +1,7 @@
 // Umiestnenie: frontend/scripts/preklady.mjs
 // Kontrola prekladov administrácie.
 //
-//   npm run preklady                    prehľad: koľko textov chýba v en/cs
+//   npm run preklady                    prehľad: koľko textov chýba v en/cs/pl/de/es/fr
 //   npm run preklady -- --kontrola      skončí chybou, ak niečo chýba (CI)
 //   npm run preklady -- --chybajuce x.json   zapíše chýbajúce texty do súboru
 //
@@ -17,7 +17,9 @@ import ts from 'typescript';
 const koren = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(koren, 'src');
 const I18N = path.join(SRC, 'i18n');
-const JAZYKY = ['en', 'cs'];
+const JAZYKY = ['en', 'cs', 'pl', 'de', 'es', 'fr'];
+// Počet tvarov množného čísla (trn) v preklade
+const TVAROV = { en: 2, cs: 3, pl: 3, de: 2, es: 2, fr: 2 };
 const argumenty = process.argv.slice(2);
 
 const subory = [];
@@ -31,6 +33,7 @@ const prejdi = (d) => {
 prejdi(SRC);
 
 const kluce = new Map(); // kľúč -> prvé miesto výskytu
+const mnozne = new Set(); // kľúče z trn() - tvary oddelené |
 const dynamicke = [];
 for (const subor of subory) {
   const zdroj = fs.readFileSync(subor, 'utf8');
@@ -46,7 +49,7 @@ for (const subor of subory) {
         else dynamicke.push(miesto);
       } else if (u.expression.text === 'trn') {
         const [a, b, c] = u.arguments.slice(1, 4).map(text);
-        if (a !== null && b !== null && c !== null) { const k = `${a}|${b}|${c}`; if (!kluce.has(k)) kluce.set(k, miesto); }
+        if (a !== null && b !== null && c !== null) { const k = `${a}|${b}|${c}`; mnozne.add(k); if (!kluce.has(k)) kluce.set(k, miesto); }
       }
     }
     ts.forEachChild(u, navstiv);
@@ -62,7 +65,14 @@ for (const j of JAZYKY) {
   const chyb = [...kluce.keys()].filter((k) => !(k in slovnik) || !slovnik[k]);
   const nepouzite = Object.keys(slovnik).filter((k) => !kluce.has(k));
   // Parametre {x} musia v preklade ostať, inak by sa hodnota stratila
-  const zleParametre = [...kluce.keys()].filter((k) => slovnik[k] && [...k.matchAll(/\{(\w+)\}/g)].some((m) => !slovnik[k].includes(`{${m[1]}}`)));
+  const zleParametre = [...kluce.keys()].filter((k) => {
+    if (!slovnik[k]) return false;
+    // trn: každý tvar musí mať svoje parametre a tvarov musí byť správny počet
+    const tvary = mnozne.has(k) ? slovnik[k].split('|') : [slovnik[k]];
+    if (mnozne.has(k) && tvary.length !== TVAROV[j]) return true;
+    const parametre = new Set([...k.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).filter((p) => p !== 'n'));
+    return tvary.some((t) => [...parametre].some((p) => !t.includes(`{${p}}`)));
+  });
   console.log(`${j}: ${kluce.size} textov, chýba ${chyb.length}, nepoužité ${nepouzite.length}, zlé parametre ${zleParametre.length}`);
   zleParametre.slice(0, 20).forEach((k) => console.log(`   parameter: ${k} → ${slovnik[k]}`));
   if (argumenty.includes('--podrobne')) chyb.forEach((k) => console.log(`   chýba: ${k}  (${kluce.get(k)})`));
@@ -72,6 +82,6 @@ for (const j of JAZYKY) {
 const i = argumenty.indexOf('--chybajuce');
 if (i >= 0) fs.writeFileSync(argumenty[i + 1], JSON.stringify(chybajuce, null, 1));
 if (argumenty.includes('--kontrola') && chyba) {
-  console.error('Chýbajú preklady - doplňte ich do src/i18n/en.json a cs.json');
+  console.error(`Chýbajú preklady - doplňte ich do src/i18n/${JAZYKY.join('/')}.json`);
   process.exit(1);
 }

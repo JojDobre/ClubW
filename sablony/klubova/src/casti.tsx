@@ -28,6 +28,7 @@ import {
   skryObrazok,
   stavZapasu,
   useApi,
+  useUpravy,
   type Clanok,
   type ClenTimu,
   type Hrac,
@@ -181,19 +182,22 @@ export const KartaClanku: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => (
 );
 
 /** Veľký článok: fotka vľavo, nadpis a „Čítať viac" vpravo. */
-export const HlavnyClanok: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => (
+export const HlavnyClanok: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => {
+  const u = useUpravy();
+  return (
   <Link to={`/clanek/${c.slug}`} className="kl-hlavny-clanok">
     <Obrazok src={c.obrazok} className="kl-hlavny-clanok__obrazok" />
     <div className="kl-hlavny-clanok__text">
       <MetaClanku clanok={c} />
       <h2>{c.nazov}</h2>
       <span className="kl-tlacidlo-obrys">
-        Čítať viac
+        {u.text('text_citat_viac', 'Čítať viac')}
         <Ikona nazov="sipka" velkost={14} />
       </span>
     </div>
   </Link>
-);
+  );
+};
 
 // ===== Videá =====
 
@@ -294,6 +298,7 @@ const STAV_KARTY: Record<string, { text: string; trieda: string }> = {
 
 /** Karta zápasu (z úvodnej stránky): doma/vonku, dátum, tímy, skóre alebo čas. */
 export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> = ({ zapas: z, vstupenky }) => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const stav = stavZapasu(z);
   const odohrany = stav === 'ukonceny' || (stav === 'prebieha' && maVysledok(z));
@@ -331,11 +336,11 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
         )}
         {!odohrany && vstupenky && (
           <Odkaz to={vstupenky} className="kl-zapas__tlacidlo">
-            Vstupenky
+            {u.text('vstupenky_text', 'Vstupenky')}
           </Odkaz>
         )}
         <Link to={`/matches/${z.id}`} className={`kl-zapas__tlacidlo${!z.video_url && (odohrany || !vstupenky) ? ' kl-zapas__tlacidlo--tmave' : ''}`}>
-          Detail
+          {u.text('text_detail', 'Detail')}
         </Link>
       </div>
     </article>
@@ -363,6 +368,7 @@ export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ 
 
 /** Partneri: hlavní vo veľkom rade, ostatní v menšom (spodok každej stránky). */
 export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
+  const u = useUpravy();
   if (partneri.length === 0) return null;
   const hlavni = partneri.filter((p) => p.uroven && HLAVNE_UROVNE.includes(p.uroven));
   const prvi = (hlavni.length > 0 ? hlavni : partneri).slice(0, 4);
@@ -370,7 +376,7 @@ export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
   return (
     <section className="kl-sekcia kl-partneri" aria-label="Partneri">
       <div className="kl-kontajner">
-        <NadpisStredovy nadpis="Partneri" />
+        <NadpisStredovy nadpis={u.text('partneri_nadpis', 'Partneri')} />
         <div className="kl-partneri__rad kl-partneri__rad--hlavny">
           {prvi.map((p) => (
             <LogoPartnera key={p.id} partner={p} velke />
@@ -384,7 +390,7 @@ export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
           </div>
         )}
         <Link to="/sponzori" className="kl-partneri__vsetci">
-          Všetci partneri
+          {u.text('text_vsetci_partneri', 'Všetci partneri')}
         </Link>
       </div>
     </section>

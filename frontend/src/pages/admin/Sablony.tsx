@@ -6,7 +6,7 @@
 // upraví jej nastavenia (farby, fotka na úvode...) a nahrá novú šablónu
 // ako balík .zip. Ako šablónu vytvoriť, popisuje sablony/README.md.
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Badge,
   Button,
@@ -93,6 +93,17 @@ const PoleNastavenia: React.FC<{
           onChange={(e) => onZmena(e.target.value)}
         />
       );
+    case 'odkaz':
+      return (
+        <Input
+          menovka={n.menovka}
+          napoveda={n.napoveda}
+          value={typeof hodnota === 'string' ? hodnota : ''}
+          onChange={(e) => onZmena(e.target.value)}
+          placeholder={tr('/stranka alebo https://…')}
+          inputMode="url"
+        />
+      );
     case 'cislo':
       return (
         <Input
@@ -115,6 +126,83 @@ const PoleNastavenia: React.FC<{
         />
       );
   }
+};
+
+/** Nastavenia rozdelené podľa skupín zo sablona.json (poradie ako v súbore). */
+const podlaSkupin = (nastavenia: NastavenieSablony[]): Array<{ nazov: string; polozky: NastavenieSablony[] }> => {
+  const skupiny: Array<{ nazov: string; polozky: NastavenieSablony[] }> = [];
+  for (const n of nastavenia) {
+    const nazov = n.skupina || tr('Všeobecné');
+    const skupina = skupiny.find((s) => s.nazov === nazov);
+    if (skupina) skupina.polozky.push(n);
+    else skupiny.push({ nazov, polozky: [n] });
+  }
+  return skupiny;
+};
+
+/**
+ * Formulár prispôsobenia: pri viacerých skupinách záložky vľavo (na mobile
+ * posúvateľný pás), vyhľadávanie prejde všetky nastavenia naraz.
+ */
+const FormularNastaveni: React.FC<{
+  nastavenia: NastavenieSablony[];
+  hodnoty: Record<string, HodnotaNastaveniaSablony>;
+  onZmena: (kluc: string, h: HodnotaNastaveniaSablony) => void;
+}> = ({ nastavenia, hodnoty, onZmena }) => {
+  const skupiny = useMemo(() => podlaSkupin(nastavenia), [nastavenia]);
+  const [aktivna, setAktivna] = useState(0);
+  const [hladat, setHladat] = useState('');
+  const text = hladat.trim().toLowerCase();
+  const najdene = text ? nastavenia.filter((n) => `${n.menovka} ${n.napoveda ?? ''} ${n.skupina ?? ''}`.toLowerCase().includes(text)) : null;
+  const polia = (zoznam: NastavenieSablony[], soSkupinou = false) =>
+    zoznam.map((n) => (
+      <div key={n.kluc} className="cw-sab__pole">
+        {soSkupinou && n.skupina && <span className="cw-sab__pole-skupina">{n.skupina}</span>}
+        <PoleNastavenia n={n} hodnota={hodnoty[n.kluc] ?? null} onZmena={(h) => onZmena(n.kluc, h)} />
+      </div>
+    ));
+
+  if (skupiny.length <= 1) return <div className="cw-sab__formular">{polia(nastavenia)}</div>;
+
+  const skupina = skupiny[Math.min(aktivna, skupiny.length - 1)];
+  return (
+    <div className="cw-sab__skupiny">
+      <div className="cw-sab__bocne">
+        <Input value={hladat} onChange={(e) => setHladat(e.target.value)} placeholder={tr('Hľadať nastavenie…')} aria-label={tr('Hľadať nastavenie')} />
+        <nav className="cw-sab__zalozky" aria-label={tr('Skupiny nastavení')}>
+          {skupiny.map((s, i) => (
+            <button
+              key={s.nazov}
+              type="button"
+              className={`cw-sab__zalozka${!najdene && i === aktivna ? ' is-aktivna' : ''}`}
+              aria-current={!najdene && i === aktivna ? 'true' : undefined}
+              onClick={() => {
+                setAktivna(i);
+                setHladat('');
+              }}
+            >
+              <span>{s.nazov}</span>
+              <small>{s.polozky.length}</small>
+            </button>
+          ))}
+        </nav>
+      </div>
+      <div className="cw-sab__formular">
+        {najdene ? (
+          najdene.length ? (
+            polia(najdene, true)
+          ) : (
+            <p className="cw-sab__prazdne">{tr('Žiadne nastavenie nezodpovedá hľadaniu')}</p>
+          )
+        ) : (
+          <>
+            <h3 className="cw-sab__nadpis-skupiny">{skupina.nazov}</h3>
+            {polia(skupina.polozky)}
+          </>
+        )}
+      </div>
+    </div>
+  );
 };
 
 /** Otvorí web v novej karte s inou šablónou - vidí ju len správca. */
@@ -350,7 +438,7 @@ export const Sablony: React.FC = () => {
         onZavri={() => setUpravovana(null)}
         nadpis={upravovana ? tr('Prispôsobiť: {nazov}', { nazov: upravovana.nazov }) : ''}
         podnadpis={upravovana?.aktivna ? tr('Zmeny sa na webe prejavia hneď po uložení.') : tr('Šablóna nie je aktívna - zmeny uvidíte v náhľade.')}
-        sirka="md"
+        sirka={upravovana && new Set(upravovana.nastavenia.map((n) => n.skupina ?? '')).size > 1 ? 'lg' : 'md'}
         pata={
           <>
             <Button variant="ghost" onClick={obnovPredvolene} disabled={uklada}>
@@ -366,11 +454,12 @@ export const Sablony: React.FC = () => {
         }
       >
         {upravovana && (
-          <div className="cw-sab__formular">
-            {upravovana.nastavenia.map((n) => (
-              <PoleNastavenia key={n.kluc} n={n} hodnota={hodnoty[n.kluc] ?? null} onZmena={(h) => setHodnoty((v) => ({ ...v, [n.kluc]: h }))} />
-            ))}
-          </div>
+          <FormularNastaveni
+            key={upravovana.slug}
+            nastavenia={upravovana.nastavenia}
+            hodnoty={hodnoty}
+            onZmena={(kluc, h) => setHodnoty((v) => ({ ...v, [kluc]: h }))}
+          />
         )}
       </Modal>
 

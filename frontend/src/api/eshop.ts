@@ -3,6 +3,7 @@
 // nastavenia obchodu a objednávky.
 
 import api, { type Zoznam } from '../app/apiKlient';
+import { lokalita } from '../i18n';
 
 export interface HodnotaVlastnosti {
   id: string;
@@ -188,6 +189,6 @@ export const eshopObjednavkyApi = {
   ) => api.uprav<EshopObjednavka>(`/admin/eshop/objednavky/${id}`, udaje),
 };
 
-/** „49,90 €" */
+/** „49,90 €" - desatinná čiarka/bodka podľa jazyka administrácie */
 export const cenaText = (suma: number | null | undefined, mena = 'EUR') =>
-  `${Number(suma ?? 0).toLocaleString('sk-SK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${mena === 'EUR' ? '€' : mena}`;
+  `${Number(suma ?? 0).toLocaleString(lokalita(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${mena === 'EUR' ? '€' : mena}`;

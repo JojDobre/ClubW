@@ -86,7 +86,7 @@ for (const k of JSON.parse(fs.readFileSync(path.join(I18N, 'dalsie.json'), 'utf8
 
 let chyba = false;
 const chybajuce = {};
-for (const j of ['en', 'cs']) {
+for (const j of ['en', 'cs', 'pl', 'de', 'es', 'fr']) {
   const slovnik = JSON.parse(fs.readFileSync(path.join(I18N, `${j}.json`), 'utf8'));
   const chyb = [...kluce.keys()].filter((k) => !slovnik[k]);
   const zleParametre = [...kluce.keys()].filter((k) => slovnik[k] && [...k.matchAll(/\{(\d+)\}/g)].some((m) => !slovnik[k].includes(`{${m[1]}}`)));

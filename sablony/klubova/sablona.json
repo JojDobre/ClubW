@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.2.0",
+  "verzia": "1.3.0",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -13,6 +13,7 @@
       "kluc": "akcent",
       "typ": "farba",
       "menovka": "Farba zvýraznenia",
+      "skupina": "Farby a písmo",
       "napoveda": "Tlačidlá, štítky, čísla a odkazy.",
       "predvolene": "#ff4d4d"
     },
@@ -20,33 +21,132 @@
       "kluc": "tmava",
       "typ": "farba",
       "menovka": "Tmavá farba",
+      "skupina": "Farby a písmo",
       "napoveda": "Hlavička, úvod, pätička a tmavé sekcie.",
       "predvolene": "#0b0b10"
+    },
+    {
+      "kluc": "pozadie",
+      "typ": "farba",
+      "menovka": "Farba pozadia stránok",
+      "skupina": "Farby a písmo",
+      "napoveda": "Svetlé plochy stránok a sekcií.",
+      "predvolene": "#FFFFFF"
+    },
+    {
+      "kluc": "pismo",
+      "typ": "vyber",
+      "menovka": "Písmo nadpisov",
+      "skupina": "Farby a písmo",
+      "predvolene": "poppins",
+      "moznosti": [
+        {
+          "hodnota": "poppins",
+          "popis": "Poppins (predvolené)"
+        },
+        {
+          "hodnota": "inter",
+          "popis": "Inter"
+        },
+        {
+          "hodnota": "system",
+          "popis": "Systémové písmo zariadenia"
+        }
+      ]
     },
     {
       "kluc": "tlacidlo_text",
       "typ": "text",
       "menovka": "Tlačidlo v hlavičke: text",
+      "skupina": "Hlavička",
       "napoveda": "Prázdne = tlačidlo sa neukáže.",
       "predvolene": "Kontaktujte nás"
     },
     {
       "kluc": "tlacidlo_odkaz",
-      "typ": "text",
+      "typ": "odkaz",
       "menovka": "Tlačidlo v hlavičke: odkaz",
+      "skupina": "Hlavička",
       "napoveda": "Napr. /kontakt alebo https://... Prázdne = e-mail klubu.",
       "predvolene": ""
+    },
+    {
+      "kluc": "ukazat_kosik",
+      "typ": "prepinac",
+      "menovka": "Košík v hlavičke",
+      "skupina": "Hlavička",
+      "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
+      "predvolene": true
+    },
+    {
+      "kluc": "ukazat_admin",
+      "typ": "prepinac",
+      "menovka": "Odkaz do administrácie pre prihlásených",
+      "skupina": "Hlavička",
+      "predvolene": true
+    },
+    {
+      "kluc": "zalozka_2_nazov",
+      "typ": "text",
+      "menovka": "Záložka 2: názov",
+      "skupina": "Mobilná navigácia",
+      "napoveda": "Prvá záložka je vždy Domov, posledná Menu.",
+      "predvolene": "Správy"
+    },
+    {
+      "kluc": "zalozka_2_odkaz",
+      "typ": "odkaz",
+      "menovka": "Záložka 2: odkaz",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "/clanky"
+    },
+    {
+      "kluc": "zalozka_3_nazov",
+      "typ": "text",
+      "menovka": "Záložka 3: názov",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "Zápasy"
+    },
+    {
+      "kluc": "zalozka_3_odkaz",
+      "typ": "odkaz",
+      "menovka": "Záložka 3: odkaz",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "/matches"
+    },
+    {
+      "kluc": "zalozka_4_nazov",
+      "typ": "text",
+      "menovka": "Záložka 4: názov",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "Tím"
+    },
+    {
+      "kluc": "zalozka_4_odkaz",
+      "typ": "odkaz",
+      "menovka": "Záložka 4: odkaz",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "/teams"
+    },
+    {
+      "kluc": "zalozka_menu_nazov",
+      "typ": "text",
+      "menovka": "Záložka Menu: názov",
+      "skupina": "Mobilná navigácia",
+      "predvolene": "Menu"
     },
     {
       "kluc": "uvod_stitok",
       "typ": "text",
       "menovka": "Úvod: štítok nad nadpisom",
+      "skupina": "Úvod - slider",
       "predvolene": "Najnovšie články"
     },
     {
       "kluc": "uvod_pocet",
       "typ": "cislo",
       "menovka": "Úvod: počet článkov v slideri",
+      "skupina": "Úvod - slider",
       "min": 1,
       "max": 6,
       "predvolene": 3
@@ -55,12 +155,28 @@
       "kluc": "uvod_fotka",
       "typ": "obrazok",
       "menovka": "Úvod: náhradná fotka",
+      "skupina": "Úvod - slider",
       "napoveda": "Pre články bez obrázka a keď ešte nie sú žiadne články. Široká fotka, aspoň 1920 px."
+    },
+    {
+      "kluc": "ukazat_zapasy",
+      "typ": "prepinac",
+      "menovka": "Zobraziť zápasy a výsledky",
+      "skupina": "Úvod - zápasy",
+      "predvolene": true
+    },
+    {
+      "kluc": "zapasy_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - zápasy",
+      "predvolene": "Zápasy a výsledky"
     },
     {
       "kluc": "zapasy_timov",
       "typ": "cislo",
       "menovka": "Zápasy: počet tímov na prepínanie",
+      "skupina": "Úvod - zápasy",
       "napoveda": "Prvé tímy podľa poradia v administrácii.",
       "min": 1,
       "max": 4,
@@ -68,80 +184,157 @@
     },
     {
       "kluc": "vstupenky_odkaz",
-      "typ": "text",
+      "typ": "odkaz",
       "menovka": "Zápasy: odkaz na vstupenky",
+      "skupina": "Úvod - zápasy",
       "napoveda": "Tlačidlo Vstupenky pri nadchádzajúcich zápasoch. Prázdne = tlačidlo sa neukáže."
+    },
+    {
+      "kluc": "vstupenky_text",
+      "typ": "text",
+      "menovka": "Tlačidlo vstupeniek: text",
+      "skupina": "Úvod - zápasy",
+      "predvolene": "Vstupenky"
+    },
+    {
+      "kluc": "ukazat_clanky",
+      "typ": "prepinac",
+      "menovka": "Zobraziť najnovšie články",
+      "skupina": "Úvod - články",
+      "predvolene": true
+    },
+    {
+      "kluc": "clanky_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - články",
+      "predvolene": "Najnovšie články"
     },
     {
       "kluc": "pocet_clankov",
       "typ": "cislo",
-      "menovka": "Počet článkov v sekcii Najnovšie články",
+      "menovka": "Počet článkov",
+      "skupina": "Úvod - články",
       "min": 4,
       "max": 8,
       "predvolene": 8
     },
     {
-      "kluc": "fanshop_odkaz",
+      "kluc": "ukazat_fanshop",
+      "typ": "prepinac",
+      "menovka": "Zobraziť fanshop",
+      "skupina": "Úvod - fanshop",
+      "predvolene": true
+    },
+    {
+      "kluc": "fanshop_nadpis",
       "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - fanshop",
+      "predvolene": "Fanshop"
+    },
+    {
+      "kluc": "fanshop_tlacidlo",
+      "typ": "text",
+      "menovka": "Tlačidlo pri produkte",
+      "skupina": "Úvod - fanshop",
+      "predvolene": "Kúpiť"
+    },
+    {
+      "kluc": "fanshop_odkaz",
+      "typ": "odkaz",
       "menovka": "Fanshop: odkaz na obchod",
+      "skupina": "Úvod - fanshop",
       "napoveda": "Len bez vlastného obchodu. So zapnutým obchodom (E-shop v administrácii) sa ukážu odporúčané produkty a odkaz vedie do obchodu."
     },
     {
       "kluc": "produkt_1_obrazok",
       "typ": "obrazok",
-      "menovka": "Fanshop: produkt 1 - fotka"
+      "menovka": "Fanshop: produkt 1 - fotka",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_1_cena",
       "typ": "text",
       "menovka": "Fanshop: produkt 1 - cena",
+      "skupina": "Úvod - fanshop",
       "napoveda": "Napr. 89,99 €"
     },
     {
       "kluc": "produkt_1_odkaz",
-      "typ": "text",
-      "menovka": "Fanshop: produkt 1 - odkaz na kúpu"
+      "typ": "odkaz",
+      "menovka": "Fanshop: produkt 1 - odkaz na kúpu",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_2_obrazok",
       "typ": "obrazok",
-      "menovka": "Fanshop: produkt 2 - fotka"
+      "menovka": "Fanshop: produkt 2 - fotka",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_2_cena",
       "typ": "text",
-      "menovka": "Fanshop: produkt 2 - cena"
+      "menovka": "Fanshop: produkt 2 - cena",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_2_odkaz",
-      "typ": "text",
-      "menovka": "Fanshop: produkt 2 - odkaz na kúpu"
+      "typ": "odkaz",
+      "menovka": "Fanshop: produkt 2 - odkaz na kúpu",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_3_obrazok",
       "typ": "obrazok",
-      "menovka": "Fanshop: produkt 3 - fotka"
+      "menovka": "Fanshop: produkt 3 - fotka",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_3_cena",
       "typ": "text",
-      "menovka": "Fanshop: produkt 3 - cena"
+      "menovka": "Fanshop: produkt 3 - cena",
+      "skupina": "Úvod - fanshop"
     },
     {
       "kluc": "produkt_3_odkaz",
+      "typ": "odkaz",
+      "menovka": "Fanshop: produkt 3 - odkaz na kúpu",
+      "skupina": "Úvod - fanshop"
+    },
+    {
+      "kluc": "ukazat_videa",
+      "typ": "prepinac",
+      "menovka": "Zobraziť videá",
+      "skupina": "Úvod - videá",
+      "predvolene": true
+    },
+    {
+      "kluc": "videa_nadpis",
       "typ": "text",
-      "menovka": "Fanshop: produkt 3 - odkaz na kúpu"
+      "menovka": "Nadpis",
+      "skupina": "Úvod - videá",
+      "predvolene": "Videá"
     },
     {
       "kluc": "videa_pozadie",
       "typ": "obrazok",
       "menovka": "Videá: vlastné pozadie",
+      "skupina": "Úvod - videá",
       "napoveda": "Prázdne = vzor šablóny vo farbe zvýraznenia."
+    },
+    {
+      "kluc": "ukazat_hracov",
+      "typ": "prepinac",
+      "menovka": "Zobraziť hráčov",
+      "skupina": "Úvod - hráči",
+      "predvolene": true
     },
     {
       "kluc": "hraci_tim",
       "typ": "cislo",
       "menovka": "Hráči: tím (ID)",
+      "skupina": "Úvod - hráči",
       "napoveda": "0 = prvý mužský tím.",
       "min": 0,
       "max": 100000,
@@ -151,40 +344,89 @@
       "kluc": "hraci_nadpis",
       "typ": "text",
       "menovka": "Hráči: nadpis sekcie",
+      "skupina": "Úvod - hráči",
       "napoveda": "Prázdne = názov tímu.",
       "predvolene": "Mužský A tím"
+    },
+    {
+      "kluc": "uspechy_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - úspechy",
+      "predvolene": "Úspechy"
     },
     {
       "kluc": "uspechy",
       "typ": "dlhy_text",
       "menovka": "Úspechy",
+      "skupina": "Úvod - úspechy",
       "napoveda": "Jeden úspech na riadok v tvare počet a názov, napr. „4 Ligový titul“. Prázdne = sekcia sa neukáže."
+    },
+    {
+      "kluc": "ukazat_siete",
+      "typ": "prepinac",
+      "menovka": "Zobraziť sekciu Sleduj nás",
+      "skupina": "Úvod - sociálne siete",
+      "napoveda": "Siete sa berú z Nastavení klubu.",
+      "predvolene": true
+    },
+    {
+      "kluc": "siete_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - sociálne siete",
+      "predvolene": "Sleduj nás"
     },
     {
       "kluc": "sledujuci_instagram",
       "typ": "text",
       "menovka": "Sleduj nás: počet sledujúcich Instagram",
+      "skupina": "Úvod - sociálne siete",
       "napoveda": "Napr. 12K. Prázdne = „Sledovať“. Siete sa berú z Nastavení klubu."
     },
     {
       "kluc": "sledujuci_facebook",
       "typ": "text",
-      "menovka": "Sleduj nás: počet sledujúcich Facebook"
+      "menovka": "Sleduj nás: počet sledujúcich Facebook",
+      "skupina": "Úvod - sociálne siete"
     },
     {
       "kluc": "sledujuci_x",
       "typ": "text",
-      "menovka": "Sleduj nás: počet sledujúcich X"
+      "menovka": "Sleduj nás: počet sledujúcich X",
+      "skupina": "Úvod - sociálne siete"
     },
     {
       "kluc": "sledujuci_youtube",
       "typ": "text",
-      "menovka": "Sleduj nás: počet odberateľov YouTube"
+      "menovka": "Sleduj nás: počet odberateľov YouTube",
+      "skupina": "Úvod - sociálne siete"
+    },
+    {
+      "kluc": "sledujuci_tiktok",
+      "typ": "text",
+      "menovka": "Počet sledujúcich TikTok",
+      "skupina": "Úvod - sociálne siete"
+    },
+    {
+      "kluc": "ukazat_odkazy",
+      "typ": "prepinac",
+      "menovka": "Zobraziť sekciu Odkaz klubu",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": true
+    },
+    {
+      "kluc": "odkazy_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": "Odkaz klubu"
     },
     {
       "kluc": "odkaz_1_nazov",
       "typ": "text",
       "menovka": "Odkaz klubu 1: nadpis",
+      "skupina": "Úvod - odkaz klubu",
       "napoveda": "Prázdne = karta sa neukáže.",
       "predvolene": "História"
     },
@@ -192,12 +434,14 @@
       "kluc": "odkaz_1_obrazok",
       "typ": "obrazok",
       "menovka": "Odkaz klubu 1: fotka",
+      "skupina": "Úvod - odkaz klubu",
       "napoveda": "Zobrazí sa čiernobielo s farebným tónom."
     },
     {
       "kluc": "odkaz_1_odkaz",
-      "typ": "text",
+      "typ": "odkaz",
       "menovka": "Odkaz klubu 1: odkaz",
+      "skupina": "Úvod - odkaz klubu",
       "napoveda": "Napr. /historia",
       "predvolene": "/historia"
     },
@@ -205,48 +449,303 @@
       "kluc": "odkaz_2_nazov",
       "typ": "text",
       "menovka": "Odkaz klubu 2: nadpis",
+      "skupina": "Úvod - odkaz klubu",
       "predvolene": "Legendy"
     },
     {
       "kluc": "odkaz_2_obrazok",
       "typ": "obrazok",
-      "menovka": "Odkaz klubu 2: fotka"
+      "menovka": "Odkaz klubu 2: fotka",
+      "skupina": "Úvod - odkaz klubu"
     },
     {
       "kluc": "odkaz_2_odkaz",
-      "typ": "text",
+      "typ": "odkaz",
       "menovka": "Odkaz klubu 2: odkaz",
+      "skupina": "Úvod - odkaz klubu",
       "predvolene": "/legendy"
     },
     {
       "kluc": "odkaz_3_nazov",
       "typ": "text",
       "menovka": "Odkaz klubu 3: nadpis",
+      "skupina": "Úvod - odkaz klubu",
       "predvolene": "Trofeje"
     },
     {
       "kluc": "odkaz_3_obrazok",
       "typ": "obrazok",
-      "menovka": "Odkaz klubu 3: fotka"
+      "menovka": "Odkaz klubu 3: fotka",
+      "skupina": "Úvod - odkaz klubu"
     },
     {
       "kluc": "odkaz_3_odkaz",
-      "typ": "text",
+      "typ": "odkaz",
       "menovka": "Odkaz klubu 3: odkaz",
+      "skupina": "Úvod - odkaz klubu",
       "predvolene": "/trofeje"
+    },
+    {
+      "kluc": "ukazat_partnerov_uvod",
+      "typ": "prepinac",
+      "menovka": "Partneri na úvodnej stránke",
+      "skupina": "Partneri",
+      "predvolene": true
     },
     {
       "kluc": "ukazat_partnerov",
       "typ": "prepinac",
-      "menovka": "Partneri na spodku stránok",
+      "menovka": "Partneri na spodku podstránok",
+      "skupina": "Partneri",
       "predvolene": true
+    },
+    {
+      "kluc": "partneri_nadpis",
+      "typ": "text",
+      "menovka": "Nadpis sekcie",
+      "skupina": "Partneri",
+      "predvolene": "Partneri"
+    },
+    {
+      "kluc": "stranka_clanky_stitok",
+      "typ": "text",
+      "menovka": "Novinky (/clanky): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Aktuality"
+    },
+    {
+      "kluc": "stranka_clanky_nadpis",
+      "typ": "text",
+      "menovka": "Novinky (/clanky): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Novinky"
+    },
+    {
+      "kluc": "stranka_videa_stitok",
+      "typ": "text",
+      "menovka": "Videá (/videa): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Obsah"
+    },
+    {
+      "kluc": "stranka_videa_nadpis",
+      "typ": "text",
+      "menovka": "Videá (/videa): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Videá"
+    },
+    {
+      "kluc": "stranka_galerie_stitok",
+      "typ": "text",
+      "menovka": "Fotogaléria (/galleries): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Médiá"
+    },
+    {
+      "kluc": "stranka_galerie_nadpis",
+      "typ": "text",
+      "menovka": "Fotogaléria (/galleries): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Fotogaléria"
+    },
+    {
+      "kluc": "stranka_zapasy_stitok",
+      "typ": "text",
+      "menovka": "Zápasy (/matches): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Program a výsledky"
+    },
+    {
+      "kluc": "stranka_zapasy_nadpis",
+      "typ": "text",
+      "menovka": "Zápasy (/matches): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Zápasy"
+    },
+    {
+      "kluc": "stranka_ligy_stitok",
+      "typ": "text",
+      "menovka": "Súťaže (/leagues): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Súťaže"
+    },
+    {
+      "kluc": "stranka_ligy_nadpis",
+      "typ": "text",
+      "menovka": "Súťaže (/leagues): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Tabuľky"
+    },
+    {
+      "kluc": "stranka_turnaje_stitok",
+      "typ": "text",
+      "menovka": "Turnaje (/turnaje): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Súťaže"
+    },
+    {
+      "kluc": "stranka_turnaje_nadpis",
+      "typ": "text",
+      "menovka": "Turnaje (/turnaje): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Turnaje"
+    },
+    {
+      "kluc": "stranka_dokumenty_stitok",
+      "typ": "text",
+      "menovka": "Dokumenty (/dokumenty): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Na stiahnutie"
+    },
+    {
+      "kluc": "stranka_dokumenty_nadpis",
+      "typ": "text",
+      "menovka": "Dokumenty (/dokumenty): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Dokumenty"
+    },
+    {
+      "kluc": "stranka_partneri_stitok",
+      "typ": "text",
+      "menovka": "Partneri (/sponzori): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Partneri"
+    },
+    {
+      "kluc": "stranka_partneri_nadpis",
+      "typ": "text",
+      "menovka": "Partneri (/sponzori): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Ďakujeme, že ste s nami"
+    },
+    {
+      "kluc": "stranka_obchod_stitok",
+      "typ": "text",
+      "menovka": "Obchod (/obchod): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Fanshop"
+    },
+    {
+      "kluc": "stranka_obchod_nadpis",
+      "typ": "text",
+      "menovka": "Obchod (/obchod): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Oficiálny fanshop"
+    },
+    {
+      "kluc": "stranka_partneri_popis",
+      "typ": "dlhy_text",
+      "menovka": "Partneri: text pod nadpisom",
+      "skupina": "Nadpisy podstránok",
+      "napoveda": "{klub} sa nahradí názvom klubu.",
+      "predvolene": "Bez podpory partnerov by {klub} nebol tým, čím je."
+    },
+    {
+      "kluc": "stranka_obchod_popis",
+      "typ": "dlhy_text",
+      "menovka": "Obchod: text pod nadpisom",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub."
+    },
+    {
+      "kluc": "stranka_supiska_nadpis",
+      "typ": "text",
+      "menovka": "Súpiska (/teams): nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Súpiska"
+    },
+    {
+      "kluc": "stranka_kalendar_stitok",
+      "typ": "text",
+      "menovka": "Kalendár (/calendar): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Kalendár"
+    },
+    {
+      "kluc": "stranka_statistiky_stitok",
+      "typ": "text",
+      "menovka": "Štatistiky (/stats): štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Štatistiky"
+    },
+    {
+      "kluc": "text_zobrazit_vsetky",
+      "typ": "text",
+      "menovka": "Odkaz pri nadpisoch sekcií",
+      "skupina": "Texty tlačidiel a odkazov",
+      "predvolene": "Zobraziť všetky"
+    },
+    {
+      "kluc": "text_citat_viac",
+      "typ": "text",
+      "menovka": "Tlačidlo pri článku",
+      "skupina": "Texty tlačidiel a odkazov",
+      "predvolene": "Čítať viac"
+    },
+    {
+      "kluc": "text_detail",
+      "typ": "text",
+      "menovka": "Tlačidlo pri zápase a súťaži",
+      "skupina": "Texty tlačidiel a odkazov",
+      "predvolene": "Detail"
+    },
+    {
+      "kluc": "text_objavit",
+      "typ": "text",
+      "menovka": "Tlačidlo pri odkaze klubu",
+      "skupina": "Texty tlačidiel a odkazov",
+      "predvolene": "Objaviť"
+    },
+    {
+      "kluc": "text_vsetci_partneri",
+      "typ": "text",
+      "menovka": "Odkaz pod partnermi",
+      "skupina": "Texty tlačidiel a odkazov",
+      "predvolene": "Všetci partneri"
     },
     {
       "kluc": "paticka_text",
       "typ": "dlhy_text",
       "menovka": "Text v pätičke",
+      "skupina": "Pätička",
       "napoveda": "Prázdne = slogan klubu.",
       "predvolene": "Sledujte náš klub, zápasy a najnovšie novinky na jednom mieste."
+    },
+    {
+      "kluc": "paticka_klub",
+      "typ": "text",
+      "menovka": "Nadpis stĺpca s menu",
+      "skupina": "Pätička",
+      "predvolene": "Klub"
+    },
+    {
+      "kluc": "paticka_obsah",
+      "typ": "text",
+      "menovka": "Nadpis stĺpca s obsahom",
+      "skupina": "Pätička",
+      "predvolene": "Obsah"
+    },
+    {
+      "kluc": "paticka_kontakt",
+      "typ": "text",
+      "menovka": "Nadpis stĺpca s kontaktom",
+      "skupina": "Pätička",
+      "predvolene": "Kontakt"
+    },
+    {
+      "kluc": "ukazat_siete_paticka",
+      "typ": "prepinac",
+      "menovka": "Sociálne siete v pätičke",
+      "skupina": "Pätička",
+      "predvolene": true
+    },
+    {
+      "kluc": "paticka_copyright",
+      "typ": "text",
+      "menovka": "Text za rokom a názvom klubu",
+      "skupina": "Pätička",
+      "napoveda": "Napr. „© 2026 FK Dolina. Všetky práva vyhradené.\"",
+      "predvolene": "Všetky práva vyhradené."
     }
   ]
 }

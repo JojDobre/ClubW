@@ -18,6 +18,7 @@ import {
   type Hrac,
   type StatistikaHraca,
   type Tim,
+  useUpravy,
 } from '../spolocne';
 
 /** Hráči zoskupení podľa pozície v poradí brankári → útočníci. */
@@ -108,6 +109,7 @@ const SupiskaTimu: React.FC<{ tim: Tim; timy: Tim[] }> = ({ tim, timy }) => {
 };
 
 const Supiska: React.FC = () => {
+  const u = useUpravy();
   const { id } = useParams();
   const { nastavenia } = useNastavenia();
   const timy = useApi<Tim[]>('/teams');
@@ -121,7 +123,7 @@ const Supiska: React.FC = () => {
 
   return (
     <div className="kl-stranka kl-supiska">
-      <HlavickaStranky stitok={tim && zoradene.length > 1 ? tim.nazov : 'Tím'} nadpis="Súpiska">
+      <HlavickaStranky stitok={tim && zoradene.length > 1 ? tim.nazov : 'Tím'} nadpis={u.text('stranka_supiska_nadpis', 'Súpiska')}>
         {tim?.popis && <p className="kl-hlava__popis">{tim.popis}</p>}
       </HlavickaStranky>
       {tim ? (
