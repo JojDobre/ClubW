@@ -6,7 +6,8 @@ náhľad inej šablóny, upraví jej nastavenia a nahrá novú šablónu ako bal
 
 ```
 sablony/
-  zakladna/          predvolená šablóna - celý verejný web (dodaná so systémom)
+  klubova/           predvolená šablóna - výrazný klubový vzhľad, mobil ako aplikácia
+  zakladna/          pôvodný verejný web; ostatné šablóny z neho preberajú, čo nenahradia
   stadion/           tmavá športová šablóna (dodaná so systémom)
   moderna/           prémiový redakčný vzhľad, nahrádza všetky stránky (dodaná so systémom)
   README.md          tento návod
@@ -198,6 +199,33 @@ a partnerov, texty a odkaz tmavého panelu (prázdny nadpis panel skryje).
 Zdrojové súbory sú v `moderna/src/` (`spolocne.tsx` - karty, tabuľka, formáty,
 `Rozlozenie.tsx` - hlavička, pätička, spodná navigácia, `stranky/` - jednotlivé stránky),
 štýl v `moderna/styl.css` (triedy `md-`, tokeny na začiatku súboru).
+
+## Šablóna Klubová (predvolená)
+
+Podľa návrhu z Claude Design. Nové inštalácie ju majú aktívnu a weby, ktoré ostali
+na pôvodnej základnej šablóne, sa na ňu prepnú migráciou. Zatiaľ nahrádza hlavičku,
+pätičku, mobilnú navigáciu a úvodnú stránku; ostatné stránky preberá zo základnej
+šablóny (vykreslia sa v hlavičke a pätičke Klubovej).
+
+- **Desktop** (1:1 s návrhom) - priehľadná hlavička nad celostránkovým sliderom
+  článkov, rozbaľovacie menu cez celú šírku, Zápasy a výsledky s prepínaním tímov,
+  najnovšie články, fanshop, videá na červenom vzore, hráči so štatistikami, úspechy,
+  sociálne siete na tmavom vzore, odkaz klubu a partneri.
+- **Tablet** - menu v paneli, mriežky v dvoch stĺpcoch.
+- **Mobil** - ako klubová aplikácia: horná lišta s logom, spodné záložky (Domov,
+  Správy, Zápasy, Tím, Menu), karty posúvateľné prstom, slider s potiahnutím.
+- **Dáta** - slider berie zvýraznené články (inak najnovšie), zápasy podľa tímov,
+  hráčov so štatistikami z `GET /api/teams/:id/players/stats` (zápasy zo zostáv,
+  góly, asistencie, karty), sociálne siete z Nastavení klubu, partnerov podľa úrovne.
+- **Nastavenia** (Šablóny → Klubová → Prispôsobiť) - farba zvýraznenia a tmavá farba,
+  tlačidlo v hlavičke, texty a fotka úvodu, počet tímov v zápasoch, odkaz na vstupenky,
+  tri produkty fanshopu, pozadie videí, tím hráčov, úspechy (riadok = „počet názov“),
+  počty sledujúcich, tri karty odkazu klubu a text pätičky. Sekcie bez obsahu sa neukážu.
+- **Písma** Poppins a Inter sú pribalené v `klubova/pisma` (bez Google Fonts).
+
+Zdrojové súbory: `klubova/src/Rozlozenie.tsx` (hlavička, menu, pätička, záložky),
+`klubova/src/stranky/Uvod.tsx`, `klubova/src/spolocne.tsx`; štýl `klubova/styl.css`
+(triedy `kl-`, tokeny na začiatku súboru).
 
 ## Bezpečnosť
 

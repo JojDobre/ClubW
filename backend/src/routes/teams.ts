@@ -6,6 +6,7 @@ import {
   getTeams,
   getTeamById,
   getTeamPlayers,
+  getTeamPlayerStats,
   getTeamStaff,
   createTeam,
   updateTeam,
@@ -49,6 +50,15 @@ router.get('/:id', getTeamById);
  * @example GET /api/teams/1/players?pozicia=brankár
  */
 router.get('/:id/players', getTeamPlayers);
+
+/**
+ * @route   GET /api/teams/:id/players/stats
+ * @desc    Štatistiky hráčov tímu: zápasy, góly, asistencie, karty
+ * @access  Verejné
+ * @query   liga_id - len zápasy jednej súťaže
+ * @example GET /api/teams/1/players/stats?liga_id=1
+ */
+router.get('/:id/players/stats', getTeamPlayerStats);
 
 /**
  * @route   GET /api/teams/:id/staff
