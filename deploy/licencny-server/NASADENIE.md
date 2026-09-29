@@ -2,6 +2,8 @@
 
 Tento návod spustí licenčný server ClubW s webovou administráciou na vašom VPS a doméne. V administrácii vytvárate licenčné kľúče, sledujete inštalácie, nastavujete aktuálnu verziu CMS z GitHubu a spúšťate aktualizácie webov klubov.
 
+> **Na VPS už bežia iné weby cez nginx?** Postupujte podľa časti [Variant: VPS s nginx](#variant-vps-s-nginx) nižšie. Caddy by sa s nginx pobil o porty 80 a 443.
+
 Beží to v troch kontajneroch:
 
 | Kontajner | Čo robí |
@@ -93,6 +95,38 @@ docker compose exec licencny-server npm run vytvor-admina -- --email vas@email.s
 Skript vypýta heslo (aspoň 12 znakov) a nezobrazuje ho pri písaní. Rovnakým príkazom sa dá zabudnuté heslo nastaviť znova (zároveň vypne dvojstupňové overenie).
 
 Po prihlásení hneď choďte do **Môj účet** a **zapnite dvojstupňové overenie**. Ďalších administrátorov pridáte v časti **Administrátori**.
+
+---
+
+## Variant: VPS s nginx
+
+Ak na serveri už beží nginx (`sudo ss -tlnp | grep ':443'` ukáže `nginx`), Caddy sa nespúšťa. Licenčný server počúva len na `127.0.0.1:3101` a HTTPS mu robí váš nginx s certifikátom z certbotu. Ostatné weby ostanú nedotknuté.
+
+Kroky 1 až 4 sú rovnaké, ale **nespúšťajte `ufw enable` ani nemeňte firewall**: nginx má porty 80 a 443 už otvorené. Port 3101 neotvárajte. Docker ho publikuje len na localhost, a to je zámer (porty publikované Dockerom na `0.0.0.0` by ufw obišli).
+
+```bash
+cd /opt/clubw/deploy/licencny-server
+./priprav.sh licencie.vasadomena.sk vas@email.sk --nginx
+docker compose up -d --build
+docker compose ps                         # db a licencny-server, bez caddy
+curl -s http://127.0.0.1:3101/health      # odpoveď servera
+```
+
+`--nginx` zapíše do `.env` riadok `COMPOSE_FILE=...docker-compose.nginx.yml`, takže `docker compose`, `zaloha.sh` aj `aktualizuj.sh` použijú tento variant samy.
+
+Stránka nginx a certifikát:
+
+```bash
+DOMENA=licencie.vasadomena.sk                          # vaša subdoména
+sudo apt install -y certbot python3-certbot-nginx     # ak certbot ešte nemáte
+sudo cp nginx-licencie.conf /etc/nginx/sites-available/licencie
+sudo sed -i "s/licencie.vasadomena.sk/$DOMENA/" /etc/nginx/sites-available/licencie
+sudo ln -s /etc/nginx/sites-available/licencie /etc/nginx/sites-enabled/licencie
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d "$DOMENA" --redirect
+```
+
+`nginx -t` musí vypísať `syntax is ok` a `test is successful`. Inak `reload` nespúšťajte, aby sa nezastavili ostatné weby. Certbot doplní HTTPS, presmerovanie z HTTP a automatickú obnovu certifikátu. Potom pokračujte krokom 7 (prvý administrátor).
 
 ---
 

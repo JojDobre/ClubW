@@ -2,16 +2,25 @@
 # Umiestnenie: deploy/licencny-server/priprav.sh
 # Jednorazová príprava .env: doména, heslo databázy a pár podpisových kľúčov.
 #
-#   ./priprav.sh licencie.vasadomena.sk vas@email.sk [github_token]
+#   ./priprav.sh licencie.vasadomena.sk vas@email.sk [github_token] [--nginx]
+#
+# --nginx: na serveri už beží nginx (iné weby) - Caddy sa nespustí a server
+#          bude počúvať na 127.0.0.1:3101 pre nginx (docker-compose.nginx.yml)
 set -euo pipefail
 cd "$(dirname "$0")"
 
-DOMENA="${1:-}"
-EMAIL="${2:-}"
-TOKEN="${3:-}"
+NGINX=false
+ARGUMENTY=()
+for a in "$@"; do
+  if [ "$a" = "--nginx" ]; then NGINX=true; else ARGUMENTY+=("$a"); fi
+done
+DOMENA="${ARGUMENTY[0]:-}"
+EMAIL="${ARGUMENTY[1]:-}"
+TOKEN="${ARGUMENTY[2]:-}"
 if [ -z "$DOMENA" ] || [ -z "$EMAIL" ]; then
-  echo "Použitie: ./priprav.sh <doména> <e-mail> [github_token]"
+  echo "Použitie: ./priprav.sh <doména> <e-mail> [github_token] [--nginx]"
   echo "Príklad:  ./priprav.sh licencie.vasadomena.sk jozef@vasadomena.sk"
+  echo "S nginx:  ./priprav.sh licencie.vasadomena.sk jozef@vasadomena.sk --nginx"
   exit 1
 fi
 if [ -f .env ]; then
@@ -40,6 +49,13 @@ LICENSE_PRIVATE_KEY="$SUKROMNY"
 LICENSE_PUBLIC_KEY="$VEREJNY"
 GITHUB_TOKEN=$TOKEN
 KONIEC
+if [ "$NGINX" = true ]; then
+  cat >> .env <<KONIEC
+# HTTPS robí nginx na hostiteľovi, Caddy sa nespúšťa
+COMPOSE_FILE=docker-compose.yml:docker-compose.nginx.yml
+PORT_SERVERA=3101
+KONIEC
+fi
 
 echo "✅ Vytvorený .env pre https://$DOMENA"
 echo
@@ -49,4 +65,9 @@ echo
 echo "⚠️  Súbor .env zálohujte na bezpečné miesto. Bez súkromného kľúča"
 echo "   by bolo treba všetkým webom vymeniť verejný kľúč."
 echo
-echo "Ďalej: docker compose up -d --build"
+if [ "$NGINX" = true ]; then
+  echo "Ďalej: docker compose up -d --build"
+  echo "       potom stránka nginx a certbot podľa nginx-licencie.conf"
+else
+  echo "Ďalej: docker compose up -d --build"
+fi
