@@ -85,9 +85,104 @@ const HladanieHlavicky: React.FC = () => {
   );
 };
 
+// ===== Horná lišta =====
+
+/** Horná lišta je zapnutá a má čo zobraziť. */
+const useHornaLista = () => {
+  const u = useUpravy();
+  const { nastavenia } = useNastavenia();
+  const siete = useSiete();
+  const odkazy = [1, 2, 3, 4]
+    .map((k) => ({ text: u.text(`horna_lista_odkaz_${k}_text`, ''), odkaz: String(u.s[`horna_lista_odkaz_${k}`] ?? '').trim() }))
+    .filter((o) => o.text && o.odkaz);
+  const text = u.text('horna_lista_text', '');
+  const kontakt = u.zapnute('horna_lista_kontakt') ? (nastavenia.kontakt ?? {}) : {};
+  const telefon = (kontakt as { telefon?: string | null }).telefon || null;
+  const email = (kontakt as { email?: string | null }).email || null;
+  const hladanie = u.zapnute('horna_lista_hladanie');
+  const zobrazSiete = u.zapnute('horna_lista_siete') && siete.length > 0;
+  const zapnuta = u.zapnute('horna_lista', false) && Boolean(text || telefon || email || odkazy.length || hladanie || zobrazSiete);
+  // Na mobile sa ukážu len odkazy a siete - bez nich lištu nezobrazíme
+  const mobil = zapnuta && u.zapnute('horna_lista_mobil', false) && (odkazy.length > 0 || zobrazSiete);
+  const farba = typeof u.s.horna_lista_farba === 'string' ? u.s.horna_lista_farba : 'tmava';
+  return { zapnuta, mobil, farba, text, telefon, email, odkazy, hladanie, siete: zobrazSiete ? siete : [] };
+};
+
+/** Malé vyhľadávacie pole v hornej lište - odošle na stránku /hladat. */
+const HladanieListy: React.FC = () => {
+  const navigate = useNavigate();
+  const [text, setText] = useState('');
+  return (
+    <form
+      className="kl-lista__hladanie"
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const q = text.trim();
+        navigate(q ? `/hladat?q=${encodeURIComponent(q)}` : '/hladat');
+        setText('');
+      }}
+    >
+      <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hľadať…" aria-label="Hľadať na webe" maxLength={100} />
+      <button type="submit" aria-label="Hľadať">
+        <Ikona nazov="hladat" velkost={13} />
+      </button>
+    </form>
+  );
+};
+
+/** Tenký pás navrchu stránky - text, kontakt, odkazy (zväzy…), hľadanie, sociálne siete. */
+const HornaLista: React.FC = () => {
+  const l = useHornaLista();
+  if (!l.zapnuta) return null;
+  return (
+    <div className={`kl-lista kl-lista--${l.farba}${l.mobil ? ' kl-lista--mobil' : ''}`}>
+      <div className="kl-lista__vnutro">
+        <div className="kl-lista__vlavo">
+          {l.text && <span className="kl-lista__text">{l.text}</span>}
+          {l.telefon && (
+            <a href={`tel:${l.telefon.replace(/\s+/g, '')}`} className="kl-lista__kontakt">
+              <Ikona nazov="telefon" velkost={13} />
+              {l.telefon}
+            </a>
+          )}
+          {l.email && (
+            <a href={`mailto:${l.email}`} className="kl-lista__kontakt">
+              <Ikona nazov="mail" velkost={13} />
+              {l.email}
+            </a>
+          )}
+        </div>
+        <div className="kl-lista__vpravo">
+          {l.odkazy.length > 0 && (
+            <nav className="kl-lista__odkazy" aria-label="Užitočné odkazy">
+              {l.odkazy.map((o, i) => (
+                <Odkaz key={i} to={o.odkaz}>
+                  {o.text}
+                </Odkaz>
+              ))}
+            </nav>
+          )}
+          {l.hladanie && <HladanieListy />}
+          {l.siete.length > 0 && (
+            <div className="kl-lista__siete">
+              {l.siete.map((s) => (
+                <a key={s.kluc} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.nazov} title={s.nazov}>
+                  {s.skratka}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
   const { s } = useUpravy();
+  const lista = useHornaLista();
   const jeUvod = pathname === '/';
 
   // Nová stránka začína navrchu
@@ -96,7 +191,7 @@ export const Rozlozenie: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [pathname]);
 
   return (
-    <div className={`kl${jeUvod ? ' kl--uvod' : ''}`} data-pismo={typeof s.pismo === 'string' ? s.pismo : undefined}>
+    <div className={`kl${jeUvod ? ' kl--uvod' : ''}${lista.zapnuta ? ' kl--lista' : ''}${lista.mobil ? ' kl--lista-mobil' : ''}`} data-pismo={typeof s.pismo === 'string' ? s.pismo : undefined}>
       <a href="#kl-obsah" className="kl-preskocit">
         Preskočiť na obsah
       </a>
@@ -269,6 +364,7 @@ export const Hlavicka: React.FC = () => {
       <header className={`kl-hlavicka${plna ? ' is-plna' : ''}${jeUvod ? ' kl-hlavicka--uvod' : ''}`}>
         <div className="kl-hlavicka__prechod" aria-hidden="true" />
         <div className="kl-hlavicka__pozadie" aria-hidden="true" />
+        <HornaLista />
         <nav className="kl-hlavicka__vnutro" aria-label="Hlavné menu">
           <Logo />
           <Link to="/" className="kl-hlavicka__nazov" tabIndex={-1} aria-hidden="true">
