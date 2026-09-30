@@ -611,7 +611,11 @@ const Uvod: React.FC = () => {
     () => [...(timy.data ?? [])].sort((a, b) => (a.poradie ?? 0) - (b.poradie ?? 0) || a.id - b.id),
     [timy.data]
   );
-  const timyZapasov = zoradeneTimy.slice(0, obmedz(s.zapasy_timov, 1, 4, 2));
+  // Zápasy na úvode: len A a B tím (dospelí muži, seniori); ak klub taký tím nemá, všetky tímy
+  // (staršie tímy môžu mať namiesto „seniori" kategóriu „Muži")
+  const jeSeniorska = (k?: string | null) => ['seniori', 'muzi'].includes((k || 'seniori').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+  const timyAB = zoradeneTimy.filter((t) => t.typ === 'muzi' && jeSeniorska(t.vekova_kategoria));
+  const timyZapasov = (timyAB.length > 0 ? timyAB : zoradeneTimy).slice(0, obmedz(s.zapasy_timov, 1, 4, 2));
   const timHracov = vyberTim(zoradeneTimy, s.hraci_tim);
 
   // Slider: zvýraznené články, inak najnovšie

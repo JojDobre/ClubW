@@ -392,8 +392,10 @@ a.kl-hero__nadpis:hover { color: #ffffff; text-decoration: underline; text-decor
   border: 1px solid rgba(255, 255, 255, 0.2); background: var(--kl-tmava);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
-.kl-kruh-tlacidlo--vlavo { left: -24px; }
-.kl-kruh-tlacidlo--vpravo { right: -24px; }
+/* Šípky mimo kariet: 16px od okraja karty, na užšom okne najviac po okraj okna */
+.kl-zapasy__ram { --kl-sipka-odsad: max(-64px, calc(-1 * (var(--kl-okraj) + max(0px, (100vw - var(--kl-sirka) - 2 * var(--kl-okraj)) / 2)))); }
+.kl-kruh-tlacidlo--vlavo { left: var(--kl-sipka-odsad, -24px); }
+.kl-kruh-tlacidlo--vpravo { right: var(--kl-sipka-odsad, -24px); }
 
 .kl-zapas {
   flex: 0 0 calc((100% - 40px) / 3); scroll-snap-align: start;
