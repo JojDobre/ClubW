@@ -108,11 +108,11 @@
 
 .kl-hlavicka { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; }
 .kl-hlavicka__prechod {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute; inset: 0; pointer-events: none; z-index: -1;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 60%, rgba(0, 0, 0, 0) 100%);
 }
 .kl-hlavicka__pozadie {
-  position: absolute; inset: 0; background: var(--kl-tmava);
+  position: absolute; inset: 0; z-index: -1; background: var(--kl-tmava);
   opacity: 0; transition: opacity 0.45s ease; pointer-events: none;
 }
 .kl-hlavicka.is-plna .kl-hlavicka__pozadie { opacity: 1; }
@@ -120,7 +120,7 @@
 .kl-hlavicka__vnutro {
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
   gap: 16px 24px; padding: 16px var(--kl-okraj); max-width: var(--kl-sirka); margin: 0 auto;
-  position: relative; z-index: 2;
+  /* Bez position - rozbaľovací panel sa tak meria od celej hlavičky (celá šírka okna) */
 }
 
 .kl-logo { display: block; flex-shrink: 0; width: var(--kl-logo); height: var(--kl-logo); transition: transform 0.25s ease, filter 0.25s ease; }
@@ -144,10 +144,14 @@
   transition: color 0.2s ease;
 }
 .kl-menu__odkaz:hover, .kl-menu__odkaz.is-aktivny { color: var(--kl-akcent); }
+.kl-menu__prepinac {
+  display: flex; align-items: center; background: none; border: 0; padding: 0; color: inherit; cursor: pointer;
+}
+.kl-menu__nazov { color: inherit; text-decoration: none; }
 .kl-menu__sipka { transition: transform 0.2s ease; }
 .kl-menu__polozka.is-otvorena .kl-menu__sipka { transform: rotate(180deg); }
 
-/* Rozbaľovací panel cez celú šírku pod hlavičkou */
+/* Rozbaľovací panel cez celú šírku okna pod hlavičkou (podľa návrhu) */
 .kl-panel {
   position: absolute; top: 100%; left: 0; width: 100%;
   background: var(--kl-tmava-panel); border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -161,31 +165,49 @@
   max-width: var(--kl-sirka); margin: 0 auto; padding: 40px var(--kl-okraj);
   display: flex; align-items: flex-start; gap: 40px;
 }
-.kl-panel__hlavny {
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-width: 190px;
-  padding: 10px 12px; color: var(--kl-akcent); text-decoration: none;
-  font-family: var(--kl-nadpisy); font-weight: 600; font-size: 16px; letter-spacing: 1.2px; text-transform: uppercase;
-}
-.kl-panel__hlavny:hover { color: #ffffff; }
-.kl-panel__zoznam { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+/* Kategórie: stĺpce s nadpismi */
 .kl-panel__stlpce {
-  flex: 1; display: grid; grid-template-columns: repeat(var(--kl-stlpcov, 4), minmax(0, 1fr)); gap: 36px;
+  flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(var(--kl-stlpcov, 4), minmax(0, 1fr)); gap: 36px;
 }
-.kl-panel__stlpec { display: flex; flex-direction: column; gap: 4px; }
+.kl-panel__stlpec { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .kl-panel__stlpec + .kl-panel__stlpec { border-left: 1px solid rgba(255, 255, 255, 0.08); padding-left: 36px; }
 .kl-panel__nadpis {
   color: var(--kl-akcent); text-decoration: none;
   font-family: var(--kl-nadpisy); font-weight: 600; font-size: 16px; letter-spacing: 1.2px; text-transform: uppercase;
 }
+a.kl-panel__nadpis:hover { color: #ffffff; }
+/* Bez kategórií: zoznam odkazov vľavo */
+.kl-panel__zoznam { display: flex; gap: 40px; }
+.kl-panel__zoznam-stlpec { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
 .kl-panel__odkaz {
   display: block; padding: 10px 12px; margin: 0 -12px; border-radius: 10px;
-  color: #ffffff; text-decoration: none; white-space: nowrap;
+  color: #ffffff; text-decoration: none; overflow-wrap: anywhere;
   font-family: var(--kl-pismo); font-weight: 700; font-size: 16px;
   transition: color 0.2s ease;
 }
-.kl-panel__zoznam .kl-panel__odkaz { margin: 0; }
-.kl-panel__odkaz:hover, .kl-panel__nadpis:hover { color: var(--kl-akcent); }
-a.kl-panel__nadpis:hover { color: #ffffff; }
+.kl-panel__zoznam .kl-panel__odkaz { margin: 0; white-space: nowrap; }
+.kl-panel__odkaz:hover { color: var(--kl-akcent); }
+/* Položky s obrázkom: karty vpravo */
+.kl-panel__karty { display: flex; gap: 28px; margin-left: auto; flex-shrink: 0; }
+.kl-panel__karta {
+  display: flex; flex-direction: column; gap: 14px; width: 230px;
+  color: #ffffff; text-decoration: none; transition: color 0.2s ease;
+}
+.kl-panel__karta-obrazok {
+  display: block; width: 230px; height: 150px; border-radius: 16px; overflow: hidden;
+  background: #12163a; border: 2px solid transparent; box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.kl-panel__karta-obrazok img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kl-panel__karta-nazov { font-family: var(--kl-nadpisy); font-weight: 700; font-size: 16px; line-height: 1.3; }
+.kl-panel__karta:hover { color: var(--kl-akcent); }
+.kl-panel__karta:hover .kl-panel__karta-obrazok { transform: translateY(-4px); border-color: var(--kl-akcent); }
+@media (max-width: 1280px) {
+  /* Užšie okno: kariet menej, nech ostane miesto pre odkazy */
+  .kl-panel__karta:nth-child(n + 3) { display: none; }
+  .kl-panel__karta, .kl-panel__karta-obrazok { width: 200px; }
+  .kl-panel__karta-obrazok { height: 130px; }
+}
 
 .kl-hlavicka__tlacidlo {
   flex-shrink: 0; white-space: nowrap; cursor: pointer; text-decoration: none;
@@ -683,6 +705,10 @@ a.kl-hero__nadpis:hover { color: #ffffff; text-decoration: underline; text-decor
 .kl-mmenu__podmenu { list-style: none; margin: -6px 0 12px; padding: 0 0 0 14px; border-left: 2px solid var(--kl-akcent); }
 .kl-mmenu__pododkaz { display: block; padding: 10px 8px; color: rgba(255, 255, 255, 0.85); text-decoration: none; font-family: var(--kl-pismo); font-weight: 600; font-size: 16px; }
 .kl-mmenu__pododkaz.is-aktivny, .kl-mmenu__pododkaz:hover { color: var(--kl-akcent); }
+.kl-mmenu__kategoria {
+  display: block; padding: 14px 8px 4px; color: var(--kl-akcent);
+  font-family: var(--kl-nadpisy); font-weight: 600; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase;
+}
 .kl-mmenu__spodok { margin-top: auto; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 18px; align-items: stretch; }
 .kl-mmenu__spodok .kl-tlacidlo { padding: 16px; border-radius: 14px; }
 .kl-mmenu__admin { color: rgba(255, 255, 255, 0.6); font-family: var(--kl-nadpisy); font-weight: 600; font-size: 14px; }

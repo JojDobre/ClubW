@@ -176,7 +176,7 @@ objednávke prepočíta a overí sklad. Odkaz na košík v hlavičke ukazujte le
 | `useNastavenia()` | názov, logo, slogan, farby, kontakt, sociálne siete, údaje klubu |
 | `useNastaveniaSablony()` | hodnoty nastavení šablóny z administrácie |
 | `useSablona()` | slug, názov a verzia aktívnej šablóny |
-| `useMenuWebu()`, `OdkazMenu` | menu z **Menu a odkazy** (aj s podmenu) |
+| `useMenuWebu()`, `OdkazMenu` | menu z **Menu a odkazy** – najviac 3 úrovne: hlavná položka → podmenu → odkazy v kategórii. Kategória má `odkaz: null` (`OdkazMenu` ju vykreslí ako `<span>`), položka môže mať `obrazok` pre kartu v podmenu |
 | `useData('/articles?limit=3')` | načítanie dát z verejného API (`{ data, nacitava, chyba }`) |
 | `apiUrl()`, `souborUrl()` | adresa API a nahratých súborov (`/uploads/...`) |
 | `Cast` | vykreslí inú časť - napr. `<Cast nazov="Paticka" />` |

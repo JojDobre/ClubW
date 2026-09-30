@@ -1036,7 +1036,8 @@ export interface OdpovedFormulara {
 
 // ===== Menu webu =====
 
-export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url';
+/** nadpis = kategória bez odkazu (nadpis stĺpca v rozbaľovacom menu) */
+export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url' | 'nadpis';
 
 export interface PolozkaMenuWebu {
   id: number;
@@ -1048,6 +1049,8 @@ export interface PolozkaMenuWebu {
   /** Adresa, kam položka vedie (dopočíta server) */
   odkaz: string | null;
   rodic_id: number | null;
+  /** Obrázok karty v rozbaľovacom menu */
+  obrazok: string | null;
   poradie: number;
   otvorit_v_novom: boolean;
   aktivity: boolean;

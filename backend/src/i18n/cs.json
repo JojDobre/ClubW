@@ -339,7 +339,6 @@
  "Liga úspešne vytvorená": "Liga úspěšně vytvořena",
  "Logo musí byť nahratý obrázok alebo adresa": "Logo musí být nahraný obrázek nebo adresa",
  "Meno musí mať 2-100 znakov": "Jméno musí mít 2-100 znaků",
- "Menu má najviac dve úrovne": "Menu má nejvýše dvě úrovně",
  "Meta description môže mať max 300 znakov": "Meta description může mít max 300 znaků",
  "Meta description môže mať maximálne 160 znakov": "Meta description může mít nejvýše 160 znaků",
  "Meta title môže mať max 100 znakov": "Meta title může mít max 100 znaků",
@@ -498,7 +497,6 @@
  "Pole „{0}\" musí byť súbor typu {1}": "Pole „{0}\" musí být soubor typu {1}",
  "Pole „{0}\" v {1} nie je platná cesta k súboru": "Pole „{0}\" v {1} není platná cesta k souboru",
  "Položka menu nebola nájdená": "Položka menu nebyla nalezena",
- "Položka má vlastné podmenu - nedá sa vnoriť": "Položka má vlastní podmenu - nelze ji vnořit",
  "Položka nemôže byť vnorená sama do seba": "Položka nemůže být vnořena sama do sebe",
  "Položka typu „rubrika\" musí mať zvolenú rubriku": "Položka typu „rubrika\" musí mít zvolenou rubriku",
  "Položka typu „stranka\" musí mať zvolenú stránku": "Položka typu „stranka\" musí mít zvolenou stránku",
@@ -921,5 +919,8 @@
  "Pri doručení na adresu zadajte telefón pre kuriéra": "Při doručení na adresu zadejte telefon pro kurýra",
  "Neplatný kľúč oznámenia": "Neplatný klíč oznámení",
  "Chýba číslo objednávky alebo variabilný symbol": "Chybí číslo objednávky nebo variabilní symbol",
- "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "odkaz musí začínat / (stránka webu), https://, mailto: nebo tel:"
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "odkaz musí začínat / (stránka webu), https://, mailto: nebo tel:",
+ "Menu má najviac {0} úrovne": "Menu má nejvýše {0} úrovně",
+ "Položka nemôže byť vnorená do vlastného podmenu": "Položka nemůže být vnořena do vlastního podmenu",
+ "Adresa obrázka musí začínať / alebo https://": "Adresa obrázku musí začínat / nebo https://"
 }

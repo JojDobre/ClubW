@@ -229,6 +229,7 @@
 .md-menu__polozka:hover .md-menu__podmenu, .md-menu__polozka:focus-within .md-menu__podmenu { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
 .md-menu__pododkaz { padding: 10px 12px; border-radius: var(--md-r-sm); font-size: 14px; font-weight: 550; }
 .md-menu__pododkaz:hover { background: var(--md-povrch-makky); }
+.md-menu__kategoria { padding: 12px 12px 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; }
 
 .md-hlavicka__akcie { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .md-hlavicka--priehladna .md-ikona-tlacidlo:hover { background: rgba(255, 255, 255, 0.12); }

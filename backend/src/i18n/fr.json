@@ -339,7 +339,6 @@
  "Liga úspešne vytvorená": "Ligue créée",
  "Logo musí byť nahratý obrázok alebo adresa": "Le logo doit être une image téléversée ou une adresse",
  "Meno musí mať 2-100 znakov": "Le nom doit comporter 2 à 100 caractères",
- "Menu má najviac dve úrovne": "Le menu comporte au plus deux niveaux",
  "Meta description môže mať max 300 znakov": "La méta-description peut comporter 300 caractères maximum",
  "Meta description môže mať maximálne 160 znakov": "La méta-description peut comporter 160 caractères maximum",
  "Meta title môže mať max 100 znakov": "Le méta-titre peut comporter 100 caractères maximum",
@@ -498,7 +497,6 @@
  "Pole „{0}\" musí byť súbor typu {1}": "Le champ « {0} » doit être un fichier de type {1}",
  "Pole „{0}\" v {1} nie je platná cesta k súboru": "Le champ « {0} » dans {1} n'est pas un chemin de fichier valide",
  "Položka menu nebola nájdená": "L'élément de menu est introuvable",
- "Položka má vlastné podmenu - nedá sa vnoriť": "L'élément a son propre sous-menu - il ne peut pas être imbriqué",
  "Položka nemôže byť vnorená sama do seba": "Un élément ne peut pas être imbriqué dans lui-même",
  "Položka typu „rubrika\" musí mať zvolenú rubriku": "Un élément de type « rubrika » doit avoir une rubrique sélectionnée",
  "Položka typu „stranka\" musí mať zvolenú stránku": "Un élément de type « stranka » doit avoir une page sélectionnée",
@@ -921,5 +919,8 @@
  "Pri doručení na adresu zadajte telefón pre kuriéra": "Pour une livraison à domicile, indiquez un numéro de téléphone pour le coursier",
  "Neplatný kľúč oznámenia": "Clé de notification invalide",
  "Chýba číslo objednávky alebo variabilný symbol": "Le numéro de commande ou la référence de paiement est manquant",
- "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "le lien doit commencer par / (page du site), https://, mailto: ou tel:"
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "le lien doit commencer par / (page du site), https://, mailto: ou tel:",
+ "Menu má najviac {0} úrovne": "Le menu comporte au maximum {0} niveaux",
+ "Položka nemôže byť vnorená do vlastného podmenu": "L’élément ne peut pas être imbriqué dans son propre sous-menu",
+ "Adresa obrázka musí začínať / alebo https://": "L’adresse de l’image doit commencer par / ou https://"
 }

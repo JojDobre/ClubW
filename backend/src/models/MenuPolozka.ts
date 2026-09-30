@@ -10,7 +10,8 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-export type TypPolozky = 'stranka' | 'url' | 'rubrika';
+/** nadpis = kategória bez odkazu (nadpis stĺpca v rozbaľovacom menu) */
+export type TypPolozky = 'stranka' | 'url' | 'rubrika' | 'nadpis';
 
 interface MenuPolozkaAttributes {
   id: number;
@@ -21,6 +22,8 @@ interface MenuPolozkaAttributes {
   url: string | null;
   /** Rodič pri vnorenej položke; prázdne = prvá úroveň */
   rodic_id: number | null;
+  /** Obrázok karty v rozbaľovacom menu (adresa z knižnice médií) */
+  obrazok: string | null;
   poradie: number;
   otvorit_v_novom: boolean;
   aktivity: boolean;
@@ -31,7 +34,7 @@ interface MenuPolozkaAttributes {
 interface MenuPolozkaCreationAttributes
   extends Optional<
     MenuPolozkaAttributes,
-    | 'id' | 'typ' | 'stranka_id' | 'rubrika_id' | 'url' | 'rodic_id'
+    | 'id' | 'typ' | 'stranka_id' | 'rubrika_id' | 'url' | 'rodic_id' | 'obrazok'
     | 'poradie' | 'otvorit_v_novom' | 'aktivity' | 'vytvorena' | 'aktualizovana'
   > {}
 
@@ -46,6 +49,7 @@ class MenuPolozka
   public rubrika_id!: number | null;
   public url!: string | null;
   public rodic_id!: number | null;
+  public obrazok!: string | null;
   public poradie!: number;
   public otvorit_v_novom!: boolean;
   public aktivity!: boolean;
@@ -79,6 +83,7 @@ class MenuPolozka
       url: this.url,
       odkaz: this.odkaz(),
       rodic_id: this.rodic_id,
+      obrazok: this.obrazok,
       poradie: this.poradie,
       otvorit_v_novom: this.otvorit_v_novom,
       aktivity: this.aktivity,
@@ -95,7 +100,7 @@ MenuPolozka.init(
       validate: { len: { args: [1, 100], msg: 'Názov položky menu musí mať 1-100 znakov' } },
     },
     typ: {
-      type: DataTypes.ENUM('stranka', 'url', 'rubrika'),
+      type: DataTypes.ENUM('stranka', 'url', 'rubrika', 'nadpis'),
       allowNull: false,
       defaultValue: 'stranka',
     },
@@ -103,6 +108,18 @@ MenuPolozka.init(
     rubrika_id: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'rubriky', key: 'id' } },
     url: { type: DataTypes.STRING(500), allowNull: true },
     rodic_id: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'menu_polozky', key: 'id' } },
+    obrazok: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      validate: {
+        // Obrázok z knižnice médií alebo https - nie javascript: či data:
+        jeAdresa(hodnota: string | null) {
+          if (hodnota && !/^(\/(?!\/)|https?:\/\/)/i.test(hodnota)) {
+            throw new Error('Adresa obrázka musí začínať / alebo https://');
+          }
+        },
+      },
+    },
     poradie: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     otvorit_v_novom: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     aktivity: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
