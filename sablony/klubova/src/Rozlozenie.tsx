@@ -6,7 +6,7 @@
 // prechodom) a po posunutí alebo otvorení menu dostane tmavé pozadie.
 
 import React, { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Cast,
   OdkazMenu,
@@ -69,6 +69,18 @@ const KosikHlavicky: React.FC = () => {
     <Link to="/kosik" className={`kl-hlavicka__kosik${pathname === '/kosik' ? ' is-aktivny' : ''}`} aria-label={pocet ? `Košík, ${pocet} ks` : 'Košík'}>
       <Ikona nazov="kosik" velkost={20} />
       {pocet > 0 && <span className="kl-hlavicka__pocet">{pocet > 99 ? '99+' : pocet}</span>}
+    </Link>
+  );
+};
+
+/** Lupa v hlavičke - vedie na stránku vyhľadávania. */
+const HladanieHlavicky: React.FC = () => {
+  const { pathname } = useLocation();
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_hladanie')) return null;
+  return (
+    <Link to="/hladat" className={`kl-hlavicka__kosik kl-hlavicka__hladat${pathname === '/hladat' ? ' is-aktivny' : ''}`} aria-label="Hľadať na webe">
+      <Ikona nazov="hladat" velkost={19} />
     </Link>
   );
 };
@@ -317,6 +329,7 @@ export const Hlavicka: React.FC = () => {
               {tlacidlo.text}
             </Odkaz>
           )}
+          <HladanieHlavicky />
           <KosikHlavicky />
           {jePrihlaseny() && u.zapnute('ukazat_admin') && (
             <a href="/admin" className="kl-hlavicka__admin" title="Administrácia">
@@ -334,6 +347,26 @@ export const Hlavicka: React.FC = () => {
 };
 
 // ===== Mobilné menu (celá obrazovka) =====
+
+/** Vyhľadávacie pole v mobilnom menu. */
+const HladanieMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
+  const navigate = useNavigate();
+  const [text, setText] = useState('');
+  return (
+    <form
+      className="kl-mmenu__hladanie"
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        zavriet();
+        navigate(`/hladat${text.trim() ? `?q=${encodeURIComponent(text.trim())}` : ''}`);
+      }}
+    >
+      <Ikona nazov="hladat" velkost={18} />
+      <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hľadať na webe…" aria-label="Hľadať na webe" />
+    </form>
+  );
+};
 
 const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
   const { polozky } = useMenuWebu();
@@ -361,6 +394,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
           <Ikona nazov="zavriet" velkost={22} />
         </button>
       </div>
+      <HladanieMenu zavriet={zavriet} />
       <ul className="kl-mmenu__zoznam">
         {polozky.map((p) => {
           const deti = vsetkyDeti(p);

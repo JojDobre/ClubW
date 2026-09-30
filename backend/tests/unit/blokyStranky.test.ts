@@ -64,6 +64,24 @@ describe('ocistiBloky', () => {
     expect(ocistiBloky(typy.map((typ) => ({ typ })))).toHaveLength(typy.length);
   });
 
+  it('tabuľka: orezanie stĺpcov a riadkov, bunky podľa hlavičky', () => {
+    const [b] = ocistiBloky([
+      { typ: 'tabulka', data: { tabulka: { hlavicka: ['Kategória', 'Ročník', 'Tréningy'], riadky: [['U9', '2018'], ['U11', '2016', 'Po, St', 'navyše']] }, pruhovana: 'ano' } },
+    ]);
+    expect(b.data.tabulka).toEqual({ hlavicka: ['Kategória', 'Ročník', 'Tréningy'], riadky: [['U9', '2018', ''], ['U11', '2016', 'Po, St']] });
+    expect(b.data.pruhovana).toBe(false);
+  });
+
+  it('tlačidlá a cenník: prepínače len true/false, štýl z povolených', () => {
+    const [tl, cen] = ocistiBloky([
+      { typ: 'tlacidla', data: { vzhlad: 'velke' }, polozky: [{ text: 'Kontakt', odkaz: '/kontakt', styl: 'neon', nove_okno: 1 }] },
+      { typ: 'cennik', polozky: [{ nazov: 'Člen', cena: '20 €', zvyraznene: true }] },
+    ]);
+    expect(tl.data.vzhlad).toBe('velke');
+    expect(tl.polozky![0]).toMatchObject({ styl: 'hlavne', nove_okno: false });
+    expect(cen.polozky![0].zvyraznene).toBe(true);
+  });
+
   it('text blokov pre popis vyhľadávačov vynechá odkazy a skryté bloky', () => {
     const bloky = ocistiBloky([
       { typ: 'nadpis', data: { nadpis: 'Vedenie klubu', text: 'Ľudia za klubom' } },

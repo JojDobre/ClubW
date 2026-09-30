@@ -830,8 +830,18 @@ export interface Fanusik {
   suhlas_oznamy: boolean;
   poznamka: string | null;
   aktivity: boolean;
+  /** aktivny = platný záznam, ziadost = registrácia z webu čaká na schválenie */
+  stav: StavFanusika;
+  /** Odkiaľ záznam pochádza - administracia alebo web */
+  zdroj: string;
+  datum_narodenia: string | null;
+  adresa: string | null;
+  /** Správa klubu z registračného formulára */
+  sprava: string | null;
   vytvoreny: string;
 }
+
+export type StavFanusika = 'aktivny' | 'ziadost' | 'zamietnuty';
 
 // ===== Komentáre, videá, turnaje =====
 

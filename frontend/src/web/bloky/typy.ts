@@ -20,7 +20,19 @@ export type TypBloku =
   | 'formular'
   | 'clanky'
   | 'zapasy'
-  | 'partneri';
+  | 'partneri'
+  | 'tlacidla'
+  | 'podmenu'
+  | 'tabulka'
+  | 'stlpce'
+  | 'kroky'
+  | 'vyhody'
+  | 'cennik'
+  | 'oddelovac'
+  | 'kontakt'
+  | 'stadion'
+  | 'registracia'
+  | 'dve_percenta';
 
 export type PozadieBloku = 'biele' | 'sive' | 'tmave';
 
@@ -36,5 +48,8 @@ export interface BlokStranky {
   skryty?: boolean;
 }
 
-/** Vlastné zobrazenie jedného typu bloku v šablóne. */
-export type KomponentBloku = (props: { blok: BlokStranky }) => JSX.Element | null;
+/** Vlastné zobrazenie jedného typu bloku v šablóne (bloky = všetky viditeľné bloky stránky, napr. pre podmenu). */
+export type KomponentBloku = (props: { blok: BlokStranky; bloky: BlokStranky[] }) => JSX.Element | null;
+
+/** Kotva bloku na stránke (odkaz z podmenu). */
+export const kotvaBloku = (b: Pick<BlokStranky, 'id'>) => `blok-${b.id}`;

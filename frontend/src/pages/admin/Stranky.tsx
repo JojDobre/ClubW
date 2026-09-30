@@ -10,6 +10,7 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { strankyApi } from '../../api/obsah';
 import { EditorBlokov } from '../../components/admin/EditorBlokov';
+import { PREDLOHY_STRANOK, type PredlohaStranky } from '../../components/admin/predlohyStranok';
 import { formatujDatum } from '../../utils/datum';
 import type { Stranka } from '../../api/typy';
 import { tr } from '../../i18n';
@@ -55,6 +56,7 @@ export const Stranky: React.FC = () => {
   const [naZmazanie, setNaZmazanie] = useState<Stranka | null>(null);
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
+  const [predloha, setPredloha] = useState('');
   /** Kým používateľ adresu neupraví ručne, odvodzuje sa z názvu. */
   const adresaUpravena = useRef(false);
 
@@ -78,7 +80,26 @@ export const Stranky: React.FC = () => {
 
   const novaStranka = () => {
     adresaUpravena.current = false;
+    setPredloha('');
     setUpravovana({ ...PRAZDNA });
+  };
+
+  /** Nová stránka z predlohy - bloky dostanú nové id, obsadená adresa dostane číslo. */
+  const pouziPredlohu = (p: PredlohaStranky) => {
+    const obsadene = new Set(zoznam.map((s) => s.slug));
+    let slug = p.stranka.slug;
+    for (let i = 2; obsadene.has(slug); i++) slug = `${p.stranka.slug}-${i}`;
+    adresaUpravena.current = slug !== p.stranka.slug;
+    const zaklad = Date.now().toString(36);
+    setUpravovana((d) => ({
+      ...d!,
+      nazov: p.stranka.nazov,
+      slug,
+      meta_title: p.stranka.nazov,
+      meta_description: p.stranka.meta_description,
+      bloky: p.stranka.bloky.map((b, i) => ({ ...JSON.parse(JSON.stringify(b)), id: `b${zaklad}${i.toString(36)}` })),
+    }));
+    setPredloha(p.kluc);
   };
 
   /** Zmena názvu - pri novej stránke sa z neho odvodí aj adresa. */
@@ -271,6 +292,24 @@ export const Stranky: React.FC = () => {
       >
         {upravovana && (
           <>
+            {jeNova && (
+              <div className="cw-field cw-predlohy">
+                <span className="cw-field__label">{tr('Začať z predlohy')}</span>
+                <div className="cw-predlohy__zoznam">
+                  {PREDLOHY_STRANOK.map((p) => (
+                    <button key={p.kluc} type="button" className={`cw-predlohy__predloha${predloha === p.kluc ? ' is-zvolena' : ''}`} onClick={() => pouziPredlohu(p)} title={p.popis}>
+                      <Icon nazov={p.ikona} velkost={16} />
+                      <span>
+                        <strong>{p.titulok}</strong>
+                        <small>{p.popis}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="cw-field__hint">{tr('Predloha vyplní bloky vzorovým obsahom, ktorý si potom upravíte. Údaje klubu sa doplnia z nastavení.')}</div>
+              </div>
+            )}
+
             <Input
               menovka={tr('Názov stránky')}
               value={upravovana.nazov ?? ''}

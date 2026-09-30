@@ -9,14 +9,22 @@ import {
 import { useNacitanie } from '../../app/useNacitanie';
 import { fanusikoviaApi } from '../../api/klub';
 import { formatujDatum } from '../../utils/datum';
-import type { Fanusik, TypClenstva } from '../../api/typy';
+import type { Fanusik, StavFanusika, TypClenstva } from '../../api/typy';
 import { tr } from '../../i18n';
+import './Hraci.css';
+import './Fanusikovia.css';
 
 const TYPY: Array<{ hodnota: TypClenstva; popis: string; ton: TonStitka }> = [
   { hodnota: 'fanusik', popis: tr('Fanúšik'), ton: 'neutral' },
   { hodnota: 'clen', popis: tr('Člen klubu'), ton: 'primary' },
   { hodnota: 'vip', popis: 'VIP', ton: 'warning' },
   { hodnota: 'cestny', popis: tr('Čestný člen'), ton: 'success' },
+];
+
+const STAVY: Array<{ hodnota: StavFanusika; popis: string; ton: TonStitka }> = [
+  { hodnota: 'aktivny', popis: tr('Aktívny'), ton: 'success' },
+  { hodnota: 'ziadost', popis: tr('Čaká na schválenie'), ton: 'warning' },
+  { hodnota: 'zamietnuty', popis: tr('Zamietnutý'), ton: 'danger' },
 ];
 
 const PRAZDNY: Partial<Fanusik> = {
@@ -29,7 +37,13 @@ const PRAZDNY: Partial<Fanusik> = {
   suhlas_oznamy: false,
   poznamka: '',
   aktivity: true,
+  stav: 'aktivny',
+  datum_narodenia: null,
+  adresa: '',
 };
+
+/** Filter „Nové žiadosti" - registrácie z webu, ktoré čakajú na schválenie */
+const FILTER_ZIADOSTI = 'ziadosti';
 
 export const Fanusikovia: React.FC = () => {
   const { uspech, chyba: hlasChybu, varovanie } = useToast();
@@ -39,26 +53,52 @@ export const Fanusikovia: React.FC = () => {
   const [filterTypu, setFilterTypu] = useState('');
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
+  const [meniStav, setMeniStav] = useState<number | null>(null);
 
   const fanusikovia = useNacitanie((signal) => fanusikoviaApi.vypis(signal));
   const zoznam = fanusikovia.data ?? [];
+  const ziadosti = zoznam.filter((f) => f.stav === 'ziadost');
 
   const chipy: Chip[] = useMemo(
     () => [
       { hodnota: '', popis: tr('Všetci'), pocet: zoznam.length },
+      ...(ziadosti.length > 0 || filterTypu === FILTER_ZIADOSTI ? [{ hodnota: FILTER_ZIADOSTI, popis: tr('Nové žiadosti'), pocet: ziadosti.length }] : []),
       ...TYPY.map((t) => ({
         hodnota: t.hodnota,
         popis: t.popis,
         pocet: zoznam.filter((f) => f.typ_clenstva === t.hodnota).length,
       })),
     ],
-    [zoznam]
+    [zoznam, ziadosti.length, filterTypu]
   );
 
   const zobrazeni = useMemo(
-    () => (filterTypu ? zoznam.filter((f) => f.typ_clenstva === filterTypu) : zoznam),
+    () =>
+      filterTypu === FILTER_ZIADOSTI
+        ? zoznam.filter((f) => f.stav === 'ziadost')
+        : filterTypu
+          ? zoznam.filter((f) => f.typ_clenstva === filterTypu)
+          : zoznam,
     [zoznam, filterTypu]
   );
+
+  // Schválenie alebo zamietnutie registrácie z webu
+  const zmenStav = async (f: Fanusik, stav: StavFanusika) => {
+    setMeniStav(f.id);
+    try {
+      await fanusikoviaApi.uprav(f.id, {
+        stav,
+        ...(stav === 'aktivny' && !f.clenstvo_od ? { clenstvo_od: new Date().toISOString().slice(0, 10) } : {}),
+      });
+      uspech(stav === 'aktivny' ? tr('Žiadosť bola schválená') : tr('Žiadosť bola zamietnutá'));
+      setUpravovany((d) => (d?.id === f.id ? null : d));
+      fanusikovia.obnov();
+    } catch (e: any) {
+      hlasChybu(e?.message || tr('Záznam sa nepodarilo uložiť'));
+    } finally {
+      setMeniStav(null);
+    }
+  };
 
   const jeNovy = upravovany !== null && !upravovany.id;
 
@@ -80,6 +120,7 @@ export const Fanusikovia: React.FC = () => {
         ...upravovany,
         email: upravovany.email.trim().toLowerCase(),
         telefon: upravovany.telefon?.trim() || null,
+        adresa: upravovany.adresa?.trim() || null,
         cislo_karty: upravovany.cislo_karty?.trim() || null,
         poznamka: upravovany.poznamka?.trim() || null,
       };
@@ -128,7 +169,10 @@ export const Fanusikovia: React.FC = () => {
             <span className="cw-hraci__meno-text">
               {f.meno} {f.priezvisko}
             </span>
-            <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>{f.email}</span>
+            <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
+              {f.email}
+              {f.zdroj === 'web' && ` · ${tr('registrácia z webu')}`}
+            </span>
           </div>
         </div>
       ),
@@ -143,6 +187,26 @@ export const Fanusikovia: React.FC = () => {
       },
       hodnotaNaZoradenie: (f) => f.typ_clenstva,
       sirka: '150px',
+    },
+    {
+      kluc: 'stav',
+      popis: tr('Stav'),
+      obsah: (f) => {
+        const s = STAVY.find((x) => x.hodnota === f.stav) ?? STAVY[0];
+        if (f.stav !== 'ziadost') return <Badge ton={s.ton}>{s.popis}</Badge>;
+        return (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+            <Button velkost="sm" onClick={() => zmenStav(f, 'aktivny')} nacitava={meniStav === f.id}>
+              {tr('Schváliť')}
+            </Button>
+            <Button velkost="sm" variant="ghost" onClick={() => zmenStav(f, 'zamietnuty')} disabled={meniStav === f.id}>
+              {tr('Zamietnuť')}
+            </Button>
+          </div>
+        );
+      },
+      hodnotaNaZoradenie: (f) => (f.stav === 'ziadost' ? 0 : f.stav === 'aktivny' ? 1 : 2),
+      sirka: '230px',
     },
     {
       kluc: 'karta',
@@ -189,6 +253,7 @@ export const Fanusikovia: React.FC = () => {
 
   const akcieRiadku: AkciaRiadku<Fanusik>[] = [
     { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (f) => setUpravovany({ ...f }) },
+    { popis: tr('Schváliť'), ikona: 'gdpr', onKlik: (f) => zmenStav(f, 'aktivny'), zobrazit: (f) => f.stav !== 'aktivny' },
     { popis: tr('Odstrániť'), ikona: 'zmazat', nebezpecna: true, onKlik: (f) => setNaZmazanie(f) },
   ];
 
@@ -199,7 +264,11 @@ export const Fanusikovia: React.FC = () => {
     <div className="cw-screen">
       <PageHeader
         nadpis={tr('Fanúšikovia')}
-        podnadpis={tr('Registrovaní priaznivci klubu · {soSuhlasom} so súhlasom na zasielanie oznamov.', { soSuhlasom })}
+        podnadpis={
+          ziadosti.length > 0
+            ? tr('Registrovaní priaznivci klubu · {soSuhlasom} so súhlasom na zasielanie oznamov · nové žiadosti z webu: {pocet}.', { soSuhlasom, pocet: ziadosti.length })
+            : tr('Registrovaní priaznivci klubu · {soSuhlasom} so súhlasom na zasielanie oznamov.', { soSuhlasom })
+        }
         akcie={
           <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
             {tr('Pridať fanúšika')}
@@ -247,6 +316,27 @@ export const Fanusikovia: React.FC = () => {
       >
         {upravovany && (
           <>
+            {upravovany.stav === 'ziadost' && (
+              <div className="cw-fanusik__ziadost">
+                <strong>{tr('Registrácia z webu čaká na schválenie')}</strong>
+                <span>{tr('Prijatá {datum}', { datum: formatujDatum(upravovany.vytvoreny!) })}</span>
+                {upravovany.sprava && <blockquote>{upravovany.sprava}</blockquote>}
+                <div className="cw-fanusik__ziadost-akcie">
+                  <Button velkost="sm" onClick={() => zmenStav(upravovany as Fanusik, 'aktivny')} nacitava={meniStav === upravovany.id}>
+                    {tr('Schváliť')}
+                  </Button>
+                  <Button velkost="sm" variant="secondary" onClick={() => zmenStav(upravovany as Fanusik, 'zamietnuty')} disabled={meniStav === upravovany.id}>
+                    {tr('Zamietnuť')}
+                  </Button>
+                </div>
+              </div>
+            )}
+            {upravovany.stav !== 'ziadost' && upravovany.sprava && (
+              <div className="cw-fanusik__ziadost">
+                <strong>{tr('Správa z registrácie')}</strong>
+                <blockquote>{upravovany.sprava}</blockquote>
+              </div>
+            )}
             <div className="cw-hraci__row">
               <Input
                 menovka={tr('Meno')}
@@ -308,6 +398,28 @@ export const Fanusikovia: React.FC = () => {
                 onChange={(e) => setUpravovany((d) => ({ ...d!, clenstvo_do: e.target.value || null }))}
               />
             </div>
+
+            <div className="cw-hraci__row">
+              <Input
+                menovka={tr('Dátum narodenia')}
+                type="date"
+                value={upravovany.datum_narodenia?.slice(0, 10) ?? ''}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, datum_narodenia: e.target.value || null }))}
+              />
+              <Select
+                menovka={tr('Stav')}
+                value={upravovany.stav ?? 'aktivny'}
+                onChange={(e) => setUpravovany((d) => ({ ...d!, stav: e.target.value as StavFanusika }))}
+                moznosti={STAVY.map((s) => ({ hodnota: s.hodnota, popis: s.popis }))}
+              />
+            </div>
+
+            <Input
+              menovka={tr('Adresa')}
+              value={upravovany.adresa ?? ''}
+              maxLength={255}
+              onChange={(e) => setUpravovany((d) => ({ ...d!, adresa: e.target.value }))}
+            />
 
             <Textarea
               menovka={tr('Poznámka')}

@@ -9,47 +9,14 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { souborUrl } from '../../config/api';
-import { sanitizeHtml } from '../../utils/sanitize';
 import { ObsahSFormularmi } from '../../components/FormularWeb';
+import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku } from './pomocky';
 import { useData } from '../pomocky';
-import type { BlokStranky, KomponentBloku } from './typy';
+import { kotvaBloku, type BlokStranky, type KomponentBloku } from './typy';
+import { ROZSIRENE_BLOKY } from './BlokyRozsirene';
 import './bloky.css';
 
-// ===== Pomôcky =====
-
-/** Adresa obrázka z knižnice médií alebo úplná adresa. */
-export const obrazokBloku = (cesta?: string | null): string | null =>
-  cesta ? (/^https?:\/\//.test(cesta) ? cesta : souborUrl(cesta)) : null;
-
-/** Odkaz: interný bez znovunačítania stránky, externý do nového okna. */
-export const OdkazBloku: React.FC<{ to: string; className?: string; children: React.ReactNode }> = ({ to, className, children }) =>
-  to.startsWith('/') && !to.startsWith('//') ? (
-    <Link to={to} className={className}>
-      {children}
-    </Link>
-  ) : (
-    <a href={to} className={className} {...(/^https?:/.test(to) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-      {children}
-    </a>
-  );
-
-const Obr: React.FC<{ src?: string | null; alt?: string; className?: string }> = ({ src, alt = '', className }) => {
-  const adresa = obrazokBloku(src);
-  return adresa ? <img src={adresa} alt={alt} loading="lazy" className={className} /> : null;
-};
-
-/** Nadpis a úvod bloku (spoločné pre väčšinu typov). */
-export const HlavickaBloku: React.FC<{ nadpis?: string; uvod?: string }> = ({ nadpis, uvod }) =>
-  nadpis || uvod ? (
-    <header className="blok__hlavicka">
-      {nadpis && <h2 className="blok__nadpis">{nadpis}</h2>}
-      {uvod && <p className="blok__uvod">{uvod}</p>}
-    </header>
-  ) : null;
-
-const Html: React.FC<{ html?: string; className?: string }> = ({ html, className = 'blok__text' }) =>
-  html ? <ObsahSFormularmi html={sanitizeHtml(html)} className={className} /> : null;
+export { HlavickaBloku, OdkazBloku, obrazokBloku } from './pomocky';
 
 const iniciely = (meno: string) =>
   meno
@@ -94,7 +61,7 @@ const CasovaOs: KomponentBloku = ({ blok: { data, polozky = [] } }) => (
 const Osoby: KomponentBloku = ({ blok: { data, polozky = [] } }) => (
   <>
     <HlavickaBloku nadpis={data.nadpis} uvod={data.uvod} />
-    <div className={`blok__mriezka blok__mriezka--${data.stlpce || '3'}`}>
+    <div className={`blok__mriezka blok__mriezka--${data.stlpce || '3'} blok__osoby--${data.vzhlad || 'karty'}`}>
       {polozky.map((p, i) => (
         <article key={i} className="blok__polozka blok__osoba">
           <div className="blok__foto">
@@ -120,7 +87,7 @@ const Osoby: KomponentBloku = ({ blok: { data, polozky = [] } }) => (
 const Karty: KomponentBloku = ({ blok: { data, polozky = [] } }) => (
   <>
     <HlavickaBloku nadpis={data.nadpis} uvod={data.uvod} />
-    <div className={`blok__mriezka blok__mriezka--${data.stlpce || '3'}`}>
+    <div className={`blok__mriezka blok__mriezka--${data.stlpce || '3'} blok__karty--${data.vzhlad || 'klasicke'}`}>
       {polozky.map((p, i) => {
         const obsah = (
           <>
@@ -477,6 +444,7 @@ export const PREDVOLENE_BLOKY: Record<string, KomponentBloku> = {
   clanky: Clanky,
   zapasy: Zapasy,
   partneri: Partneri,
+  ...ROZSIRENE_BLOKY,
 };
 
 /**
@@ -497,9 +465,13 @@ export const BlokyStranky: React.FC<{
       {viditelne.map((b) => {
         const Komponent = (komponenty[b.typ] || PREDVOLENE_BLOKY[b.typ])!;
         return (
-          <section key={b.id} className={`blok blok--${b.typ.replace(/_/g, '-')} blok--pozadie-${b.pozadie || 'biele'}`}>
+          <section
+            key={b.id}
+            id={kotvaBloku(b)}
+            className={`blok blok--${b.typ.replace(/_/g, '-')} blok--pozadie-${b.pozadie || 'biele'}${b.typ === 'podmenu' && b.data?.prilepene ? ' blok--prilepene' : ''}`}
+          >
             <div className="blok__vnutro">
-              <Komponent blok={b} />
+              <Komponent blok={b} bloky={viditelne} />
             </div>
           </section>
         );

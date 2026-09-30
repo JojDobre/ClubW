@@ -11,3 +11,15 @@
 .cw-stranka__prepinace .cw-kat__row {
   align-items: center;
 }
+
+/* Predlohy novej stránky */
+.cw-predlohy__zoznam { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.cw-predlohy__predloha {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cw-predlohy__predloha > svg { flex-shrink: 0; margin-top: 2px; color: var(--pri); }
+.cw-predlohy__predloha > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cw-predlohy__predloha strong { font-size: 14px; }
+.cw-predlohy__predloha small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.cw-predlohy__predloha:hover, .cw-predlohy__predloha.is-zvolena { border-color: var(--pri); background: var(--pri-softer); }

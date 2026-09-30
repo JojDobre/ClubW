@@ -34,6 +34,8 @@ export const SEKCIE_WEBU: Array<{ url: string; nazov: string }> = [
   { url: '/dokumenty', nazov: tr('Dokumenty') },
   { url: '/sponzori', nazov: tr('Partneri') },
   { url: '/obchod', nazov: tr('Fanshop') },
+  { url: '/registracia', nazov: tr('Registrácia fanúšika / člena') },
+  { url: '/hladat', nazov: tr('Vyhľadávanie') },
 ];
 
 /** Odporúčané menu pre prázdny web. */

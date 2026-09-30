@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.5.0",
+  "verzia": "1.6.0",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -76,6 +76,14 @@
       "menovka": "Košík v hlavičke",
       "skupina": "Hlavička",
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
+      "predvolene": true
+    },
+    {
+      "kluc": "ukazat_hladanie",
+      "typ": "prepinac",
+      "menovka": "Vyhľadávanie v hlavičke",
+      "skupina": "Hlavička",
+      "napoveda": "Ikona lupy vedie na stránku Hľadať (/hladat).",
       "predvolene": true
     },
     {
@@ -646,6 +654,28 @@
       "menovka": "Obchod: text pod nadpisom",
       "skupina": "Nadpisy podstránok",
       "predvolene": "Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub."
+    },
+    {
+      "kluc": "stranka_registracia_stitok",
+      "typ": "text",
+      "menovka": "Registrácia: štítok",
+      "skupina": "Nadpisy podstránok",
+      "napoveda": "Prázdne = názov klubu.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "stranka_registracia_nadpis",
+      "typ": "text",
+      "menovka": "Registrácia: nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Staňte sa súčasťou klubu"
+    },
+    {
+      "kluc": "registracia_vyhody_nadpis",
+      "typ": "text",
+      "menovka": "Registrácia: nadpis výhod",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Prečo sa registrovať"
     },
     {
       "kluc": "stranka_supiska_nadpis",

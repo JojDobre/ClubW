@@ -20,7 +20,10 @@ type Pole =
   | { typ: 'obrazok' }
   | { typ: 'odkaz' }
   | { typ: 'cislo'; min: number; max: number }
-  | { typ: 'vyber'; moznosti: string[] };
+  | { typ: 'vyber'; moznosti: string[] }
+  | { typ: 'prepinac' }
+  /** Tabuľka: { hlavicka: string[], riadky: string[][] } */
+  | { typ: 'tabulka' };
 
 interface SchemaBloku {
   polia: Record<string, Pole>;
@@ -31,6 +34,9 @@ const T = (max: number): Pole => ({ typ: 'text', max });
 const NADPIS = T(150);
 const UVOD = T(600);
 const STLPCE: Pole = { typ: 'vyber', moznosti: ['2', '3', '4'] };
+const ZAROVNANIE: Pole = { typ: 'vyber', moznosti: ['vlavo', 'stred'] };
+const MAX_STLPCOV_TABULKY = 8;
+const MAX_RIADKOV_TABULKY = 100;
 
 export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
   text: { polia: { html: { typ: 'html' } } },
@@ -40,11 +46,11 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
     polozky: { max: 60, polia: { rok: T(20), nadpis: NADPIS, text: T(1500), obrazok: { typ: 'obrazok' } } },
   },
   osoby: {
-    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE },
+    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE, vzhlad: { typ: 'vyber', moznosti: ['karty', 'kompaktne'] } },
     polozky: { max: 60, polia: { foto: { typ: 'obrazok' }, meno: T(100), funkcia: T(100), text: T(600), email: T(150), telefon: T(40) } },
   },
   karty: {
-    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE },
+    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'prekryv', 'vodorovne', 'jednoduche'] } },
     polozky: { max: 24, polia: { obrazok: { typ: 'obrazok' }, nadpis: NADPIS, text: T(600), odkaz: { typ: 'odkaz' }, tlacidlo: T(40) } },
   },
   cisla: {
@@ -79,6 +85,44 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
     polia: { nadpis: NADPIS, tim_id: { typ: 'cislo', min: 0, max: 1_000_000 }, rezim: { typ: 'vyber', moznosti: ['program', 'vysledky'] }, pocet: { typ: 'cislo', min: 1, max: 12 } },
   },
   partneri: { polia: { nadpis: NADPIS } },
+  tlacidla: {
+    polia: { nadpis: NADPIS, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'obrazkove', 'velke'] }, zarovnanie: ZAROVNANIE, stlpce: { typ: 'vyber', moznosti: ['2', '3', '4'] } },
+    polozky: {
+      max: 12,
+      polia: { text: T(60), popis: T(200), odkaz: { typ: 'odkaz' }, obrazok: { typ: 'obrazok' }, styl: { typ: 'vyber', moznosti: ['hlavne', 'obrys', 'tmave'] }, nove_okno: { typ: 'prepinac' } },
+    },
+  },
+  podmenu: {
+    polia: { rezim: { typ: 'vyber', moznosti: ['automaticke', 'vlastne'] }, prilepene: { typ: 'prepinac' } },
+    polozky: { max: 20, polia: { text: T(60), odkaz: { typ: 'odkaz' } } },
+  },
+  tabulka: { polia: { nadpis: NADPIS, popis: UVOD, tabulka: { typ: 'tabulka' }, pruhovana: { typ: 'prepinac' } } },
+  stlpce: { polia: { pocet: { typ: 'vyber', moznosti: ['2', '3'] }, html1: { typ: 'html' }, html2: { typ: 'html' }, html3: { typ: 'html' } } },
+  kroky: {
+    polia: { nadpis: NADPIS, uvod: UVOD },
+    polozky: { max: 12, polia: { nadpis: NADPIS, text: T(600) } },
+  },
+  vyhody: {
+    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE },
+    polozky: { max: 24, polia: { nadpis: NADPIS, text: T(400) } },
+  },
+  cennik: {
+    polia: { nadpis: NADPIS, uvod: UVOD },
+    polozky: {
+      max: 6,
+      polia: { nazov: T(80), cena: T(30), obdobie: T(40), vyhody: T(1500), tlacidlo: T(40), odkaz: { typ: 'odkaz' }, zvyraznene: { typ: 'prepinac' } },
+    },
+  },
+  oddelovac: { polia: { styl: { typ: 'vyber', moznosti: ['ciara', 'medzera'] }, velkost: { typ: 'vyber', moznosti: ['mala', 'stredna', 'velka'] } } },
+  kontakt: { polia: { nadpis: NADPIS, text: UVOD, mapa: { typ: 'prepinac' }, fakturacne: { typ: 'prepinac' } } },
+  stadion: { polia: { stadion_id: { typ: 'cislo', min: 0, max: 1_000_000 }, text: { typ: 'html' }, mapa: { typ: 'prepinac' } } },
+  registracia: { polia: { nadpis: NADPIS, text: UVOD, typ: { typ: 'vyber', moznosti: ['vyber', 'fanusik', 'clen'] } } },
+  dve_percenta: {
+    polia: {
+      nadpis: NADPIS, text: UVOD, prijimatel: T(200), ico: T(20), pravna_forma: T(80), sidlo: T(200),
+      termin: T(60), tlacivo: { typ: 'odkaz' }, poznamka: T(600),
+    },
+  },
 };
 
 export const MAX_BLOKOV = 60;
@@ -120,6 +164,17 @@ const ocistiPole = (pole: Pole, hodnota: unknown, poradie: number): unknown => {
     }
     case 'vyber':
       return pole.moznosti.includes(String(hodnota)) ? String(hodnota) : pole.moznosti[0];
+    case 'prepinac':
+      return hodnota === true;
+    case 'tabulka': {
+      const t = hodnota && typeof hodnota === 'object' ? (hodnota as { hlavicka?: unknown; riadky?: unknown }) : {};
+      const hlavicka = (Array.isArray(t.hlavicka) ? t.hlavicka : []).slice(0, MAX_STLPCOV_TABULKY).map((h) => cistyText(h, 100));
+      const stlpcov = Math.max(1, hlavicka.length);
+      const riadky = (Array.isArray(t.riadky) ? t.riadky : [])
+        .slice(0, MAX_RIADKOV_TABULKY)
+        .map((r) => Array.from({ length: stlpcov }, (_, i) => cistyText(Array.isArray(r) ? r[i] : '', 300)));
+      return { hlavicka: hlavicka.length ? hlavicka : [''], riadky };
+    }
   }
 };
 

@@ -43,6 +43,8 @@ export const casti: CastiSablony = {
   Kosik: lazy(() => obchod().then((m) => ({ default: m.Kosik }))),
   Pokladna: lazy(() => obchod().then((m) => ({ default: m.Pokladna }))),
   Objednavka: lazy(() => obchod().then((m) => ({ default: m.Objednavka }))),
+  Registracia: lazy(() => import('./stranky/Registracia')),
+  Hladanie: lazy(() => import('./stranky/Hladanie')),
   Nenajdena: lazy(() => import('./stranky/Nenajdena')),
 };
 
