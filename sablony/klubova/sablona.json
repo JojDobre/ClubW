@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.4.1",
+  "verzia": "1.7.0",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -79,11 +79,145 @@
       "predvolene": true
     },
     {
+      "kluc": "ukazat_hladanie",
+      "typ": "prepinac",
+      "menovka": "Vyhľadávanie v hlavičke",
+      "skupina": "Hlavička",
+      "napoveda": "Ikona lupy vedie na stránku Hľadať (/hladat).",
+      "predvolene": true
+    },
+    {
       "kluc": "ukazat_admin",
       "typ": "prepinac",
       "menovka": "Odkaz do administrácie pre prihlásených",
       "skupina": "Hlavička",
       "predvolene": true
+    },
+    {
+      "kluc": "horna_lista",
+      "typ": "prepinac",
+      "menovka": "Zobraziť hornú lištu",
+      "skupina": "Horná lišta",
+      "napoveda": "Tenký pás úplne navrchu nad hlavičkou s malými odkazmi (zväzy, kontakt, hľadanie, sociálne siete).",
+      "predvolene": false
+    },
+    {
+      "kluc": "horna_lista_farba",
+      "typ": "vyber",
+      "menovka": "Farba lišty",
+      "skupina": "Horná lišta",
+      "moznosti": [
+        {
+          "hodnota": "tmava",
+          "popis": "Tmavá"
+        },
+        {
+          "hodnota": "akcent",
+          "popis": "Farba zvýraznenia"
+        },
+        {
+          "hodnota": "svetla",
+          "popis": "Svetlá"
+        }
+      ],
+      "predvolene": "tmava"
+    },
+    {
+      "kluc": "horna_lista_text",
+      "typ": "text",
+      "menovka": "Text vľavo",
+      "skupina": "Horná lišta",
+      "napoveda": "Napr. Oficiálna stránka klubu {klub}. Prázdne = bez textu.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_kontakt",
+      "typ": "prepinac",
+      "menovka": "Telefón a e-mail klubu",
+      "skupina": "Horná lišta",
+      "napoveda": "Údaje z Nastavenia → Kontakt.",
+      "predvolene": true
+    },
+    {
+      "kluc": "horna_lista_odkaz_1_text",
+      "typ": "text",
+      "menovka": "Odkaz 1: text",
+      "skupina": "Horná lišta",
+      "napoveda": "Napr. zväz, oblastný futbalový zväz, súťaž alebo registrácia. Prázdne = odkaz sa neukáže.",
+      "predvolene": "SFZ"
+    },
+    {
+      "kluc": "horna_lista_odkaz_1",
+      "typ": "odkaz",
+      "menovka": "Odkaz 1: adresa",
+      "skupina": "Horná lišta",
+      "napoveda": "Adresa mimo webu klubu sa otvorí v novom okne.",
+      "predvolene": "https://www.futbalsfz.sk"
+    },
+    {
+      "kluc": "horna_lista_odkaz_2_text",
+      "typ": "text",
+      "menovka": "Odkaz 2: text",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_2",
+      "typ": "odkaz",
+      "menovka": "Odkaz 2: adresa",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_3_text",
+      "typ": "text",
+      "menovka": "Odkaz 3: text",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_3",
+      "typ": "odkaz",
+      "menovka": "Odkaz 3: adresa",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_4_text",
+      "typ": "text",
+      "menovka": "Odkaz 4: text",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_4",
+      "typ": "odkaz",
+      "menovka": "Odkaz 4: adresa",
+      "skupina": "Horná lišta",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_hladanie",
+      "typ": "prepinac",
+      "menovka": "Vyhľadávacie pole",
+      "skupina": "Horná lišta",
+      "predvolene": true
+    },
+    {
+      "kluc": "horna_lista_siete",
+      "typ": "prepinac",
+      "menovka": "Sociálne siete",
+      "skupina": "Horná lišta",
+      "napoveda": "Odkazy z Nastavenia → Sociálne siete.",
+      "predvolene": true
+    },
+    {
+      "kluc": "horna_lista_mobil",
+      "typ": "prepinac",
+      "menovka": "Zobraziť aj na mobile",
+      "skupina": "Horná lišta",
+      "napoveda": "Na mobile sa ukážu len odkazy a sociálne siete.",
+      "predvolene": false
     },
     {
       "kluc": "zalozka_2_nazov",
@@ -646,6 +780,28 @@
       "menovka": "Obchod: text pod nadpisom",
       "skupina": "Nadpisy podstránok",
       "predvolene": "Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub."
+    },
+    {
+      "kluc": "stranka_registracia_stitok",
+      "typ": "text",
+      "menovka": "Registrácia: štítok",
+      "skupina": "Nadpisy podstránok",
+      "napoveda": "Prázdne = názov klubu.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "stranka_registracia_nadpis",
+      "typ": "text",
+      "menovka": "Registrácia: nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Staňte sa súčasťou klubu"
+    },
+    {
+      "kluc": "registracia_vyhody_nadpis",
+      "typ": "text",
+      "menovka": "Registrácia: nadpis výhod",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Prečo sa registrovať"
     },
     {
       "kluc": "stranka_supiska_nadpis",

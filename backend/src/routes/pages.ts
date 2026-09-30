@@ -11,6 +11,29 @@ import { Op } from 'sequelize';
 import { sanitizeContent } from '../utils/sanitize';
 import { zostavStrankovanie } from '../utils/odpoved';
 import { presmerujStaruAdresu } from '../utils/automatickePresmerovanie';
+import { ChybaBlokovError, ocistiBloky, type BlokStranky } from '../services/blokyStranky';
+
+/** Text bez HTML značiek - či stránka naozaj niečo obsahuje. */
+const dlzkaTextu = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim().length;
+
+/**
+ * Očistí obsah a bloky stránky. Stránka potrebuje aspoň 10 znakov textu
+ * alebo aspoň jeden blok. Vráti chybovú správu alebo očistené údaje.
+ */
+const pripravObsah = (obsah: unknown, bloky: unknown): { chyba: string } | { obsah: string; bloky: BlokStranky[] } => {
+  let ocistene: BlokStranky[];
+  try {
+    ocistene = ocistiBloky(bloky);
+  } catch (e) {
+    if (e instanceof ChybaBlokovError) return { chyba: e.message };
+    throw e;
+  }
+  const html = sanitizeContent(typeof obsah === 'string' ? obsah : '');
+  if (dlzkaTextu(html) < 10 && ocistene.filter((b) => !b.skryty).length === 0) {
+    return { chyba: 'Stránka musí mať aspoň 10 znakov textu alebo aspoň jeden blok' };
+  }
+  return { obsah: html, bloky: ocistene };
+};
 
 const router: Router = Router();
 
@@ -300,8 +323,8 @@ adminPageRouter.post('/', [
   requireEditor,
   body('nazov').isString().isLength({ min: 2, max: 200 }).trim()
     .withMessage('Názov musí mať 2-200 znakov'),
-  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim()
-    .withMessage('Obsah musí mať 10-100000 znakov'),
+  body('obsah').optional({ nullable: true }).isString().isLength({ max: 100000 }).trim()
+    .withMessage('Obsah môže mať najviac 100000 znakov'),
   // ✅ OPRAVENÉ: Slug validácia - správne spracovanie prázdnych hodnôt
   body('slug')
     .optional({ nullable: true, checkFalsy: true }) // Akceptuje null, undefined, prázdny string
@@ -330,6 +353,7 @@ adminPageRouter.post('/', [
     const {
       nazov,
       obsah,
+      bloky,
       slug,
       v_menu = false,
       poradie_menu,
@@ -337,6 +361,11 @@ adminPageRouter.post('/', [
       meta_title,
       meta_description
     } = req.body;
+
+    const pripravene = pripravObsah(obsah, bloky);
+    if ('chyba' in pripravene) {
+      return res.status(400).json({ success: false, message: pripravene.chyba });
+    }
 
     // ✅ OPRAVENÉ: Automatické generovanie unikátneho slug s číselným suffixom
     const finalSlug = (slug && slug.trim()) 
@@ -362,7 +391,8 @@ adminPageRouter.post('/', [
 
     const newPage = await Page.create({
       nazov,
-      obsah: sanitizeContent(obsah), // sanitizácia proti XSS
+      obsah: pripravene.obsah, // sanitizácia proti XSS
+      bloky: pripravene.bloky,
       slug: finalSlug,
       v_menu,
       poradie_menu: finalPoradieMenu,
@@ -396,8 +426,8 @@ adminPageRouter.put('/:id', [
   param('id').isInt({ min: 1 }),
   body('nazov').isString().isLength({ min: 2, max: 200 }).trim()
     .withMessage('Názov musí mať 2-200 znakov'),
-  body('obsah').isString().isLength({ min: 10, max: 100000 }).trim()
-    .withMessage('Obsah musí mať 10-100000 znakov'),
+  body('obsah').optional({ nullable: true }).isString().isLength({ max: 100000 }).trim()
+    .withMessage('Obsah môže mať najviac 100000 znakov'),
   // ✅ OPRAVENÉ: Slug validácia pre update
   body('slug')
     .optional({ nullable: true, checkFalsy: true })
@@ -436,6 +466,7 @@ adminPageRouter.put('/:id', [
     const {
       nazov,
       obsah,
+      bloky,
       slug,
       v_menu,
       poradie_menu,
@@ -443,6 +474,12 @@ adminPageRouter.put('/:id', [
       meta_title,
       meta_description
     } = req.body;
+
+    // Bez poľa bloky (staršia administrácia) ostávajú uložené bloky
+    const pripravene = pripravObsah(obsah, bloky === undefined ? page.bloky : bloky);
+    if ('chyba' in pripravene) {
+      return res.status(400).json({ success: false, message: pripravene.chyba });
+    }
 
     // ✅ OPRAVENÉ: Spracovanie slug pre update s automatickým číslovaním
     let finalSlug = page.slug; // Ponechaj pôvodný slug
@@ -471,7 +508,8 @@ adminPageRouter.put('/:id', [
     // Aktualizácia
     await page.update({
       nazov,
-      obsah: sanitizeContent(obsah), // sanitizácia proti XSS
+      obsah: pripravene.obsah, // sanitizácia proti XSS
+      bloky: pripravene.bloky,
       slug: finalSlug,
       v_menu: v_menu !== undefined ? v_menu : page.v_menu,
       poradie_menu: poradie_menu !== undefined ? poradie_menu : page.poradie_menu,

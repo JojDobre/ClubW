@@ -9,6 +9,8 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
 export type TypClenstva = 'fanusik' | 'clen' | 'vip' | 'cestny';
+/** ziadost = registrácia z webu čaká na schválenie */
+export type StavFanusika = 'aktivny' | 'ziadost' | 'zamietnuty';
 
 interface FanusikAttributes {
   id: number;
@@ -24,6 +26,13 @@ interface FanusikAttributes {
   /** Súhlas so zasielaním klubových oznamov */
   suhlas_oznamy: boolean;
   poznamka: string | null;
+  stav: StavFanusika;
+  /** Odkiaľ záznam prišiel: administracia | web */
+  zdroj: string;
+  datum_narodenia: string | null;
+  adresa: string | null;
+  /** Správa od žiadateľa pri registrácii z webu */
+  sprava: string | null;
   aktivity: boolean;
   vytvoreny: Date;
   aktualizovany: Date;
@@ -34,6 +43,7 @@ interface FanusikCreationAttributes
     FanusikAttributes,
     'id' | 'telefon' | 'typ_clenstva' | 'cislo_karty' | 'clenstvo_od' | 'clenstvo_do'
     | 'suhlas_oznamy' | 'poznamka' | 'aktivity' | 'vytvoreny' | 'aktualizovany'
+    | 'stav' | 'zdroj' | 'datum_narodenia' | 'adresa' | 'sprava'
   > {}
 
 class Fanusik extends Model<FanusikAttributes, FanusikCreationAttributes> implements FanusikAttributes {
@@ -48,13 +58,18 @@ class Fanusik extends Model<FanusikAttributes, FanusikCreationAttributes> implem
   public clenstvo_do!: Date | null;
   public suhlas_oznamy!: boolean;
   public poznamka!: string | null;
+  public stav!: StavFanusika;
+  public zdroj!: string;
+  public datum_narodenia!: string | null;
+  public adresa!: string | null;
+  public sprava!: string | null;
   public aktivity!: boolean;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
 
   /** Je členstvo práve platné? */
   public jePlatne(): boolean {
-    if (!this.aktivity) return false;
+    if (!this.aktivity || this.stav !== 'aktivny') return false;
     if (this.clenstvo_do && new Date(this.clenstvo_do) < new Date()) return false;
     return true;
   }
@@ -82,6 +97,16 @@ Fanusik.init(
     clenstvo_do: { type: DataTypes.DATEONLY, allowNull: true },
     suhlas_oznamy: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     poznamka: { type: DataTypes.TEXT, allowNull: true },
+    stav: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'aktivny',
+      validate: { isIn: { args: [['aktivny', 'ziadost', 'zamietnuty']], msg: 'Neplatný stav fanúšika' } },
+    },
+    zdroj: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'administracia' },
+    datum_narodenia: { type: DataTypes.DATEONLY, allowNull: true },
+    adresa: { type: DataTypes.STRING(255), allowNull: true },
+    sprava: { type: DataTypes.TEXT, allowNull: true },
     aktivity: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     vytvoreny: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     aktualizovany: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

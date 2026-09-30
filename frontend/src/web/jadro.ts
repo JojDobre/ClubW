@@ -50,6 +50,20 @@ export { AnketaWeb } from '../components/AnketaWeb';
 export { KomentarePodClankom } from '../components/KomentarePodClankom';
 export { default as ZapasPriebeh } from '../components/ZapasPriebeh';
 
+// Bloky stránok (časová os, karty osôb, čísla, galéria…) - predvolené
+// zobrazenie; šablóna môže vzhľad vypnúť a jednotlivé typy nahradiť
+export { BlokyStranky, PREDVOLENE_BLOKY, HlavickaBloku, OdkazBloku, obrazokBloku, adresaZapasovBloku } from './bloky/BlokyStranky';
+export type { BlokStranky, TypBloku, PozadieBloku, KomponentBloku } from './bloky/typy';
+export { kotvaBloku } from './bloky/typy';
+
+// Registrácia fanúšikov a členov (stránka /registracia, blok Registrácia)
+export { FormularRegistracie, registrujFanusika } from './FormularRegistracie';
+export type { UdajeRegistracie, TypRegistracie } from './FormularRegistracie';
+
+// Vyhľadávanie na webe (stránka /hladat)
+export { useHladanie, SKUPINY_HLADANIA } from './hladanie';
+export type { VysledokHladania, TypVysledku } from './hladanie';
+
 // E-shop: košík, nastavenia obchodu, objednávka, rámec platobnej brány
 export {
   useKosik,

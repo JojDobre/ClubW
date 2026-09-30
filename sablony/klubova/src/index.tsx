@@ -29,6 +29,8 @@ import Sponzori from './stranky/Sponzori';
 import Formular from './stranky/Formular';
 import Statistiky from './stranky/Statistiky';
 import Nenajdena from './stranky/Nenajdena';
+import Registracia from './stranky/Registracia';
+import Hladanie from './stranky/Hladanie';
 import { Obchod, Produkt, Kosik, Pokladna, Objednavka } from './stranky/Obchod';
 
 registrujSablonu({
@@ -63,6 +65,8 @@ registrujSablonu({
     Kosik,
     Pokladna,
     Objednavka,
+    Registracia,
+    Hladanie,
     Nenajdena,
   },
 });

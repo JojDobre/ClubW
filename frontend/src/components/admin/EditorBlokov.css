@@ -1,0 +1,95 @@
+/* Umiestnenie: frontend/src/components/admin/EditorBlokov.css */
+
+.cw-bloky { display: flex; flex-direction: column; gap: 12px; margin: 8px 0 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.cw-bloky__hlava { display: flex; flex-direction: column; gap: 2px; }
+.cw-bloky__hlava small, .cw-bloky__prazdne { color: var(--muted); font-size: 13px; }
+.cw-bloky__prazdne { margin: 0; padding: 14px 16px; border: 1px dashed var(--border); border-radius: 12px; }
+.cw-bloky__zoznam { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.cw-blok { border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.cw-blok.is-otvoreny { border-color: color-mix(in srgb, var(--pri) 45%, var(--border)); }
+.cw-blok.is-skryty .cw-blok__hlava { opacity: 0.6; }
+.cw-blok__hlava { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 6px; }
+.cw-blok__prepinac, .cw-polozka__prepinac {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px; border: 0; border-radius: 8px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.cw-blok__prepinac:hover, .cw-polozka__prepinac:hover { background: var(--pri-softer); }
+.cw-blok__ikona {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--pri) 12%, transparent); color: var(--pri);
+}
+.cw-blok__nazov { display: flex; flex-direction: column; min-width: 0; }
+.cw-blok__nazov strong { font-size: 14px; }
+.cw-blok__nazov small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-blok__akcie { display: flex; gap: 2px; flex-shrink: 0; }
+.cw-blok__telo { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
+.cw-blok__vzhlad { display: grid; grid-template-columns: minmax(0, 220px) auto; align-items: center; gap: 16px; margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border); }
+
+.cw-blok__polozky { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 4px; align-items: flex-start; }
+.cw-blok__polozky > .cw-field__label { margin-bottom: 0; }
+.cw-polozka { align-self: stretch; border: 1px solid var(--border); border-radius: 10px; background: var(--bg, transparent); }
+.cw-polozka__hlava { display: flex; align-items: center; gap: 2px; padding: 4px 6px 4px 4px; }
+.cw-polozka__prepinac { font-size: 14px; font-weight: 600; }
+.cw-polozka__prepinac span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-polozka__cislo {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--border); font-size: 12px; font-weight: 700;
+}
+.cw-polozka__telo { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px 14px; border-top: 1px solid var(--border); }
+
+.cw-bloky__ponuka { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--card); }
+.cw-bloky__ponuka-hlava { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cw-bloky__typy { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.cw-bloky__typ {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cw-bloky__typ:hover { border-color: var(--pri); background: var(--pri-softer); }
+.cw-bloky__typ > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cw-bloky__typ strong { font-size: 14px; }
+.cw-bloky__typ small { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+
+@media (max-width: 640px) {
+  .cw-blok__hlava { flex-wrap: wrap; }
+  .cw-blok__prepinac { flex-basis: 100%; }
+  .cw-blok__akcie { margin-left: auto; }
+  .cw-blok__telo { padding: 10px 12px 14px; }
+  .cw-blok__vzhlad { grid-template-columns: 1fr; gap: 8px; }
+  .cw-bloky__typy { grid-template-columns: 1fr; }
+}
+
+/* Skupiny v ponuke blokov */
+.cw-bloky__ponuka { display: flex; flex-direction: column; gap: 12px; }
+.cw-bloky__ponuka-hlava { margin-bottom: 0; }
+.cw-bloky__ponuka .cw-field { margin: 0; }
+.cw-bloky__skupina { display: flex; flex-direction: column; gap: 8px; }
+.cw-bloky__skupina-nazov { color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Prepínač a kotva */
+.cw-blok__prepinac-pole { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 10px; }
+.cw-blok__prepinac-pole small, .cw-blok__kotva { color: var(--muted); font-size: 12.5px; }
+.cw-blok__kotva { margin-top: 6px; }
+.cw-blok__kotva code { padding: 1px 6px; border-radius: 6px; background: var(--pri-softer); font-size: 12px; user-select: all; }
+
+/* Editor tabuľky */
+.cw-tabulka__obal { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+.cw-tabulka table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cw-tabulka th, .cw-tabulka td { padding: 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); min-width: 120px; }
+.cw-tabulka tr:last-child td { border-bottom: 0; }
+.cw-tabulka th { background: var(--pri-softer); }
+.cw-tabulka input {
+  width: 100%; min-width: 0; padding: 8px 10px; border: 0; background: transparent; color: inherit; font: inherit;
+}
+.cw-tabulka th input { font-weight: 700; }
+.cw-tabulka input:focus { outline: 2px solid var(--pri); outline-offset: -2px; border-radius: 4px; }
+.cw-tabulka__bunka { display: flex; align-items: center; }
+.cw-tabulka__odober, .cw-tabulka__akcie button {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 4px;
+  border: 0; border-radius: 6px; background: none; color: var(--muted); font: inherit; cursor: pointer;
+}
+.cw-tabulka__odober:hover, .cw-tabulka__akcie button:hover:not(:disabled) { background: var(--card); color: var(--text, inherit); }
+.cw-tabulka__akcie button:disabled { opacity: 0.35; cursor: default; }
+.cw-tabulka th.cw-tabulka__akcie, .cw-tabulka td.cw-tabulka__akcie { min-width: 0; width: 1%; white-space: nowrap; border-right: 0; padding: 0 2px; }
+.cw-tabulka__tlacidla { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.cw-tabulka__tlacidla small { color: var(--muted); font-size: 12.5px; }

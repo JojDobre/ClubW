@@ -1,0 +1,9 @@
+/* Umiestnenie: frontend/src/pages/admin/Fanusikovia.css */
+
+.cw-fanusik__ziadost {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--warning, #d97706) 40%, var(--border)); background: color-mix(in srgb, var(--warning, #d97706) 8%, transparent);
+}
+.cw-fanusik__ziadost > span { color: var(--muted); font-size: 13px; }
+.cw-fanusik__ziadost blockquote { margin: 6px 0 0; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--card); border-radius: 0 8px 8px 0; white-space: pre-wrap; font-size: 14px; }
+.cw-fanusik__ziadost-akcie { display: flex; gap: 8px; margin-top: 8px; }

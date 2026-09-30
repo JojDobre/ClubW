@@ -75,6 +75,8 @@ const ADRESY: Array<[string, NazovCasti]> = [
   ['/kosik', 'Kosik'],
   ['/pokladna', 'Pokladna'],
   ['/objednavka/:token', 'Objednavka'],
+  ['/registracia', 'Registracia'],
+  ['/hladat', 'Hladanie'],
   ['/:slug', 'Stranka'],
   ['*', 'Nenajdena'],
 ];

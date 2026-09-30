@@ -4,6 +4,8 @@
 // Odzrkadľujú skutočný tvar dát z backendu. Pri zmene modelu na serveri
 // sa chyba objaví hneď pri kompilácii, nie až za behu na produkcii.
 
+import type { BlokStranky } from '../web/bloky/typy';
+
 // ===== Stránkovanie =====
 
 /**
@@ -592,6 +594,8 @@ export interface Stranka {
   nazov: string;
   slug: string;
   obsah?: string;
+  /** Bloky pod textom - časová os, karty osôb… (web/bloky) */
+  bloky?: BlokStranky[];
   excerpt?: string | null;
   v_menu: boolean;
   poradie_menu: number | null;
@@ -826,8 +830,18 @@ export interface Fanusik {
   suhlas_oznamy: boolean;
   poznamka: string | null;
   aktivity: boolean;
+  /** aktivny = platný záznam, ziadost = registrácia z webu čaká na schválenie */
+  stav: StavFanusika;
+  /** Odkiaľ záznam pochádza - administracia alebo web */
+  zdroj: string;
+  datum_narodenia: string | null;
+  adresa: string | null;
+  /** Správa klubu z registračného formulára */
+  sprava: string | null;
   vytvoreny: string;
 }
+
+export type StavFanusika = 'aktivny' | 'ziadost' | 'zamietnuty';
 
 // ===== Komentáre, videá, turnaje =====
 

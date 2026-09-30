@@ -1,11 +1,13 @@
 // Umiestnenie: sablony/klubova/src/stranky/Stranka.tsx
 // Stránka z administrácie (O klube, Kontakt, Vstupenky...) - adresa /:slug.
-// Tmavá hlavička s nadpisom a text v čitateľnom stĺpci. Obsah môže
-// obsahovať značky [formular slug] a [anketa ID].
+// Tmavá hlavička s nadpisom, text v čitateľnom stĺpci a pod ním bloky
+// (časová os, karty osôb, čísla…). Obsah môže obsahovať značky
+// [formular slug] a [anketa ID].
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { ObsahSFormularmi, sanitizeHtml, useNastavenia } from '@clubw/jadro';
+import { BlokyStranky, ObsahSFormularmi, sanitizeHtml, useNastavenia, type BlokStranky } from '@clubw/jadro';
+import { KLUBOVE_BLOKY } from '../bloky';
 import { NenajdenyObsah } from './Nenajdena';
 import { ChybaStranky, HlavickaStranky, Nacitava } from '../casti';
 import { hlavickaPrihlasenia, useApi, useMetaPopis, useNenajdene, useTitulok } from '../spolocne';
@@ -15,6 +17,7 @@ interface TypStranky {
   nazov: string;
   slug: string;
   obsah: string;
+  bloky?: BlokStranky[];
   meta_title?: string | null;
   meta_description?: string | null;
 }
@@ -44,9 +47,12 @@ const Stranka: React.FC = () => {
     <div className="kl-stranka kl-obsahova">
       {nahladId && <div className="kl-nahlad-pruh">Náhľad z administrácie - návštevníci stránku uvidia až po zverejnení.</div>}
       <HlavickaStranky stitok={nastavenia.nazov} nadpis={s.nazov} />
-      <div className="kl-clanok-detail__telo kl-clanok-detail__telo--bez-fotky">
-        <ObsahSFormularmi html={sanitizeHtml(s.obsah ?? '')} className="kl-text" />
-      </div>
+      {s.obsah && (
+        <div className="kl-clanok-detail__telo kl-clanok-detail__telo--bez-fotky">
+          <ObsahSFormularmi html={sanitizeHtml(s.obsah)} className="kl-text" />
+        </div>
+      )}
+      <BlokyStranky bloky={s.bloky} predvolenyVzhlad={false} className="kl-bloky" komponenty={KLUBOVE_BLOKY} />
     </div>
   );
 };

@@ -64,6 +64,7 @@ import { zaznamenajZmeny } from './middleware/auditLog';
 import { vykonajPresmerovania } from './middleware/presmerovania';
 import { spustiPlanovacClankov } from './services/planovacClankov';
 import { spustiPlanovacZapasov } from './services/planovacZapasov';
+import hladanieRouter from './routes/hladanie';
 
 // Načítanie environment premenných
 dotenv.config();
@@ -374,6 +375,9 @@ app.use('/api/admin/logs', logRoutes);
 
 // E-shop - produkty, objednávky, doručenie a platby
 app.use('/api/eshop', verejnyEshopRouter);
+
+// ✅ Vyhľadávanie na webe (články, stránky, hráči, tímy, videá, galérie, dokumenty, produkty)
+app.use('/api', hladanieRouter);
 app.use('/api/admin/eshop', adminEshopRouter);
 
 

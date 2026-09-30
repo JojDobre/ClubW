@@ -18,6 +18,8 @@ import Fanusik from '../models/Fanusik';
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin, smieVModule, modulZCesty } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
+import { posliEmail } from '../utils/email';
+import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 const router = Router();
 
@@ -298,8 +300,9 @@ vytvorOperacie('fans', {
   polia: [
     'meno', 'priezvisko', 'email', 'telefon', 'typ_clenstva', 'cislo_karty',
     'clenstvo_od', 'clenstvo_do', 'suhlas_oznamy', 'poznamka', 'aktivity',
+    'stav', 'datum_narodenia', 'adresa',
   ],
-  textovePolia: ['meno', 'priezvisko', 'poznamka'],
+  textovePolia: ['meno', 'priezvisko', 'poznamka', 'adresa'],
   zoradenie: [['priezvisko', 'ASC'], ['meno', 'ASC']],
   hladatV: ['meno', 'priezvisko', 'email'],
   // Osobné údaje fanúšikov (e-mail, telefón) - len pre administráciu
@@ -360,6 +363,98 @@ router.post('/polls/:id/vote', hlasovanieLimit, async (req: Request, res: Respon
   } catch (chyba) {
     console.error('Chyba pri hlasovaní:', chyba);
     res.status(500).json({ success: false, message: 'Chyba servera' });
+  }
+});
+
+// ===== Registrácia fanúšikov a členov z webu =====
+
+/** Z jednej adresy najviac 5 registrácií za hodinu - proti zahlteniu. */
+const registraciaLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Príliš veľa registrácií z tohto zariadenia. Skúste to neskôr.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const EMAIL_VZOR = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const text = (hodnota: unknown, max: number) => sanitizePlainText(String(hodnota ?? '')).slice(0, max).trim();
+
+/**
+ * POST /api/fans/registracia
+ * Verejná registrácia fanúšika alebo člena. Záznam čaká na schválenie
+ * v administrácii (Fanúšikovia → Nové žiadosti), klub dostane e-mail.
+ */
+router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Response) => {
+  try {
+    const b = req.body ?? {};
+    // Skryté pole pre roboty - človek ho nevyplní
+    if (b.web) {
+      res.status(201).json({ success: true, message: 'Ďakujeme, registrácia bola odoslaná.' });
+      return;
+    }
+    const meno = text(b.meno, 80);
+    const priezvisko = text(b.priezvisko, 80);
+    const email = text(b.email, 150).toLowerCase();
+    const typ = b.typ === 'clen' ? 'clen' : 'fanusik';
+    if (!meno || !priezvisko) {
+      res.status(400).json({ success: false, message: 'Vyplňte meno a priezvisko' });
+      return;
+    }
+    if (!EMAIL_VZOR.test(email)) {
+      res.status(400).json({ success: false, message: 'Zadajte platný e-mail' });
+      return;
+    }
+    if (b.suhlas_gdpr !== true) {
+      res.status(400).json({ success: false, message: 'Na registráciu je potrebný súhlas so spracovaním osobných údajov' });
+      return;
+    }
+    const datum = typeof b.datum_narodenia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.datum_narodenia) ? b.datum_narodenia : null;
+    if (datum && (new Date(datum).getTime() > Date.now() || new Date(datum).getFullYear() < 1900)) {
+      res.status(400).json({ success: false, message: 'Dátum narodenia nie je platný' });
+      return;
+    }
+
+    // Už evidovaný e-mail neprezrádzame - odpoveď je rovnaká ako pri novej registrácii
+    const existujuci = await Fanusik.findOne({ where: { email } });
+    if (!existujuci) {
+      await Fanusik.create({
+        meno,
+        priezvisko,
+        email,
+        telefon: text(b.telefon, 40) || null,
+        typ_clenstva: typ,
+        datum_narodenia: datum,
+        adresa: text(b.adresa, 255) || null,
+        sprava: text(b.sprava, 2000) || null,
+        suhlas_oznamy: b.suhlas_oznamy === true,
+        stav: 'ziadost',
+        zdroj: 'web',
+      });
+
+      const klub = await NastaveniaKlubu.nacitaj();
+      if (klub?.email) {
+        posliEmail({
+          prijemca: klub.email,
+          predmet: `Nová registrácia ${typ === 'clen' ? 'člena' : 'fanúšika'}: ${meno} ${priezvisko}`,
+          text:
+            `Na webe sa zaregistroval ${typ === 'clen' ? 'nový člen' : 'nový fanúšik'}.\n\n` +
+            `Meno: ${meno} ${priezvisko}\nE-mail: ${email}\nTelefón: ${text(b.telefon, 40) || '-'}\n` +
+            `${text(b.sprava, 2000) ? `Správa: ${text(b.sprava, 2000)}\n` : ''}` +
+            `\nŽiadosť schválite v administrácii: Fanúšikovia → Nové žiadosti.`,
+        }).catch((e) => console.error('Upozornenie na registráciu sa nepodarilo odoslať:', e));
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: typ === 'clen'
+        ? 'Ďakujeme, žiadosť o členstvo sme prijali. Klub sa vám ozve.'
+        : 'Ďakujeme za registráciu. Vitajte medzi fanúšikmi!',
+    });
+  } catch (chyba) {
+    console.error('Chyba pri registrácii fanúšika:', chyba);
+    res.status(500).json({ success: false, message: 'Registráciu sa nepodarilo odoslať. Skúste to znova.' });
   }
 });
 

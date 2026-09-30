@@ -47,6 +47,10 @@ export interface CastiSablony {
   Kosik: ComponentType;
   Pokladna: ComponentType;
   Objednavka: ComponentType;
+  /** Registrácia fanúšika alebo člena (/registracia) */
+  Registracia: ComponentType;
+  /** Vyhľadávanie na webe (/hladat?q=…) */
+  Hladanie: ComponentType;
   /** Adresa neexistuje (po neúspešnom pokuse o presmerovanie) */
   Nenajdena: ComponentType;
 }
