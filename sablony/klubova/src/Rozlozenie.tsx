@@ -21,7 +21,7 @@ import {
   useNastaveniaSablony,
   type PolozkaMenu,
 } from '@clubw/jadro';
-import { Ikona, Odkaz, datum, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
+import { Ikona, Odkaz, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
 
 interface NastaveniaRozlozenia extends Record<string, string | number | boolean | null> {
@@ -372,24 +372,44 @@ const ZoznamOdkazov: React.FC<{ odkazy: PolozkaMenu[]; zavriet: () => void }> = 
   );
 };
 
+/** Karty najnovších článkov - položka menu typu „Najnovšie články" (voliteľne z jednej rubriky). */
+const ClankyMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
+  const pocet = Math.min(6, Math.max(1, Number(polozka.pocet) || 2));
+  const rubrika = polozka.rubrika_slug ? `&category=${encodeURIComponent(polozka.rubrika_slug)}` : '';
+  const clanky = useApi<Clanok[]>(`/articles?limit=${pocet}${rubrika}`);
+  return (
+    <>
+      {(clanky.data ?? []).map((c) => (
+        <Link key={c.id} to={`/clanek/${c.slug}`} className="kl-panel__karta kl-panel__karta--clanok" onClick={zavriet}>
+          <span className="kl-panel__karta-obrazok">
+            {c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : <span className="kl-obrazok--prazdny" />}
+          </span>
+          <span className="kl-panel__karta-nazov">{c.nazov}</span>
+        </Link>
+      ))}
+    </>
+  );
+};
+
 /**
  * Obsah rozbaľovacieho panela podľa návrhu:
  *  - kategórie (položky s vlastným podmenu) = stĺpce s nadpismi cez celú šírku,
  *  - bez kategórií = zoznam odkazov vľavo,
- *  - položky s obrázkom = karty vpravo.
+ *  - položky s obrázkom a „Najnovšie články" = karty vpravo.
  */
-const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void; clanky?: Clanok[] | null }> = ({ polozka, zavriet, clanky }) => {
-  const deti = polozka.deti ?? [];
+const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
+  const vsetkyDeti = polozka.deti ?? [];
+  const clankove = vsetkyDeti.filter((d) => d.typ === 'clanky');
+  const deti = vsetkyDeti.filter((d) => d.typ !== 'clanky');
   const kategorie = deti.filter((d) => (d.deti?.length ?? 0) > 0);
-  // Pri najnovších článkoch ustúpia karty s obrázkom (panel by bol preplnený)
-  const karty = clanky?.length ? [] : deti.filter((d) => !d.deti?.length && d.obrazok && d.odkaz);
-  const odkazy = deti.filter((d) => !d.deti?.length && !(d.obrazok && d.odkaz && !clanky?.length));
-  const maKarty = karty.length > 0 || Boolean(clanky?.length);
+  const karty = deti.filter((d) => !d.deti?.length && d.obrazok && d.odkaz);
+  const odkazy = deti.filter((d) => !d.deti?.length && !(d.obrazok && d.odkaz));
+  const maKarty = karty.length > 0 || clankove.length > 0;
 
   return (
     <>
       {kategorie.length > 0 ? (
-        // Mriežka má vždy štyri stĺpce ako v návrhu - pri menej kategóriách ostanú vľavo
+        // Mriežka má štyri stĺpce ako v návrhu - pri kartách vpravo menej, pri menej kategóriách ostanú vľavo
         <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': maKarty ? 2 : 4 } as React.CSSProperties}>
           {odkazy.length > 0 && (
             <div className="kl-panel__stlpec">
@@ -407,54 +427,34 @@ const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void; clanky?: 
             </div>
           ))}
         </div>
+      ) : odkazy.length > 0 ? (
+        <ZoznamOdkazov odkazy={odkazy} zavriet={zavriet} />
       ) : (
-        odkazy.length > 0 && <ZoznamOdkazov odkazy={odkazy} zavriet={zavriet} />
+        // Len články: vľavo nadpis a odkaz na všetky články, nech panel nie je prázdny
+        clankove.length > 0 && (
+          <div className="kl-panel__stlpec kl-panel__uvod-clankov">
+            <span className="kl-panel__nadpis">{clankove[0].nazov}</span>
+            {clankove[0].odkaz && (
+              <OdkazMenu polozka={{ ...clankove[0], deti: [] }} className="kl-panel__vsetky" onClick={zavriet}>
+                Všetky články
+                <Ikona nazov="vpravo" velkost={16} />
+              </OdkazMenu>
+            )}
+          </div>
+        )
       )}
-      {karty.length > 0 && (
+      {maKarty && (
         <div className="kl-panel__karty">
-          {karty.slice(0, 3).map((d) => (
+          {karty.slice(0, clankove.length > 0 ? 1 : 3).map((d) => (
             <KartaMenu key={d.id} polozka={d} zavriet={zavriet} />
           ))}
-        </div>
-      )}
-      {clanky && clanky.length > 0 && deti.length === 0 && (
-        <div className="kl-panel__stlpec kl-panel__uvod-clankov">
-          <span className="kl-panel__nadpis">Najnovšie články</span>
-          <p>Aktuality, reportáže zo zápasov a novinky z klubu.</p>
-          {polozka.odkaz && (
-            <OdkazMenu polozka={polozka} className="kl-panel__vsetky" onClick={zavriet}>
-              Všetky články
-              <Ikona nazov="vpravo" velkost={16} />
-            </OdkazMenu>
-          )}
-        </div>
-      )}
-      {clanky && clanky.length > 0 && (
-        <div className="kl-panel__karty kl-panel__clanky">
-          {clanky.map((c) => (
-            <Link key={c.id} to={`/clanek/${c.slug}`} className="kl-panel__karta" onClick={zavriet}>
-              <span className="kl-panel__karta-obrazok">
-                {c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : <span className="kl-obrazok--prazdny" />}
-              </span>
-              <span className="kl-panel__karta-datum">{datum(c.publikovany_datum || c.vytvoreny)}</span>
-              <span className="kl-panel__karta-nazov">{c.nazov}</span>
-            </Link>
+          {clankove.map((c) => (
+            <ClankyMenu key={c.id} polozka={c} zavriet={zavriet} />
           ))}
         </div>
       )}
     </>
   );
-};
-
-/** Položka hlavného menu, ktorá má v paneli ukázať najnovšie články (podľa nastavenia šablóny). */
-const useClankyMenu = (polozky: PolozkaMenu[]) => {
-  const u = useUpravy();
-  const zapnute = u.zapnute('menu_clanky', false);
-  const hladana = u.text('menu_clanky_polozka', '/clanky').toLowerCase();
-  const pocet = Math.min(4, Math.max(1, Number(u.s.menu_clanky_pocet) || 3));
-  const polozka = zapnute ? polozky.find((p) => p.nazov.trim().toLowerCase() === hladana || (p.odkaz ?? '').toLowerCase() === hladana) : undefined;
-  const clanky = useApi<Clanok[]>(polozka ? `/articles?limit=${pocet}` : null);
-  return { id: polozka?.id ?? null, clanky: clanky.data ?? null };
 };
 
 export const Hlavicka: React.FC = () => {
@@ -469,7 +469,6 @@ export const Hlavicka: React.FC = () => {
   const [hladanie, setHladanie] = useState(false);
   const hlavicka = useRef<HTMLElement>(null);
   const casovac = useRef<number>();
-  const menuClanky = useClankyMenu(polozky);
   const jeUvod = pathname === '/';
 
   useEffect(() => {
@@ -540,13 +539,13 @@ export const Hlavicka: React.FC = () => {
         <HornaLista />
         <nav className="kl-hlavicka__vnutro" aria-label="Hlavné menu">
           <Logo />
+          {/* Na mobile a tablete zároveň odsúva ikony doprava - preto zostáva aj bez textu */}
           <Link to="/" className="kl-hlavicka__nazov" tabIndex={-1} aria-hidden="true">
-            {nastavenia.nazov}
+            {u.zapnute('ukazat_nazov', false) ? nastavenia.nazov : ''}
           </Link>
           <div className="kl-menu">
             {polozky.map((p) => {
-              const clanky = menuClanky.id === p.id ? menuClanky.clanky : null;
-              const maDeti = (p.deti?.length ?? 0) > 0 || Boolean(clanky?.length);
+              const maDeti = (p.deti?.length ?? 0) > 0;
               const jeOtvorene = otvorene === p.id;
               if (!maDeti) {
                 return (
@@ -587,7 +586,7 @@ export const Hlavicka: React.FC = () => {
                   )}
                   <div className="kl-panel">
                     <div className="kl-panel__vnutro">
-                      <PanelMenu polozka={p} zavriet={zavri} clanky={clanky} />
+                      <PanelMenu polozka={p} zavriet={zavri} />
                     </div>
                   </div>
                 </div>

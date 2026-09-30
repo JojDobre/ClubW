@@ -10,8 +10,14 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-/** nadpis = kategória bez odkazu (nadpis stĺpca v rozbaľovacom menu) */
-export type TypPolozky = 'stranka' | 'url' | 'rubrika' | 'nadpis';
+/**
+ * nadpis = kategória bez odkazu (nadpis stĺpca v rozbaľovacom menu),
+ * clanky = najnovšie články (voliteľne z rubriky) ako karty v rozbaľovacom menu
+ */
+export type TypPolozky = 'stranka' | 'url' | 'rubrika' | 'nadpis' | 'clanky';
+
+/** Najviac článkov v položke „Najnovšie články" */
+export const MAX_CLANKOV_V_MENU = 6;
 
 interface MenuPolozkaAttributes {
   id: number;
@@ -24,6 +30,8 @@ interface MenuPolozkaAttributes {
   rodic_id: number | null;
   /** Obrázok karty v rozbaľovacom menu (adresa z knižnice médií) */
   obrazok: string | null;
+  /** Počet článkov pri položke typu clanky */
+  pocet: number | null;
   poradie: number;
   otvorit_v_novom: boolean;
   aktivity: boolean;
@@ -34,7 +42,7 @@ interface MenuPolozkaAttributes {
 interface MenuPolozkaCreationAttributes
   extends Optional<
     MenuPolozkaAttributes,
-    | 'id' | 'typ' | 'stranka_id' | 'rubrika_id' | 'url' | 'rodic_id' | 'obrazok'
+    | 'id' | 'typ' | 'stranka_id' | 'rubrika_id' | 'url' | 'rodic_id' | 'obrazok' | 'pocet'
     | 'poradie' | 'otvorit_v_novom' | 'aktivity' | 'vytvorena' | 'aktualizovana'
   > {}
 
@@ -50,6 +58,7 @@ class MenuPolozka
   public url!: string | null;
   public rodic_id!: number | null;
   public obrazok!: string | null;
+  public pocet!: number | null;
   public poradie!: number;
   public otvorit_v_novom!: boolean;
   public aktivity!: boolean;
@@ -70,6 +79,8 @@ class MenuPolozka
     if (this.typ === 'stranka') return this.stranka ? `/${this.stranka.slug}` : null;
     // Web nemá samostatnú stránku rubriky - zoznam článkov sa filtruje
     if (this.typ === 'rubrika') return this.rubrika ? `/clanky?rubrika=${encodeURIComponent(this.rubrika.slug)}` : null;
+    // Najnovšie články - šablóny bez kariet v menu ukážu obyčajný odkaz na zoznam
+    if (this.typ === 'clanky') return this.rubrika ? `/clanky?rubrika=${encodeURIComponent(this.rubrika.slug)}` : '/clanky';
     return null;
   }
 
@@ -84,6 +95,9 @@ class MenuPolozka
       odkaz: this.odkaz(),
       rodic_id: this.rodic_id,
       obrazok: this.obrazok,
+      pocet: this.typ === 'clanky' ? this.pocet ?? 2 : null,
+      /** Rubrika pre načítanie článkov (/api/articles?category=…) */
+      rubrika_slug: this.rubrika?.slug ?? null,
       poradie: this.poradie,
       otvorit_v_novom: this.otvorit_v_novom,
       aktivity: this.aktivity,
@@ -100,7 +114,7 @@ MenuPolozka.init(
       validate: { len: { args: [1, 100], msg: 'Názov položky menu musí mať 1-100 znakov' } },
     },
     typ: {
-      type: DataTypes.ENUM('stranka', 'url', 'rubrika', 'nadpis'),
+      type: DataTypes.ENUM('stranka', 'url', 'rubrika', 'nadpis', 'clanky'),
       allowNull: false,
       defaultValue: 'stranka',
     },
@@ -120,6 +134,7 @@ MenuPolozka.init(
         },
       },
     },
+    pocet: { type: DataTypes.INTEGER, allowNull: true },
     poradie: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     otvorit_v_novom: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     aktivity: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },

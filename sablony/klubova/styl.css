@@ -192,8 +192,7 @@ a.kl-panel__nadpis:hover { color: #ffffff; }
 .kl-panel__odkaz:hover { color: var(--kl-akcent); }
 /* Položky s obrázkom a najnovšie články: karty vpravo */
 .kl-panel__karty { display: flex; gap: 24px; margin-left: auto; flex-shrink: 0; }
-.kl-panel__uvod-clankov { max-width: 280px; }
-.kl-panel__uvod-clankov p { margin: 0 0 18px; color: rgba(255, 255, 255, 0.6); font-family: var(--kl-pismo); font-size: 15px; line-height: 1.55; }
+.kl-panel__uvod-clankov { max-width: 280px; gap: 12px; }
 .kl-panel__vsetky {
   display: inline-flex; align-items: center; gap: 8px; color: #ffffff; text-decoration: none;
   font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px; transition: color 0.2s ease;
@@ -209,7 +208,6 @@ a.kl-panel__nadpis:hover { color: #ffffff; }
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 .kl-panel__karta-obrazok img, .kl-panel__karta-obrazok .kl-obrazok--prazdny { width: 100%; height: 100%; object-fit: cover; display: block; }
-.kl-panel__karta-datum { margin-bottom: -6px; color: rgba(255, 255, 255, 0.55); font-family: var(--kl-pismo); font-size: 12.5px; font-weight: 600; }
 .kl-panel__karta-nazov {
   font-family: var(--kl-nadpisy); font-weight: 700; font-size: 16px; line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -2788,13 +2786,82 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-lista__odkazy a, .kl-lista__siete a { min-height: 28px; }
 }
 
+/* ===================================================================
+   Bloky stránok bez prázdnych miest
+   Mriežky kariet sú flex: položky posledného riadku sa roztiahnu a na
+   užšom okne sa karty zalomia skôr, než by sa tlačili k sebe.
+   =================================================================== */
+.kl-bloky .blok__mriezka {
+  --kl-n: 3; --kl-min: 260px; --kl-medzera: 24px;
+  display: flex; flex-wrap: wrap; gap: var(--kl-medzera);
+}
+.kl-bloky .blok__mriezka--2 { --kl-n: 2; --kl-min: 300px; }
+.kl-bloky .blok__mriezka--4 { --kl-n: 4; --kl-min: 220px; }
+.kl-bloky .blok__mriezka > * {
+  flex: 1 1 calc((100% - (var(--kl-n) - 1) * var(--kl-medzera)) / var(--kl-n));
+  min-width: min(100%, var(--kl-min));
+}
+.kl-bloky .blok__vyhody { --kl-min: 240px; }
+.kl-bloky .blok__dlazdice--velke { --kl-min: 230px; }
+/* Osoby a galéria zostávajú mriežkou (fotka cez celú šírku by bola obrovská),
+   pri menej položkách než stĺpcov sa ale roztiahnu */
+.kl-bloky .blok__mriezka.blok__galeria, .kl-bloky .blok__mriezka[class*='blok__osoby'] {
+  --kl-min: 200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(min(100%, var(--kl-min)), calc((100% - (var(--kl-n) - 1) * var(--kl-medzera)) / var(--kl-n))), 1fr));
+}
+.kl-bloky .blok__mriezka.blok__galeria { --kl-min: 160px; }
+.kl-bloky .blok__mriezka.blok__osoby--kompaktne { --kl-min: 280px; }
+.kl-bloky .blok__mriezka.blok__galeria > *, .kl-bloky .blok__mriezka[class*='blok__osoby'] > * { min-width: 0; }
+.kl-bloky .blok__uspechy { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.kl-bloky .blok__cisla { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+
+@media (max-width: 768px) {
+  .kl-bloky .blok__mriezka { --kl-medzera: 14px; }
+  .kl-bloky .blok__mriezka.blok__galeria { --kl-medzera: 8px; }
+  /* Osoby po dvoch vedľa seba sú na mobile ešte čitateľné */
+  .kl-bloky .blok__mriezka.blok__osoby--karty { --kl-min: 140px; }
+  .kl-bloky .blok__cisla { gap: 12px; }
+  .kl-bloky .blok__cisla .blok__polozka { padding: 20px; border-radius: 20px; }
+  .kl-bloky .blok__cisla dt { font-size: 32px; }
+  /* Údaje štadióna pod sebou, s menším písmom */
+  .kl-bloky .blok__stadion-udaje { grid-template-columns: 1fr; gap: 10px; }
+  .kl-bloky .blok__stadion-udaje dd { font-size: 17px; line-height: 1.35; }
+  /* Odkaz klubu v bloku: karty pod sebou nižšie (na šírku), nech nie sú tri štvorce za sebou */
+  .kl-bloky .blok__karty--klub .kl-odkaz-karta__obraz { aspect-ratio: 16 / 9; }
+  .kl-bloky .blok__karty--klub .kl-odkaz-karta__oval { left: 32%; width: 36%; }
+}
+
+/* ===================================================================
+   Mobil: zápasy a výsledky na úvode
+   Celá sekcia je jeden tmavý panel - karty sa posúvajú vo vnútri a nič
+   netrčí von z panela. „Všetky zápasy" je tlačidlo priamo v paneli.
+   =================================================================== */
+@media (max-width: 768px) {
+  .kl-zapasy { margin: 12px 8px 0; padding: 0 0 20px; border-radius: 28px; background: var(--kl-tmava); overflow: hidden; }
+  .kl-zapasy__pozadie { display: none; }
+  .kl-zapasy__hlava { padding: 24px 20px 0; margin-bottom: 18px; }
+  .kl-zapasy__timy { margin: 0 -20px; padding: 0 20px; }
+  .kl-zapasy__pas { padding: 2px 20px 4px; margin: 0; gap: 12px; scroll-padding-inline: 20px; }
+  .kl-zapas { flex-basis: calc(100% - 56px); scroll-snap-align: start; box-shadow: none; }
+  .kl-zapasy__vsetky {
+    margin: 16px 20px 0; padding: 13px; border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .kl-zapasy__prazdne { margin: 0 20px; }
+
+  /* Nadpis sekcie a „Zobraziť všetky" na jednej línii */
+  .kl-nadpis { align-items: center; }
+  .kl-nadpis__odkaz { font-size: 13px; line-height: 1; }
+}
+
 /* Tablet na výšku (mobilné rozloženie, ale širší displej): menšie karty v posuvných pásoch */
 @media (min-width: 560px) and (max-width: 768px) {
   .kl-pas-mobil > * { flex-basis: 46%; }
   .kl-fanshop .kl-pas-mobil > * { flex-basis: 38%; }
   .kl-hraci .kl-pas-mobil > * { flex-basis: 42%; }
   .kl-clanky__spodne > * { flex-basis: 44%; }
-  .kl-zapas { flex-basis: 64%; }
+  .kl-zapas { flex-basis: calc(62% - 20px); }
   .kl-uspechy__zoznam { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .kl-socialne__mriezka { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .kl-uspechy__zoznam > :last-child:nth-child(odd), .kl-socialne__mriezka > :last-child:nth-child(odd) { grid-column: auto; }

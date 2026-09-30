@@ -127,3 +127,6 @@
     flex-direction: column;
   }
 }
+
+/* Najnovšie články: rubrika a počet vedľa seba */
+.cw-menu__dvojica { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 12px; }

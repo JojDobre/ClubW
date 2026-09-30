@@ -238,6 +238,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
             popis: tr('Vodorovné - obrázok vedľa textu'),
           },
           { hodnota: 'jednoduche', popis: tr('Jednoduché - bez rámčeka') },
+          { hodnota: 'klub', popis: tr('Odkaz klubu - ovál s názvom a tlačidlom (História, Legendy…)') },
         ],
       },
     ],
@@ -857,6 +858,35 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
 
 const definicia = (typ: string) => DEFINICIE_BLOKOV.find((d) => d.typ === typ);
 
+/** Predvyplnené bloky v ponuke - existujúci typ s pripraveným vzhľadom a položkami. */
+interface RychlyBlok {
+  kluc: string;
+  typ: string;
+  nazov: string;
+  popis: string;
+  ikona: string;
+  skupina: SkupinaBlokov;
+  data: Record<string, unknown>;
+  polozky?: Array<Record<string, unknown>>;
+}
+
+const RYCHLE_BLOKY: RychlyBlok[] = [
+  {
+    kluc: 'odkaz_klubu',
+    typ: 'karty',
+    nazov: tr('Odkaz klubu'),
+    popis: tr('Karty s oválom a tlačidlom Objaviť - História, Legendy, Trofeje'),
+    ikona: 'ligy',
+    skupina: 'obsah',
+    data: { nadpis: tr('Odkaz klubu'), stlpce: '3', vzhlad: 'klub' },
+    polozky: [
+      { nadpis: tr('História'), tlacidlo: tr('Objaviť') },
+      { nadpis: tr('Legendy'), tlacidlo: tr('Objaviť') },
+      { nadpis: tr('Trofeje'), tlacidlo: tr('Objaviť') },
+    ],
+  },
+];
+
 const noveId = () => `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 /** Krátky popis bloku v zbalenom stave. */
@@ -1169,17 +1199,17 @@ export const EditorBlokov: React.FC<{
     [nove[index], nove[ciel]] = [nove[ciel], nove[index]];
     onZmena(nove);
   };
-  const pridaj = (typ: string) => {
+  const pridaj = (typ: string, rychly?: RychlyBlok) => {
     const def = definicia(typ)!;
     const blok: BlokStranky = {
       id: noveId(),
       typ,
-      data: { ...(def.data ?? {}) },
+      data: { ...(def.data ?? {}), ...(rychly?.data ?? {}) },
       pozadie: 'biele',
       skryty: false,
     };
     const sPolozkami = def.polozky && (!def.polozky.ak || def.polozky.ak(blok.data));
-    if (sPolozkami) blok.polozky = [{}];
+    if (sPolozkami) blok.polozky = rychly?.polozky ? rychly.polozky.map((x) => ({ ...x })) : [{}];
     onZmena([...bloky, blok]);
     setRozbalene(new Set(rozbalene).add(blok.id));
     if (sPolozkami) setRozbalenePolozky(new Set(rozbalenePolozky).add(`${blok.id}:0`));
@@ -1357,14 +1387,18 @@ export const EditorBlokov: React.FC<{
           <Input value={hladanyTyp} onChange={(e) => setHladanyTyp(e.target.value)} placeholder={tr('Hľadať blok…')} aria-label={tr('Hľadať blok…')} autoFocus />
           {SKUPINY_BLOKOV.map((skupina) => {
             const hladane = hladanyTyp.trim().toLowerCase();
-            const typy = DEFINICIE_BLOKOV.filter((d) => d.skupina === skupina.kluc && (!hladane || `${d.nazov} ${d.popis}`.toLowerCase().includes(hladane)));
+            const sedi = (d: { nazov: string; popis: string }) => !hladane || `${d.nazov} ${d.popis}`.toLowerCase().includes(hladane);
+            const typy = [
+              ...DEFINICIE_BLOKOV.filter((d) => d.skupina === skupina.kluc && sedi(d)).map((d) => ({ kluc: d.typ, typ: d.typ, nazov: d.nazov, popis: d.popis, ikona: d.ikona, rychly: undefined as RychlyBlok | undefined })),
+              ...RYCHLE_BLOKY.filter((r) => r.skupina === skupina.kluc && sedi(r)).map((r) => ({ ...r, rychly: r })),
+            ];
             if (typy.length === 0) return null;
             return (
               <div key={skupina.kluc} className="cw-bloky__skupina">
                 <span className="cw-bloky__skupina-nazov">{skupina.nazov}</span>
                 <div className="cw-bloky__typy">
                   {typy.map((d) => (
-                    <button key={d.typ} type="button" className="cw-bloky__typ" onClick={() => pridaj(d.typ)}>
+                    <button key={d.kluc} type="button" className="cw-bloky__typ" onClick={() => pridaj(d.typ, d.rychly)}>
                       <span className="cw-blok__ikona">
                         <Icon nazov={d.ikona} velkost={16} />
                       </span>

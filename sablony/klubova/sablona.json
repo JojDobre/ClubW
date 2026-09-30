@@ -102,29 +102,12 @@
       "predvolene": true
     },
     {
-      "kluc": "menu_clanky",
+      "kluc": "ukazat_nazov",
       "typ": "prepinac",
-      "menovka": "Najnovšie články v rozbaľovacom menu",
+      "menovka": "Názov klubu vedľa loga (mobil a tablet)",
       "skupina": "Hlavička",
-      "napoveda": "Vybraná položka hlavného menu zobrazí v rozbaľovacom paneli najnovšie články.",
+      "napoveda": "Na počítači sa názov nezobrazuje nikdy.",
       "predvolene": false
-    },
-    {
-      "kluc": "menu_clanky_polozka",
-      "typ": "text",
-      "menovka": "Položka menu s článkami",
-      "skupina": "Hlavička",
-      "napoveda": "Názov alebo adresa položky hlavného menu, napr. Články alebo /clanky.",
-      "predvolene": "/clanky"
-    },
-    {
-      "kluc": "menu_clanky_pocet",
-      "typ": "cislo",
-      "menovka": "Počet článkov v menu",
-      "skupina": "Hlavička",
-      "min": 1,
-      "max": 4,
-      "predvolene": 3
     },
     {
       "kluc": "horna_lista",

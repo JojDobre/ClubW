@@ -93,4 +93,18 @@ describe('menu s kategóriami', () => {
     expect(sutaze.deti.map((d: any) => d.nazov)).toEqual([`${P} Tabuľky`]);
     expect(zapasy.deti.find((d: any) => d.nazov === `${P} Karta`).obrazok).toBe('/uploads/media/karta.jpg');
   });
+
+  it('položka Najnovšie články má počet kariet a odkaz na zoznam článkov', async () => {
+    const clanky = await vytvor({ nazov: 'Najnovšie', typ: 'clanky', rodic_id: hlavna, url: '/nieco', pocet: 50 });
+    expect(clanky.status).toBe(201);
+    expect(clanky.body.data.typ).toBe('clanky');
+    expect(clanky.body.data.url).toBeNull();
+    expect(clanky.body.data.pocet).toBe(6);
+    expect(clanky.body.data.odkaz).toBe('/clanky');
+
+    const menu = await request(app).get('/api/menu');
+    const zapasy = menu.body.data.find((p: any) => p.id === hlavna);
+    const polozka = zapasy.deti.find((d: any) => d.id === clanky.body.data.id);
+    expect(polozka).toMatchObject({ typ: 'clanky', pocet: 6, rubrika_slug: null });
+  });
 });
