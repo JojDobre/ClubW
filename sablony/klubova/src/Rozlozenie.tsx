@@ -19,7 +19,7 @@ import {
   useNastaveniaSablony,
   type PolozkaMenu,
 } from '@clubw/jadro';
-import { Ikona, Odkaz, useUpravy } from './spolocne';
+import { Ikona, Odkaz, obrazokUrl, useUpravy } from './spolocne';
 import { PartneriStranky } from './casti';
 
 interface NastaveniaRozlozenia extends Record<string, string | number | boolean | null> {
@@ -124,50 +124,77 @@ const Logo: React.FC<{ className?: string; onClick?: () => void }> = ({ classNam
 
 // ===== Hlavička =====
 
-/** Obsah rozbaľovacieho panela: stĺpce s nadpismi (3 úrovne), inak zoznam odkazov. */
-const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
-  const deti = polozka.deti ?? [];
-  const maStlpce = deti.some((d) => (d.deti?.length ?? 0) > 0);
-  if (maStlpce) {
-    return (
-      <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': Math.min(deti.length, 4) } as React.CSSProperties}>
-        {deti.map((d) => (
-          <div key={d.id} className="kl-panel__stlpec">
-            {d.odkaz ? (
-              <OdkazMenu polozka={d} className="kl-panel__nadpis" onClick={zavriet} />
-            ) : (
-              <span className="kl-panel__nadpis">{d.nazov}</span>
-            )}
-            {(d.deti ?? []).map((v) => (
-              <OdkazMenu key={v.id} polozka={v} className="kl-panel__odkaz" onClick={zavriet} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-  // Dlhé podmenu sa rozdelí do stĺpcov (najviac 5 odkazov pod sebou)
-  if (deti.length > 5) {
-    const stlpcov = Math.min(Math.ceil(deti.length / 5), 4);
-    const naStlpec = Math.ceil(deti.length / stlpcov);
-    return (
-      <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': stlpcov } as React.CSSProperties}>
-        {Array.from({ length: stlpcov }, (_, i) => (
-          <div key={i} className="kl-panel__stlpec">
-            {deti.slice(i * naStlpec, (i + 1) * naStlpec).map((d) => (
-              <OdkazMenu key={d.id} polozka={d} className="kl-panel__odkaz" onClick={zavriet} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
+/** Karta s obrázkom v rozbaľovacom menu (položka podmenu s obrázkom). */
+const KartaMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => (
+  <OdkazMenu polozka={polozka} className="kl-panel__karta" onClick={zavriet}>
+    <span className="kl-panel__karta-obrazok">
+      <img src={obrazokUrl(polozka.obrazok) ?? ''} alt="" loading="lazy" />
+    </span>
+    <span className="kl-panel__karta-nazov">{polozka.nazov}</span>
+  </OdkazMenu>
+);
+
+/** Odkazy bez kategórie - dlhý zoznam sa rozdelí do stĺpcov (najviac 5 pod sebou). */
+const ZoznamOdkazov: React.FC<{ odkazy: PolozkaMenu[]; zavriet: () => void }> = ({ odkazy, zavriet }) => {
+  const stlpcov = Math.min(Math.ceil(odkazy.length / 5), 4);
+  const naStlpec = Math.ceil(odkazy.length / stlpcov);
   return (
     <div className="kl-panel__zoznam">
-      {deti.map((d) => (
-        <OdkazMenu key={d.id} polozka={d} className="kl-panel__odkaz" onClick={zavriet} />
+      {Array.from({ length: stlpcov }, (_, i) => (
+        <div key={i} className="kl-panel__zoznam-stlpec">
+          {odkazy.slice(i * naStlpec, (i + 1) * naStlpec).map((d) => (
+            <OdkazMenu key={d.id} polozka={d} className="kl-panel__odkaz" onClick={zavriet} />
+          ))}
+        </div>
       ))}
     </div>
+  );
+};
+
+/**
+ * Obsah rozbaľovacieho panela podľa návrhu:
+ *  - kategórie (položky s vlastným podmenu) = stĺpce s nadpismi cez celú šírku,
+ *  - bez kategórií = zoznam odkazov vľavo,
+ *  - položky s obrázkom = karty vpravo.
+ */
+const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
+  const deti = polozka.deti ?? [];
+  const kategorie = deti.filter((d) => (d.deti?.length ?? 0) > 0);
+  const karty = deti.filter((d) => !d.deti?.length && d.obrazok && d.odkaz);
+  const odkazy = deti.filter((d) => !d.deti?.length && !(d.obrazok && d.odkaz));
+
+  return (
+    <>
+      {kategorie.length > 0 ? (
+        // Mriežka má vždy štyri stĺpce ako v návrhu - pri menej kategóriách ostanú vľavo
+        <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': karty.length > 0 ? 3 : 4 } as React.CSSProperties}>
+          {odkazy.length > 0 && (
+            <div className="kl-panel__stlpec">
+              {odkazy.map((d) => (
+                <OdkazMenu key={d.id} polozka={d} className="kl-panel__odkaz" onClick={zavriet} />
+              ))}
+            </div>
+          )}
+          {kategorie.map((k) => (
+            <div key={k.id} className="kl-panel__stlpec">
+              <OdkazMenu polozka={k} className="kl-panel__nadpis" onClick={zavriet} />
+              {(k.deti ?? []).map((v) => (
+                <OdkazMenu key={v.id} polozka={v} className="kl-panel__odkaz" onClick={zavriet} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        odkazy.length > 0 && <ZoznamOdkazov odkazy={odkazy} zavriet={zavriet} />
+      )}
+      {karty.length > 0 && (
+        <div className="kl-panel__karty">
+          {karty.slice(0, 3).map((d) => (
+            <KartaMenu key={d.id} polozka={d} zavriet={zavriet} />
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 
@@ -251,23 +278,33 @@ export const Hlavicka: React.FC = () => {
                   onMouseEnter={() => otvor(p.id)}
                   onMouseLeave={zavriSOneskorenim}
                 >
-                  <button
-                    type="button"
-                    className={`kl-menu__odkaz${jeOtvorene || jeAktivny(p.odkaz, pathname) ? ' is-aktivny' : ''}`}
-                    aria-expanded={jeOtvorene}
-                    onClick={() => (jeOtvorene ? setOtvorene(null) : otvor(p.id))}
-                  >
-                    <Ikona nazov="dole" velkost={16} className="kl-menu__sipka" />
-                    <span>{p.nazov}</span>
-                  </button>
+                  {p.odkaz ? (
+                    // Položka s vlastnou stránkou: názov je odkaz, šípka otvára panel (klávesnica, dotyk)
+                    <span className={`kl-menu__odkaz${jeOtvorene || jeAktivny(p.odkaz, pathname) ? ' is-aktivny' : ''}`}>
+                      <button
+                        type="button"
+                        className="kl-menu__prepinac"
+                        aria-expanded={jeOtvorene}
+                        aria-label={`${p.nazov} - podmenu`}
+                        onClick={() => (jeOtvorene ? setOtvorene(null) : otvor(p.id))}
+                      >
+                        <Ikona nazov="dole" velkost={16} className="kl-menu__sipka" />
+                      </button>
+                      <OdkazMenu polozka={p} className="kl-menu__nazov" onClick={zavri} />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`kl-menu__odkaz${jeOtvorene ? ' is-aktivny' : ''}`}
+                      aria-expanded={jeOtvorene}
+                      onClick={() => (jeOtvorene ? setOtvorene(null) : otvor(p.id))}
+                    >
+                      <Ikona nazov="dole" velkost={16} className="kl-menu__sipka" />
+                      <span>{p.nazov}</span>
+                    </button>
+                  )}
                   <div className="kl-panel">
                     <div className="kl-panel__vnutro">
-                      {p.odkaz && (
-                        <OdkazMenu polozka={p} className="kl-panel__hlavny" onClick={zavri}>
-                          {p.nazov}
-                          <Ikona nazov="sipka" velkost={14} />
-                        </OdkazMenu>
-                      )}
                       <PanelMenu polozka={p} zavriet={zavri} />
                     </div>
                   </div>
@@ -352,7 +389,11 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
                       )}
                       {deti.map((d) => (
                         <li key={d.id}>
-                          <OdkazMenu polozka={d} onClick={zavriet} className={`kl-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}`} />
+                          <OdkazMenu
+                            polozka={d}
+                            onClick={zavriet}
+                            className={d.odkaz ? `kl-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}` : 'kl-mmenu__kategoria'}
+                          />
                         </li>
                       ))}
                     </ul>

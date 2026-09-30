@@ -339,7 +339,6 @@
  "Liga úspešne vytvorená": "Liga erstellt",
  "Logo musí byť nahratý obrázok alebo adresa": "Das Logo muss ein hochgeladenes Bild oder eine Adresse sein",
  "Meno musí mať 2-100 znakov": "Der Name muss 2-100 Zeichen haben",
- "Menu má najviac dve úrovne": "Das Menü hat höchstens zwei Ebenen",
  "Meta description môže mať max 300 znakov": "Die Meta-Beschreibung darf höchstens 300 Zeichen haben",
  "Meta description môže mať maximálne 160 znakov": "Die Meta-Beschreibung darf höchstens 160 Zeichen haben",
  "Meta title môže mať max 100 znakov": "Der Meta-Titel darf höchstens 100 Zeichen haben",
@@ -498,7 +497,6 @@
  "Pole „{0}\" musí byť súbor typu {1}": "Das Feld „{0}“ muss eine Datei vom Typ {1} sein",
  "Pole „{0}\" v {1} nie je platná cesta k súboru": "Das Feld „{0}“ in {1} ist kein gültiger Dateipfad",
  "Položka menu nebola nájdená": "Der Menüeintrag wurde nicht gefunden",
- "Položka má vlastné podmenu - nedá sa vnoriť": "Der Eintrag hat ein eigenes Untermenü - er kann nicht verschachtelt werden",
  "Položka nemôže byť vnorená sama do seba": "Ein Eintrag kann nicht in sich selbst verschachtelt werden",
  "Položka typu „rubrika\" musí mať zvolenú rubriku": "Ein Eintrag vom Typ „rubrika“ muss eine Rubrik ausgewählt haben",
  "Položka typu „stranka\" musí mať zvolenú stránku": "Ein Eintrag vom Typ „stranka“ muss eine Seite ausgewählt haben",
@@ -921,5 +919,8 @@
  "Pri doručení na adresu zadajte telefón pre kuriéra": "Geben Sie bei Lieferung an eine Adresse eine Telefonnummer für den Kurier an",
  "Neplatný kľúč oznámenia": "Ungültiger Benachrichtigungsschlüssel",
  "Chýba číslo objednávky alebo variabilný symbol": "Bestellnummer oder Verwendungszweck fehlt",
- "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "der Link muss mit / (Seite der Website), https://, mailto: oder tel: beginnen"
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "der Link muss mit / (Seite der Website), https://, mailto: oder tel: beginnen",
+ "Menu má najviac {0} úrovne": "Das Menü hat höchstens {0} Ebenen",
+ "Položka nemôže byť vnorená do vlastného podmenu": "Der Eintrag kann nicht in sein eigenes Untermenü verschoben werden",
+ "Adresa obrázka musí začínať / alebo https://": "Die Bildadresse muss mit / oder https:// beginnen"
 }

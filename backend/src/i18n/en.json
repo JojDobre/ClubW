@@ -339,7 +339,6 @@
  "Liga úspešne vytvorená": "League created successfully",
  "Logo musí byť nahratý obrázok alebo adresa": "The logo must be an uploaded image or an address",
  "Meno musí mať 2-100 znakov": "The name must have 2-100 characters",
- "Menu má najviac dve úrovne": "The menu has at most two levels",
  "Meta description môže mať max 300 znakov": "The meta description may have at most 300 characters",
  "Meta description môže mať maximálne 160 znakov": "The meta description may have at most 160 characters",
  "Meta title môže mať max 100 znakov": "The meta title may have at most 100 characters",
@@ -498,7 +497,6 @@
  "Pole „{0}\" musí byť súbor typu {1}": "The field “{0}” must be a file of type {1}",
  "Pole „{0}\" v {1} nie je platná cesta k súboru": "The field “{0}” in {1} is not a valid file path",
  "Položka menu nebola nájdená": "The menu item was not found",
- "Položka má vlastné podmenu - nedá sa vnoriť": "The item has its own submenu - it cannot be nested",
  "Položka nemôže byť vnorená sama do seba": "An item cannot be nested inside itself",
  "Položka typu „rubrika\" musí mať zvolenú rubriku": "An item of type “rubrika” must have a section selected",
  "Položka typu „stranka\" musí mať zvolenú stránku": "An item of type “stranka” must have a page selected",
@@ -921,5 +919,8 @@
  "Pri doručení na adresu zadajte telefón pre kuriéra": "For delivery to an address, enter a phone number for the courier",
  "Neplatný kľúč oznámenia": "Invalid notification key",
  "Chýba číslo objednávky alebo variabilný symbol": "The order number or variable symbol is missing",
- "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "the link must start with / (a website page), https://, mailto: or tel:"
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "the link must start with / (a website page), https://, mailto: or tel:",
+ "Menu má najviac {0} úrovne": "The menu has at most {0} levels",
+ "Položka nemôže byť vnorená do vlastného podmenu": "The item cannot be nested in its own submenu",
+ "Adresa obrázka musí začínať / alebo https://": "The image address must start with / or https://"
 }

@@ -45,6 +45,7 @@
 }
 .st-menu__podmenu a { padding: 9px 16px; color: #e2e8f0; text-decoration: none; font-size: 14px; }
 .st-menu__podmenu a:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.st-menu__kategoria { padding: 10px 16px 2px; color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .st-menu__polozka:hover .st-menu__podmenu, .st-menu__polozka:focus-within .st-menu__podmenu { display: flex; }
 .st-menu__admin {
   margin-left: 8px; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 700;

@@ -339,7 +339,6 @@
  "Liga úspešne vytvorená": "Liga została utworzona",
  "Logo musí byť nahratý obrázok alebo adresa": "Logo musi być wgranym obrazkiem lub adresem",
  "Meno musí mať 2-100 znakov": "Imię musi mieć 2-100 znaków",
- "Menu má najviac dve úrovne": "Menu ma maksymalnie dwa poziomy",
  "Meta description môže mať max 300 znakov": "Meta description może mieć maks. 300 znaków",
  "Meta description môže mať maximálne 160 znakov": "Meta description może mieć maksymalnie 160 znaków",
  "Meta title môže mať max 100 znakov": "Meta title może mieć maks. 100 znaków",
@@ -498,7 +497,6 @@
  "Pole „{0}\" musí byť súbor typu {1}": "Pole „{0}” musi być plikiem typu {1}",
  "Pole „{0}\" v {1} nie je platná cesta k súboru": "Pole „{0}” w {1} nie jest prawidłową ścieżką do pliku",
  "Položka menu nebola nájdená": "Nie znaleziono pozycji menu",
- "Položka má vlastné podmenu - nedá sa vnoriť": "Pozycja ma własne podmenu - nie można jej zagnieździć",
  "Položka nemôže byť vnorená sama do seba": "Pozycja nie może być zagnieżdżona sama w sobie",
  "Položka typu „rubrika\" musí mať zvolenú rubriku": "Pozycja typu „rubrika” musi mieć wybrany dział",
  "Položka typu „stranka\" musí mať zvolenú stránku": "Pozycja typu „stranka” musi mieć wybraną stronę",
@@ -921,5 +919,8 @@
  "Pri doručení na adresu zadajte telefón pre kuriéra": "Przy dostawie pod adres podaj telefon dla kuriera",
  "Neplatný kľúč oznámenia": "Nieprawidłowy klucz powiadomienia",
  "Chýba číslo objednávky alebo variabilný symbol": "Brak numeru zamówienia lub tytułu przelewu",
- "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "link musi zaczynać się od / (strona witryny), https://, mailto: lub tel:"
+ "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "link musi zaczynać się od / (strona witryny), https://, mailto: lub tel:",
+ "Menu má najviac {0} úrovne": "Menu ma najwyżej {0} poziomy",
+ "Položka nemôže byť vnorená do vlastného podmenu": "Pozycji nie można zagnieździć we własnym podmenu",
+ "Adresa obrázka musí začínať / alebo https://": "Adres obrazu musi zaczynać się od / lub https://"
 }

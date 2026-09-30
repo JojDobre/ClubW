@@ -46,7 +46,8 @@ const nacitajPolozky = (lenAktivne: boolean) =>
 /**
  * Poskladá plochý zoznam do stromu podľa rodic_id.
  *
- * Menu má v praxi dve úrovne, ale funkcia zvláda ľubovoľnú hĺbku.
+ * Menu má najviac tri úrovne (hlavná položka → kategória → odkaz),
+ * funkcia však zvláda ľubovoľnú hĺbku.
  */
 const doStromu = (polozky: any[]): any[] => {
   const podlaId = new Map<number, any>();
@@ -68,6 +69,44 @@ const doStromu = (polozky: any[]): any[] => {
   return koren;
 };
 
+/** Najviac úrovní menu: hlavná položka → kategória → odkaz. */
+const MAX_UROVNI = 3;
+
+/** Úroveň položky v strome (1 = hlavné menu). */
+const urovenPolozky = async (id: number): Promise<number> => {
+  let uroven = 1;
+  let aktualna = await MenuPolozka.findByPk(id, { attributes: ['id', 'rodic_id'] });
+  const navstivene = new Set<number>();
+  while (aktualna?.rodic_id && !navstivene.has(aktualna.id) && uroven <= MAX_UROVNI + 1) {
+    navstivene.add(aktualna.id);
+    uroven++;
+    aktualna = await MenuPolozka.findByPk(aktualna.rodic_id, { attributes: ['id', 'rodic_id'] });
+  }
+  return uroven;
+};
+
+/** Potomkovia položky (id) a počet úrovní jej podstromu (1 = bez podmenu). */
+const podstrom = async (id: number): Promise<{ potomkovia: Set<number>; vyska: number }> => {
+  const vsetky = await MenuPolozka.findAll({ attributes: ['id', 'rodic_id'] });
+  const potomkovia = new Set<number>();
+  let vyska = 1;
+  let uroven = [id];
+  while (uroven.length > 0 && vyska <= MAX_UROVNI + 1) {
+    const dalsia = vsetky.filter((p) => p.rodic_id !== null && uroven.includes(p.rodic_id) && !potomkovia.has(p.id)).map((p) => p.id);
+    if (dalsia.length === 0) break;
+    dalsia.forEach((d) => potomkovia.add(d));
+    vyska++;
+    uroven = dalsia;
+  }
+  return { potomkovia, vyska };
+};
+
+/** Kategória bez odkazu nemá zmysel bez odkazov pod ňou - na webe sa vynechá. */
+const bezPrazdnychNadpisov = (uzly: any[]): any[] =>
+  uzly
+    .map((u) => ({ ...u, deti: bezPrazdnychNadpisov(u.deti ?? []) }))
+    .filter((u) => u.typ !== 'nadpis' || u.deti.length > 0);
+
 /**
  * GET /api/menu
  * Menu pre verejný web - vnorené, len aktívne položky.
@@ -83,13 +122,14 @@ export const getMenu = async (_req: Request, res: Response): Promise<void> => {
       .filter((p) => {
         if (p.typ === 'stranka') return p.stranka && p.stranka.publikovany;
         if (p.typ === 'rubrika') return Boolean(p.rubrika);
+        if (p.typ === 'nadpis') return true;
         return Boolean(p.url);
       })
       .map((p) => p.toSafeJSON());
 
     res.json({
       success: true,
-      data: doStromu(pouzitelne),
+      data: bezPrazdnychNadpisov(doStromu(pouzitelne)),
     });
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
@@ -126,6 +166,14 @@ const pripravPolozku = (telo: any) => {
   if (telo.poradie !== undefined) udaje.poradie = Number(telo.poradie) || 0;
   if (telo.otvorit_v_novom !== undefined) udaje.otvorit_v_novom = Boolean(telo.otvorit_v_novom);
   if (telo.aktivity !== undefined) udaje.aktivity = Boolean(telo.aktivity);
+  if (telo.obrazok !== undefined) udaje.obrazok = telo.obrazok ? String(telo.obrazok).trim() : null;
+  // Kategória (nadpis) nikam nevedie
+  if (udaje.typ === 'nadpis') {
+    udaje.stranka_id = null;
+    udaje.rubrika_id = null;
+    udaje.url = null;
+    udaje.otvorit_v_novom = false;
+  }
 
   return udaje;
 };
@@ -141,8 +189,12 @@ export const createMenuPolozka = async (req: Request, res: Response): Promise<vo
     }
     if (udaje.rodic_id) {
       const rodic = await MenuPolozka.findByPk(Number(udaje.rodic_id));
-      if (!rodic || rodic.rodic_id) {
-        res.status(400).json({ success: false, message: rodic ? 'Menu má najviac dve úrovne' : 'Nadradená položka neexistuje' });
+      if (!rodic) {
+        res.status(400).json({ success: false, message: 'Nadradená položka neexistuje' });
+        return;
+      }
+      if ((await urovenPolozky(rodic.id)) >= MAX_UROVNI) {
+        res.status(400).json({ success: false, message: `Menu má najviac ${MAX_UROVNI} úrovne` });
         return;
       }
     }
@@ -198,19 +250,20 @@ export const updateMenuPolozka = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Menu má dve úrovne - pod položku s podmenu sa nedá vnoriť ďalšia
+    // Najviac tri úrovne: úroveň rodiča + výška podstromu presúvanej položky
     if (udaje.rodic_id) {
       const rodic = await MenuPolozka.findByPk(Number(udaje.rodic_id));
       if (!rodic) {
         res.status(400).json({ success: false, message: 'Nadradená položka neexistuje' });
         return;
       }
-      if (rodic.rodic_id) {
-        res.status(400).json({ success: false, message: 'Menu má najviac dve úrovne' });
+      const { potomkovia, vyska } = await podstrom(id);
+      if (potomkovia.has(rodic.id)) {
+        res.status(400).json({ success: false, message: 'Položka nemôže byť vnorená do vlastného podmenu' });
         return;
       }
-      if (await MenuPolozka.count({ where: { rodic_id: id } })) {
-        res.status(400).json({ success: false, message: 'Položka má vlastné podmenu - nedá sa vnoriť' });
+      if ((await urovenPolozky(rodic.id)) + vyska > MAX_UROVNI) {
+        res.status(400).json({ success: false, message: `Menu má najviac ${MAX_UROVNI} úrovne` });
         return;
       }
     }

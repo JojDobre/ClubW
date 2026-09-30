@@ -124,8 +124,9 @@ export const Hlavicka: React.FC = () => {
                 <OdkazMenu polozka={p} className={`md-menu__odkaz${jeAktivny(p.odkaz, pathname) ? ' is-aktivny' : ''}`} />
                 {(p.deti?.length ?? 0) > 0 && (
                   <div className="md-menu__podmenu">
-                    {p.deti!.map((d) => (
-                      <OdkazMenu key={d.id} polozka={d} className="md-menu__pododkaz" />
+                    {/* Tretia úroveň (kategórie) sa zobrazí pod nadpisom kategórie */}
+                    {p.deti!.flatMap((d) => [d, ...(d.deti ?? [])]).map((d) => (
+                      <OdkazMenu key={d.id} polozka={d} className={d.odkaz ? 'md-menu__pododkaz' : 'md-menu__kategoria'} />
                     ))}
                   </div>
                 )}

@@ -11,8 +11,14 @@ import { apiUrl } from '../config/api';
 export interface PolozkaMenu {
   id: number | string;
   nazov: string;
+  /** Prázdny odkaz = kategória (nadpis stĺpca v podmenu), nikam nevedie */
   odkaz: string | null;
   otvorit_v_novom: boolean;
+  /** stranka | rubrika | url | nadpis */
+  typ?: string;
+  /** Obrázok karty v rozbaľovacom menu (šablóna ho môže ukázať ako kartu) */
+  obrazok?: string | null;
+  /** Podmenu - najviac tri úrovne (hlavná položka → kategória → odkaz) */
   deti?: PolozkaMenu[];
 }
 
@@ -90,7 +96,9 @@ export const OdkazMenu: React.FC<{
   onClick?: () => void;
   children?: ReactNode;
 }> = ({ polozka, className, onClick, children }) => {
-  const adresa = polozka.odkaz || '#';
+  // Kategória bez odkazu je len nadpis
+  if (!polozka.odkaz) return <span className={className}>{children ?? polozka.nazov}</span>;
+  const adresa = polozka.odkaz;
   if (adresa.startsWith('/') && !adresa.startsWith('//') && !polozka.otvorit_v_novom) {
     return (
       <Link to={adresa} className={className} onClick={onClick}>

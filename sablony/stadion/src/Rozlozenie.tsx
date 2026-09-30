@@ -59,8 +59,8 @@ export const Hlavicka: React.FC = () => {
               <OdkazMenu polozka={p} className={`st-menu__odkaz${p.odkaz === pathname ? ' is-aktivny' : ''}`} />
               {(p.deti?.length ?? 0) > 0 && (
                 <div className="st-menu__podmenu">
-                  {p.deti!.map((d) => (
-                    <OdkazMenu key={d.id} polozka={d} />
+                  {p.deti!.flatMap((d) => [d, ...(d.deti ?? [])]).map((d) => (
+                    <OdkazMenu key={d.id} polozka={d} className={d.odkaz ? undefined : 'st-menu__kategoria'} />
                   ))}
                 </div>
               )}
