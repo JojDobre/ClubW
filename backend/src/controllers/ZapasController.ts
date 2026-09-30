@@ -172,27 +172,27 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
     const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 500);
     const offset = (pageNum - 1) * limitNum;
 
-    // Include podmienky
-    const includeOptions = [];
-    
+    // Tímy klubu (názov a logo) idú vždy - bez nich by web ukázal pri našom
+    // tíme namiesto jeho loga logo klubu. Liga len na požiadanie.
+    const includeOptions: any[] = [
+      {
+        model: Team,
+        as: 'domaci_tim',
+        attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
+      },
+      {
+        model: Team,
+        as: 'hostujuci_tim',
+        attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
+      }
+    ];
+
     if (include_details === 'true') {
-      includeOptions.push(
-        {
-          model: Liga,
-          as: 'liga',
-          attributes: ['id', 'nazov', 'sezona', 'typ']
-        },
-        {
-          model: Team,
-          as: 'domaci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
-        },
-        {
-          model: Team,
-          as: 'hostujuci_tim',
-          attributes: ['id', 'nazov', 'vekova_kategoria', 'logo']
-        }
-      );
+      includeOptions.push({
+        model: Liga,
+        as: 'liga',
+        attributes: ['id', 'nazov', 'sezona', 'typ']
+      });
     }
 
     const { rows: matches, count } = await Zapas.findAndCountAll({
@@ -214,8 +214,14 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
       );
     }
 
-    // Transformácia na safe JSON
-    const result = filteredMatches.map(zapas => zapas.toSafeJSON());
+    // Transformácia na safe JSON - s logami našich tímov (web ich ukazuje na kartách)
+    const tim = (t: any) => (t ? { id: t.id, nazov: t.nazov, logo: t.logo ?? null } : null);
+    const result = filteredMatches.map(zapas => ({
+      ...zapas.toSafeJSON(),
+      domaci_tim: tim((zapas as any).domaci_tim),
+      hostujuci_tim: tim((zapas as any).hostujuci_tim),
+      ...(include_details === 'true' && (zapas as any).liga ? { liga: (zapas as any).liga } : {}),
+    }));
 
     res.json({
       success: true,

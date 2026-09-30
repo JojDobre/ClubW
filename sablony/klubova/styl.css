@@ -1391,7 +1391,8 @@ td.kl-tabulka__body { font-family: var(--kl-nadpisy); font-weight: 800; }
 
 /* Detail zápasu */
 .kl-hlava--zapas { padding-bottom: 64px; }
-.kl-skore__stitky { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
+/* Súťaž a pod ňou stav zápasu */
+.kl-skore__stitky { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .kl-hlava--zapas .kl-hlava__stitok { margin: 0; }
 .kl-skore__stav {
   background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.75); padding: 6px 12px; border-radius: 999px;
@@ -1738,28 +1739,27 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 .kl-cena--velka s { font-size: 18px; }
 
 /* Mriežka produktov */
-.kl-obchod__mriezka { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px 24px; }
-.kl-tovar { display: flex; flex-direction: column; min-width: 0; color: var(--kl-tmava); text-decoration: none; }
-.kl-tovar__foto { position: relative; display: block; margin-bottom: 16px; }
-.kl-tovar__obrazok { width: 100%; aspect-ratio: 1 / 1; border-radius: 20px; background: var(--kl-tmava-4); }
-.kl-tovar__obrazok img { object-fit: contain; padding: 8%; transition: transform 0.4s ease; }
-.kl-tovar:hover .kl-tovar__obrazok img { transform: scale(1.05); }
+.kl-obchod__mriezka { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 24px; }
+/* Karta produktu v obchode = karta Fanshopu z úvodu (.kl-produkt) so šípkou */
+.kl-tovar { color: var(--kl-tmava); text-decoration: none; }
+.kl-tovar__foto { position: relative; display: block; }
+.kl-tovar__obrazok img { transition: transform 0.4s ease; }
+.kl-tovar:hover .kl-tovar__obrazok img { transform: scale(1.04); }
 .kl-tovar.is-vypredany .kl-tovar__obrazok img { opacity: 0.45; filter: grayscale(1); }
 .kl-tovar__stitok {
   position: absolute; top: 14px; left: 14px; padding: 6px 12px; border-radius: 999px;
   background: var(--kl-akcent); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
 }
 .kl-tovar__stitok--tmavy { background: var(--kl-tmava); }
-.kl-tovar__text { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-.kl-tovar__text small { color: var(--kl-akcent); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase; }
-.kl-tovar__text strong { font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; line-height: 1.3; text-wrap: pretty; transition: color 0.2s ease; }
-.kl-tovar:hover .kl-tovar__text strong { color: var(--kl-akcent); }
-.kl-tovar__spodok { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.kl-tovar .kl-produkt__nazov { transition: color 0.2s ease; }
+.kl-tovar:hover .kl-produkt__nazov { color: var(--kl-akcent); }
+.kl-tovar .kl-produkt__spodok { margin-top: auto; }
+.kl-tovar .kl-cena strong { font-size: 20px; }
 .kl-tovar__sipka {
-  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--kl-tmava-12); color: var(--kl-tmava); transition: all 0.2s ease;
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--kl-tmava); color: #ffffff; transition: background 0.2s ease;
 }
-.kl-tovar:hover .kl-tovar__sipka { background: var(--kl-akcent); border-color: var(--kl-akcent); color: #ffffff; }
+.kl-tovar:hover .kl-tovar__sipka { background: var(--kl-akcent); }
 
 /* Detail produktu */
 .kl-sekcia--produkt { padding-top: 32px; padding-bottom: 80px; }
@@ -1923,19 +1923,19 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 .kl-moznost__cena { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 15px; white-space: nowrap; }
 
 /* Objednávka */
-.kl-priebeh { list-style: none; margin: 0 0 32px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: krok; }
-.kl-priebeh li {
+.kl-postup-objednavky { list-style: none; margin: 0 0 32px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: krok; }
+.kl-postup-objednavky li {
   position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px;
   background: var(--kl-tmava-4); color: var(--kl-tmava-45); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px;
 }
-.kl-priebeh li span {
+.kl-postup-objednavky li span {
   width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   background: var(--kl-tmava-10); color: var(--kl-tmava-55); font-size: 13px;
 }
-.kl-priebeh li.is-hotovy { color: var(--kl-tmava); }
-.kl-priebeh li.is-hotovy span { background: var(--kl-tmava); color: #ffffff; }
-.kl-priebeh li.is-aktualny { background: var(--kl-akcent); color: #ffffff; }
-.kl-priebeh li.is-aktualny span { background: #ffffff; color: var(--kl-akcent); }
+.kl-postup-objednavky li.is-hotovy { color: var(--kl-tmava); }
+.kl-postup-objednavky li.is-hotovy span { background: var(--kl-tmava); color: #ffffff; }
+.kl-postup-objednavky li.is-aktualny { background: var(--kl-akcent); color: #ffffff; }
+.kl-postup-objednavky li.is-aktualny span { background: #ffffff; color: var(--kl-akcent); }
 .kl-platba-box { padding: 28px; border-radius: 24px; border: 2px solid var(--kl-akcent); }
 .kl-platba-box.is-uhradena { border-color: var(--kl-uspech); }
 .kl-platba-box__hlava { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: var(--kl-tmava); }
@@ -1974,13 +1974,9 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-produkt__nazov { font-size: 14px; margin: -4px 0 8px; }
 
   .kl-obchod__mriezka { gap: 24px 12px; }
-  .kl-tovar__foto { margin-bottom: 10px; }
-  .kl-tovar__obrazok { border-radius: 18px; }
   .kl-tovar__stitok { top: 8px; left: 8px; padding: 4px 9px; font-size: 10px; }
-  .kl-tovar__text { margin-bottom: 6px; gap: 2px; }
-  .kl-tovar__text small { font-size: 10px; }
-  .kl-tovar__text strong { font-size: 15px; }
-  .kl-tovar__sipka { display: none; }
+  .kl-tovar .kl-cena strong { font-size: 17px; }
+  .kl-tovar__sipka { width: 36px; height: 36px; }
   .kl-cena strong { font-size: 16px; }
   .kl-cena s { font-size: 12px; }
 
@@ -2029,8 +2025,8 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-pole__dve, .kl-pole__dve--psc { grid-template-columns: 1fr; }
   .kl-moznost { padding: 14px; gap: 12px; }
 
-  .kl-priebeh { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 20px; }
-  .kl-priebeh li { flex-direction: column; gap: 6px; padding: 10px 4px; font-size: 11px; text-align: center; border-radius: 12px; }
+  .kl-postup-objednavky { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 20px; }
+  .kl-postup-objednavky li { flex-direction: column; gap: 6px; padding: 10px 4px; font-size: 11px; text-align: center; border-radius: 12px; }
   .kl-platba-box { padding: 20px 18px; border-radius: 20px; }
   .kl-platba-box__hlava strong { font-size: 16px; }
   .kl-platba-box__udaje dd { font-size: 17px; }

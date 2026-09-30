@@ -61,22 +61,20 @@ const Zatvorene: React.FC = () => (
 
 // ===== Karta produktu =====
 
+/** Karta produktu - rovnaká ako vo Fanshope na úvode, namiesto tlačidla šípka. */
 export const KartaProduktu: React.FC<{ produkt: ProduktObchodu; mena: string }> = ({ produkt: p, mena }) => (
-  <Link to={`/obchod/${p.slug}`} className={`kl-tovar${p.vypredany ? ' is-vypredany' : ''}`}>
+  <Link to={`/obchod/${p.slug}`} className={`kl-produkt kl-tovar${p.vypredany ? ' is-vypredany' : ''}`}>
     <span className="kl-tovar__foto">
-      <Obrazok src={p.obrazok} className="kl-tovar__obrazok" alt={p.nazov} />
+      <Obrazok src={p.obrazok} className="kl-produkt__obrazok kl-tovar__obrazok" alt={p.nazov} />
       {p.vypredany ? (
         <span className="kl-tovar__stitok kl-tovar__stitok--tmavy">Vypredané</span>
       ) : p.povodna_cena && p.povodna_cena > p.cena ? (
         <span className="kl-tovar__stitok">−{Math.round((1 - p.cena / p.povodna_cena) * 100)} %</span>
       ) : null}
     </span>
-    <span className="kl-tovar__text">
-      {p.kategoria && <small>{p.kategoria.nazov}</small>}
-      <strong>{p.nazov}</strong>
-    </span>
-    <span className="kl-tovar__spodok">
-      <Cena cena={p.cena} povodna={p.povodna_cena} mena={mena} />
+    <span className="kl-produkt__nazov">{p.nazov}</span>
+    <span className="kl-produkt__spodok">
+      <Cena cena={p.cena} povodna={p.povodna_cena} mena={mena} className="kl-produkt__cena" />
       <span className="kl-tovar__sipka" aria-hidden="true">
         <Ikona nazov="sipka" velkost={16} />
       </span>
@@ -599,7 +597,7 @@ const PriebehObjednavky: React.FC<{ o: ObjednavkaZakaznika }> = ({ o }) => {
   const kroky = ['nova', 'potvrdena', o.ulica ? 'odoslana' : 'pripravena', 'vybavena'];
   const aktualny = PORADIE_STAVOV[o.stav] ?? 0;
   return (
-    <ol className="kl-priebeh">
+    <ol className="kl-postup-objednavky">
       {kroky.map((k, i) => (
         <li key={k} className={i < aktualny ? 'is-hotovy' : i === aktualny ? 'is-aktualny' : ''}>
           <span aria-hidden="true">{i + 1}</span>
