@@ -1,6 +1,6 @@
 // Umiestnenie: sablony/klubova/src/stranky/Zapasy.tsx
 // Zápasy klubu: červený pás so záložkami tímov (ako na súpiske), pilulky
-// Program / Výsledky a karty zápasov z úvodnej stránky zoskupené podľa
+// Všetky / Program / Výsledky a karty zápasov z úvodnej stránky zoskupené podľa
 // mesiaca. Tím a zobrazenie sa držia v adrese (?tim=1&zobrazit=vysledky).
 
 import React from 'react';
@@ -9,7 +9,7 @@ import { useNastaveniaSablony } from '@clubw/jadro';
 import { Chyba, Filtre, HlavickaStranky, KartaZapasu, Nacitava, PasZaloziek, Prazdne, Sekcia } from '../casti';
 import { podlaMesiaca, useApi, useTitulok, useVolbaVAdrese, zoradTimy, useUpravy, type Tim, type Zapas } from '../spolocne';
 
-type Zobrazenie = 'program' | 'vysledky';
+type Zobrazenie = 'vsetky' | 'program' | 'vysledky';
 
 const Zapasy: React.FC = () => {
   const u = useUpravy();
@@ -27,9 +27,10 @@ const Zapasy: React.FC = () => {
     .sort((a, b) => a.datum_cas.localeCompare(b.datum_cas));
   const vysledky = vsetky.filter((z) => !program.includes(z) && z.status !== 'zruseny').sort((a, b) => b.datum_cas.localeCompare(a.datum_cas));
 
-  const predvolene: Zobrazenie = program.length > 0 || vysledky.length === 0 ? 'program' : 'vysledky';
-  const [zobrazenie, setZobrazenie] = useVolbaVAdrese<Zobrazenie>('zobrazit', ['program', 'vysledky'], predvolene);
-  const zobrazene = zobrazenie === 'program' ? program : vysledky;
+  // Všetky zápasy chronologicky ako rozpis sezóny
+  const vsetkyZapasy = [...vsetky].sort((a, b) => a.datum_cas.localeCompare(b.datum_cas));
+  const [zobrazenie, setZobrazenie] = useVolbaVAdrese<Zobrazenie>('zobrazit', ['vsetky', 'program', 'vysledky'], 'vsetky');
+  const zobrazene = zobrazenie === 'program' ? program : zobrazenie === 'vysledky' ? vysledky : vsetkyZapasy;
   const zoradeneTimy = zoradTimy(timy.data);
   const vstupenky = (s.vstupenky_odkaz || '').trim() || null;
 
@@ -62,10 +63,11 @@ const Zapasy: React.FC = () => {
 
       <Sekcia className="kl-sekcia--filtre">
         <Filtre<Zobrazenie>
-          popis="Program alebo výsledky"
+          popis="Všetky zápasy, program alebo výsledky"
           aktivna={zobrazenie}
           onZmena={setZobrazenie}
           moznosti={[
+            { kluc: 'vsetky', nazov: `Všetky${vsetkyZapasy.length ? ` (${vsetkyZapasy.length})` : ''}` },
             { kluc: 'program', nazov: `Program${program.length ? ` (${program.length})` : ''}` },
             { kluc: 'vysledky', nazov: `Výsledky${vysledky.length ? ` (${vysledky.length})` : ''}` },
           ]}
@@ -81,7 +83,7 @@ const Zapasy: React.FC = () => {
       ) : zobrazene.length === 0 ? (
         <Sekcia>
           <Prazdne
-            nadpis={zobrazenie === 'program' ? 'Žiadne naplánované zápasy' : 'Zatiaľ žiadne odohrané zápasy'}
+            nadpis={zobrazenie === 'program' ? 'Žiadne naplánované zápasy' : zobrazenie === 'vysledky' ? 'Zatiaľ žiadne odohrané zápasy' : 'Zatiaľ tu nie sú žiadne zápasy'}
             text={zobrazenie === 'program' ? 'Program zverejníme hneď, ako bude známy.' : undefined}
           />
         </Sekcia>
