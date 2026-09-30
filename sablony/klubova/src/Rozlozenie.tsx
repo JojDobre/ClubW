@@ -10,16 +10,18 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Cast,
   OdkazMenu,
+  SKUPINY_HLADANIA,
   jePrihlaseny,
   otvorNastaveniaCookies,
   souborUrl,
   useKosik,
   useMenuWebu,
   useNastavenia,
+  useHladanie,
   useNastaveniaSablony,
   type PolozkaMenu,
 } from '@clubw/jadro';
-import { Ikona, Odkaz, obrazokUrl, useUpravy } from './spolocne';
+import { Ikona, Odkaz, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
 
 interface NastaveniaRozlozenia extends Record<string, string | number | boolean | null> {
@@ -73,15 +75,107 @@ const KosikHlavicky: React.FC = () => {
   );
 };
 
-/** Lupa v hlavičke - vedie na stránku vyhľadávania. */
-const HladanieHlavicky: React.FC = () => {
-  const { pathname } = useLocation();
+/** Lupa v hlavičke - otvorí vyhľadávací panel pod hlavičkou. */
+const HladanieHlavicky: React.FC<{ otvorene: boolean; prepni: () => void }> = ({ otvorene, prepni }) => {
   const u = useUpravy();
   if (!u.zapnute('ukazat_hladanie')) return null;
   return (
-    <Link to="/hladat" className={`kl-hlavicka__kosik kl-hlavicka__hladat${pathname === '/hladat' ? ' is-aktivny' : ''}`} aria-label="Hľadať na webe">
-      <Ikona nazov="hladat" velkost={19} />
-    </Link>
+    <button
+      type="button"
+      className={`kl-hlavicka__kosik kl-hlavicka__hladat${otvorene ? ' is-aktivny' : ''}`}
+      onClick={prepni}
+      aria-label={otvorene ? 'Zavrieť vyhľadávanie' : 'Hľadať na webe'}
+      aria-expanded={otvorene}
+      aria-controls="kl-hladanie-panel"
+    >
+      <Ikona nazov={otvorene ? 'zavriet' : 'hladat'} velkost={19} />
+    </button>
+  );
+};
+
+/** Vyhľadávanie v rozbaľovacom paneli - výsledky sa ukazujú počas písania. */
+const PanelHladania: React.FC<{ otvorene: boolean; zavriet: () => void }> = ({ otvorene, zavriet }) => {
+  const navigate = useNavigate();
+  const [text, setText] = useState('');
+  const pole = useRef<HTMLInputElement>(null);
+  const { vysledky, nacitava, chyba } = useHladanie(otvorene ? text : '', 4);
+  const dotaz = text.trim();
+
+  useEffect(() => {
+    if (otvorene) window.setTimeout(() => pole.current?.focus(), 60);
+  }, [otvorene]);
+
+  const skupiny = SKUPINY_HLADANIA.map((s) => ({ ...s, polozky: vysledky.filter((v) => v.typ === s.typ) })).filter((s) => s.polozky.length > 0);
+  const vsetky = () => {
+    zavriet();
+    navigate(dotaz ? `/hladat?q=${encodeURIComponent(dotaz)}` : '/hladat');
+  };
+
+  return (
+    <div id="kl-hladanie-panel" className={`kl-panel kl-hladanie-panel${otvorene ? ' is-otvoreny' : ''}`} aria-hidden={!otvorene}>
+      <div className="kl-panel__vnutro kl-hladanie-panel__vnutro">
+        <form
+          className="kl-hladanie-panel__pole"
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            vsetky();
+          }}
+        >
+          <Ikona nazov="hladat" velkost={22} />
+          <input
+            ref={pole}
+            type="search"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Hľadať články, hráčov, zápasy, stránky…"
+            aria-label="Hľadať na webe"
+            maxLength={100}
+            tabIndex={otvorene ? 0 : -1}
+          />
+          <button type="submit" className="kl-hladanie-panel__tlacidlo" tabIndex={otvorene ? 0 : -1}>
+            Hľadať
+          </button>
+        </form>
+        {dotaz.length >= 2 && (
+          <div className="kl-hladanie-panel__vysledky" aria-live="polite">
+            {nacitava && vysledky.length === 0 && <p className="kl-hladanie-panel__stav">Hľadám…</p>}
+            {chyba && <p className="kl-hladanie-panel__stav">{chyba}</p>}
+            {!nacitava && !chyba && vysledky.length === 0 && <p className="kl-hladanie-panel__stav">Pre „{dotaz}“ sme nič nenašli.</p>}
+            {skupiny.length > 0 && (
+              <div className="kl-hladanie-panel__skupiny">
+                {skupiny.map((s) => (
+                  <div key={s.typ} className="kl-hladanie-panel__skupina">
+                    <span className="kl-panel__nadpis">{s.nazov}</span>
+                    {s.polozky.map((v) => (
+                      <Odkaz key={`${v.typ}-${v.id}`} to={v.odkaz} className="kl-hladanie-panel__vysledok" onClick={zavriet}>
+                        {v.obrazok ? (
+                          <img src={obrazokUrl(v.obrazok) ?? ''} alt="" loading="lazy" />
+                        ) : (
+                          <span className="kl-hladanie-panel__ikona" aria-hidden="true">
+                            <Ikona nazov="hladat" velkost={14} />
+                          </span>
+                        )}
+                        <span>
+                          <strong>{v.nazov}</strong>
+                          {v.popis && <small>{v.popis}</small>}
+                        </span>
+                      </Odkaz>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+            {vysledky.length > 0 && (
+              <button type="button" className="kl-hladanie-panel__vsetky" onClick={vsetky}>
+                Zobraziť všetky výsledky
+                <Ikona nazov="vpravo" velkost={16} />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -92,20 +186,29 @@ const useHornaLista = () => {
   const u = useUpravy();
   const { nastavenia } = useNastavenia();
   const siete = useSiete();
+  const retazec = (kluc: string) => String(u.s[kluc] ?? '').trim();
   const odkazy = [1, 2, 3, 4]
-    .map((k) => ({ text: u.text(`horna_lista_odkaz_${k}_text`, ''), odkaz: String(u.s[`horna_lista_odkaz_${k}`] ?? '').trim() }))
-    .filter((o) => o.text && o.odkaz);
+    .map((k) => ({
+      text: u.text(`horna_lista_odkaz_${k}_text`, ''),
+      odkaz: retazec(`horna_lista_odkaz_${k}`),
+      obrazok: obrazokUrl(retazec(`horna_lista_odkaz_${k}_obrazok`) || null),
+    }))
+    .filter((o) => (o.text || o.obrazok) && o.odkaz);
   const text = u.text('horna_lista_text', '');
+  const obrazok = obrazokUrl(retazec('horna_lista_obrazok') || null);
+  const obrazokOdkaz = retazec('horna_lista_obrazok_odkaz');
   const kontakt = u.zapnute('horna_lista_kontakt') ? (nastavenia.kontakt ?? {}) : {};
   const telefon = (kontakt as { telefon?: string | null }).telefon || null;
   const email = (kontakt as { email?: string | null }).email || null;
   const hladanie = u.zapnute('horna_lista_hladanie');
   const zobrazSiete = u.zapnute('horna_lista_siete') && siete.length > 0;
-  const zapnuta = u.zapnute('horna_lista', false) && Boolean(text || telefon || email || odkazy.length || hladanie || zobrazSiete);
+  const zapnuta = u.zapnute('horna_lista', false) && Boolean(text || obrazok || telefon || email || odkazy.length || hladanie || zobrazSiete);
   // Na mobile sa ukážu len odkazy a siete - bez nich lištu nezobrazíme
   const mobil = zapnuta && u.zapnute('horna_lista_mobil', false) && (odkazy.length > 0 || zobrazSiete);
   const farba = typeof u.s.horna_lista_farba === 'string' ? u.s.horna_lista_farba : 'tmava';
-  return { zapnuta, mobil, farba, text, telefon, email, odkazy, hladanie, siete: zobrazSiete ? siete : [] };
+  const stranaInfo = u.s.horna_lista_strana_info === 'vpravo' ? 'vpravo' : 'vlavo';
+  const stranaOdkazov = u.s.horna_lista_strana_odkazov === 'vlavo' ? 'vlavo' : 'vpravo';
+  return { zapnuta, mobil, farba, text, obrazok, obrazokOdkaz, telefon, email, odkazy, hladanie, stranaInfo, stranaOdkazov, siete: zobrazSiete ? siete : [] };
 };
 
 /** Malé vyhľadávacie pole v hornej lište - odošle na stránku /hladat. */
@@ -135,34 +238,45 @@ const HladanieListy: React.FC = () => {
 const HornaLista: React.FC = () => {
   const l = useHornaLista();
   if (!l.zapnuta) return null;
+  const obrazok = l.obrazok ? <img src={l.obrazok} alt="" className="kl-lista__logo" /> : null;
+  const info = (l.text || obrazok || l.telefon || l.email) && (
+    <div className="kl-lista__info">
+      {obrazok && (l.obrazokOdkaz ? <Odkaz to={l.obrazokOdkaz} className="kl-lista__logo-odkaz">{obrazok}</Odkaz> : obrazok)}
+      {l.text && <span className="kl-lista__text">{l.text}</span>}
+      {l.telefon && (
+        <a href={`tel:${l.telefon.replace(/\s+/g, '')}`} className="kl-lista__kontakt">
+          <Ikona nazov="telefon" velkost={13} />
+          {l.telefon}
+        </a>
+      )}
+      {l.email && (
+        <a href={`mailto:${l.email}`} className="kl-lista__kontakt">
+          <Ikona nazov="mail" velkost={13} />
+          {l.email}
+        </a>
+      )}
+    </div>
+  );
+  const odkazy = l.odkazy.length > 0 && (
+    <nav className="kl-lista__odkazy" aria-label="Užitočné odkazy">
+      {l.odkazy.map((o, i) => (
+        <Odkaz key={i} to={o.odkaz} ariaLabel={o.text ? undefined : o.odkaz}>
+          {o.obrazok && <img src={o.obrazok} alt="" className="kl-lista__odkaz-obrazok" />}
+          {o.text && <span>{o.text}</span>}
+        </Odkaz>
+      ))}
+    </nav>
+  );
   return (
     <div className={`kl-lista kl-lista--${l.farba}${l.mobil ? ' kl-lista--mobil' : ''}`}>
       <div className="kl-lista__vnutro">
         <div className="kl-lista__vlavo">
-          {l.text && <span className="kl-lista__text">{l.text}</span>}
-          {l.telefon && (
-            <a href={`tel:${l.telefon.replace(/\s+/g, '')}`} className="kl-lista__kontakt">
-              <Ikona nazov="telefon" velkost={13} />
-              {l.telefon}
-            </a>
-          )}
-          {l.email && (
-            <a href={`mailto:${l.email}`} className="kl-lista__kontakt">
-              <Ikona nazov="mail" velkost={13} />
-              {l.email}
-            </a>
-          )}
+          {l.stranaInfo === 'vlavo' && info}
+          {l.stranaOdkazov === 'vlavo' && odkazy}
         </div>
         <div className="kl-lista__vpravo">
-          {l.odkazy.length > 0 && (
-            <nav className="kl-lista__odkazy" aria-label="Užitočné odkazy">
-              {l.odkazy.map((o, i) => (
-                <Odkaz key={i} to={o.odkaz}>
-                  {o.text}
-                </Odkaz>
-              ))}
-            </nav>
-          )}
+          {l.stranaInfo === 'vpravo' && info}
+          {l.stranaOdkazov === 'vpravo' && odkazy}
           {l.hladanie && <HladanieListy />}
           {l.siete.length > 0 && (
             <div className="kl-lista__siete">
@@ -258,23 +372,45 @@ const ZoznamOdkazov: React.FC<{ odkazy: PolozkaMenu[]; zavriet: () => void }> = 
   );
 };
 
+/** Karty najnovších článkov - položka menu typu „Najnovšie články" (voliteľne z jednej rubriky). */
+const ClankyMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
+  const pocet = Math.min(6, Math.max(1, Number(polozka.pocet) || 2));
+  const rubrika = polozka.rubrika_slug ? `&category=${encodeURIComponent(polozka.rubrika_slug)}` : '';
+  const clanky = useApi<Clanok[]>(`/articles?limit=${pocet}${rubrika}`);
+  return (
+    <>
+      {(clanky.data ?? []).map((c) => (
+        <Link key={c.id} to={`/clanek/${c.slug}`} className="kl-panel__karta kl-panel__karta--clanok" onClick={zavriet}>
+          <span className="kl-panel__karta-obrazok">
+            {c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : <span className="kl-obrazok--prazdny" />}
+          </span>
+          <span className="kl-panel__karta-nazov">{c.nazov}</span>
+        </Link>
+      ))}
+    </>
+  );
+};
+
 /**
  * Obsah rozbaľovacieho panela podľa návrhu:
  *  - kategórie (položky s vlastným podmenu) = stĺpce s nadpismi cez celú šírku,
  *  - bez kategórií = zoznam odkazov vľavo,
- *  - položky s obrázkom = karty vpravo.
+ *  - položky s obrázkom a „Najnovšie články" = karty vpravo.
  */
 const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
-  const deti = polozka.deti ?? [];
+  const vsetkyDeti = polozka.deti ?? [];
+  const clankove = vsetkyDeti.filter((d) => d.typ === 'clanky');
+  const deti = vsetkyDeti.filter((d) => d.typ !== 'clanky');
   const kategorie = deti.filter((d) => (d.deti?.length ?? 0) > 0);
   const karty = deti.filter((d) => !d.deti?.length && d.obrazok && d.odkaz);
   const odkazy = deti.filter((d) => !d.deti?.length && !(d.obrazok && d.odkaz));
+  const maKarty = karty.length > 0 || clankove.length > 0;
 
   return (
     <>
       {kategorie.length > 0 ? (
-        // Mriežka má vždy štyri stĺpce ako v návrhu - pri menej kategóriách ostanú vľavo
-        <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': karty.length > 0 ? 3 : 4 } as React.CSSProperties}>
+        // Mriežka má štyri stĺpce ako v návrhu - pri kartách vpravo menej, pri menej kategóriách ostanú vľavo
+        <div className="kl-panel__stlpce" style={{ '--kl-stlpcov': maKarty ? 2 : 4 } as React.CSSProperties}>
           {odkazy.length > 0 && (
             <div className="kl-panel__stlpec">
               {odkazy.map((d) => (
@@ -291,13 +427,29 @@ const PanelMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ po
             </div>
           ))}
         </div>
+      ) : odkazy.length > 0 ? (
+        <ZoznamOdkazov odkazy={odkazy} zavriet={zavriet} />
       ) : (
-        odkazy.length > 0 && <ZoznamOdkazov odkazy={odkazy} zavriet={zavriet} />
+        // Len články: vľavo nadpis a odkaz na všetky články, nech panel nie je prázdny
+        clankove.length > 0 && (
+          <div className="kl-panel__stlpec kl-panel__uvod-clankov">
+            <span className="kl-panel__nadpis">{clankove[0].nazov}</span>
+            {clankove[0].odkaz && (
+              <OdkazMenu polozka={{ ...clankove[0], deti: [] }} className="kl-panel__vsetky" onClick={zavriet}>
+                Všetky články
+                <Ikona nazov="vpravo" velkost={16} />
+              </OdkazMenu>
+            )}
+          </div>
+        )
       )}
-      {karty.length > 0 && (
+      {maKarty && (
         <div className="kl-panel__karty">
-          {karty.slice(0, 3).map((d) => (
+          {karty.slice(0, clankove.length > 0 ? 1 : 3).map((d) => (
             <KartaMenu key={d.id} polozka={d} zavriet={zavriet} />
+          ))}
+          {clankove.map((c) => (
+            <ClankyMenu key={c.id} polozka={c} zavriet={zavriet} />
           ))}
         </div>
       )}
@@ -314,6 +466,8 @@ export const Hlavicka: React.FC = () => {
   const [posunute, setPosunute] = useState(false);
   const [otvorene, setOtvorene] = useState<PolozkaMenu['id'] | null>(null);
   const [mobilneMenu, setMobilneMenu] = useState(false);
+  const [hladanie, setHladanie] = useState(false);
+  const hlavicka = useRef<HTMLElement>(null);
   const casovac = useRef<number>();
   const jeUvod = pathname === '/';
 
@@ -328,7 +482,23 @@ export const Hlavicka: React.FC = () => {
   useEffect(() => {
     setOtvorene(null);
     setMobilneMenu(false);
+    setHladanie(false);
   }, [pathname]);
+
+  // Vyhľadávanie sa zavrie klávesom Escape alebo kliknutím mimo hlavičky
+  useEffect(() => {
+    if (!hladanie) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setHladanie(false);
+    const klik = (e: MouseEvent) => {
+      if (hlavicka.current && !hlavicka.current.contains(e.target as Node)) setHladanie(false);
+    };
+    window.addEventListener('keydown', esc);
+    document.addEventListener('mousedown', klik);
+    return () => {
+      window.removeEventListener('keydown', esc);
+      document.removeEventListener('mousedown', klik);
+    };
+  }, [hladanie]);
 
   // Spodná navigácia otvára to isté menu
   useEffect(() => {
@@ -342,6 +512,7 @@ export const Hlavicka: React.FC = () => {
   const otvor = (id: PolozkaMenu['id']) => {
     window.clearTimeout(casovac.current);
     setOtvorene(id);
+    setHladanie(false);
   };
   // Krátke oneskorenie, aby sa panel nezavrel pri presune myši z odkazu na panel
   const zavriSOneskorenim = () => {
@@ -357,18 +528,20 @@ export const Hlavicka: React.FC = () => {
     return () => window.removeEventListener('keydown', esc);
   }, [otvorene]);
 
-  const plna = posunute || otvorene !== null || !jeUvod;
+  const plna = posunute || otvorene !== null || hladanie || !jeUvod;
+  const zmensena = posunute && u.zapnute('hlavicka_zmensit');
 
   return (
     <>
-      <header className={`kl-hlavicka${plna ? ' is-plna' : ''}${jeUvod ? ' kl-hlavicka--uvod' : ''}`}>
+      <header ref={hlavicka} className={`kl-hlavicka${plna ? ' is-plna' : ''}${zmensena ? ' is-zmensena' : ''}${jeUvod ? ' kl-hlavicka--uvod' : ''}`}>
         <div className="kl-hlavicka__prechod" aria-hidden="true" />
         <div className="kl-hlavicka__pozadie" aria-hidden="true" />
         <HornaLista />
         <nav className="kl-hlavicka__vnutro" aria-label="Hlavné menu">
           <Logo />
+          {/* Na mobile a tablete zároveň odsúva ikony doprava - preto zostáva aj bez textu */}
           <Link to="/" className="kl-hlavicka__nazov" tabIndex={-1} aria-hidden="true">
-            {nastavenia.nazov}
+            {u.zapnute('ukazat_nazov', false) ? nastavenia.nazov : ''}
           </Link>
           <div className="kl-menu">
             {polozky.map((p) => {
@@ -425,7 +598,13 @@ export const Hlavicka: React.FC = () => {
               {tlacidlo.text}
             </Odkaz>
           )}
-          <HladanieHlavicky />
+          <HladanieHlavicky
+            otvorene={hladanie}
+            prepni={() => {
+              setOtvorene(null);
+              setHladanie((h) => !h);
+            }}
+          />
           <KosikHlavicky />
           {jePrihlaseny() && u.zapnute('ukazat_admin') && (
             <a href="/admin" className="kl-hlavicka__admin" title="Administrácia">
@@ -436,6 +615,7 @@ export const Hlavicka: React.FC = () => {
             <Ikona nazov="menu" velkost={22} />
           </button>
         </nav>
+        {u.zapnute('ukazat_hladanie') && <PanelHladania otvorene={hladanie} zavriet={() => setHladanie(false)} />}
       </header>
       {mobilneMenu && <MobilneMenu zavriet={() => setMobilneMenu(false)} />}
     </>

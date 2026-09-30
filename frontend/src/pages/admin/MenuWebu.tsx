@@ -41,7 +41,7 @@ export const SEKCIE_WEBU: Array<{ url: string; nazov: string }> = [
 /** Odporúčané menu pre prázdny web. */
 const ODPORUCANE = ['/', '/clanky', '/matches', '/teams', '/turnaje', '/sponzori'];
 
-type Druh = 'sekcia' | 'stranka' | 'rubrika' | 'url' | 'nadpis';
+type Druh = 'sekcia' | 'stranka' | 'rubrika' | 'url' | 'nadpis' | 'clanky';
 
 /** Najviac úrovní menu (rovnaké obmedzenie stráži server). */
 const MAX_UROVNI = 3;
@@ -63,6 +63,8 @@ interface Formular {
   url: string;
   rodic_id: number | null;
   obrazok: string | null;
+  /** Najnovšie články: počet kariet */
+  pocet: number;
   otvorit_v_novom: boolean;
   aktivity: boolean;
   /** Názov napísal používateľ - výber cieľa ho už neprepíše */
@@ -78,6 +80,7 @@ const PRAZDNY: Formular = {
   url: '',
   rodic_id: null,
   obrazok: null,
+  pocet: 2,
   otvorit_v_novom: false,
   aktivity: true,
   nazovRucne: false,
@@ -96,6 +99,7 @@ const doFormulara = (p: PolozkaMenuWebu): Formular => {
     url: jeSekcia ? '' : p.url ?? '',
     rodic_id: p.rodic_id,
     obrazok: p.obrazok ?? null,
+    pocet: p.pocet ?? 2,
     otvorit_v_novom: p.otvorit_v_novom,
     aktivity: p.aktivity,
     nazovRucne: true,
@@ -122,6 +126,10 @@ export const MenuWebu: React.FC = () => {
   /** Kam položka vedie - text do zoznamu. */
   const ciel = (p: PolozkaMenuWebu): string => {
     if (p.typ === 'nadpis') return tr('Kategória - nadpis stĺpca v rozbaľovacom menu');
+    if (p.typ === 'clanky') {
+      const r = zoznamRubrik.find((x) => x.id === p.rubrika_id);
+      return r ? tr('Najnovšie články z rubriky {nazov} ({pocet})', { nazov: r.nazov, pocet: p.pocet ?? 2 }) : tr('Najnovšie články ({pocet})', { pocet: p.pocet ?? 2 });
+    }
     if (p.typ === 'stranka') {
       const s = zoznamStranok.find((x) => x.id === p.stranka_id);
       return s ? tr('Stránka: {nazov}{hodnota}', { nazov: s.nazov, hodnota: s.publikovany ? '' : tr(' (nepublikovaná - na webe sa neukáže)') }) : tr('Stránka bola zmazaná');
@@ -163,12 +171,13 @@ export const MenuWebu: React.FC = () => {
       nazov: f.nazov.trim(),
       typ: f.druh === 'sekcia' ? 'url' : f.druh,
       stranka_id: f.druh === 'stranka' ? f.stranka_id : null,
-      rubrika_id: f.druh === 'rubrika' ? f.rubrika_id : null,
+      rubrika_id: f.druh === 'rubrika' || f.druh === 'clanky' ? f.rubrika_id : null,
+      pocet: f.druh === 'clanky' ? f.pocet : null,
       url: f.druh === 'sekcia' ? f.sekcia : f.druh === 'url' ? f.url.trim() : null,
       rodic_id: f.rodic_id,
       // Obrázok (karta) má zmysel len v podmenu
-      obrazok: f.rodic_id && f.druh !== 'nadpis' ? f.obrazok : null,
-      otvorit_v_novom: f.druh === 'nadpis' ? false : f.otvorit_v_novom,
+      obrazok: f.rodic_id && f.druh !== 'nadpis' && f.druh !== 'clanky' ? f.obrazok : null,
+      otvorit_v_novom: f.druh === 'nadpis' || f.druh === 'clanky' ? false : f.otvorit_v_novom,
       aktivity: f.aktivity,
     };
 
@@ -361,9 +370,33 @@ export const MenuWebu: React.FC = () => {
                 { hodnota: 'rubrika', popis: tr('Rubrika článkov') },
                 { hodnota: 'url', popis: tr('Vlastná adresa') },
                 { hodnota: 'nadpis', popis: tr('Kategória (nadpis bez odkazu)') },
+                { hodnota: 'clanky', popis: tr('Najnovšie články (karty v podmenu)') },
               ]}
-              napoveda={upravovana.druh === 'nadpis' ? tr('Kategória zoskupí odkazy v podmenu pod spoločný nadpis. Na webe sa ukáže, len ak obsahuje aspoň jeden odkaz.') : undefined}
+              napoveda={
+                upravovana.druh === 'nadpis'
+                  ? tr('Kategória zoskupí odkazy v podmenu pod spoločný nadpis. Na webe sa ukáže, len ak obsahuje aspoň jeden odkaz.')
+                  : upravovana.druh === 'clanky'
+                    ? tr('Vložte ju do podmenu - v rozbaľovacom menu sa vpravo ukážu karty najnovších článkov (šablóna Klubová). Iné šablóny ukážu odkaz na zoznam článkov.')
+                    : undefined
+              }
             />
+            {upravovana.druh === 'clanky' && (
+              <div className="cw-menu__dvojica">
+                <Select
+                  menovka={tr('Z rubriky')}
+                  value={upravovana.rubrika_id ?? ''}
+                  onChange={(e) => setUpravovana({ ...upravovana, rubrika_id: e.target.value ? Number(e.target.value) : null })}
+                  prazdna={tr('Všetky rubriky')}
+                  moznosti={zoznamRubrik.map((r) => ({ hodnota: r.id, popis: r.nazov }))}
+                />
+                <Select
+                  menovka={tr('Počet článkov')}
+                  value={String(upravovana.pocet)}
+                  onChange={(e) => setUpravovana({ ...upravovana, pocet: Number(e.target.value) })}
+                  moznosti={[1, 2, 3, 4, 5, 6].map((n) => ({ hodnota: String(n), popis: String(n) }))}
+                />
+              </div>
+            )}
             {upravovana.druh === 'sekcia' && (
               <Select
                 menovka={tr('Sekcia')}
@@ -422,7 +455,7 @@ export const MenuWebu: React.FC = () => {
               disabled={maDeti}
               napoveda={maDeti ? tr('Položka má vlastné podmenu, preto zostáva v hlavnom menu') : undefined}
             />
-            {upravovana.rodic_id !== null && upravovana.druh !== 'nadpis' && (
+            {upravovana.rodic_id !== null && upravovana.druh !== 'nadpis' && upravovana.druh !== 'clanky' && (
               <PoleObrazka
                 menovka={tr('Obrázok karty (nepovinné)')}
                 hodnota={upravovana.obrazok}
@@ -431,7 +464,7 @@ export const MenuWebu: React.FC = () => {
                 napoveda={tr('Položka s obrázkom sa v rozbaľovacom menu zobrazí ako karta vpravo (šablóna Klubová).')}
               />
             )}
-            {upravovana.druh !== 'nadpis' && (
+            {upravovana.druh !== 'nadpis' && upravovana.druh !== 'clanky' && (
               <Switch
                 zapnute={upravovana.otvorit_v_novom}
                 onZmena={(v) => setUpravovana({ ...upravovana, otvorit_v_novom: v })}

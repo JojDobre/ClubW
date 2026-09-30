@@ -50,7 +50,7 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
     polozky: { max: 60, polia: { foto: { typ: 'obrazok' }, meno: T(100), funkcia: T(100), text: T(600), email: T(150), telefon: T(40) } },
   },
   karty: {
-    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'prekryv', 'vodorovne', 'jednoduche'] } },
+    polia: { nadpis: NADPIS, uvod: UVOD, stlpce: STLPCE, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'prekryv', 'vodorovne', 'jednoduche', 'klub'] } },
     polozky: { max: 24, polia: { obrazok: { typ: 'obrazok' }, nadpis: NADPIS, text: T(600), odkaz: { typ: 'odkaz' }, tlacidlo: T(40) } },
   },
   cisla: {

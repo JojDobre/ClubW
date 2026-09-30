@@ -5,9 +5,9 @@
 // a partneri vyzerajú rovnako ako na úvode.
 
 import React from 'react';
-import { HlavickaBloku, adresaZapasovBloku, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
-import { KartaClanku, KartaZapasu, LogoPartnera } from './casti';
-import { useApi, type Clanok, type Partner, type Zapas } from './spolocne';
+import { HlavickaBloku, PREDVOLENE_BLOKY, adresaZapasovBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
+import { KartaClanku, KartaZapasu, LogoPartnera, Obrazok } from './casti';
+import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
 const ZapasyBloku: KomponentBloku = ({ blok: { data } }) => {
   const s = useNastaveniaSablony<{ vstupenky_odkaz: string | null }>();
@@ -60,7 +60,53 @@ const PartneriBloku: KomponentBloku = ({ blok: { data } }) => {
   );
 };
 
+/** Farebné tóny kariet „Odkaz klubu" - rovnaké ako na úvode */
+const TONY_ODKAZU = ['var(--kl-tmava)', 'var(--kl-akcent)', '#c8862a'];
+
+/** Karty: vzhľad „Odkaz klubu" (ovál s názvom a tlačidlo ako na úvode), ostatné vzhľady kreslí jadro. */
+const KartyBloku: KomponentBloku = (props) => {
+  const { nastavenia } = useNastavenia();
+  const u = useUpravy();
+  const { data, polozky = [] } = props.blok;
+  if (data.vzhlad !== 'klub') {
+    const Predvolene = PREDVOLENE_BLOKY.karty;
+    return <Predvolene {...props} />;
+  }
+  return (
+    <>
+      <HlavickaBloku nadpis={data.nadpis} uvod={data.uvod} />
+      <div className={`blok__mriezka blok__mriezka--${data.stlpce || '3'} blok__karty--klub`}>
+        {polozky.map((p, i) => {
+          const nazov = String(p.nadpis || '');
+          return (
+            <div key={i} className="blok__polozka kl-odkaz-karta">
+              <div className="kl-odkaz-karta__obraz">
+                <Obrazok src={p.obrazok as string | null} className="kl-odkaz-karta__fotka" />
+                <span className="kl-odkaz-karta__ton" style={{ background: TONY_ODKAZU[i % TONY_ODKAZU.length] }} aria-hidden="true" />
+                <span className="kl-odkaz-karta__oval" aria-hidden="true">
+                  <small>{nastavenia.skratka || nastavenia.nazov}</small>
+                  <strong>{nazov}</strong>
+                </span>
+              </div>
+              <div className="kl-odkaz-karta__spodok">
+                <span>{nazov}</span>
+                {p.odkaz && (
+                  <Odkaz to={String(p.odkaz)} className="kl-tlacidlo-obrys kl-tlacidlo-obrys--male">
+                    {String(p.tlacidlo || '') || u.text('text_objavit', 'Objaviť')}
+                    <Ikona nazov="sipka" velkost={12} />
+                  </Odkaz>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
 export const KLUBOVE_BLOKY: Partial<Record<string, KomponentBloku>> = {
+  karty: KartyBloku,
   zapasy: ZapasyBloku,
   clanky: ClankyBloku,
   partneri: PartneriBloku,

@@ -1051,7 +1051,7 @@ export interface OdpovedFormulara {
 // ===== Menu webu =====
 
 /** nadpis = kategória bez odkazu (nadpis stĺpca v rozbaľovacom menu) */
-export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url' | 'nadpis';
+export type TypPolozkyMenu = 'stranka' | 'rubrika' | 'url' | 'nadpis' | 'clanky';
 
 export interface PolozkaMenuWebu {
   id: number;
@@ -1065,6 +1065,8 @@ export interface PolozkaMenuWebu {
   rodic_id: number | null;
   /** Obrázok karty v rozbaľovacom menu */
   obrazok: string | null;
+  /** Počet článkov pri položke „Najnovšie články" */
+  pocet?: number | null;
   poradie: number;
   otvorit_v_novom: boolean;
   aktivity: boolean;

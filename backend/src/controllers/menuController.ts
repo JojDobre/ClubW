@@ -8,7 +8,7 @@
 // presmerovania starých odkazov.
 
 import { Request, Response } from 'express';
-import MenuPolozka from '../models/MenuPolozka';
+import MenuPolozka, { MAX_CLANKOV_V_MENU } from '../models/MenuPolozka';
 import Presmerovanie from '../models/Presmerovanie';
 import Page from '../models/Page';
 import Category from '../models/Category';
@@ -122,7 +122,7 @@ export const getMenu = async (_req: Request, res: Response): Promise<void> => {
       .filter((p) => {
         if (p.typ === 'stranka') return p.stranka && p.stranka.publikovany;
         if (p.typ === 'rubrika') return Boolean(p.rubrika);
-        if (p.typ === 'nadpis') return true;
+        if (p.typ === 'nadpis' || p.typ === 'clanky') return true;
         return Boolean(p.url);
       })
       .map((p) => p.toSafeJSON());
@@ -167,6 +167,17 @@ const pripravPolozku = (telo: any) => {
   if (telo.otvorit_v_novom !== undefined) udaje.otvorit_v_novom = Boolean(telo.otvorit_v_novom);
   if (telo.aktivity !== undefined) udaje.aktivity = Boolean(telo.aktivity);
   if (telo.obrazok !== undefined) udaje.obrazok = telo.obrazok ? String(telo.obrazok).trim() : null;
+  if (telo.pocet !== undefined) {
+    const pocet = Math.round(Number(telo.pocet));
+    udaje.pocet = Number.isFinite(pocet) && pocet > 0 ? Math.min(MAX_CLANKOV_V_MENU, pocet) : null;
+  }
+  // Najnovšie články: rubrika je nepovinný filter, stránka ani adresa sa nepoužívajú
+  if (udaje.typ === 'clanky') {
+    udaje.stranka_id = null;
+    udaje.url = null;
+    udaje.obrazok = null;
+    if (!udaje.pocet) udaje.pocet = 2;
+  }
   // Kategória (nadpis) nikam nevedie
   if (udaje.typ === 'nadpis') {
     udaje.stranka_id = null;

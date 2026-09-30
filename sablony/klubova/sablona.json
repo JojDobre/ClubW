@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.7.0",
+  "verzia": "1.8.0",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -75,7 +75,7 @@
       "typ": "prepinac",
       "menovka": "Košík v hlavičke",
       "skupina": "Hlavička",
-      "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
+      "napoveda": "Zobrazí sa, len keď je obchod zapnutý. Vypnutím košík z hlavičky skryjete.",
       "predvolene": true
     },
     {
@@ -83,7 +83,7 @@
       "typ": "prepinac",
       "menovka": "Vyhľadávanie v hlavičke",
       "skupina": "Hlavička",
-      "napoveda": "Ikona lupy vedie na stránku Hľadať (/hladat).",
+      "napoveda": "Lupa otvorí vyhľadávanie priamo pod hlavičkou, výsledky sa zobrazujú počas písania.",
       "predvolene": true
     },
     {
@@ -92,6 +92,22 @@
       "menovka": "Odkaz do administrácie pre prihlásených",
       "skupina": "Hlavička",
       "predvolene": true
+    },
+    {
+      "kluc": "hlavicka_zmensit",
+      "typ": "prepinac",
+      "menovka": "Po posunutí stránky zmenšiť hlavičku",
+      "skupina": "Hlavička",
+      "napoveda": "Logo a výška hlavičky sa pri posúvaní zmenšia.",
+      "predvolene": true
+    },
+    {
+      "kluc": "ukazat_nazov",
+      "typ": "prepinac",
+      "menovka": "Názov klubu vedľa loga (mobil a tablet)",
+      "skupina": "Hlavička",
+      "napoveda": "Na počítači sa názov nezobrazuje nikdy.",
+      "predvolene": false
     },
     {
       "kluc": "horna_lista",
@@ -125,9 +141,23 @@
     {
       "kluc": "horna_lista_text",
       "typ": "text",
-      "menovka": "Text vľavo",
+      "menovka": "Text",
       "skupina": "Horná lišta",
       "napoveda": "Napr. Oficiálna stránka klubu {klub}. Prázdne = bez textu.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_obrazok",
+      "typ": "obrazok",
+      "menovka": "Obrázok (logo)",
+      "skupina": "Horná lišta",
+      "napoveda": "Napr. logo zväzu, súťaže alebo partnera. Zobrazí sa pred textom."
+    },
+    {
+      "kluc": "horna_lista_obrazok_odkaz",
+      "typ": "odkaz",
+      "menovka": "Odkaz obrázka",
+      "skupina": "Horná lišta",
       "predvolene": ""
     },
     {
@@ -139,11 +169,45 @@
       "predvolene": true
     },
     {
+      "kluc": "horna_lista_strana_info",
+      "typ": "vyber",
+      "menovka": "Strana pre text, obrázok a kontakt",
+      "skupina": "Horná lišta",
+      "moznosti": [
+        {
+          "hodnota": "vlavo",
+          "popis": "Vľavo"
+        },
+        {
+          "hodnota": "vpravo",
+          "popis": "Vpravo"
+        }
+      ],
+      "predvolene": "vlavo"
+    },
+    {
+      "kluc": "horna_lista_strana_odkazov",
+      "typ": "vyber",
+      "menovka": "Strana pre odkazy",
+      "skupina": "Horná lišta",
+      "moznosti": [
+        {
+          "hodnota": "vpravo",
+          "popis": "Vpravo"
+        },
+        {
+          "hodnota": "vlavo",
+          "popis": "Vľavo"
+        }
+      ],
+      "predvolene": "vpravo"
+    },
+    {
       "kluc": "horna_lista_odkaz_1_text",
       "typ": "text",
       "menovka": "Odkaz 1: text",
       "skupina": "Horná lišta",
-      "napoveda": "Napr. zväz, oblastný futbalový zväz, súťaž alebo registrácia. Prázdne = odkaz sa neukáže.",
+      "napoveda": "Napr. zväz, oblastný futbalový zväz, súťaž alebo registrácia. Odkaz sa ukáže, ak má text alebo obrázok a adresu.",
       "predvolene": "SFZ"
     },
     {
@@ -153,6 +217,13 @@
       "skupina": "Horná lišta",
       "napoveda": "Adresa mimo webu klubu sa otvorí v novom okne.",
       "predvolene": "https://www.futbalsfz.sk"
+    },
+    {
+      "kluc": "horna_lista_odkaz_1_obrazok",
+      "typ": "obrazok",
+      "menovka": "Odkaz 1: obrázok",
+      "skupina": "Horná lišta",
+      "napoveda": "Logo zväzu namiesto textu alebo vedľa neho."
     },
     {
       "kluc": "horna_lista_odkaz_2_text",
@@ -169,6 +240,12 @@
       "predvolene": ""
     },
     {
+      "kluc": "horna_lista_odkaz_2_obrazok",
+      "typ": "obrazok",
+      "menovka": "Odkaz 2: obrázok",
+      "skupina": "Horná lišta"
+    },
+    {
       "kluc": "horna_lista_odkaz_3_text",
       "typ": "text",
       "menovka": "Odkaz 3: text",
@@ -183,6 +260,12 @@
       "predvolene": ""
     },
     {
+      "kluc": "horna_lista_odkaz_3_obrazok",
+      "typ": "obrazok",
+      "menovka": "Odkaz 3: obrázok",
+      "skupina": "Horná lišta"
+    },
+    {
       "kluc": "horna_lista_odkaz_4_text",
       "typ": "text",
       "menovka": "Odkaz 4: text",
@@ -195,6 +278,12 @@
       "menovka": "Odkaz 4: adresa",
       "skupina": "Horná lišta",
       "predvolene": ""
+    },
+    {
+      "kluc": "horna_lista_odkaz_4_obrazok",
+      "typ": "obrazok",
+      "menovka": "Odkaz 4: obrázok",
+      "skupina": "Horná lišta"
     },
     {
       "kluc": "horna_lista_hladanie",

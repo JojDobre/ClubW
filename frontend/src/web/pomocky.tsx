@@ -14,10 +14,14 @@ export interface PolozkaMenu {
   /** Prázdny odkaz = kategória (nadpis stĺpca v podmenu), nikam nevedie */
   odkaz: string | null;
   otvorit_v_novom: boolean;
-  /** stranka | rubrika | url | nadpis */
+  /** stranka | rubrika | url | nadpis | clanky */
   typ?: string;
   /** Obrázok karty v rozbaľovacom menu (šablóna ho môže ukázať ako kartu) */
   obrazok?: string | null;
+  /** Najnovšie články (typ clanky): koľko kariet ukázať */
+  pocet?: number | null;
+  /** Najnovšie články (typ clanky): len z tejto rubriky (slug) */
+  rubrika_slug?: string | null;
   /** Podmenu - najviac tri úrovne (hlavná položka → kategória → odkaz) */
   deti?: PolozkaMenu[];
 }
