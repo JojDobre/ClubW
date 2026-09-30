@@ -314,6 +314,9 @@ a.kl-tlacidlo-obrys:hover { background: var(--kl-akcent); color: #ffffff; }
 .kl-erb--akcent { background: var(--kl-akcent); }
 .kl-erb--logo { background: #fff; }
 .kl-erb--logo img { width: 100%; height: 100%; object-fit: contain; }
+/* Na kartách zápasov je erb štvorec - logo celé, bez orezania do kruhu */
+.kl-zapas .kl-erb { border-radius: 8px; }
+.kl-zapas .kl-erb--logo { border-radius: 0; background: transparent; }
 
 /* ===================================================================
    Úvod - slider
