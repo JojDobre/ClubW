@@ -177,6 +177,7 @@ objednávke prepočíta a overí sklad. Odkaz na košík v hlavičke ukazujte le
 | `useNastaveniaSablony()` | hodnoty nastavení šablóny z administrácie |
 | `useSablona()` | slug, názov a verzia aktívnej šablóny |
 | `useMenuWebu()`, `OdkazMenu` | menu z **Menu a odkazy** – najviac 3 úrovne: hlavná položka → podmenu → odkazy v kategórii. Kategória má `odkaz: null` (`OdkazMenu` ju vykreslí ako `<span>`), položka môže mať `obrazok` pre kartu v podmenu |
+| `BlokyStranky`, `BlokStranky` | bloky stránky pod textom (časová os, karty osôb, čísla, galéria, otázky…). `<BlokyStranky bloky={stranka.bloky} />` kreslí predvolený vzhľad; s `predvolenyVzhlad={false}` šablóna štýluje triedy `.blok`, `.blok--casova-os`, `.blok__polozka`… sama a cez `komponenty={{ zapasy: VlastnyBlok }}` nahradí vybrané typy |
 | `useData('/articles?limit=3')` | načítanie dát z verejného API (`{ data, nacitava, chyba }`) |
 | `apiUrl()`, `souborUrl()` | adresa API a nahratých súborov (`/uploads/...`) |
 | `Cast` | vykreslí inú časť - napr. `<Cast nazov="Paticka" />` |

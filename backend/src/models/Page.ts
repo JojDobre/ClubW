@@ -2,13 +2,15 @@
 // Model pre správu statických stránok (Fáza 5) - ROZŠÍRENÝ
 
 import { DataTypes, Model, Optional, Op } from 'sequelize';
+import { textBlokov, type BlokStranky } from '../services/blokyStranky';
 import sequelize from '../config/database';
 
 // Interface pre atribúty stránky
 interface PageAttributes {
   id: number;
   nazov: string;           // Názov stránky
-  obsah: string;           // HTML obsah stránky
+  obsah: string;           // HTML obsah stránky (pri stránke z blokov môže byť prázdny)
+  bloky: BlokStranky[];    // Bloky pod textom - časová os, karty osôb… (services/blokyStranky)
   slug: string;            // URL slug (napr. "historia", "o-klube")
   v_menu: boolean;         // Či sa má zobrazovať v menu
   poradie_menu: number;    // Poradie v menu (nižšie číslo = vyššie)
@@ -20,13 +22,14 @@ interface PageAttributes {
 }
 
 // Interface pre voliteľné atribúty pri vytváraní
-interface PageCreationAttributes extends Optional<PageAttributes, 'id' | 'slug' | 'v_menu' | 'poradie_menu' | 'meta_title' | 'meta_description' | 'publikovany' | 'vytvoreny' | 'aktualizovany'> {}
+interface PageCreationAttributes extends Optional<PageAttributes, 'id' | 'bloky' | 'slug' | 'v_menu' | 'poradie_menu' | 'meta_title' | 'meta_description' | 'publikovany' | 'vytvoreny' | 'aktualizovany'> {}
 
 // Definícia modelu
 class Page extends Model<PageAttributes, PageCreationAttributes> implements PageAttributes {
   public id!: number;
   public nazov!: string;
   public obsah!: string;
+  public bloky!: BlokStranky[];
   public slug!: string;
   public v_menu!: boolean;
   public poradie_menu!: number;
@@ -82,8 +85,12 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
         : this.nazov.substring(0, 67).trimEnd() + '...';
     }
 
-    if (!this.meta_description && this.obsah) {
-      this.meta_description = Page.generateExcerpt(this.obsah, 160);
+    if (!this.meta_description) {
+      // Bez textu stránky sa popis poskladá z blokov
+      const text = this.obsah && Page.generateExcerpt(this.obsah, 160);
+      const zBlokov = text ? '' : textBlokov(this.bloky);
+      if (text) this.meta_description = text;
+      else if (zBlokov) this.meta_description = zBlokov.length <= 160 ? zBlokov : `${zBlokov.substring(0, 157).trimEnd()}...`;
     }
   }
 
@@ -245,10 +252,16 @@ Page.init(
     obsah: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: '',
       validate: {
-        notEmpty: true,
-        len: [10, 100000], // Min 10 znakov, max 100k znakov
+        // Stránka z blokov nemusí mať text - či má stránka aspoň niečo, stráži API
+        len: [0, 100000],
       },
+    },
+    bloky: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
     },
     slug: {
       type: DataTypes.STRING(100),

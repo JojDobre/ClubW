@@ -50,6 +50,11 @@ export { AnketaWeb } from '../components/AnketaWeb';
 export { KomentarePodClankom } from '../components/KomentarePodClankom';
 export { default as ZapasPriebeh } from '../components/ZapasPriebeh';
 
+// Bloky stránok (časová os, karty osôb, čísla, galéria…) - predvolené
+// zobrazenie; šablóna môže vzhľad vypnúť a jednotlivé typy nahradiť
+export { BlokyStranky, PREDVOLENE_BLOKY, HlavickaBloku, OdkazBloku, obrazokBloku, adresaZapasovBloku } from './bloky/BlokyStranky';
+export type { BlokStranky, TypBloku, PozadieBloku, KomponentBloku } from './bloky/typy';
+
 // E-shop: košík, nastavenia obchodu, objednávka, rámec platobnej brány
 export {
   useKosik,

@@ -462,7 +462,6 @@
  "Obrázok v tejto galérii nenájdený": "Nie znaleziono obrazka w tej galerii",
  "Obrázok úspešne aktualizovaný": "Obrazek został zaktualizowany",
  "Obrázok úspešne vymazaný": "Obrazek został usunięty",
- "Obsah musí mať 10-100000 znakov": "Treść musi mieć 10-100000 znaków",
  "Obsah musí mať 10-50000 znakov": "Treść musi mieć 10-50000 znaków",
  "Odhlásenie prebehlo úspešne": "Wylogowano pomyślnie",
  "Odhlásené na všetkých zariadeniach ({0} relácií)": "Wylogowano na wszystkich urządzeniach ({0} sesji)",
@@ -922,5 +921,12 @@
  "odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "link musi zaczynać się od / (strona witryny), https://, mailto: lub tel:",
  "Menu má najviac {0} úrovne": "Menu ma najwyżej {0} poziomy",
  "Položka nemôže byť vnorená do vlastného podmenu": "Pozycji nie można zagnieździć we własnym podmenu",
- "Adresa obrázka musí začínať / alebo https://": "Adres obrazu musi zaczynać się od / lub https://"
+ "Adresa obrázka musí začínať / alebo https://": "Adres obrazu musi zaczynać się od / lub https://",
+ "Stránka musí mať aspoň 10 znakov textu alebo aspoň jeden blok": "Strona musi mieć co najmniej 10 znaków tekstu lub co najmniej jeden blok",
+ "Obsah môže mať najviac 100000 znakov": "Treść może mieć najwyżej 100000 znaków",
+ "{0}. blok: adresa obrázka musí začínať / alebo https://": "Blok {0}: adres obrazu musi zaczynać się od / lub https://",
+ "{0}. blok: odkaz musí začínať / (stránka webu), https://, mailto: alebo tel:": "Blok {0}: link musi zaczynać się od / (strona witryny), https://, mailto: lub tel:",
+ "Bloky stránky musia byť zoznam (najviac {0})": "Bloki strony muszą być listą (najwyżej {0})",
+ "Neznámy typ bloku: {0}": "Nieznany typ bloku: {0}",
+ "{0}. blok: video musí byť odkaz na YouTube alebo Vimeo": "Blok {0}: wideo musi być linkiem do YouTube lub Vimeo"
 }

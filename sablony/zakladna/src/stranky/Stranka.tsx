@@ -7,13 +7,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { sanitizeHtml } from '@clubw/jadro';
 // Centrálna konfigurácia API adries - žiadne natvrdo zapísané localhost
 import { apiUrl } from '@clubw/jadro';
-import { ObsahSFormularmi } from '@clubw/jadro';
+import { BlokyStranky, ObsahSFormularmi, type BlokStranky } from '@clubw/jadro';
 import { skusPresmerovat } from '@clubw/jadro';
 
 interface Page {
   id: number;
   nazov: string;
   obsah: string;
+  bloky?: BlokStranky[];
   slug: string;
   meta_title?: string;
   meta_description?: string;
@@ -278,6 +279,9 @@ const PageView: React.FC = () => {
         }}
         html={sanitizeHtml(page.obsah)}
       />
+
+      {/* Bloky stránky - časová os, karty osôb, galéria… */}
+      <BlokyStranky bloky={page.bloky} />
 
       {/* Footer informácie */}
       <footer style={{

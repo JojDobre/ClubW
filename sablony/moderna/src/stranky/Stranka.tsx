@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { ObsahSFormularmi, sanitizeHtml, useNastavenia } from '@clubw/jadro';
+import { BlokyStranky, ObsahSFormularmi, sanitizeHtml, useNastavenia, type BlokStranky } from '@clubw/jadro';
 import { NenajdenyObsah } from './Nenajdena';
 import { Chyba, HlavickaStranky, Nacitava, hlavickaPrihlasenia, useApi, useMetaPopis, useNenajdene, useTitulok } from '../spolocne';
 
@@ -13,6 +13,7 @@ interface Stranka {
   nazov: string;
   slug: string;
   obsah: string;
+  bloky?: BlokStranky[];
   meta_title?: string | null;
   meta_description?: string | null;
   aktualizovany?: string;
@@ -54,8 +55,9 @@ const Stranka: React.FC = () => {
       {nahladId && <div className="md-nahlad-pruh">Náhľad z administrácie - návštevníci stránku uvidia až po zverejnení.</div>}
       <HlavickaStranky stitok={nastavenia.nazov} nadpis={s.nazov} />
       <div className="md-kontajner md-stranka__telo">
-        <ObsahSFormularmi html={sanitizeHtml(s.obsah ?? '')} className="md-text" />
+        {s.obsah && <ObsahSFormularmi html={sanitizeHtml(s.obsah)} className="md-text" />}
       </div>
+      <BlokyStranky bloky={s.bloky} className="md-bloky" />
     </div>
   );
 };

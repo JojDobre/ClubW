@@ -1,5 +1,6 @@
 // Umiestnenie: frontend/src/pages/admin/Stranky.tsx
-// Statické stránky webu (O klube, Kontakt, História…).
+// Statické stránky webu (O klube, Kontakt, História…). Stránku tvorí text
+// z editora a pod ním bloky (časová os, karty osôb, čísla, galéria…).
 
 import React, { useRef, useState } from 'react';
 import {
@@ -8,6 +9,7 @@ import {
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
 import { strankyApi } from '../../api/obsah';
+import { EditorBlokov } from '../../components/admin/EditorBlokov';
 import { formatujDatum } from '../../utils/datum';
 import type { Stranka } from '../../api/typy';
 import { tr } from '../../i18n';
@@ -17,6 +19,7 @@ const PRAZDNA: Partial<Stranka> = {
   nazov: '',
   slug: '',
   obsah: '',
+  bloky: [],
   v_menu: false,
   poradie_menu: 10,
   publikovany: false,
@@ -93,9 +96,11 @@ export const Stranky: React.FC = () => {
       varovanie(tr('Zadajte názov stránky'));
       return;
     }
-    // Editor vracia HTML - dĺžku posudzujeme podľa textu bez značiek
-    if (bezZnaciek(upravovana.obsah ?? '').length < 10) {
-      varovanie(tr('Obsah stránky musí mať aspoň 10 znakov'));
+    // Editor vracia HTML - dĺžku posudzujeme podľa textu bez značiek.
+    // Stránka z blokov text mať nemusí.
+    const viditelneBloky = (upravovana.bloky ?? []).filter((b) => !b.skryty).length;
+    if (bezZnaciek(upravovana.obsah ?? '').length < 10 && viditelneBloky === 0) {
+      varovanie(tr('Stránka musí mať aspoň 10 znakov textu alebo aspoň jeden blok'));
       return;
     }
 
@@ -294,6 +299,8 @@ export const Stranky: React.FC = () => {
                 placeholder={tr('Text stránky…')}
               />
             </div>
+
+            <EditorBlokov bloky={upravovana.bloky ?? []} onZmena={(bloky) => setUpravovana((d) => ({ ...d!, bloky }))} />
 
             <div className="cw-stranka__prepinace">
             <div className="cw-kat__row">
