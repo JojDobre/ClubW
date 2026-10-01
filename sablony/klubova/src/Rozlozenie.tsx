@@ -695,8 +695,13 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
           <Ikona nazov="zavriet" velkost={30} />
         </button>
         {u.zapnute('ukazat_nazov', false) && <strong>{nastavenia.nazov}</strong>}
+        {tlacidlo && (
+          <Odkaz to={tlacidlo.odkaz} className="kl-mmenu__ikona kl-mmenu__ikona--prva" onClick={zavriet} ariaLabel={tlacidlo.text}>
+            <Ikona nazov="mail" velkost={24} />
+          </Odkaz>
+        )}
         {kosik && (
-          <Link to="/kosik" className="kl-mmenu__ikona" onClick={zavriet} aria-label={vKosiku ? `Košík, ${vKosiku} ks` : 'Košík'}>
+          <Link to="/kosik" className={`kl-mmenu__ikona${tlacidlo ? '' : ' kl-mmenu__ikona--prva'}`} onClick={zavriet} aria-label={vKosiku ? `Košík, ${vKosiku} ks` : 'Košík'}>
             <Ikona nazov="kosik" velkost={26} />
             {vKosiku > 0 && <span className="kl-mmenu__pocet">{vKosiku > 99 ? '99+' : vKosiku}</span>}
           </Link>
@@ -704,17 +709,9 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
       </div>
 
       <div className="kl-mmenu__telo">
-        {(tlacidlo || u.zapnute('ukazat_hladanie')) && (
+        {u.zapnute('ukazat_hladanie') && (
           <div className="kl-mmenu__akcie">
-            {tlacidlo ? (
-              <Odkaz to={tlacidlo.odkaz} className="kl-mmenu__akcia" onClick={zavriet}>
-                <Ikona nazov="mail" velkost={22} />
-                {tlacidlo.text}
-              </Odkaz>
-            ) : (
-              <span />
-            )}
-            {u.zapnute('ukazat_hladanie') && (
+            {(
               <button type="button" className={`kl-mmenu__akcia${hladanie ? ' is-aktivna' : ''}`} onClick={() => setHladanie((h) => !h)} aria-expanded={hladanie}>
                 <Ikona nazov="hladat" velkost={22} />
                 Hľadať
