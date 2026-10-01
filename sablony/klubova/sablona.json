@@ -309,6 +309,13 @@
       "predvolene": false
     },
     {
+      "kluc": "mmenu_pozadie",
+      "typ": "obrazok",
+      "menovka": "Mobilné menu: fotka na pozadí",
+      "skupina": "Mobilná navigácia",
+      "napoveda": "Zobrazí sa jemne vyblednutá. Prázdne = náhradná fotka úvodu."
+    },
+    {
       "kluc": "zalozka_2_nazov",
       "typ": "text",
       "menovka": "Záložka 2: názov",

@@ -769,80 +769,104 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
    =================================================================== */
 
 .kl-mmenu {
-  position: fixed; inset: 0; z-index: 90; background: var(--kl-tmava); color: #fff;
+  --kl-mmenu-okraj: 24px;
+  position: fixed; inset: 0; z-index: 90; background: #f2f2f4; color: var(--kl-tmava);
   display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
   padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
   animation: kl-vysun 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@keyframes kl-vysun { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-.kl-mmenu__hlava {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px; position: sticky; top: 0;
-  background: var(--kl-tmava); z-index: 1;
+/* Vyblednutá fotka na pozadí (nastavenie šablóny alebo fotka úvodu) */
+.kl-mmenu::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--kl-mmenu-pozadie, none) center top / cover no-repeat; filter: grayscale(1); opacity: 0.07;
 }
-.kl-mmenu__logo { width: 44px; height: 44px; flex-shrink: 0; display: block; }
+.kl-mmenu > * { position: relative; z-index: 1; }
+@keyframes kl-vysun { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.kl-mmenu__hlava {
+  display: flex; align-items: center; gap: 16px; padding: 12px var(--kl-mmenu-okraj) 12px 16px; position: sticky; top: 0; z-index: 2;
+  background: #ffffff; box-shadow: 0 1px 0 var(--kl-tmava-8);
+}
+.kl-mmenu__logo { width: 52px; height: 52px; flex-shrink: 0; display: block; }
 .kl-mmenu__logo img { width: 100%; height: 100%; object-fit: contain; }
-.kl-mmenu__logo .kl-logo__znak { font-size: 14px; }
-.kl-mmenu__hlava strong { flex: 1; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kl-mmenu__logo .kl-logo__znak { font-size: 15px; }
+.kl-mmenu__predel { width: 1px; height: 36px; background: var(--kl-tmava-12); flex-shrink: 0; }
 .kl-mmenu__zavriet {
-  width: 44px; height: 44px; margin-left: auto; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--kl-akcent);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.kl-mmenu__hlava strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 16px; }
+.kl-mmenu__ikona { position: relative; margin-left: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--kl-tmava); }
+.kl-mmenu__pocet {
+  position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--kl-akcent); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 10px; line-height: 18px; text-align: center;
 }
 
-/* Položky ako karty - rozbalená položka ukáže podmenu vo vnútri karty */
-.kl-mmenu__zoznam { list-style: none; margin: 0; padding: 12px 16px 0; display: flex; flex-direction: column; gap: 8px; }
-.kl-mmenu__polozka { border-radius: 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.06); overflow: hidden; transition: background 0.2s ease, border-color 0.2s ease; }
-.kl-mmenu__polozka.is-rozbalene { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1); }
+.kl-mmenu__telo { padding: 28px var(--kl-mmenu-okraj) 0; }
+.kl-mmenu__akcie { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.kl-mmenu__akcia {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 0; border: 0; background: none; cursor: pointer; text-decoration: none;
+  color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.kl-mmenu__akcia.is-aktivna { color: var(--kl-akcent); }
+.kl-mmenu .kl-mmenu__hladanie { margin: 0 0 16px; background: #ffffff; color: var(--kl-tmava-55); box-shadow: 0 0 0 1px var(--kl-tmava-10); }
+.kl-mmenu .kl-mmenu__hladanie input { color: var(--kl-tmava); }
+.kl-mmenu .kl-mmenu__hladanie input::placeholder { color: var(--kl-tmava-45); }
+
+/* Položky: veľký tučný text, trojuholník vpravo; rozbalená je červená s pásikom pri okraji */
+.kl-mmenu__zoznam { list-style: none; margin: 0; padding: 0; }
+.kl-mmenu__polozka { position: relative; }
 .kl-mmenu__odkaz {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 56px;
-  padding: 0 12px 0 18px; background: none; border: 0; color: #fff; cursor: pointer; text-align: left; text-decoration: none;
-  font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px; letter-spacing: 0.6px; text-transform: uppercase;
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%;
+  padding: 18px 0; border: 0; background: none; color: var(--kl-tmava); cursor: pointer; text-align: left; text-decoration: none;
+  font-family: var(--kl-nadpisy); font-weight: 800; font-size: 21px; letter-spacing: 0.4px; line-height: 1.15; text-transform: uppercase;
   -webkit-tap-highlight-color: transparent;
 }
-.kl-mmenu__sipka {
-  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+.kl-mmenu__trojuholnik {
+  flex-shrink: 0; width: 0; height: 0; margin-right: 2px;
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid currentColor; transition: transform 0.2s ease;
 }
-.kl-mmenu__polozka.is-rozbalene .kl-mmenu__odkaz, .kl-mmenu__polozka.is-aktivna .kl-mmenu__odkaz { color: var(--kl-akcent); }
-.kl-mmenu__polozka.is-rozbalene .kl-mmenu__sipka { transform: rotate(180deg); background: var(--kl-akcent); color: #ffffff; }
-.kl-mmenu__podmenu { display: flex; flex-direction: column; padding: 4px 8px 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-.kl-mmenu__prehlad, .kl-mmenu__pododkaz {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 10px;
-  border-radius: 12px; color: rgba(255, 255, 255, 0.85); text-decoration: none;
-  font-family: var(--kl-pismo); font-weight: 600; font-size: 15px; line-height: 1.3;
+.kl-mmenu__polozka.is-aktivna > .kl-mmenu__odkaz, .kl-mmenu__polozka.is-rozbalene > .kl-mmenu__odkaz { color: var(--kl-akcent); }
+.kl-mmenu__polozka.is-rozbalene .kl-mmenu__trojuholnik { transform: rotate(180deg); }
+.kl-mmenu__polozka.is-rozbalene > .kl-mmenu__odkaz::before {
+  content: ''; position: absolute; left: calc(-1 * var(--kl-mmenu-okraj)); top: 10px; bottom: 10px; width: 5px; background: var(--kl-akcent);
 }
-.kl-mmenu__prehlad { color: #ffffff; font-weight: 700; }
-.kl-mmenu__prehlad svg { color: var(--kl-akcent); flex-shrink: 0; }
-.kl-mmenu__pododkaz.is-aktivny { color: var(--kl-akcent); background: rgba(255, 255, 255, 0.05); }
-.kl-mmenu__prehlad:active, .kl-mmenu__pododkaz:active { background: rgba(255, 255, 255, 0.06); }
-.kl-mmenu__skupina { display: flex; flex-direction: column; padding-top: 6px; }
+.kl-mmenu__podmenu { display: flex; flex-direction: column; padding: 0 0 18px 24px; }
+.kl-mmenu__pododkaz {
+  display: block; padding: 11px 0; color: var(--kl-tmava); text-decoration: none;
+  font-family: var(--kl-pismo); font-weight: 500; font-size: 18px; line-height: 1.3;
+}
+.kl-mmenu__pododkaz.is-aktivny { color: var(--kl-akcent); font-weight: 700; }
+.kl-mmenu__skupina { display: flex; flex-direction: column; padding-top: 8px; }
 .kl-mmenu__kategoria {
-  display: block; padding: 8px 10px 4px; color: var(--kl-akcent); text-decoration: none;
-  font-family: var(--kl-nadpisy); font-weight: 600; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase;
+  display: block; padding: 6px 0 2px; color: var(--kl-akcent); text-decoration: none;
+  font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase;
+}
+/* Najnovšie články v podmenu - posuvné karty */
+.kl-mmenu__clanky {
+  display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+  margin: 14px calc(-1 * var(--kl-mmenu-okraj)) 0 -24px; padding: 0 var(--kl-mmenu-okraj) 4px 24px;
+}
+.kl-mmenu__clanky::-webkit-scrollbar { display: none; }
+.kl-mmenu__clanok { flex: 0 0 72%; max-width: 280px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 12px; color: var(--kl-tmava); text-decoration: none; }
+.kl-mmenu__clanok-obrazok { display: block; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden; background: var(--kl-tmava-8); border: 3px solid #ffffff; box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.35); }
+.kl-mmenu__clanok-obrazok img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kl-mmenu__clanok-nazov {
+  font-family: var(--kl-nadpisy); font-weight: 800; font-size: 18px; line-height: 1.15; text-transform: uppercase;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* Spodok: výzva, kontakt, sociálne siete, administrácia */
-.kl-mmenu__spodok { display: flex; flex-direction: column; gap: 16px; padding: 24px 16px 0; }
-.kl-mmenu__tlacidlo {
-  display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 16px; text-decoration: none;
-  background: var(--kl-akcent); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 15px; letter-spacing: 0.3px;
-}
-.kl-mmenu__kontakt { display: flex; flex-direction: column; gap: 4px; }
-.kl-mmenu__kontakt a {
-  display: flex; align-items: center; gap: 12px; min-height: 40px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
-  font-family: var(--kl-pismo); font-weight: 600; font-size: 15px;
-}
-.kl-mmenu__kontakt svg { color: var(--kl-akcent); flex-shrink: 0; }
-.kl-mmenu__riadok { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+/* Spodok: sociálne siete a administrácia */
+.kl-mmenu__spodok { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 24px; padding: 20px 0 0; border-top: 1px solid var(--kl-tmava-10); }
 .kl-mmenu__siete { display: flex; gap: 8px; }
 .kl-mmenu__siete a {
   width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #ffffff; text-decoration: none;
+  border: 1.5px solid var(--kl-tmava); color: var(--kl-tmava); text-decoration: none;
   font-family: var(--kl-nadpisy); font-weight: 800; font-size: 12px;
 }
 .kl-mmenu__admin {
   display: inline-flex; align-items: center; min-height: 38px; padding: 0 16px; border-radius: 999px; text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.18); color: rgba(255, 255, 255, 0.75);
-  font-family: var(--kl-nadpisy); font-weight: 600; font-size: 13px;
+  background: var(--kl-tmava); color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 13px;
 }
 
 /* ===================================================================

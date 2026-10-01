@@ -644,9 +644,28 @@ const HladanieMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
   );
 };
 
+/** Mobilné menu: karty najnovších článkov (položka menu typu „Najnovšie články"). */
+const ClankyMobil: React.FC<{ polozka: PolozkaMenu; zavriet: () => void }> = ({ polozka, zavriet }) => {
+  const pocet = Math.min(6, Math.max(1, Number(polozka.pocet) || 2));
+  const rubrika = polozka.rubrika_slug ? `&category=${encodeURIComponent(polozka.rubrika_slug)}` : '';
+  const clanky = useApi<Clanok[]>(`/articles?limit=${pocet}${rubrika}`);
+  if (!clanky.data?.length) return null;
+  return (
+    <div className="kl-mmenu__clanky">
+      {clanky.data.map((c) => (
+        <Link key={c.id} to={`/clanek/${c.slug}`} className="kl-mmenu__clanok" onClick={zavriet}>
+          <span className="kl-mmenu__clanok-obrazok">{c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : null}</span>
+          <span className="kl-mmenu__clanok-nazov">{c.nazov}</span>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
+  const { pocet: vKosiku } = useKosik();
   const { pathname } = useLocation();
   const tlacidlo = useTlacidloHlavicky();
   const u = useUpravy();
@@ -655,6 +674,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
   const [rozbalene, setRozbalene] = useState<PolozkaMenu['id'] | null>(
     () => polozky.find((p) => (p.deti ?? []).some((d) => jeAktivny(d.odkaz, pathname) || (d.deti ?? []).some((v) => jeAktivny(v.odkaz, pathname))))?.id ?? null
   );
+  const [hladanie, setHladanie] = useState(false);
   useZamknutyPosun(true);
 
   useEffect(() => {
@@ -663,92 +683,99 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
     return () => window.removeEventListener('keydown', esc);
   }, [zavriet]);
 
-  const kontakt = nastavenia.kontakt ?? { email: null, telefon: null };
+  const pozadie = obrazokUrl(String(u.s.mmenu_pozadie || u.s.uvod_fotka || '') || null);
+  const kosik = Boolean(nastavenia.eshop?.zapnuty) && u.zapnute('ukazat_kosik');
 
   return (
-    <div className="kl-mmenu" role="dialog" aria-modal="true" aria-label="Menu">
+    <div className="kl-mmenu" role="dialog" aria-modal="true" aria-label="Menu" style={pozadie ? ({ '--kl-mmenu-pozadie': `url("${pozadie}")` } as React.CSSProperties) : undefined}>
       <div className="kl-mmenu__hlava">
         <Logo className="kl-mmenu__logo" onClick={zavriet} />
-        {u.zapnute('ukazat_nazov', false) && <strong>{nastavenia.nazov}</strong>}
+        <span className="kl-mmenu__predel" aria-hidden="true" />
         <button type="button" className="kl-mmenu__zavriet" onClick={zavriet} aria-label="Zavrieť menu">
-          <Ikona nazov="zavriet" velkost={22} />
+          <Ikona nazov="zavriet" velkost={30} />
         </button>
-      </div>
-      {u.zapnute('ukazat_hladanie') && <HladanieMenu zavriet={zavriet} />}
-      <ul className="kl-mmenu__zoznam">
-        {polozky.map((p) => {
-          const deti = p.deti ?? [];
-          const jeRozbalene = rozbalene === p.id;
-          const aktivna = jeAktivny(p.odkaz, pathname);
-          return (
-            <li key={p.id} className={`kl-mmenu__polozka${jeRozbalene ? ' is-rozbalene' : ''}${aktivna ? ' is-aktivna' : ''}`}>
-              {deti.length > 0 ? (
-                <>
-                  <button type="button" className="kl-mmenu__odkaz" aria-expanded={jeRozbalene} onClick={() => setRozbalene(jeRozbalene ? null : p.id)}>
-                    <span>{p.nazov}</span>
-                    <span className="kl-mmenu__sipka" aria-hidden="true">
-                      <Ikona nazov="dole" velkost={16} />
-                    </span>
-                  </button>
-                  {jeRozbalene && (
-                    <div className="kl-mmenu__podmenu">
-                      {p.odkaz && (
-                        <OdkazMenu polozka={p} onClick={zavriet} className="kl-mmenu__prehlad">
-                          <span>Prehľad: {p.nazov}</span>
-                          <Ikona nazov="vpravo" velkost={16} />
-                        </OdkazMenu>
-                      )}
-                      {deti.map((d) =>
-                        d.deti?.length ? (
-                          <div key={d.id} className="kl-mmenu__skupina">
-                            <OdkazMenu polozka={{ ...d, deti: [] }} onClick={zavriet} className="kl-mmenu__kategoria" />
-                            {d.deti.map((v) => (
-                              <OdkazMenu key={v.id} polozka={v} onClick={zavriet} className={`kl-mmenu__pododkaz${jeAktivny(v.odkaz, pathname) ? ' is-aktivny' : ''}`} />
-                            ))}
-                          </div>
-                        ) : (
-                          <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className={`kl-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}`} />
-                        )
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <OdkazMenu polozka={p} onClick={zavriet} className="kl-mmenu__odkaz">
-                  <span>{p.nazov}</span>
-                  <span className="kl-mmenu__sipka" aria-hidden="true">
-                    <Ikona nazov="vpravo" velkost={16} />
-                  </span>
-                </OdkazMenu>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      <div className="kl-mmenu__spodok">
-        {tlacidlo && (
-          <Odkaz to={tlacidlo.odkaz} className="kl-mmenu__tlacidlo" onClick={zavriet}>
-            {tlacidlo.text}
-          </Odkaz>
+        {u.zapnute('ukazat_nazov', false) && <strong>{nastavenia.nazov}</strong>}
+        {kosik && (
+          <Link to="/kosik" className="kl-mmenu__ikona" onClick={zavriet} aria-label={vKosiku ? `Košík, ${vKosiku} ks` : 'Košík'}>
+            <Ikona nazov="kosik" velkost={26} />
+            {vKosiku > 0 && <span className="kl-mmenu__pocet">{vKosiku > 99 ? '99+' : vKosiku}</span>}
+          </Link>
         )}
-        {(kontakt.telefon || kontakt.email) && (
-          <div className="kl-mmenu__kontakt">
-            {kontakt.telefon && (
-              <a href={`tel:${kontakt.telefon.replace(/\s+/g, '')}`}>
-                <Ikona nazov="telefon" velkost={16} />
-                {kontakt.telefon}
-              </a>
+      </div>
+
+      <div className="kl-mmenu__telo">
+        {(tlacidlo || u.zapnute('ukazat_hladanie')) && (
+          <div className="kl-mmenu__akcie">
+            {tlacidlo ? (
+              <Odkaz to={tlacidlo.odkaz} className="kl-mmenu__akcia" onClick={zavriet}>
+                <Ikona nazov="mail" velkost={22} />
+                {tlacidlo.text}
+              </Odkaz>
+            ) : (
+              <span />
             )}
-            {kontakt.email && (
-              <a href={`mailto:${kontakt.email}`}>
-                <Ikona nazov="mail" velkost={16} />
-                {kontakt.email}
-              </a>
+            {u.zapnute('ukazat_hladanie') && (
+              <button type="button" className={`kl-mmenu__akcia${hladanie ? ' is-aktivna' : ''}`} onClick={() => setHladanie((h) => !h)} aria-expanded={hladanie}>
+                <Ikona nazov="hladat" velkost={22} />
+                Hľadať
+              </button>
             )}
           </div>
         )}
+        {hladanie && <HladanieMenu zavriet={zavriet} />}
+
+        <ul className="kl-mmenu__zoznam">
+          {polozky.map((p) => {
+            const deti = (p.deti ?? []).filter((d) => d.typ !== 'clanky');
+            const clankove = (p.deti ?? []).filter((d) => d.typ === 'clanky');
+            const maPodmenu = deti.length > 0 || clankove.length > 0;
+            const jeRozbalene = rozbalene === p.id;
+            const aktivna = jeAktivny(p.odkaz, pathname);
+            return (
+              <li key={p.id} className={`kl-mmenu__polozka${jeRozbalene ? ' is-rozbalene' : ''}${aktivna ? ' is-aktivna' : ''}`}>
+                {maPodmenu ? (
+                  <>
+                    <button type="button" className="kl-mmenu__odkaz" aria-expanded={jeRozbalene} onClick={() => setRozbalene(jeRozbalene ? null : p.id)}>
+                      <span>{p.nazov}</span>
+                      <span className="kl-mmenu__trojuholnik" aria-hidden="true" />
+                    </button>
+                    {jeRozbalene && (
+                      <div className="kl-mmenu__podmenu">
+                        {p.odkaz && (
+                          <OdkazMenu polozka={{ ...p, deti: [] }} onClick={zavriet} className={`kl-mmenu__pododkaz${aktivna ? ' is-aktivny' : ''}`}>
+                            {p.nazov}
+                          </OdkazMenu>
+                        )}
+                        {deti.map((d) =>
+                          d.deti?.length ? (
+                            <div key={d.id} className="kl-mmenu__skupina">
+                              <OdkazMenu polozka={{ ...d, deti: [] }} onClick={zavriet} className="kl-mmenu__kategoria" />
+                              {d.deti.map((v) => (
+                                <OdkazMenu key={v.id} polozka={v} onClick={zavriet} className={`kl-mmenu__pododkaz${jeAktivny(v.odkaz, pathname) ? ' is-aktivny' : ''}`} />
+                              ))}
+                            </div>
+                          ) : (
+                            <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className={`kl-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}`} />
+                          )
+                        )}
+                        {clankove.map((c) => (
+                          <ClankyMobil key={c.id} polozka={c} zavriet={zavriet} />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <OdkazMenu polozka={p} onClick={zavriet} className="kl-mmenu__odkaz">
+                    <span>{p.nazov}</span>
+                  </OdkazMenu>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
         {(siete.length > 0 || (jePrihlaseny() && u.zapnute('ukazat_admin'))) && (
-          <div className="kl-mmenu__riadok">
+          <div className="kl-mmenu__spodok">
             {siete.length > 0 && (
               <div className="kl-mmenu__siete">
                 {siete.map((s) => (
