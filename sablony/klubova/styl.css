@@ -1458,12 +1458,23 @@ td.kl-tabulka__body { font-family: var(--kl-nadpisy); font-weight: 800; }
   .kl-mriezka-4--hraci .kl-hrac__staty strong { font-size: 15px; }
   .kl-mriezka-4--hraci .kl-hrac__staty span { font-size: 10px; }
 
-  /* Profil hráča: fotka navrchu ako karta, meno pod ňou */
-  .kl-profil-hero { padding: 12px 16px 28px; border-radius: 0 0 28px 28px; }
-  .kl-profil-hero__mriezka { grid-template-columns: 1fr; gap: 20px; }
-  .kl-profil-hero__foto { order: -1; max-width: none; aspect-ratio: 4 / 5; max-height: 62svh; border-radius: 24px; }
-  .kl-profil-hero__text { padding-bottom: 0; }
-  .kl-profil-hero__meno { gap: 14px; margin-bottom: 10px; }
+  /* Profil hráča: fotka cez celú šírku ako na karte v tíme, meno cez spodok fotky */
+  .kl:not(.kl--uvod) .kl-obsah > .kl-profil:first-child { margin-top: calc(-1 * var(--kl-vyska-hlavicky)); }
+  .kl-profil-hero { position: relative; padding: 0; border-radius: 0 0 28px 28px; }
+  .kl-profil-hero__mriezka { display: grid; grid-template-columns: 1fr; grid-template-areas: 'hero'; gap: 0; padding: 0; max-width: none; }
+  .kl-profil-hero__foto, .kl-profil-hero__text { grid-area: hero; }
+  .kl-profil-hero__foto {
+    max-width: none; width: 100%; height: min(86svh, 680px); aspect-ratio: auto; border-radius: 0;
+    background: color-mix(in srgb, var(--kl-tmava), #ffffff 6%);
+  }
+  .kl-profil-hero__foto::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) calc(var(--kl-vyska-hlavicky) + 40px)),
+      linear-gradient(to top, var(--kl-tmava) 0%, color-mix(in srgb, var(--kl-tmava) 85%, transparent) 22%, rgba(0, 0, 0, 0) 55%);
+  }
+  .kl-profil-hero__text { position: relative; z-index: 1; align-self: end; padding: 0 20px 28px; }
+  .kl-profil-hero__meno { gap: 14px; margin-bottom: 8px; }
   .kl-profil-hero__cislo { font-size: 54px; }
   .kl-profil-hero__priezvisko { font-size: 34px; }
   .kl-profil-hero__pozicia { font-size: 15px; }
