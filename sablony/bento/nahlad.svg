@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" font-family="'Arial Narrow', Arial, sans-serif">
+  <defs>
+    <linearGradient id="foto" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b5a3c"/>
+      <stop offset="0.6" stop-color="#1f2a1c"/>
+      <stop offset="1" stop-color="#101210"/>
+    </linearGradient>
+    <linearGradient id="tien" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.35" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+    <clipPath id="hero"><rect x="14" y="58" width="370" height="232" rx="18"/></clipPath>
+  </defs>
+  <rect width="600" height="400" fill="#e6e7e1"/>
+
+  <!-- Hlavička: tri dlaždice -->
+  <rect x="14" y="12" width="118" height="36" rx="12" fill="#fff"/>
+  <circle cx="34" cy="30" r="11" fill="#101210"/>
+  <text x="34" y="34" font-size="10" font-weight="700" fill="#d4ff3a" text-anchor="middle">FK</text>
+  <text x="52" y="35" font-size="15" font-weight="800" fill="#101210">KLUB</text>
+  <rect x="140" y="12" width="300" height="36" rx="12" fill="#fff"/>
+  <rect x="152" y="21" width="48" height="18" rx="9" fill="#101210"/>
+  <rect x="210" y="27" width="40" height="6" rx="3" fill="#c9cbc3"/>
+  <rect x="262" y="27" width="40" height="6" rx="3" fill="#c9cbc3"/>
+  <rect x="314" y="27" width="40" height="6" rx="3" fill="#c9cbc3"/>
+  <rect x="448" y="12" width="138" height="36" rx="12" fill="#fff"/>
+  <circle cx="468" cy="30" r="10" fill="#ecede8"/>
+  <rect x="490" y="20" width="86" height="20" rx="10" fill="#d4ff3a"/>
+
+  <!-- Hero karta -->
+  <g clip-path="url(#hero)">
+    <rect x="14" y="58" width="370" height="232" fill="url(#foto)"/>
+    <circle cx="350" cy="300" r="110" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="2"/>
+    <rect x="14" y="58" width="370" height="232" fill="url(#tien)"/>
+  </g>
+  <rect x="30" y="74" width="66" height="16" rx="8" fill="#d4ff3a"/>
+  <text x="30" y="214" font-size="34" font-weight="800" fill="#fff">VÍŤAZSTVO</text>
+  <text x="30" y="246" font-size="34" font-weight="800" fill="#fff">V DERBY 3:1</text>
+  <rect x="30" y="262" width="120" height="6" rx="3" fill="#fff" fill-opacity="0.5"/>
+  <rect x="322" y="78" width="22" height="3" rx="1.5" fill="#d4ff3a"/>
+  <rect x="348" y="78" width="22" height="3" rx="1.5" fill="#fff" fill-opacity="0.3"/>
+  <!-- Otočná nálepka cez okraj -->
+  <g transform="rotate(-12 384 160)">
+    <circle cx="384" cy="160" r="34" fill="#d4ff3a"/>
+    <circle cx="384" cy="160" r="24" fill="none" stroke="#101210" stroke-width="5" stroke-dasharray="6 4"/>
+    <circle cx="384" cy="160" r="13" fill="#101210"/>
+  </g>
+
+  <!-- Zápas -->
+  <rect x="392" y="58" width="194" height="126" rx="18" fill="#101210"/>
+  <rect x="406" y="72" width="64" height="6" rx="3" fill="#d4ff3a"/>
+  <rect x="412" y="92" width="34" height="34" rx="9" fill="#2a2d29"/>
+  <text x="489" y="116" font-size="18" font-weight="800" fill="#d4ff3a" text-anchor="middle">VS</text>
+  <rect x="532" y="92" width="34" height="34" rx="9" fill="#ff4d1f"/>
+  <text x="406" y="164" font-size="30" font-weight="800" fill="#fff">15:30</text>
+  <rect x="500" y="148" width="72" height="20" rx="10" fill="#d4ff3a"/>
+  <!-- Výsledok a tabuľka -->
+  <rect x="392" y="192" width="93" height="98" rx="18" fill="#d4ff3a"/>
+  <text x="404" y="254" font-size="40" font-weight="800" fill="#101210">3:1</text>
+  <rect x="493" y="192" width="93" height="98" rx="18" fill="#fff"/>
+  <text x="504" y="258" font-size="48" font-weight="800" fill="#101210">2<tspan fill="#ff4d1f">.</tspan></text>
+
+  <!-- Bežiaci pás -->
+  <g transform="rotate(-1.4 300 306)">
+    <rect x="8" y="296" width="584" height="22" rx="11" fill="#101210"/>
+    <text x="26" y="312" font-size="12" font-weight="800" fill="#fff" letter-spacing="1">ĎALŠÍ ZÁPAS ✦ VÝSLEDOK 3:1 ✦ NOVÝ DRES</text>
+  </g>
+
+  <!-- Novinky -->
+  <rect x="14" y="328" width="150" height="60" rx="16" fill="#101210"/>
+  <rect x="172" y="328" width="216" height="60" rx="16" fill="#fff"/>
+  <rect x="172" y="328" width="96" height="60" rx="16" fill="#9aa48a"/>
+  <rect x="280" y="344" width="90" height="7" rx="3.5" fill="#101210"/>
+  <rect x="280" y="358" width="64" height="6" rx="3" fill="#c9cbc3"/>
+  <rect x="396" y="328" width="96" height="60" rx="16" fill="#fff"/>
+  <rect x="500" y="328" width="86" height="60" rx="16" fill="#d4ff3a"/>
+  <text x="512" y="364" font-size="16" font-weight="800" fill="#101210">VŠETKY →</text>
+</svg>
