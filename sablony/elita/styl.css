@@ -198,6 +198,11 @@
 }
 .el-pas__sipka:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
 .el-pas__sipka:disabled { opacity: 0.25; cursor: default; }
+.el-pas__zavriet {
+  flex-shrink: 0; width: 44px; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(255, 255, 255, 0.6); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease, color 0.2s ease;
+}
+.el-pas__zavriet:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
 .el-pas__zoznam { flex: 1; min-width: 0; display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
 .el-pas__zoznam::-webkit-scrollbar { display: none; }
 .el-pas__zapas {
@@ -471,6 +476,7 @@
   .el-pas__nadpis { min-width: 0; padding: 0 14px 0 16px; }
   .el-pas__nadpis small { display: none; }
   .el-pas__sipka { display: none; }
+  .el-pas__zavriet { width: 40px; }
   .el-pas__zapas { flex-basis: 178px; padding: 9px 12px 10px; }
   .el-hpanel { padding: 20px 0 24px; }
   .el-hpanel__pole { padding-left: 14px; }

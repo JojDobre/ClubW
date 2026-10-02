@@ -180,6 +180,16 @@ export const IkonaSiete: React.FC<{ kluc: string; velkost?: number }> = ({ kluc,
 
 // ===== Pás zápasov =====
 
+/** Návštevník si pás zápasov môže zavrieť - voľba ostane v prehliadači. */
+const KLUC_ZAVRETY_PAS = 'el:pas-zapasov-skryty';
+const citajZavretyPas = () => {
+  try {
+    return window.localStorage.getItem(KLUC_ZAVRETY_PAS) === '1';
+  } catch {
+    return false;
+  }
+};
+
 const PasZapasov: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
@@ -191,6 +201,8 @@ const PasZapasov: React.FC = () => {
   const buduce = useApi<Zapas[]>(id ? `/matches?tim_id=${id}&status=naplanovany&od_datumu=${dnes()}&limit=${pocet}` : null);
   const pas = useRef<HTMLDivElement>(null);
   const [kraje, setKraje] = useState({ zaciatok: true, koniec: false });
+  const moznoZavriet = u.zapnute('pas_zavriet');
+  const [zavrety, setZavrety] = useState(citajZavretyPas);
 
   const zapasy = useMemo(() => {
     const minule = [...(odohrane.data ?? [])].sort(podlaCasu);
@@ -220,7 +232,15 @@ const PasZapasov: React.FC = () => {
     aktualizujKraje();
   }, [prvyBuduci, zapasy.length, aktualizujKraje]);
 
-  if (zapasy.length === 0) return null;
+  if (zapasy.length === 0 || (moznoZavriet && zavrety)) return null;
+  const zavriet = () => {
+    setZavrety(true);
+    try {
+      window.localStorage.setItem(KLUC_ZAVRETY_PAS, '1');
+    } catch {
+      // Bez úložiska sa pás skryje len do obnovenia stránky
+    }
+  };
   const posun = (smer: number) => pas.current?.scrollBy({ left: smer * pas.current.clientWidth * 0.8, behavior: 'smooth' });
 
   return (
@@ -257,6 +277,11 @@ const PasZapasov: React.FC = () => {
         <button type="button" className="el-pas__sipka" onClick={() => posun(1)} disabled={kraje.koniec} aria-label="Ďalšie zápasy">
           <Ikona nazov="vpravo" velkost={14} />
         </button>
+        {moznoZavriet && (
+          <button type="button" className="el-pas__zavriet" onClick={zavriet} aria-label="Skryť pás zápasov" title="Skryť pás zápasov">
+            <Ikona nazov="zavriet" velkost={14} />
+          </button>
+        )}
       </div>
     </div>
   );

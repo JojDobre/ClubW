@@ -84,7 +84,15 @@
       "typ": "prepinac",
       "menovka": "Pás zápasov nad hlavičkou",
       "skupina": "Hlavička",
-      "napoveda": "Posledné výsledky a najbližšie zápasy A tímu na všetkých stránkach.",
+      "napoveda": "Posledné výsledky a najbližšie zápasy A tímu na všetkých stránkach. Vypnuté = pás sa neukáže nikomu.",
+      "predvolene": true
+    },
+    {
+      "kluc": "pas_zavriet",
+      "typ": "prepinac",
+      "menovka": "Návštevník môže pás zápasov zavrieť",
+      "skupina": "Hlavička",
+      "napoveda": "Tlačidlo × na konci pásu. Prehliadač si voľbu zapamätá.",
       "predvolene": true
     },
     {
