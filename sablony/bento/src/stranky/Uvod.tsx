@@ -55,14 +55,11 @@ const podlaCasu = (a: Zapas, b: Zapas) => a.datum_cas.localeCompare(b.datum_cas)
 const sutazZapasu = (z: Zapas) => [z.liga_nazov, z.kolo ? `${z.kolo}. kolo` : null].filter(Boolean).join(' · ');
 const pozadieUrl = (url: string | null) => (url ? `url("${url.replace(/"/g, '%22')}")` : undefined);
 
-/** Nadpis sekcie dosky: veľké slovo, poradové číslo a odkaz ako šípka. */
-const HlavaSekcie: React.FC<{ cislo: string; nadpis: string; odkaz?: string | null; id: string; children?: React.ReactNode }> = ({ cislo, nadpis, odkaz, id, children }) => {
+/** Nadpis sekcie: nadpis vľavo, „Zobraziť všetky" vpravo. */
+const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; id: string; children?: React.ReactNode }> = ({ nadpis, odkaz, id, children }) => {
   const u = useUpravy();
   return (
     <div className="db-u-hlava">
-      <span className="db-u-hlava__cislo" aria-hidden="true">
-        {cislo}
-      </span>
       <h2 id={id}>{nadpis}</h2>
       {children}
       {odkaz && (
@@ -79,30 +76,9 @@ const HlavaSekcie: React.FC<{ cislo: string; nadpis: string; odkaz?: string | nu
 
 const INTERVAL = 7000;
 
-/** Kruhová nálepka s bežiacim textom - pootočená cez roh hero karty. */
-const Nalepka: React.FC<{ text: string }> = ({ text }) => {
-  const opakovany = `${text} • ${text} • `;
-  return (
-    <span className="db-u-nalepka" aria-hidden="true">
-      <svg viewBox="0 0 200 200">
-        <defs>
-          <path id="db-nalepka-kruh" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0" />
-        </defs>
-        <text>
-          <textPath href="#db-nalepka-kruh">{opakovany.toUpperCase()}</textPath>
-        </text>
-      </svg>
-      <span className="db-u-nalepka__stred">
-        <Ikona nazov="sipka" velkost={26} />
-      </span>
-    </span>
-  );
-};
-
-const HeroKarta: React.FC<{ clanky: Clanok[]; stitok: string; nalepka: string; nahradnaFotka: string | null; nacitava: boolean }> = ({
+const HeroKarta: React.FC<{ clanky: Clanok[]; stitok: string; nahradnaFotka: string | null; nacitava: boolean }> = ({
   clanky,
   stitok,
-  nalepka,
   nahradnaFotka,
   nacitava,
 }) => {
@@ -124,7 +100,7 @@ const HeroKarta: React.FC<{ clanky: Clanok[]; stitok: string; nalepka: string; n
 
   return (
     <section
-      className={`db-u-hero db-objekt db-odhal${nacitava ? ' is-nacitava' : ''}`}
+      className={`db-u-hero db-odhal${nacitava ? ' is-nacitava' : ''}`}
       aria-roledescription={pocet > 1 ? 'slider' : undefined}
       aria-label={stitok}
       onMouseEnter={() => setPauza(true)}
@@ -142,7 +118,6 @@ const HeroKarta: React.FC<{ clanky: Clanok[]; stitok: string; nalepka: string; n
           const fotka = obrazokUrl(x?.obrazok) ?? obrazokUrl(nahradnaFotka);
           return <span key={x?.id ?? 'prazdna'} className={`db-u-hero__fotka${i === aktivny ? ' is-aktivna' : ''}`} style={{ backgroundImage: pozadieUrl(fotka) }} />;
         })}
-        <span className="db-u-hero__mriezka" />
       </div>
 
       <div className="db-u-hero__hore">
@@ -160,17 +135,14 @@ const HeroKarta: React.FC<{ clanky: Clanok[]; stitok: string; nalepka: string; n
               <span>{datum(c.publikovany_datum || c.vytvoreny)}</span>
               {c.excerpt && <p>{c.excerpt}</p>}
             </div>
+            <Link to={`/clanek/${c.slug}`} className="db-u-tl db-u-tl--volt db-u-hero__tl" tabIndex={-1}>
+              {u.text('text_citat_viac', 'Čítať viac')} <Ikona nazov="sipka" velkost={14} />
+            </Link>
           </>
         ) : (
           <h1 className="db-u-hero__nadpis">{nacitava ? ' ' : nastavenia.slogan || nastavenia.nazov}</h1>
         )}
       </div>
-
-      {c && (
-        <Link to={`/clanek/${c.slug}`} className="db-u-hero__citat" aria-label={`${u.text('text_citat_viac', 'Čítať viac')}: ${c.nazov}`} tabIndex={-1}>
-          <Nalepka text={nalepka || nastavenia.skratka || nastavenia.nazov} />
-        </Link>
-      )}
 
       {pocet > 1 && (
         <div className="db-u-hero__kroky" role="tablist" aria-label="Články">
@@ -357,18 +329,18 @@ const Pas: React.FC<{ polozky: string[] }> = ({ polozky }) => {
 
 // ===== Novinky =====
 
-const VZORY = ['velka', 'siroka', 'mala', 'textova', 'mala', 'mala'] as const;
+const VZORY = ['velka', 'mala', 'mala', 'mala', 'mala'] as const;
 
 const KartaNoviny: React.FC<{ clanok: Clanok; vzor: (typeof VZORY)[number]; index: number }> = ({ clanok: c, vzor, index }) => (
   <Link to={`/clanek/${c.slug}`} className={`db-u-novina db-u-novina--${vzor} db-objekt db-odhal`} style={{ '--db-i': index } as React.CSSProperties}>
-    {vzor !== 'textova' && <Obrazok src={c.obrazok} className="db-u-novina__obrazok" />}
+    <Obrazok src={c.obrazok} className="db-u-novina__obrazok" />
     <span className="db-u-novina__text">
       <span className="db-u-novina__meta">
         {c.kategoria && <b>{c.kategoria.nazov}</b>}
         <span>{datumKratky(c.publikovany_datum || c.vytvoreny)}</span>
       </span>
       <strong>{c.nazov}</strong>
-      {(vzor === 'siroka' || vzor === 'textova') && c.excerpt && <span className="db-u-novina__perex">{c.excerpt}</span>}
+      {vzor === 'velka' && c.excerpt && <span className="db-u-novina__perex">{c.excerpt}</span>}
     </span>
     <span className="db-u-novina__sipka" aria-hidden="true">
       <Ikona nazov="sipka" velkost={16} />
@@ -381,15 +353,11 @@ const Novinky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
   if (clanky.length === 0) return null;
   return (
     <section className="db-u-sekcia db-u-novinky" aria-labelledby="db-u-novinky">
-      <HlavaSekcie cislo="01" nadpis={u.text('clanky_nadpis', 'Novinky')} odkaz="/clanky" id="db-u-novinky" />
-      <div className={`db-u-novinky__mriezka db-u-novinky__mriezka--${Math.min(clanky.length, 6)}`}>
-        {clanky.slice(0, 6).map((c, i) => (
+      <HlavaSekcie nadpis={u.text('clanky_nadpis', 'Novinky')} odkaz="/clanky" id="db-u-novinky" />
+      <div className={`db-u-novinky__mriezka db-u-novinky__mriezka--${Math.min(clanky.length, 5)}`}>
+        {clanky.slice(0, 5).map((c, i) => (
           <KartaNoviny key={c.id} clanok={c} vzor={VZORY[i]} index={i} />
         ))}
-        <Link to="/clanky" className="db-dlazdica db-dlazdica--volt db-u-vsetky db-objekt db-odhal">
-          <span>{u.text('text_vsetky_spravy', 'Všetky správy')}</span>
-          <Ikona nazov="sipka" velkost={34} />
-        </Link>
       </div>
     </section>
   );
@@ -435,7 +403,7 @@ const ZapasoveCentrum: React.FC<{
   const vyrez = tabulka ? vyrezTabulky(tabulka.riadky, timId, 6) : [];
   return (
     <section className="db-u-sekcia db-u-centrum" aria-labelledby="db-u-centrum">
-      <HlavaSekcie cislo="02" nadpis={u.text('zapasy_nadpis', 'Zápasové centrum')} odkaz="/matches" id="db-u-centrum">
+      <HlavaSekcie nadpis={u.text('zapasy_nadpis', 'Zápasové centrum')} odkaz="/matches" id="db-u-centrum">
         {timy.length > 1 && (
           <div className="db-u-timy" role="tablist" aria-label="Tím">
             {timy.map((t) => (
@@ -544,9 +512,6 @@ const Hraci: React.FC<{ tim: Tim; nadpis: string }> = ({ tim, nadpis }) => {
     <section className="db-u-sekcia db-u-hraci" aria-labelledby="db-u-hraci">
       <div className="db-u-hraci__mriezka">
         <div className="db-dlazdica db-dlazdica--tmava db-u-kader db-odhal">
-          <span className="db-u-hlava__cislo" aria-hidden="true">
-            03
-          </span>
           <h2 id="db-u-hraci">{nadpis}</h2>
           <div className="db-u-kader__cisla">
             <span>
@@ -594,7 +559,7 @@ const Videa: React.FC<{ videa: Video[] }> = ({ videa }) => {
   if (videa.length === 0) return null;
   return (
     <section className="db-u-sekcia db-u-videa" aria-labelledby="db-u-videa">
-      <HlavaSekcie cislo="04" nadpis={u.text('videa_nadpis', 'Videá')} odkaz="/videa" id="db-u-videa" />
+      <HlavaSekcie nadpis={u.text('videa_nadpis', 'Videá')} odkaz="/videa" id="db-u-videa" />
       <div className={`db-u-videa__mriezka db-u-videa__mriezka--${Math.min(videa.length, 3)}`}>
         {videa.slice(0, 3).map((v, i) => {
           const dlzka = dlzkaVidea(v.dlzka);
@@ -663,9 +628,6 @@ const Fanshop: React.FC<{ s: Nastavenia }> = ({ s }) => {
     <section className="db-u-sekcia db-u-fanshop" aria-labelledby="db-u-fanshop">
       <div className="db-u-fanshop__mriezka">
         <div className="db-dlazdica db-dlazdica--druha db-u-fanshop__uvod db-odhal">
-          <span className="db-u-hlava__cislo" aria-hidden="true">
-            05
-          </span>
           <h2 id="db-u-fanshop">{u.text('fanshop_nadpis', 'Fanshop')}</h2>
           <p>{u.text('fanshop_popis', 'Dresy, šály a doplnky. Podpor klub aj mimo štadióna.')}</p>
           {obchod && (
@@ -791,7 +753,7 @@ const OdkazKlubu: React.FC<{ s: Nastavenia }> = ({ s }) => {
   if (karty.length === 0) return null;
   return (
     <section className="db-u-sekcia db-u-klub" aria-labelledby="db-u-klub">
-      <HlavaSekcie cislo="06" nadpis={u.text('odkazy_nadpis', 'Klub')} id="db-u-klub" />
+      <HlavaSekcie nadpis={u.text('odkazy_nadpis', 'Klub')} id="db-u-klub" />
       <div className={`db-u-klub__mriezka db-u-klub__mriezka--${karty.length}`}>
         {karty.map((k) => {
           const obsah = (
@@ -909,7 +871,7 @@ const Uvod: React.FC = () => {
   const hero = (zvyraznene.data?.length ? zvyraznene.data : clanky.data ?? []).slice(0, pocetSlidov);
   const nacitavaHero = zvyraznene.nacitava || (clanky.nacitava && !zvyraznene.data?.length);
   const idHero = new Set(hero.map((c) => c.id));
-  const novinky = (clanky.data ?? []).filter((c) => !idHero.has(c.id)).slice(0, obmedz(s.pocet_clankov, 3, 6, 6));
+  const novinky = (clanky.data ?? []).filter((c) => !idHero.has(c.id)).slice(0, obmedz(s.pocet_clankov, 3, 5, 5));
   const vstupenky = String(s.vstupenky_odkaz || '').trim() || null;
 
   const pas = useMemo(() => {
@@ -934,7 +896,6 @@ const Uvod: React.FC = () => {
         <HeroKarta
           clanky={hero}
           stitok={String(s.uvod_stitok || '').trim() || 'Top story'}
-          nalepka={String(s.uvod_nalepka || '').trim()}
           nahradnaFotka={(s.uvod_fotka as string | null) || null}
           nacitava={nacitavaHero}
         />

@@ -177,15 +177,6 @@
   transition: opacity 0.3s ease;
 }
 .db-hlavicka.is-posunuta::before, .db-hlavicka.is-otvorena::before { opacity: 1; }
-.db-hlavicka__rad {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--db-medzera);
-  max-width: var(--db-sirka); margin: 0 auto;
-}
-.db-hlavicka .db-dlazdica {
-  display: flex; align-items: center; min-height: 70px; padding: 0 12px;
-  transition: box-shadow 0.3s ease, border-radius 0.3s ease;
-}
-.db-hlavicka.is-posunuta .db-dlazdica { box-shadow: var(--db-tien-maly); }
 
 .db-hlavicka__logo { gap: 12px; padding-right: 22px !important; }
 .db-logo { display: block; flex-shrink: 0; width: var(--db-logo); height: var(--db-logo); transition: transform 0.4s var(--db-pruzina); }
@@ -342,37 +333,7 @@
   flex: 1; min-width: 0; padding: 14px 0; border: 0 !important; outline: none !important; box-shadow: none !important; background: none;
   color: var(--db-tmava); font-family: var(--db-pismo); font-size: 16px;
 }
-.db-mmenu__mriezka { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--db-medzera); }
-.db-mmenu__polozka { min-width: 0; animation: db-vynor 0.45s var(--db-krivka) both; animation-delay: calc(var(--db-i, 0) * 35ms + 60ms); }
 /* Asymetria: každá tretia položka cez celú šírku, rozbalená vždy */
-.db-mmenu__polozka:nth-child(3n + 1), .db-mmenu__polozka.is-rozbalene { grid-column: 1 / -1; }
-.db-mmenu__dlazdica {
-  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; width: 100%; min-height: 96px;
-  padding: 14px 16px; border: 0; border-radius: var(--db-r-m); cursor: pointer; text-align: left; text-decoration: none;
-  background: var(--db-plocha); color: var(--db-tmava); -webkit-tap-highlight-color: transparent;
-  transition: transform 0.25s var(--db-pruzina), background-color 0.2s ease;
-}
-.db-mmenu__dlazdica:active { transform: scale(0.97); }
-.db-mmenu__polozka:nth-child(3n + 1) .db-mmenu__dlazdica { min-height: 84px; }
-.db-mmenu__polozka:nth-child(6n + 4) .db-mmenu__dlazdica { background: var(--db-tmava); color: #ffffff; }
-.db-mmenu__polozka.is-aktivna .db-mmenu__dlazdica, .db-mmenu__polozka.is-rozbalene .db-mmenu__dlazdica { background: var(--db-volt); color: var(--db-tmava); }
-.db-mmenu__cislo { font-family: var(--db-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.1em; opacity: 0.5; }
-.db-mmenu__nazov {
-  padding-right: 28px; font-family: var(--db-display); font-weight: 800; font-size: 26px; line-height: 0.92; text-transform: uppercase; overflow-wrap: anywhere;
-}
-.db-mmenu__plus, .db-mmenu__sipka { position: absolute; top: 14px; right: 14px; }
-.db-mmenu__plus { width: 22px; height: 22px; }
-.db-mmenu__plus::before, .db-mmenu__plus::after {
-  content: ''; position: absolute; left: 4px; right: 4px; top: 10px; height: 2px; border-radius: 2px; background: currentColor; transition: transform 0.3s var(--db-krivka);
-}
-.db-mmenu__plus::after { transform: rotate(90deg); }
-.db-mmenu__polozka.is-rozbalene .db-mmenu__plus::after { transform: rotate(0deg); }
-.db-mmenu__sipka { transform: rotate(-45deg); }
-
-.db-mmenu__podmenu {
-  display: flex; flex-direction: column; margin-top: 6px; padding: 8px; border-radius: var(--db-r-m); background: var(--db-plocha);
-  animation: db-vynor 0.35s var(--db-krivka);
-}
 .db-mmenu__pododkaz {
   display: flex; align-items: center; justify-content: space-between; padding: 12px 12px; border-radius: 12px; color: var(--db-tmava); text-decoration: none;
   font-family: var(--db-nadpisy); font-weight: 600; font-size: 16px; line-height: 1.25;
@@ -430,54 +391,6 @@
 /* ===================================================================
    Pätička - zhluk dlaždíc
    =================================================================== */
-
-.db-paticka { padding: calc(var(--db-medzera) * 3) 0 calc(var(--db-okraj) + var(--db-zalozky)); }
-.db-paticka__doska { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--db-medzera); }
-.db-paticka__doska > .db-dlazdica { padding: var(--db-vnutro); min-width: 0; }
-.db-paticka__klub {
-  grid-column: span 6; grid-row: span 2; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 340px;
-}
-.db-paticka__doska:not(:has(.db-paticka__siete)) .db-paticka__klub { grid-row: span 1; }
-.db-paticka__logo .db-logo { width: 64px; height: 64px; }
-.db-paticka__obri {
-  display: block; margin: 0 0 -0.12em; color: var(--db-tmava);
-  font-family: var(--db-display); font-weight: 900; font-size: clamp(64px, 9.5vw, 168px); line-height: 0.8; letter-spacing: -0.01em; text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
-.db-paticka__klub p { max-width: 460px; color: var(--db-tmava-65); font-size: 15px; line-height: 1.6; }
-.db-paticka__menu { grid-column: span 3; display: flex; flex-direction: column; gap: 14px; }
-.db-paticka__menu > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
-.db-paticka__odkaz {
-  padding: 5px 0; color: var(--db-tmava); text-decoration: none; font-family: var(--db-nadpisy); font-weight: 600; font-size: 15px;
-  background: linear-gradient(var(--db-volt), var(--db-volt)) 0 88% / 0 6px no-repeat; transition: background-size 0.3s var(--db-krivka);
-}
-.db-paticka__odkaz:hover { background-size: 100% 6px; }
-.db-paticka__kontakt { grid-column: span 3; display: flex; flex-direction: column; gap: 10px; }
-.db-paticka__kontakt .db-panel__stitok { color: var(--db-volt); margin-bottom: 4px; }
-.db-paticka__kontakt a, .db-paticka__adresa {
-  color: #ffffff; text-decoration: none; font-family: var(--db-nadpisy); font-weight: 600; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere;
-}
-.db-paticka__adresa { color: rgba(255, 255, 255, 0.65); font-weight: 500; white-space: pre-line; }
-.db-paticka__kontakt a:hover { color: var(--db-volt); }
-.db-paticka__siete { grid-column: span 6; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.db-paticka__siete .db-panel__stitok {
-  color: var(--db-tmava); font-family: var(--db-display); font-weight: 800; font-size: clamp(34px, 3.4vw, 52px); letter-spacing: 0; line-height: 0.9;
-}
-.db-paticka__siete > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.db-paticka__siete a {
-  width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;
-  background: var(--db-tmava); color: var(--db-volt); font-family: var(--db-nadpisy); font-weight: 700; font-size: 14px;
-}
-.db-paticka__spodok {
-  grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px;
-  padding-top: 18px !important; padding-bottom: 18px !important; color: var(--db-tmava-55); font-size: 13px;
-}
-.db-paticka__pravne { display: flex; flex-wrap: wrap; gap: 6px; }
-.db-paticka__male {
-  padding: 8px 14px; border: 0; border-radius: 999px; background: var(--db-tmava-6); color: var(--db-tmava); cursor: pointer; text-decoration: none;
-  font-family: var(--db-nadpisy); font-weight: 600; font-size: 13px;
-}
-.db-paticka__male:hover { background: var(--db-tmava); color: var(--db-volt); }
 
 /* ===================================================================
    Spoločné prvky stránok (karty, tabuľky, formuláre, obchod, bloky).
@@ -2307,7 +2220,6 @@ a.db-partner-karta:hover { border-color: var(--db-druha); transform: translateY(
 .db-vysledok__sipka { flex-shrink: 0; color: var(--db-tmava-40); transition: color 0.2s ease; }
 .db-vysledok:hover .db-vysledok__sipka { color: var(--db-druha); }
 
-
 @media (max-width: 900px) {
   .db-bloky .blok__stlpce, .db-bloky .blok__stlpce--3, .db-bloky .blok__kontakt-mriezka.s-mapou, .db-bloky .blok__stadion.s-fotkou, .db-registracia__mriezka { grid-template-columns: 1fr; }
   .db-registracia__vyhody { position: static; }
@@ -2412,17 +2324,6 @@ a.db-partner-karta:hover { border-color: var(--db-druha); transform: translateY(
   padding: clamp(28px, 4vw, 60px) var(--db-vnutro) clamp(32px, 4.4vw, 64px);
   border-radius: var(--db-r); background: var(--db-tmava); color: #ffffff;
 }
-.db-hlava::before {
-  content: ''; position: absolute; z-index: -1; top: clamp(-200px, -14vw, -90px); right: clamp(-160px, -9vw, -60px);
-  width: clamp(200px, 30vw, 460px); aspect-ratio: 1; border-radius: 50%; background: var(--db-volt);
-  animation: db-kruh 0.9s var(--db-krivka) both;
-}
-.db-hlava::after {
-  content: ''; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 46%; pointer-events: none; opacity: 0.5;
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 64px);
-  mask-image: linear-gradient(to top, #000, transparent); -webkit-mask-image: linear-gradient(to top, #000, transparent);
-}
-@keyframes db-kruh { from { transform: scale(0.4) translate(30%, -30%); opacity: 0; } to { transform: none; opacity: 1; } }
 .db-hlava .db-kontajner { max-width: none; }
 .db-hlava__stitok {
   display: inline-flex; align-items: center; height: 30px; padding: 0 13px; margin-bottom: 18px; border-radius: 999px;
@@ -2564,7 +2465,6 @@ a.db-partner-karta:hover, .db-riadok-karta:hover, .db-vysledok:hover { border-co
 .db-skore__vysledok i { color: var(--db-volt); }
 .db-skore__cas { background: var(--db-volt); color: var(--db-tmava); }
 .db-skore__stav--prebieha { background: var(--db-druha); }
-.db-hlava--zapas::before { top: auto; bottom: clamp(-260px, -18vw, -120px); right: auto; left: 50%; margin-left: clamp(-230px, -15vw, -100px); background: none; border: 2px solid var(--db-volt); opacity: 0.35; }
 .db-hlava--zapas h1 { max-width: none; }
 .db-priebeh__minuta, .db-zostavy__cislo { font-family: var(--db-display); font-weight: 900; font-size: 20px; }
 .db-zapas-detail__mriezka { gap: var(--db-medzera) calc(var(--db-medzera) * 3); }
@@ -2573,10 +2473,6 @@ a.db-partner-karta:hover, .db-riadok-karta:hover, .db-vysledok:hover { border-co
 .db-profil-hero {
   position: relative; isolation: isolate; width: min(100% - 2 * var(--db-okraj), var(--db-sirka)); margin: var(--db-medzera) auto;
   padding: clamp(24px, 3vw, 40px) var(--db-vnutro) 0; border-radius: var(--db-r);
-}
-.db-profil-hero::before {
-  content: ''; position: absolute; z-index: -1; right: clamp(40px, 12vw, 220px); bottom: -18%; width: clamp(240px, 34vw, 520px); aspect-ratio: 1; border-radius: 50%;
-  background: var(--db-volt);
 }
 .db-profil-hero__mriezka { max-width: none; }
 .db-profil-hero__cislo { font-family: var(--db-display); font-weight: 900; font-size: clamp(90px, 12vw, 200px); line-height: 0.78; color: transparent; -webkit-text-stroke: 2px var(--db-volt); }
@@ -2605,11 +2501,7 @@ a.db-partner-karta:hover, .db-riadok-karta:hover, .db-vysledok:hover { border-co
 /* Štatistiky */
 .db-cisla { gap: var(--db-medzera); }
 .db-cislo { align-items: flex-start; text-align: left; padding: 26px; }
-.db-cislo:nth-child(3n + 1) { background: var(--db-tmava); }
-.db-cislo:nth-child(3n + 1) span { color: rgba(255, 255, 255, 0.7); }
-.db-cislo:nth-child(3n + 2) { background: var(--db-volt); }
 .db-cislo strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(56px, 6vw, 96px); line-height: 0.82; color: var(--db-tmava); }
-.db-cislo:nth-child(3n + 1) strong { color: var(--db-volt); }
 .db-bilancia {
   width: min(100% - 2 * var(--db-okraj), var(--db-sirka)); margin: 0 auto; border-radius: var(--db-r); background: var(--db-druha);
 }
@@ -2677,12 +2569,8 @@ a.db-partner-karta:hover, .db-riadok-karta:hover, .db-vysledok:hover { border-co
 .db-bloky .blok__karta { border: 0; box-shadow: none; background: var(--db-platno); border-radius: var(--db-r-m); }
 .db-bloky .blok--pozadie-sive .blok__karta { background: var(--db-plocha); }
 .db-bloky .blok__cisla .blok__polozka { border-radius: var(--db-r-m); }
-.db-bloky .blok__cisla .blok__polozka:nth-child(even) { background: var(--db-volt); }
-.db-bloky .blok__cisla .blok__polozka:nth-child(even) dt { color: var(--db-tmava); }
-.db-bloky .blok__cisla .blok__polozka:nth-child(even) dd { color: var(--db-tmava-65); }
 .db-bloky .blok__cisla dt { font-family: var(--db-display); font-weight: 900; font-size: clamp(54px, 5vw, 84px); }
 .db-bloky .blok__cisla dt::after { background: var(--db-volt); }
-.db-bloky .blok__cisla .blok__polozka:nth-child(even) dt::after { background: var(--db-tmava); }
 .db-bloky .blok__tlacidlo { background: var(--db-volt); color: var(--db-tmava); }
 .db-bloky .blok__tlacidlo:hover { background: var(--db-tmava); color: var(--db-volt); }
 .db-bloky .blok__vyzva { border-radius: var(--db-r-m); background: var(--db-volt); color: var(--db-tmava); }
@@ -2721,23 +2609,9 @@ a.db-partner-karta:hover, .db-riadok-karta:hover, .db-vysledok:hover { border-co
    Objekty: náklon, zdvih a vynáranie
    =================================================================== */
 
-.db-objekt {
-  transform: perspective(1100px) rotateX(var(--db-rx, 0deg)) rotateY(var(--db-ry, 0deg)) translateY(var(--db-ty, 0px)) scale(var(--db-sc, 1));
-  transition: transform 0.45s var(--db-krivka), box-shadow 0.45s var(--db-krivka);
-  will-change: transform;
-}
-@media (hover: hover) and (pointer: fine) {
-  .db-objekt:hover { --db-ty: -5px; box-shadow: var(--db-tien); z-index: 2; }
-}
-.db-objekt:active { --db-sc: 0.985; }
 /* Náklon sa nastavuje počas pohybu myši - bez oneskorenia */
-.db-objekt[style*='--db-rx'] { transition: transform 0.12s linear, box-shadow 0.45s var(--db-krivka); }
 
 .db-odhal { transition: opacity 0.6s ease, translate 0.8s var(--db-krivka), scale 0.8s var(--db-krivka); }
-.db-objekt.db-odhal {
-  transition: transform 0.45s var(--db-krivka), box-shadow 0.45s var(--db-krivka), opacity 0.6s ease, translate 0.8s var(--db-krivka), scale 0.8s var(--db-krivka);
-}
-.db-objekt.db-odhal[style*='--db-rx'] { transition: transform 0.12s linear, box-shadow 0.45s var(--db-krivka), opacity 0.6s ease, translate 0.8s var(--db-krivka), scale 0.8s var(--db-krivka); }
 html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale: 0.96; }
 .db-odhal.is-videny { transition-delay: 0s, 0s, calc(var(--db-i, 0) * 60ms), calc(var(--db-i, 0) * 60ms), calc(var(--db-i, 0) * 60ms); }
 .db-odhal:not(.db-objekt).is-videny { transition-delay: calc(var(--db-i, 0) * 60ms); }
@@ -2777,27 +2651,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-tl--tmave:hover { background: var(--db-volt); color: var(--db-tmava); }
 
 /* Hlavička sekcie - samostatná dlaždica */
-.db-u-hlava {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; min-height: 96px; padding: 16px var(--db-vnutro);
-  border-radius: var(--db-r); background: var(--db-plocha);
-}
-.db-u-hlava__cislo {
-  font-family: var(--db-display); font-weight: 800; font-size: clamp(30px, 2.6vw, 42px); line-height: 1;
-  -webkit-text-stroke: 1.5px currentColor; -webkit-text-fill-color: transparent;
-}
-.db-u-hlava h2 {
-  margin-right: auto; font-family: var(--db-display); font-weight: 900; font-size: clamp(44px, 5.4vw, 88px); line-height: 0.84; text-transform: uppercase;
-}
-.db-u-hlava__odkaz {
-  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 999px; text-decoration: none; white-space: nowrap;
-  background: var(--db-tmava); color: var(--db-volt); font-family: var(--db-nadpisy); font-weight: 700; font-size: 14px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.db-u-hlava__odkaz:hover { background: var(--db-volt); color: var(--db-tmava); }
-.db-u-centrum .db-u-hlava { background: var(--db-tmava); color: #ffffff; }
-.db-u-centrum .db-u-hlava__odkaz { background: var(--db-volt); color: var(--db-tmava); }
-.db-u-centrum .db-u-hlava__odkaz:hover { background: #ffffff; }
-.db-u-videa .db-u-hlava { background: var(--db-volt); }
 
 /* Úvodná doska: hero karta + dlaždice zápasu */
 .db-u-start { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto auto; gap: var(--db-medzera); }
@@ -2829,12 +2682,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 }
 .db-u-hero__fotka.is-aktivna { opacity: 1; transform: scale(1); }
 /* Čiary ihriska: stredový kruh vpravo dole */
-.db-u-hero__mriezka {
-  position: absolute; z-index: 1; right: -12%; bottom: -34%; width: 58%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
-  border: 2px solid rgba(255, 255, 255, 0.16);
-}
-.db-u-hero__mriezka::before { content: ''; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
-.db-u-hero__mriezka::after { content: ''; position: absolute; left: -200%; right: 50%; top: 50%; height: 2px; background: rgba(255, 255, 255, 0.12); }
 .db-u-hero__hore { display: flex; flex-wrap: wrap; gap: 8px; padding-right: 220px; }
 .db-u-hero__nadpis {
   max-width: 16ch; font-family: var(--db-display); font-weight: 900; font-size: clamp(46px, 6vw, 108px); line-height: 0.86; letter-spacing: -0.005em; text-transform: uppercase;
@@ -2868,19 +2715,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 @keyframes db-krok { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* Otočná nálepka - presahuje cez okraj karty na susednú dlaždicu */
-.db-u-hero__citat { position: absolute; z-index: 4; right: -46px; top: 42%; text-decoration: none; }
-.db-u-nalepka {
-  position: relative; display: block; width: 140px; height: 140px; border-radius: 50%; background: var(--db-volt); color: var(--db-tmava);
-  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.55); rotate: -12deg; transition: rotate 0.6s var(--db-pruzina), scale 0.4s var(--db-pruzina);
-}
-.db-u-hero__citat:hover .db-u-nalepka { rotate: 8deg; scale: 1.08; }
-.db-u-nalepka svg { position: absolute; inset: 0; width: 100%; height: 100%; animation: db-tocenie 16s linear infinite; }
-.db-u-nalepka text { fill: currentColor; font-family: var(--db-display); font-weight: 800; font-size: 19px; letter-spacing: 3px; }
-.db-u-nalepka__stred {
-  position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; background: var(--db-tmava); color: var(--db-volt);
-}
-.db-u-nalepka__stred svg { position: static; width: auto; height: auto; animation: none; rotate: -45deg; }
 
 /* Dlaždica zápasu */
 .db-u-zapas { display: flex; flex-direction: column; gap: 18px; padding: 22px; min-width: 0; }
@@ -2936,18 +2770,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-forma .db-u-forma--P { background: var(--db-druha); }
 
 /* Bežiaci pás - mierne pootočený, prekrýva okraje susedov */
-.db-u-pas {
-  position: relative; z-index: 4; overflow: hidden; margin: 6px -6px; border-radius: 999px; background: var(--db-tmava); color: #ffffff;
-  rotate: -1.4deg; box-shadow: 0 16px 30px -20px rgba(0, 0, 0, 0.6);
-}
-.db-u-pas__stopa { display: flex; width: max-content; animation: db-pas 48s linear infinite; }
-.db-u-pas:hover .db-u-pas__stopa { animation-play-state: paused; }
-.db-u-pas__rad { display: flex; flex-shrink: 0; }
-.db-u-pas__rad > span {
-  display: inline-flex; align-items: center; gap: 22px; padding: 16px 0 16px 22px; white-space: nowrap;
-  font-family: var(--db-display); font-weight: 800; font-size: clamp(20px, 2vw, 30px); line-height: 1; text-transform: uppercase;
-}
-.db-u-pas__rad i { font-style: normal; color: var(--db-volt); font-size: 0.7em; }
 @keyframes db-pas { to { transform: translateX(-50%); } }
 
 /* Novinky - asymetrická mriežka */
@@ -2973,44 +2795,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   rotate: -45deg; scale: 0.6; opacity: 0; transition: rotate 0.4s var(--db-pruzina), scale 0.4s var(--db-pruzina), opacity 0.25s ease;
 }
 .db-u-novina:hover .db-u-novina__sipka, .db-u-novina:focus-visible .db-u-novina__sipka { rotate: 0deg; scale: 1; opacity: 1; }
-
-.db-u-novina--velka { grid-column: span 5; grid-row: span 2; justify-content: flex-end; min-height: 560px; background: var(--db-tmava); color: #ffffff; }
-.db-u-novina--velka .db-u-novina__obrazok { position: absolute; inset: 0; z-index: -1; aspect-ratio: auto; height: 100%; }
-.db-u-novina--velka .db-u-novina__obrazok::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.1) 60%); }
-.db-u-novina--velka .db-u-novina__text { padding: var(--db-vnutro); }
-.db-u-novina--velka strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(36px, 3.4vw, 60px); line-height: 0.88; text-transform: uppercase; -webkit-line-clamp: 4; }
-.db-u-novina--velka .db-u-novina__meta { color: rgba(255, 255, 255, 0.7); }
-.db-u-novina--velka .db-u-novina__meta b { color: var(--db-volt); }
-.db-u-novina--velka .db-u-novina__sipka { opacity: 1; scale: 1; }
-.db-u-novina--siroka { grid-column: span 7; flex-direction: row; }
-.db-u-novina--siroka .db-u-novina__obrazok { width: 50%; aspect-ratio: auto; flex-shrink: 0; min-height: 270px; }
-.db-u-novina--siroka .db-u-novina__text { justify-content: center; padding: 24px; }
-.db-u-novina--siroka strong { font-size: clamp(22px, 1.8vw, 28px); }
-.db-u-novina--mala { grid-column: span 4; }
-.db-u-novina--mala:nth-child(3) { grid-column: span 3; }
-.db-u-novina--textova { grid-column: span 4; justify-content: flex-end; min-height: 270px; background: var(--db-tmava); color: #ffffff; }
-.db-u-novina--textova::before {
-  content: ''; position: absolute; z-index: -1; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%;
-  border: 26px solid var(--db-druha); opacity: 0.9;
-}
-.db-u-novina--textova .db-u-novina__text { padding: 24px; }
-.db-u-novina--textova strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(30px, 2.4vw, 42px); line-height: 0.9; text-transform: uppercase; -webkit-line-clamp: 4; }
-.db-u-novina--textova .db-u-novina__meta { color: rgba(255, 255, 255, 0.6); }
-.db-u-novina--textova .db-u-novina__meta b { color: var(--db-volt); }
-.db-u-novina--textova .db-u-novina__perex { color: rgba(255, 255, 255, 0.7); -webkit-line-clamp: 2; }
-.db-u-vsetky {
-  grid-column: span 4; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; min-height: 150px; padding: 24px; text-decoration: none;
-}
-.db-u-vsetky span { font-family: var(--db-display); font-weight: 900; font-size: clamp(38px, 3.6vw, 62px); line-height: 0.84; text-transform: uppercase; }
-.db-u-vsetky svg { align-self: flex-end; rotate: -45deg; transition: rotate 0.4s var(--db-pruzina); }
-.db-u-vsetky:hover svg { rotate: 0deg; }
-.db-u-novinky__mriezka--1 .db-u-novina--velka { grid-column: span 8; grid-row: span 1; }
-.db-u-novinky__mriezka--2 .db-u-vsetky { grid-column: span 7; }
-.db-u-novinky__mriezka--4 .db-u-vsetky { grid-column: span 12; min-height: 0; flex-direction: row; align-items: center; }
-.db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) { grid-column: span 8; flex-direction: row; }
-.db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) .db-u-novina__obrazok { width: 46%; aspect-ratio: auto; flex-shrink: 0; }
-.db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) .db-u-novina__text { justify-content: center; padding: 24px; }
-.db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) strong { font-size: clamp(22px, 1.8vw, 28px); }
 
 /* Zápasové centrum */
 .db-u-timy { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -3075,13 +2859,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 
 /* Hráči - zberateľské kartičky */
 .db-u-hraci__mriezka { display: grid; grid-template-columns: minmax(280px, 3fr) minmax(0, 9fr); gap: var(--db-medzera); align-items: stretch; }
-.db-u-kader { display: flex; flex-direction: column; gap: 22px; padding: var(--db-vnutro); min-width: 0; }
-.db-u-kader h2 { font-family: var(--db-display); font-weight: 900; font-size: clamp(46px, 4.6vw, 80px); line-height: 0.84; text-transform: uppercase; overflow-wrap: anywhere; }
-.db-u-kader__cisla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: auto; }
-.db-u-kader__cisla span { display: flex; flex-direction: column; gap: 4px; }
-.db-u-kader__cisla strong { font-family: var(--db-display); font-weight: 900; font-size: 64px; line-height: 0.82; color: var(--db-volt); }
-.db-u-kader__cisla small { color: rgba(255, 255, 255, 0.6); font-size: 12.5px; line-height: 1.3; }
-.db-u-kader__akcie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .db-u-sipky { display: flex; gap: 6px; }
 .db-u-sipky button {
   width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -3096,11 +2873,8 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-karticka {
   position: relative; isolation: isolate; flex: 0 0 clamp(230px, 20vw, 290px); aspect-ratio: 3 / 4.25; overflow: hidden; scroll-snap-align: start;
   border-radius: var(--db-r); background: var(--db-tmava-panel); color: #ffffff; text-decoration: none;
-  rotate: -1.6deg; transition: transform 0.45s var(--db-krivka), box-shadow 0.45s var(--db-krivka), rotate 0.5s var(--db-pruzina);
+  transition: transform 0.35s var(--db-krivka), box-shadow 0.35s var(--db-krivka);
 }
-.db-u-karticka:nth-child(even) { rotate: 1.4deg; translate: 0 10px; }
-.db-u-karticka:nth-child(3n) { rotate: -0.6deg; }
-.db-u-karticka:hover { rotate: 0deg; }
 .db-u-karticka img { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
 .db-u-karticka .db-hrac__silueta { z-index: -1; }
 .db-u-karticka::after {
@@ -3108,12 +2882,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   background: linear-gradient(to top, var(--db-tmava) 0%, color-mix(in srgb, var(--db-tmava) 70%, transparent) 28%, rgba(0, 0, 0, 0) 55%);
 }
 /* Lesk zberateľskej kartičky */
-.db-u-karticka::before {
-  content: ''; position: absolute; inset: -20%; z-index: 3; pointer-events: none; opacity: 0;
-  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.28) 48%, transparent 58%);
-  transform: translateX(-60%); transition: transform 0.9s var(--db-krivka), opacity 0.3s ease;
-}
-.db-u-karticka:hover::before { opacity: 1; transform: translateX(60%); }
 .db-u-karticka__cislo {
   position: absolute; top: 12px; left: 16px; z-index: 1; font-family: var(--db-display); font-weight: 900; font-size: 110px; line-height: 0.8;
   color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, 0.7);
@@ -3156,23 +2924,10 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-video--velke .db-u-video__text strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(34px, 3.4vw, 58px); line-height: 0.88; text-transform: uppercase; -webkit-line-clamp: 3; }
 
 /* Fanshop */
-.db-u-fanshop__mriezka { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: repeat(2, clamp(230px, 20vw, 290px)); gap: var(--db-medzera); }
-.db-u-fanshop__uvod { grid-column: 1 / 5; grid-row: 1 / 3; display: flex; flex-direction: column; gap: 18px; padding: var(--db-vnutro); overflow: hidden; }
-.db-u-fanshop__uvod::after {
-  content: ''; position: absolute; right: -70px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%; border: 34px solid rgba(255, 255, 255, 0.18); pointer-events: none;
-}
-.db-u-fanshop__uvod h2 { font-family: var(--db-display); font-weight: 900; font-size: clamp(54px, 5.6vw, 96px); line-height: 0.82; text-transform: uppercase; }
-.db-u-fanshop__uvod p { max-width: 34ch; color: rgba(255, 255, 255, 0.88); font-size: 16px; line-height: 1.5; }
-.db-u-fanshop__uvod .db-u-tl { align-self: flex-start; margin-top: auto; position: relative; z-index: 1; }
 .db-u-produkt {
   position: relative; display: flex; flex-direction: column; min-width: 0; padding: 10px; border-radius: var(--db-r); overflow: hidden;
   background: var(--db-plocha); color: var(--db-tmava); text-decoration: none;
 }
-.db-u-produkt--1 { grid-column: 5 / 9; grid-row: 1 / 3; }
-.db-u-produkt--2 { grid-column: 9 / 13; grid-row: 1; }
-.db-u-produkt--3 { grid-column: 9 / 13; grid-row: 2; }
-.db-u-fanshop__mriezka:has(.db-u-produkt--2):not(:has(.db-u-produkt--3)) .db-u-produkt--2 { grid-row: 1 / 3; }
-.db-u-fanshop__mriezka:not(:has(.db-u-produkt--2)) .db-u-produkt--1 { grid-column: 5 / 13; }
 .db-u-produkt__obrazok { flex: 1; min-height: 150px; border-radius: calc(var(--db-r) - 10px); background: var(--db-platno); }
 .db-u-produkt__obrazok img { position: absolute; inset: 0; object-fit: contain; padding: 8%; transition: transform 0.6s var(--db-krivka); }
 .db-u-produkt:hover .db-u-produkt__obrazok img { transform: scale(1.06) rotate(-2deg); }
@@ -3190,9 +2945,7 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-uspechy li span { font-weight: 600; font-size: 16px; line-height: 1.3; }
 .db-u-vyzva {
   flex: 1.5 1 380px; min-height: 320px; display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: var(--db-vnutro); text-decoration: none;
-  rotate: -1.6deg; transition: transform 0.45s var(--db-krivka), box-shadow 0.45s var(--db-krivka), rotate 0.5s var(--db-pruzina), opacity 0.6s ease, translate 0.8s var(--db-krivka), scale 0.8s var(--db-krivka) !important;
 }
-.db-u-vyzva:hover { rotate: 0deg; }
 .db-u-vyzva strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(44px, 4.2vw, 76px); line-height: 0.84; text-transform: uppercase; overflow-wrap: anywhere; }
 .db-u-vyzva__tl {
   align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 24px; border-radius: 999px;
@@ -3213,10 +2966,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 .db-u-siet:hover .db-u-siet__sipka { color: var(--db-tmava); transform: translate(2px, -2px); }
 
 /* Klub - obrázkové dlaždice */
-.db-u-klub__mriezka { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--db-medzera); }
-.db-u-klub__mriezka--3 { grid-template-columns: 5fr 4fr 3fr; }
-.db-u-klub__mriezka--2 { grid-template-columns: 7fr 5fr; }
-.db-u-klub__mriezka--1 { grid-template-columns: 1fr; }
 .db-u-klub__karta {
   position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 340px; overflow: hidden; border-radius: var(--db-r);
   background: var(--db-tmava); color: #ffffff; text-decoration: none;
@@ -3266,11 +3015,9 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 
 @media (max-width: 1100px) {
   :root[data-sablona='bento'] { --db-vyska-hlavicky: 84px; }
-  .db-hlavicka__rad { grid-template-columns: minmax(0, 1fr) auto; }
   .db-hlavicka .db-hlavicka__menu { display: none; }
   .db-hlavicka__hamburger { display: inline-flex; background: var(--db-tmava); color: var(--db-volt); }
   .db-hlavicka__cta { display: inline-flex; }
-  .db-hlavicka .db-dlazdica { min-height: 64px; }
 
   .db-u-start { grid-template-columns: repeat(12, minmax(0, 1fr)); }
   .db-u-hero { grid-column: 1 / -1; grid-row: 1; min-height: clamp(460px, 62vh, 640px); }
@@ -3279,57 +3026,22 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-poradie { grid-column: 10 / 13; grid-row: 2; }
   .db-u-start--bez-poradia .db-u-vysledok, .db-u-start--bez-vysledku .db-u-poradie { grid-column: 7 / 13; }
   .db-u-start--1 .db-u-zapas { grid-column: 1 / -1; }
-  .db-u-hero__citat { right: 24px; top: auto; bottom: 24px; }
-  .db-u-hero__dole { padding-right: 150px; }
   .db-u-hero__hore { padding-right: 230px; }
 
   .db-u-novinky__mriezka { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .db-u-novina--velka { grid-column: span 4; min-height: 480px; }
-  .db-u-novina--siroka { grid-column: span 2; flex-direction: column; }
-  .db-u-novina--siroka .db-u-novina__obrazok { width: 100%; min-height: 0; aspect-ratio: 16 / 10; }
-  .db-u-novina--siroka .db-u-novina__text { padding: 18px 20px 22px; justify-content: flex-start; }
-  .db-u-novina--siroka strong { font-size: 19px; }
-  .db-u-novina--siroka .db-u-novina__perex { display: none; }
-  .db-u-novina--mala, .db-u-novina--mala:nth-child(3), .db-u-novina--textova { grid-column: span 2; }
-  .db-u-vsetky, .db-u-novinky__mriezka--1 .db-u-novina--velka { grid-column: span 6; }
-  .db-u-novinky__mriezka--2 .db-u-vsetky, .db-u-novinky__mriezka--5 .db-u-vsetky { grid-column: span 2; }
-  .db-u-novinky__mriezka--4 .db-u-vsetky { grid-column: span 4; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) { grid-column: span 2; flex-direction: column; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) .db-u-novina__obrazok { width: 100%; aspect-ratio: 16 / 10; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) .db-u-novina__text { justify-content: flex-start; padding: 18px 20px 22px; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) strong { font-size: 19px; }
-  .db-u-vsetky { min-height: 0; flex-direction: row; align-items: center; }
-  .db-u-novinky__mriezka--2 .db-u-vsetky, .db-u-novinky__mriezka--5 .db-u-vsetky { flex-direction: column; align-items: stretch; min-height: 180px; }
 
   .db-u-centrum__mriezka .db-u-program { grid-column: 1 / 7; }
   .db-u-centrum__mriezka .db-u-vysledky { grid-column: 7 / 13; }
   .db-u-centrum__mriezka .db-u-tabulka { grid-column: 1 / -1; }
 
   .db-u-hraci__mriezka { grid-template-columns: 1fr; }
-  .db-u-kader { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 12px 28px; }
-  .db-u-kader .db-u-hlava__cislo { grid-column: 1 / -1; }
-  .db-u-kader__cisla { margin: 0; }
-  .db-u-kader__akcie { flex-direction: column; align-items: flex-end; }
 
   .db-u-videa__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
   .db-u-video, .db-u-videa__mriezka--2 .db-u-video:not(.db-u-video--velke) { grid-column: auto; grid-row: auto; aspect-ratio: 16 / 10; }
   .db-u-video--velke { grid-column: 1 / -1; grid-row: auto; min-height: 0; aspect-ratio: 16 / 8; }
-
-  .db-u-fanshop__mriezka { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; }
-  .db-u-fanshop__uvod { grid-column: 1 / -1; grid-row: auto; min-height: 0; }
-  .db-u-produkt--1, .db-u-produkt--2, .db-u-produkt--3,
-  .db-u-fanshop__mriezka:has(.db-u-produkt--2):not(:has(.db-u-produkt--3)) .db-u-produkt--2,
-  .db-u-fanshop__mriezka:not(:has(.db-u-produkt--2)) .db-u-produkt--1 { grid-column: auto; grid-row: auto; min-height: 280px; }
-
-  .db-paticka__doska { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .db-paticka__klub { grid-column: 1 / -1; grid-row: auto; min-height: 0; }
-  .db-paticka__menu, .db-paticka__kontakt { grid-column: span 3; }
-  .db-paticka__siete { grid-column: 1 / -1; }
 }
 
 @media (max-width: 900px) {
-  .db-u-klub__mriezka, .db-u-klub__mriezka--3, .db-u-klub__mriezka--2 { grid-template-columns: 1fr 1fr; }
-  .db-u-klub__mriezka--3 > :first-child { grid-column: 1 / -1; }
   .db-u-klub__karta { min-height: 260px; }
 }
 
@@ -3354,7 +3066,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
 
   /* Hlavička: logo + akcie, menu v spodnej kapsule */
   .db-hlavicka { padding-top: calc(8px + env(safe-area-inset-top)); }
-  .db-hlavicka .db-dlazdica { min-height: 58px; padding: 0 8px; }
   .db-hlavicka__logo { padding-right: 14px !important; gap: 10px; }
   .db-hlavicka__nazov { font-size: 22px; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .db-hlavicka__cta, .db-hlavicka__akcie .db-ikona-tl--text, .db-hlavicka__hamburger { display: none; }
@@ -3384,25 +3095,8 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   [data-sablona='bento'] .web-cookies { bottom: calc(var(--db-zalozky) + 8px); left: 10px; right: 10px; }
 
   /* Pätička */
-  .db-paticka { padding-top: calc(var(--db-medzera) * 3); }
-  .db-paticka__doska { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; }
-  .db-paticka__klub { gap: 18px; }
-  .db-paticka__obri { font-size: clamp(56px, 19vw, 96px); }
-  .db-paticka__menu { grid-column: span 1; }
-  .db-paticka__menu > div { grid-template-columns: 1fr; }
-  .db-paticka__siete { grid-column: span 1; flex-direction: column; align-items: flex-start; }
-  .db-paticka__siete a { width: 44px; height: 44px; font-size: 12px; }
-  .db-paticka__doska:not(:has(.db-paticka__siete)) .db-paticka__menu { grid-column: 1 / -1; }
-  .db-paticka__kontakt { grid-column: 1 / -1; }
-  .db-paticka__spodok { flex-direction: column; align-items: flex-start; }
 
   /* Úvod */
-  .db-u-hlava { min-height: 0; padding: 16px 18px; gap: 10px 14px; }
-  .db-u-hlava h2 { font-size: clamp(38px, 11vw, 54px); }
-  .db-u-hlava__cislo { font-size: 24px; }
-  .db-u-hlava__odkaz { height: 38px; padding: 0 14px; font-size: 13px; }
-  .db-u-hlava .db-u-timy { order: 5; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 18px; width: calc(100% + 36px); }
-  .db-u-hlava .db-u-timy::-webkit-scrollbar { display: none; }
   .db-u-timy button { flex-shrink: 0; height: 36px; font-size: 13px; }
 
   .db-u-start { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3410,15 +3104,8 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-hero__hore { padding-right: 0; max-width: calc(100% - 4px); }
   .db-u-hero__kroky { top: auto; bottom: 18px; right: 18px; gap: 6px; }
   .db-u-hero__kroky button { width: 30px; font-size: 0; gap: 0; }
-  .db-u-hero__dole { padding-bottom: 26px; }
   .db-u-hero__nadpis { font-size: clamp(40px, 11.6vw, 60px); max-width: none; }
   .db-u-hero__meta p { display: none; }
-  .db-u-hero__citat { right: 14px; top: 64px; bottom: auto; }
-  .db-u-hero__dole { padding-right: 0; }
-  .db-u-nalepka { width: 96px; height: 96px; }
-  .db-u-nalepka text { font-size: 21px; }
-  .db-u-nalepka__stred { width: 40px; height: 40px; margin: -20px; }
-  .db-u-nalepka__stred svg { width: 18px; height: 18px; }
   .db-u-zapas, .db-u-start--1 .db-u-zapas { grid-column: 1 / -1; grid-row: auto; padding: 18px; }
   .db-u-vysledok, .db-u-poradie { grid-column: span 1 !important; grid-row: auto; min-height: 190px; padding: 18px; }
   .db-u-start--bez-poradia .db-u-vysledok, .db-u-start--bez-vysledku .db-u-poradie { grid-column: 1 / -1 !important; }
@@ -3427,45 +3114,18 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-vysledok__text b, .db-u-poradie__body b { font-size: 19px; }
   .db-u-forma i { width: 20px; height: 20px; font-size: 10px; }
 
-  .db-u-pas { margin: 4px -4px; }
-  .db-u-pas__rad > span { padding: 12px 0 12px 16px; gap: 16px; font-size: 20px; }
-
   .db-u-novinky__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .db-u-novina--velka, .db-u-novinky__mriezka--1 .db-u-novina--velka { grid-column: 1 / -1; grid-row: auto; min-height: 420px; }
-  .db-u-novina--siroka { grid-column: 1 / -1; flex-direction: row; }
-  .db-u-novina--siroka .db-u-novina__obrazok { width: 42%; aspect-ratio: auto; min-height: 150px; }
-  .db-u-novina--siroka .db-u-novina__text { padding: 14px; justify-content: center; }
-  .db-u-novina--siroka strong { font-size: 17px; }
-  .db-u-novina--mala, .db-u-novina--mala:nth-child(3), .db-u-novina--textova { grid-column: span 1; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) { grid-column: span 1; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) .db-u-novina__text { padding: 12px 14px 16px; }
-  .db-u-novinky__mriezka--5 .db-u-novina:nth-child(5) strong { font-size: 15.5px; }
   .db-u-novina__text { padding: 12px 14px 16px; gap: 8px; }
   .db-u-novina strong { font-size: 15.5px; -webkit-line-clamp: 4; }
   .db-u-novina__meta { font-size: 12px; gap: 6px; }
   .db-u-novina__meta b { font-size: 10px; }
-  .db-u-novina--velka strong { font-size: clamp(34px, 9.6vw, 46px); }
-  .db-u-novina--textova { min-height: 0; }
-  .db-u-novina--textova .db-u-novina__text { padding: 16px; }
-  .db-u-novina--textova strong { font-size: 25px; }
-  .db-u-novina--textova .db-u-novina__perex { display: none; }
-  .db-u-novina--textova::before { width: 110px; height: 110px; border-width: 18px; right: -34px; top: -34px; }
   .db-u-novina__sipka { display: none; }
-  .db-u-novina--velka .db-u-novina__sipka { display: flex; }
-  .db-u-vsetky, .db-u-novinky__mriezka--2 .db-u-vsetky, .db-u-novinky__mriezka--4 .db-u-vsetky { grid-column: 1 / -1; flex-direction: row; align-items: center; min-height: 0; padding: 18px; }
-  .db-u-novinky__mriezka--3 .db-u-vsetky, .db-u-novinky__mriezka--5 .db-u-vsetky { grid-column: span 1; flex-direction: column; align-items: stretch; min-height: 150px; }
-  .db-u-vsetky span { font-size: 34px; }
 
   .db-u-centrum__mriezka .db-u-program, .db-u-centrum__mriezka .db-u-vysledky, .db-u-centrum__mriezka .db-u-tabulka { grid-column: 1 / -1; padding: 16px; }
   .db-u-dlazdica-hlava h3 { font-size: 28px; }
   .db-u-riadok { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; }
   .db-u-riadok__datum { height: 50px; }
   .db-u-riadok__datum strong { font-size: 22px; }
-
-  .db-u-kader { display: flex; align-items: stretch; padding: 18px; gap: 16px; }
-  .db-u-kader h2 { font-size: clamp(42px, 12vw, 58px); }
-  .db-u-kader__cisla strong { font-size: 48px; }
-  .db-u-kader__akcie { flex-direction: row; align-items: center; }
   .db-u-sipky { display: none; }
   .db-u-karticky { padding: 16px 10px 22px; margin: -16px -10px -10px; scroll-padding-inline: 10px; }
   .db-u-karticka { flex-basis: 66%; }
@@ -3480,24 +3140,16 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-video__text { padding: 12px 14px; }
   .db-u-video__text strong { font-size: 14.5px; -webkit-line-clamp: 3; }
   .db-u-video--velke .db-u-video__text strong { font-size: clamp(30px, 8.6vw, 40px); }
-
-  .db-u-fanshop__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .db-u-fanshop__uvod h2 { font-size: clamp(52px, 15vw, 72px); }
-  .db-u-produkt--1, .db-u-fanshop__mriezka:not(:has(.db-u-produkt--2)) .db-u-produkt--1 { grid-column: 1 / -1; min-height: 300px; }
-  .db-u-produkt--2, .db-u-produkt--3 { min-height: 220px; }
-  .db-u-fanshop__mriezka:has(.db-u-produkt--2):not(:has(.db-u-produkt--3)) .db-u-produkt--2 { grid-column: 1 / -1; }
   .db-u-produkt__cena { font-size: 26px; }
   .db-u-produkt__text { flex-wrap: wrap; }
 
   .db-u-uspechy, .db-u-vyzva { flex-basis: 100%; }
-  .db-u-vyzva { min-height: 0; rotate: -1deg; margin: 4px 0; }
+  .db-u-vyzva { min-height: 0; }
   .db-u-siet { flex-basis: 140px; }
   .db-u-vyzva strong { font-size: clamp(40px, 11.6vw, 56px); }
   .db-u-uspechy li strong { font-size: 44px; }
   .db-u-siet { min-height: 140px; padding: 14px; }
   .db-u-siet__text strong { font-size: 26px; }
-
-  .db-u-klub__mriezka, .db-u-klub__mriezka--3, .db-u-klub__mriezka--2 { grid-template-columns: 1fr; }
   .db-u-klub__karta { min-height: 220px; }
 
   .db-u-partner { width: 128px; height: 70px; }
@@ -3505,10 +3157,8 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   /* Podstránky */
   .db-sekcia { padding: 0 var(--db-okraj) calc(var(--db-medzera) * 5); }
   .db-hlava { padding: 26px 20px 30px; border-radius: var(--db-r); margin-bottom: calc(var(--db-medzera) * 2); }
-  .db-hlava::before { width: 150px; top: -70px; right: -60px; }
   .db-hlava h1 { font-size: clamp(42px, 13vw, 64px); max-width: calc(100% - 50px); }
   .db-hlava--clanok h1 { font-size: clamp(34px, 10vw, 48px); max-width: 100%; }
-  .db-hlava--zapas::before { width: 260px; bottom: -150px; margin-left: -130px; }
   .db-nadpis { min-height: 0; padding: 14px 16px; gap: 10px; flex-wrap: wrap; }
   .db-nadpis h2 { min-width: 0; overflow-wrap: anywhere; }
   .db-nadpis__odkaz { flex-shrink: 0; }
@@ -3548,7 +3198,6 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-clanok-detail__telo { padding: 22px 18px; }
 
   .db-profil-hero { padding: 0; overflow: hidden; }
-  .db-profil-hero::before { right: -30%; bottom: auto; top: 6%; width: 90%; opacity: 0.9; }
   .db-profil-hero__foto { height: min(76svh, 600px); background: transparent; }
   .db-profil-hero__foto::after { background: linear-gradient(to top, var(--db-tmava) 0%, color-mix(in srgb, var(--db-tmava) 80%, transparent) 24%, rgba(0, 0, 0, 0) 56%); }
   .db-profil-hero__cislo { font-size: 80px; }
@@ -3578,7 +3227,200 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-hero { min-height: 520px; }
 }
 
+/* ===================================================================
+   Zjednodušené rozloženie: hlavička ako jeden pruh, klasické nadpisy
+   sekcií, pravidelná mriežka noviniek, tmavá pätička so stĺpcami
+   =================================================================== */
+
+/* Hlavička - jedna biela lišta */
+.db-hlavicka__rad {
+  display: flex; align-items: center; gap: 8px; max-width: var(--db-sirka); margin: 0 auto; min-height: 72px; padding: 0 12px;
+  border-radius: var(--db-r); background: var(--db-plocha); transition: box-shadow 0.3s ease;
+}
+.db-hlavicka.is-posunuta .db-hlavicka__rad, .db-hlavicka.is-otvorena .db-hlavicka__rad { box-shadow: var(--db-tien-maly); }
+.db-hlavicka .db-dlazdica { display: flex; align-items: center; background: transparent; border-radius: 0; padding: 0; }
+.db-hlavicka__logo { flex-shrink: 0; gap: 12px; padding-right: 8px !important; }
+.db-hlavicka__menu { flex: 1; min-width: 0; justify-content: center; gap: 2px; overflow: hidden; }
+.db-hlavicka__akcie { flex-shrink: 0; gap: 6px; }
+
+/* Objekty: len jemné zdvihnutie pod myšou */
+.db-objekt { transition: transform 0.3s var(--db-krivka), box-shadow 0.3s var(--db-krivka); }
+.db-objekt.db-odhal { transition: transform 0.3s var(--db-krivka), box-shadow 0.3s var(--db-krivka), opacity 0.6s ease, translate 0.7s var(--db-krivka), scale 0.7s var(--db-krivka); }
+@media (hover: hover) and (pointer: fine) {
+  .db-objekt:hover { transform: translateY(-3px); box-shadow: var(--db-tien-maly); }
+}
+
+/* Nadpis sekcie úvodu - bez dlaždice, nadpis vľavo a odkaz vpravo */
+.db-u-hlava { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; padding: calc(var(--db-medzera) * 2.5) 4px 4px; }
+.db-u-hlava h2 { margin-right: auto; font-family: var(--db-display); font-weight: 900; font-size: clamp(36px, 3.4vw, 54px); line-height: 0.9; text-transform: uppercase; }
+.db-u-hlava__odkaz {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 999px; text-decoration: none; white-space: nowrap;
+  background: var(--db-plocha); color: var(--db-tmava); font-family: var(--db-nadpisy); font-weight: 700; font-size: 14px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.db-u-hlava__odkaz:hover { background: var(--db-tmava); color: var(--db-volt); }
+.db-u-hlava .db-u-timy button { background: var(--db-plocha); color: var(--db-tmava); }
+.db-u-hlava .db-u-timy button:hover { background: var(--db-tmava-12); }
+.db-u-hlava .db-u-timy button.is-aktivny { background: var(--db-tmava); color: var(--db-volt); }
+
+/* Hero karta: tlačidlo pod nadpisom */
+.db-u-hero__tl { margin-top: 22px; }
+.db-hlava h1 { max-width: none; }
+.db-u-hero__hore { padding-right: 190px; }
+
+/* Bežiaci pás - rovný */
+.db-u-pas { position: relative; overflow: hidden; border-radius: var(--db-r-m); background: var(--db-tmava); color: #ffffff; }
+.db-u-pas__stopa { display: flex; width: max-content; animation: db-pas 52s linear infinite; }
+.db-u-pas:hover .db-u-pas__stopa { animation-play-state: paused; }
+.db-u-pas__rad { display: flex; flex-shrink: 0; }
+.db-u-pas__rad > span {
+  display: inline-flex; align-items: center; gap: 18px; padding: 13px 0 13px 18px; white-space: nowrap;
+  font-family: var(--db-nadpisy); font-weight: 600; font-size: 15px; line-height: 1;
+}
+.db-u-pas__rad i { font-style: normal; color: var(--db-volt); font-size: 0.8em; }
+
+/* Novinky - hlavný článok a štyri menšie */
+.db-u-novinky__mriezka { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--db-medzera); }
+.db-u-novina--velka { grid-column: span 2; grid-row: span 2; justify-content: flex-end; min-height: 520px; background: var(--db-tmava); color: #ffffff; }
+.db-u-novina--velka .db-u-novina__obrazok { position: absolute; inset: 0; z-index: -1; aspect-ratio: auto; height: 100%; }
+.db-u-novina--velka .db-u-novina__obrazok::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.05) 60%); }
+.db-u-novina--velka .db-u-novina__text { padding: var(--db-vnutro); }
+.db-u-novina--velka strong { font-family: var(--db-display); font-weight: 900; font-size: clamp(32px, 2.8vw, 48px); line-height: 0.92; text-transform: uppercase; -webkit-line-clamp: 3; }
+.db-u-novina--velka .db-u-novina__meta { color: rgba(255, 255, 255, 0.7); }
+.db-u-novina--velka .db-u-novina__meta b { color: var(--db-volt); }
+.db-u-novina--velka .db-u-novina__perex { color: rgba(255, 255, 255, 0.75); -webkit-line-clamp: 2; max-width: 60ch; }
+.db-u-novina__sipka { display: none; }
+.db-u-novinky__mriezka--1 .db-u-novina--velka { grid-column: 1 / -1; grid-row: auto; min-height: 420px; }
+.db-u-novinky__mriezka--2 .db-u-novina--velka, .db-u-novinky__mriezka--3 .db-u-novina--velka { grid-row: auto; }
+.db-u-novinky__mriezka--2 .db-u-novina--mala { grid-column: span 2; }
+
+/* Zápasové centrum, káder */
+.db-u-kader { display: flex; flex-direction: column; gap: 20px; padding: var(--db-vnutro); min-width: 0; }
+.db-u-kader h2 { font-family: var(--db-display); font-weight: 900; font-size: clamp(40px, 3.6vw, 60px); line-height: 0.88; text-transform: uppercase; overflow-wrap: anywhere; }
+.db-u-kader__cisla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: auto; }
+.db-u-kader__cisla span { display: flex; flex-direction: column; gap: 4px; }
+.db-u-kader__cisla strong { font-family: var(--db-display); font-weight: 900; font-size: 56px; line-height: 0.82; color: var(--db-volt); }
+.db-u-kader__cisla small { color: rgba(255, 255, 255, 0.6); font-size: 12.5px; line-height: 1.3; }
+.db-u-kader__akcie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+/* Fanshop - úvodná dlaždica a tri rovnaké produkty */
+.db-u-fanshop__mriezka { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--db-medzera); }
+.db-u-fanshop__uvod { position: relative; display: flex; flex-direction: column; gap: 16px; min-height: 340px; padding: var(--db-vnutro); overflow: hidden; }
+.db-u-fanshop__uvod h2 { font-family: var(--db-display); font-weight: 900; font-size: clamp(44px, 4vw, 68px); line-height: 0.86; text-transform: uppercase; }
+.db-u-fanshop__uvod p { max-width: 34ch; color: rgba(255, 255, 255, 0.88); font-size: 15px; line-height: 1.5; }
+.db-u-fanshop__uvod .db-u-tl { align-self: flex-start; margin-top: auto; }
+.db-u-produkt { min-height: 340px; }
+
+/* Klub - rovnaké dlaždice */
+.db-u-klub__mriezka { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--db-medzera); }
+
+/* Štatistiky a čísla v blokoch - jednotné biele dlaždice */
+.db-cislo strong { color: var(--db-tmava); }
+
+/* Pätička - jedna tmavá plocha so stĺpcami */
+.db-paticka { padding: calc(var(--db-medzera) * 4) 0 calc(var(--db-okraj) + var(--db-zalozky)); }
+.db-paticka__doska {
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px 40px;
+  padding: clamp(28px, 4vw, 56px) var(--db-vnutro) 0; border-radius: var(--db-r); background: var(--db-tmava); color: #ffffff;
+}
+.db-paticka__doska > .db-dlazdica { background: transparent; color: inherit; border-radius: 0; padding: 0; min-width: 0; }
+.db-paticka__doska .db-panel__stitok { display: block; margin-bottom: 14px; color: var(--db-volt); }
+.db-paticka__klub { display: flex; flex-direction: column; gap: 16px; }
+.db-paticka__logo .db-logo { width: 56px; height: 56px; }
+.db-paticka__obri { display: block; color: #ffffff; font-family: var(--db-display); font-weight: 900; font-size: 34px; line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; }
+.db-paticka__klub p { max-width: 340px; color: rgba(255, 255, 255, 0.6); font-size: 14.5px; line-height: 1.6; }
+.db-paticka__menu > div { display: flex; flex-direction: column; gap: 10px; }
+.db-paticka__odkaz { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-family: var(--db-nadpisy); font-weight: 500; font-size: 15px; transition: color 0.2s ease; }
+.db-paticka__odkaz:hover { color: var(--db-volt); }
+.db-paticka__kontakt { display: flex; flex-direction: column; gap: 10px; }
+.db-paticka__kontakt a, .db-paticka__adresa { color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.db-paticka__adresa { color: rgba(255, 255, 255, 0.6); white-space: pre-line; }
+.db-paticka__kontakt a:hover { color: var(--db-volt); }
+.db-paticka__siete > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.db-paticka__siete a {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;
+  background: rgba(255, 255, 255, 0.1); color: #ffffff; font-family: var(--db-nadpisy); font-weight: 700; font-size: 12px; transition: background-color 0.2s ease, color 0.2s ease;
+}
+.db-paticka__siete a:hover { background: var(--db-volt); color: var(--db-tmava); }
+.db-paticka__spodok {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px;
+  padding: 20px 0 22px !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; color: rgba(255, 255, 255, 0.45); font-size: 13px;
+}
+.db-paticka__pravne { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.db-paticka__male { padding: 0; border: 0; background: none; color: rgba(255, 255, 255, 0.55); cursor: pointer; text-decoration: none; font-family: var(--db-nadpisy); font-weight: 500; font-size: 13px; }
+.db-paticka__male:hover { color: #ffffff; }
+
+/* Mobilné menu - zoznam v jednej dlaždici */
+.db-mmenu__mriezka { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; border-radius: var(--db-r); background: var(--db-plocha); }
+.db-mmenu__polozka { min-width: 0; }
+.db-mmenu__polozka + .db-mmenu__polozka { border-top: 1px solid var(--db-tmava-8); }
+.db-mmenu__dlazdica {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 58px; padding: 0 14px;
+  border: 0; border-radius: 14px; background: none; color: var(--db-tmava); cursor: pointer; text-align: left; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.db-mmenu__dlazdica:active { background: var(--db-tmava-6); }
+.db-mmenu__cislo { display: none; }
+.db-mmenu__nazov { font-family: var(--db-display); font-weight: 800; font-size: 24px; line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; }
+.db-mmenu__polozka.is-aktivna > .db-mmenu__dlazdica .db-mmenu__nazov, .db-mmenu__polozka.is-rozbalene > .db-mmenu__dlazdica .db-mmenu__nazov { color: var(--db-druha); }
+.db-mmenu__plus { position: relative; flex-shrink: 0; width: 22px; height: 22px; }
+.db-mmenu__plus::before, .db-mmenu__plus::after {
+  content: ''; position: absolute; left: 4px; right: 4px; top: 10px; height: 2px; border-radius: 2px; background: currentColor; transition: transform 0.3s var(--db-krivka);
+}
+.db-mmenu__plus::after { transform: rotate(90deg); }
+.db-mmenu__polozka.is-rozbalene .db-mmenu__plus::after { transform: rotate(0deg); }
+.db-mmenu__sipka { flex-shrink: 0; color: var(--db-tmava-40); }
+.db-mmenu__podmenu { display: flex; flex-direction: column; margin: 0 6px 8px; padding: 6px; border-radius: 14px; background: var(--db-platno); }
+
+@media (max-width: 1100px) {
+  .db-hlavicka__rad { min-height: 64px; }
+  .db-hlavicka .db-hlavicka__menu { display: none; }
+  .db-hlavicka__logo { flex: 1; min-width: 0; }
+  .db-u-hero__hore { padding-right: 190px; }
+  .db-u-novinky__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .db-u-novina--velka, .db-u-novinky__mriezka--2 .db-u-novina--mala { grid-column: 1 / -1; grid-row: auto; min-height: 440px; }
+  .db-u-novinky__mriezka--2 .db-u-novina--mala { min-height: 0; }
+  .db-u-hraci__mriezka { grid-template-columns: 1fr; }
+  .db-u-kader { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 12px 28px; }
+  .db-u-kader__cisla { margin: 0; }
+  .db-u-fanshop__mriezka { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .db-u-fanshop__uvod { grid-column: 1 / -1; min-height: 0; }
+  .db-u-produkt { min-height: 300px; }
+  .db-paticka__doska { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .db-paticka__klub { grid-column: 1 / -1; }
+}
+
+@media (max-width: 768px) {
+  .db-hlavicka__rad { min-height: 58px; padding: 0 8px; }
+  .db-u-hlava { padding: calc(var(--db-medzera) * 3) 2px 2px; gap: 10px; }
+  .db-u-hlava h2 { font-size: clamp(32px, 9vw, 42px); }
+  .db-u-hlava__odkaz { height: 36px; padding: 0 14px; font-size: 13px; }
+  .db-u-hlava .db-u-timy { order: 5; width: calc(100% + 2 * var(--db-okraj)); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--db-okraj)); padding: 0 var(--db-okraj); }
+  .db-u-hlava .db-u-timy::-webkit-scrollbar { display: none; }
+  .db-u-hero__hore { padding-right: 0; }
+  .db-u-hero__tl { margin-top: 16px; height: 42px; }
+  .db-u-pas__rad > span { padding: 11px 0 11px 14px; gap: 14px; font-size: 14px; }
+  .db-u-novina--velka, .db-u-novinky__mriezka--1 .db-u-novina--velka { min-height: 400px; }
+  .db-u-novina.db-u-novina--velka strong { font-size: clamp(30px, 8.6vw, 40px); }
+  .db-u-novina--velka .db-u-novina__perex { display: none; }
+  .db-u-novina__text { padding: 12px 14px 16px; gap: 8px; }
+  .db-u-novina strong { font-size: 15.5px; -webkit-line-clamp: 4; }
+  .db-u-novina__meta { font-size: 12px; gap: 6px; }
+  .db-u-kader { display: flex; padding: 18px; gap: 16px; }
+  .db-u-kader h2 { font-size: clamp(38px, 11vw, 52px); }
+  .db-u-kader__cisla strong { font-size: 46px; }
+  .db-u-fanshop__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .db-u-fanshop__uvod h2 { font-size: clamp(44px, 13vw, 60px); }
+  .db-u-produkt { min-height: 230px; }
+  .db-u-fanshop__mriezka > .db-u-produkt:nth-child(2):last-child { grid-column: 1 / -1; }
+  .db-u-fanshop__mriezka > .db-u-produkt:nth-child(2):nth-last-child(3) { grid-column: 1 / -1; min-height: 280px; }
+  .db-paticka { padding-top: calc(var(--db-medzera) * 3); }
+  .db-paticka__doska { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 28px 20px; padding-top: 28px; }
+  .db-paticka__klub, .db-paticka__kontakt { grid-column: 1 / -1; }
+  .db-paticka__doska:not(:has(.db-paticka__siete)) .db-paticka__menu { grid-column: 1 / -1; }
+  .db-paticka__spodok { flex-direction: column; align-items: flex-start; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .db-u-pas__stopa, .db-u-partneri__stopa { animation: none !important; }
-  .db-objekt, .db-odhal { transform: none !important; translate: none !important; scale: none !important; }
+  .db-u-partneri__stopa { animation: none !important; }
+  .db-odhal { transform: none !important; translate: none !important; scale: none !important; }
 }

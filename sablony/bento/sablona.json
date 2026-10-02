@@ -3,7 +3,7 @@
   "nazov": "Dynamic Football Bento",
   "verzia": "1.0.0",
   "autor": "ClubW",
-  "popis": "Dynamická športová šablóna v štýle bento: celý web je jedna doska zo zaoblených dlaždíc. Obrovská hero karta s otočnou nálepkou, dlaždice zápasu, výsledku a tabuľky, asymetrická mriežka noviniek, zápasové centrum, hráči ako zberateľské kartičky, videá, fanshop, komunita a pás partnerov. Karty sa pod myšou nakláňajú ako objekty. Na mobile plávajúca kapsula so záložkami.",
+  "popis": "Športová šablóna v štýle bento: obsah je poskladaný zo zaoblených dlaždíc na jednotnom podklade. Veľká hero karta s článkami, dlaždice najbližšieho zápasu, výsledku a tabuľky, novinky, zápasové centrum, hráči, videá, fanshop, komunita a partneri. Na mobile plávajúca lišta so záložkami.",
   "api": 1,
   "nahlad": "nahlad.svg",
   "styl": "styl.css",
@@ -94,9 +94,9 @@
     {
       "kluc": "animacie",
       "typ": "prepinac",
-      "menovka": "Pohyb kariet",
+      "menovka": "Animácie kariet",
       "skupina": "Farby a tvar",
-      "napoveda": "Náklon kariet pod myšou a postupné vynáranie dlaždíc pri posúvaní.",
+      "napoveda": "Jemné zdvihnutie kariet pod myšou a postupné vynáranie dlaždíc pri posúvaní.",
       "predvolene": true
     },
     {
@@ -201,14 +201,6 @@
       "predvolene": "Top story"
     },
     {
-      "kluc": "uvod_nalepka",
-      "typ": "text",
-      "menovka": "Text otočnej nálepky",
-      "skupina": "Úvod - hero karta",
-      "napoveda": "Beží dookola v kruhu na rohu karty. Prázdne = skratka klubu.",
-      "predvolene": ""
-    },
-    {
       "kluc": "uvod_pocet",
       "typ": "cislo",
       "menovka": "Počet článkov v hero karte",
@@ -293,15 +285,8 @@
       "typ": "cislo",
       "menovka": "Počet článkov v novinkách",
       "skupina": "Úvod - pás a novinky",
-      "napoveda": "3 až 6.",
-      "predvolene": 6
-    },
-    {
-      "kluc": "text_vsetky_spravy",
-      "typ": "text",
-      "menovka": "Text dlaždice „Všetky správy“",
-      "skupina": "Úvod - pás a novinky",
-      "predvolene": "Všetky správy"
+      "napoveda": "3 až 5 (hlavný článok a menšie).",
+      "predvolene": 5
     },
     {
       "kluc": "ukazat_hracov",

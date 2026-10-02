@@ -6,9 +6,8 @@
 // menu, akcie), rozbaľovacie menu je panel dlaždíc, pätička je zhluk
 // dlaždíc a na mobile pláva dole kapsula s rýchlymi záložkami.
 //
-// Karty sa správajú ako objekty: pri pohybe myši sa jemne nakláňajú
-// (premenné --db-rx / --db-ry nastavuje useObjekty) a pri posúvaní sa
-// dlaždice postupne vynárajú (trieda is-videny).
+// Karty sa pod myšou jemne zdvihnú a pri posúvaní sa dlaždice postupne
+// vynárajú (trieda is-videny).
 
 import React, { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -53,45 +52,9 @@ const useZamknutyPosun = (zamknuty: boolean) => {
   }, [zamknuty]);
 };
 
-// ===== Objekty: náklon pod myšou a vynáranie pri posúvaní =====
+// ===== Vynáranie dlaždíc pri posúvaní =====
 
 const useObjekty = (pathname: string, zapnute: boolean) => {
-  // Náklon kariet podľa polohy myši (len jemné ukazovadlo, nie dotyk)
-  useEffect(() => {
-    if (!zapnute) return;
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let posledny: HTMLElement | null = null;
-    const pohyb = (e: PointerEvent) => {
-      const el = (e.target as HTMLElement | null)?.closest?.('.db-objekt') as HTMLElement | null;
-      if (posledny && posledny !== el) {
-        posledny.style.removeProperty('--db-rx');
-        posledny.style.removeProperty('--db-ry');
-      }
-      posledny = el;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      // Väčšie dlaždice sa nakláňajú menej
-      const sila = Math.max(2, 7 - r.width / 180);
-      el.style.setProperty('--db-rx', `${(-y * sila).toFixed(2)}deg`);
-      el.style.setProperty('--db-ry', `${(x * sila).toFixed(2)}deg`);
-    };
-    const odchod = () => {
-      if (!posledny) return;
-      posledny.style.removeProperty('--db-rx');
-      posledny.style.removeProperty('--db-ry');
-      posledny = null;
-    };
-    document.addEventListener('pointermove', pohyb, { passive: true });
-    document.addEventListener('pointerleave', odchod);
-    return () => {
-      document.removeEventListener('pointermove', pohyb);
-      document.removeEventListener('pointerleave', odchod);
-    };
-  }, [zapnute]);
-
   // Vynáranie dlaždíc - nové prvky (po načítaní dát) sleduje MutationObserver
   useEffect(() => {
     const koren = document.documentElement;
