@@ -17,8 +17,17 @@ import {
   NadpisStredovy,
   Odkaz,
   dlzkaVidea,
+  Erb,
+  cas,
+  datumKratky,
   dnes,
+  hrameDoma,
+  logoStrany,
+  maVysledok,
+  nazovDomacich,
+  nazovHosti,
   obrazokUrl,
+  stavZapasu,
   useApi,
   useTitulok,
   useUpravy,
@@ -145,6 +154,139 @@ const Slider: React.FC<{ clanky: Clanok[]; stitok: string; nahradnaFotka: string
 
 // ===== Zápasy a výsledky =====
 
+/** Popis súťaže zápasu - „5. liga Západ · 9. kolo". */
+const sutazZapasu = (z: Zapas) => [z.liga_nazov, z.kolo ? `${z.kolo}. kolo` : null].filter(Boolean).join(' · ');
+
+/** Mobil: hlavný zápas (prebiehajúci, najbližší alebo posledný) vo veľkej karte. */
+const HlavnyZapasMobil: React.FC<{ zapas: Zapas; vstupenky: string | null }> = ({ zapas: z, vstupenky }) => {
+  const u = useUpravy();
+  const { nastavenia } = useNastavenia();
+  const stav = stavZapasu(z);
+  const skore = maVysledok(z) && stav !== 'naplanovany';
+  const stitok = stav === 'prebieha' ? 'Práve sa hrá' : stav === 'ukonceny' ? 'Posledný výsledok' : 'Najbližší zápas';
+  return (
+    <article className={`kl-zapas-hlavny${stav === 'prebieha' ? ' is-zivy' : ''}`}>
+      <div className="kl-zapas-hlavny__hlava">
+        <span className="kl-zapas-hlavny__stitok">{stitok}</span>
+        {sutazZapasu(z) && <span className="kl-zapas-hlavny__sutaz">{sutazZapasu(z)}</span>}
+      </div>
+      <div className="kl-zapas-hlavny__timy">
+        <div className="kl-zapas-hlavny__tim">
+          <Erb nazov={nazovDomacich(z)} logo={logoStrany(z, 'domaci', nastavenia.logo)} ton="tmavy" velky />
+          <span>{nazovDomacich(z)}</span>
+        </div>
+        <div className="kl-zapas-hlavny__stred">
+          <strong>{skore ? `${z.goly_domaci}:${z.goly_hostia}` : cas(z.datum_cas)}</strong>
+          <small>{datumKratky(z.datum_cas)}</small>
+        </div>
+        <div className="kl-zapas-hlavny__tim">
+          <Erb nazov={nazovHosti(z)} logo={logoStrany(z, 'hostia', nastavenia.logo)} ton="akcent" velky />
+          <span>{nazovHosti(z)}</span>
+        </div>
+      </div>
+      {z.miesto && (
+        <div className="kl-zapas-hlavny__miesto">
+          <Ikona nazov="miesto" velkost={14} />
+          {z.miesto}
+        </div>
+      )}
+      <div className="kl-zapas-hlavny__akcie">
+        {stav === 'naplanovany' && vstupenky && (
+          <Odkaz to={vstupenky} className="kl-zapas-hlavny__tlacidlo kl-zapas-hlavny__tlacidlo--akcent">
+            {u.text('vstupenky_text', 'Vstupenky')}
+          </Odkaz>
+        )}
+        {z.video_url && stav !== 'naplanovany' && (
+          <a href={z.video_url} target="_blank" rel="noopener noreferrer" className="kl-zapas-hlavny__tlacidlo kl-zapas-hlavny__tlacidlo--akcent">
+            Video
+          </a>
+        )}
+        <Link to={`/matches/${z.id}`} className="kl-zapas-hlavny__tlacidlo">
+          {u.text('text_detail', 'Detail')}
+        </Link>
+      </div>
+    </article>
+  );
+};
+
+/** Mobil: riadok zápasu v zozname - dátum, tímy so skóre alebo časom. */
+const RiadokZapasuMobil: React.FC<{ zapas: Zapas }> = ({ zapas: z }) => {
+  const { nastavenia } = useNastavenia();
+  const skore = maVysledok(z) && stavZapasu(z) !== 'naplanovany';
+  const [den, mesiac] = datumKratky(z.datum_cas).split('. ');
+  const vyhra = skore && (hrameDoma(z) ? Number(z.goly_domaci) > Number(z.goly_hostia) : Number(z.goly_hostia) > Number(z.goly_domaci));
+  const prehra = skore && (hrameDoma(z) ? Number(z.goly_domaci) < Number(z.goly_hostia) : Number(z.goly_hostia) < Number(z.goly_domaci));
+  return (
+    <Link to={`/matches/${z.id}`} className="kl-riadok-zapasu">
+      <span className="kl-riadok-zapasu__datum">
+        <strong>{den}</strong>
+        <small>{mesiac}</small>
+      </span>
+      <span className="kl-riadok-zapasu__timy">
+        {(['domaci', 'hostia'] as const).map((strana) => (
+          <span key={strana} className="kl-riadok-zapasu__tim">
+            <Erb nazov={strana === 'domaci' ? nazovDomacich(z) : nazovHosti(z)} logo={logoStrany(z, strana, nastavenia.logo)} ton={strana === 'domaci' ? 'tmavy' : 'akcent'} />
+            <span className="kl-riadok-zapasu__nazov">{strana === 'domaci' ? nazovDomacich(z) : nazovHosti(z)}</span>
+            {skore && <strong>{strana === 'domaci' ? z.goly_domaci : z.goly_hostia}</strong>}
+          </span>
+        ))}
+      </span>
+      <span className={`kl-riadok-zapasu__vysledok${vyhra ? ' is-vyhra' : prehra ? ' is-prehra' : skore ? ' is-remiza' : ''}`}>
+        {skore ? (vyhra ? 'V' : prehra ? 'P' : 'R') : cas(z.datum_cas)}
+      </span>
+    </Link>
+  );
+};
+
+/**
+ * Zápasy a výsledky na mobile: nadpis ako ostatné sekcie, výber tímu,
+ * jeden veľký zápas a pod ním prehľadný zoznam ďalších (program aj výsledky).
+ */
+const ZapasyMobil: React.FC<{
+  timy: Tim[];
+  timId: number | null;
+  setTimId: (id: number) => void;
+  vysledky: Zapas[];
+  zive: Zapas[];
+  buduce: Zapas[];
+  vstupenky: string | null;
+  nacitava: boolean;
+}> = ({ timy, timId, setTimId, vysledky, zive, buduce, vstupenky, nacitava }) => {
+  const u = useUpravy();
+  const podlaCasu = (a: Zapas, b: Zapas) => a.datum_cas.localeCompare(b.datum_cas);
+  const program = [...buduce].sort(podlaCasu);
+  const odohrane = [...vysledky].sort(podlaCasu).reverse();
+  const hlavny = zive[0] ?? program[0] ?? odohrane[0] ?? null;
+  const dalsie = [...program.filter((z) => z.id !== hlavny?.id).slice(0, 2), ...odohrane.filter((z) => z.id !== hlavny?.id).slice(0, 2)];
+  return (
+    <section className="kl-sekcia kl-zapasy-mobil" aria-labelledby="kl-zapasy-mobil-nadpis">
+      <NadpisSekcie nadpis={u.text('zapasy_nadpis', 'Zápasy a výsledky')} odkaz="/matches" id="kl-zapasy-mobil-nadpis" />
+      {timy.length > 1 && (
+        <div className="kl-zapasy-mobil__timy" role="tablist" aria-label="Tím">
+          {timy.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={t.id === timId} className={t.id === timId ? 'is-aktivny' : ''} onClick={() => setTimId(t.id)}>
+              {t.nazov}
+            </button>
+          ))}
+        </div>
+      )}
+      {hlavny ? (
+        <HlavnyZapasMobil zapas={hlavny} vstupenky={vstupenky} />
+      ) : (
+        !nacitava && <p className="kl-zapasy-mobil__prazdne">Tím zatiaľ nemá žiadne zápasy.</p>
+      )}
+      {dalsie.length > 0 && (
+        <div className="kl-zapasy-mobil__zoznam">
+          {dalsie.map((z) => (
+            <RiadokZapasuMobil key={z.id} zapas={z} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+
 const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ timy, vstupenky }) => {
   const u = useUpravy();
   const [timId, setTimId] = useState<number | null>(timy[0]?.id ?? null);
@@ -185,7 +327,18 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
   };
 
   return (
-    <section className="kl-zapasy" aria-labelledby="kl-zapasy-nadpis">
+    <>
+    <ZapasyMobil
+      timy={timy}
+      timId={timId}
+      setTimId={setTimId}
+      vysledky={vysledky.data ?? []}
+      zive={zive.data ?? []}
+      buduce={buduce.data ?? []}
+      vstupenky={vstupenky}
+      nacitava={nacitava}
+    />
+    <section className="kl-zapasy kl-zapasy--pc" aria-labelledby="kl-zapasy-nadpis">
       <div className="kl-zapasy__pozadie" aria-hidden="true" />
       <div className="kl-kontajner kl-zapasy__vnutro">
         <div className="kl-zapasy__hlava">
@@ -235,6 +388,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
         </Link>
       </div>
     </section>
+    </>
   );
 };
 
