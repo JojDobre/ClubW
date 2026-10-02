@@ -1,10 +1,10 @@
-// Umiestnenie: sablony/kronika/src/index.tsx
-// Šablóna Kronika - hlavička, pätička, mobilná navigácia a všetky
+// Umiestnenie: sablony/elita/src/index.tsx
+// Šablóna Elita - hlavička, pätička, mobilná navigácia a všetky
 // verejné stránky webu vrátane fanshopu (obchod, košík, pokladňa). Úvod, Novinky, Videá, Fotogaléria, Súpiska
 // a Profil hráča sú podľa návrhov z Claude Design, ostatné stránky
 // z nich preberajú hlavičku, filtre, karty a tabuľky.
 //
-// Zostavenie: npm run sablony -- kronika   (vytvorí sablona.js)
+// Zostavenie: npm run sablony -- elita   (vytvorí sablona.js)
 
 import { registrujSablonu } from '@clubw/jadro';
 import { Rozlozenie, Hlavicka, Paticka, Nacitavanie } from './Rozlozenie';

@@ -1,5 +1,5 @@
-// Umiestnenie: sablony/kronika/src/spolocne.tsx
-// Spoločné súčasti šablóny Kronika: načítanie dát, typy z verejného API,
+// Umiestnenie: sablony/elita/src/spolocne.tsx
+// Spoločné súčasti šablóny Elita: načítanie dát, typy z verejného API,
 // formáty dátumov, erby tímov, ikony a nadpis sekcie.
 
 import React, { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -304,7 +304,7 @@ export const useMetaPopis = (popis: string | null | undefined) => {
 };
 
 /**
- * Texty, odkazy a prepínače z nastavení šablóny (Šablóny → Kronika →
+ * Texty, odkazy a prepínače z nastavení šablóny (Šablóny → Elita →
  * Prispôsobiť). Prázdny text znamená predvolený text šablóny, v texte
  * sa {klub} nahradí názvom klubu.
  *
@@ -500,11 +500,11 @@ const iniciely = (nazov: string) =>
 /** Erb tímu - logo, inak farebný kruh (v návrhu tmavý pre domácich, akcent pre hostí). */
 export const Erb: React.FC<{ nazov: string; logo?: string | null; ton?: 'tmavy' | 'akcent'; velky?: boolean }> = ({ nazov, logo, ton = 'tmavy', velky = false }) =>
   logo ? (
-    <span className={`kr-erb kr-erb--logo${velky ? ' kr-erb--velky' : ''}`}>
+    <span className={`el-erb el-erb--logo${velky ? ' el-erb--velky' : ''}`}>
       <img src={obrazokUrl(logo) ?? ''} alt="" loading="lazy" />
     </span>
   ) : (
-    <span className={`kr-erb kr-erb--${ton}${velky ? ' kr-erb--velky' : ''}`} aria-hidden="true">
+    <span className={`el-erb el-erb--${ton}${velky ? ' el-erb--velky' : ''}`} aria-hidden="true">
       {iniciely(nazov)}
     </span>
   );
@@ -587,11 +587,11 @@ export const Odkaz: React.FC<{ to: string; className?: string; children: ReactNo
 export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; svetly?: boolean; id?: string }> = ({ nadpis, odkaz, svetly = false, id }) => {
   const u = useUpravy();
   return (
-  <div className={`kr-nadpis${svetly ? ' kr-nadpis--svetly' : ''}`}>
+  <div className={`el-nadpis${svetly ? ' el-nadpis--svetly' : ''}`}>
     <h2 id={id}>{nadpis}</h2>
-    <span className="kr-nadpis__ciara" aria-hidden="true" />
+    <span className="el-nadpis__ciara" aria-hidden="true" />
     {odkaz && (
-      <Odkaz to={odkaz} className="kr-nadpis__odkaz">
+      <Odkaz to={odkaz} className="el-nadpis__odkaz">
         {u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
       </Odkaz>
     )}
@@ -601,7 +601,7 @@ export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; sve
 
 /** Nadpis medzi dvoma čiarami (Úspechy, Partneri). */
 export const NadpisStredovy: React.FC<{ nadpis: string }> = ({ nadpis }) => (
-  <div className="kr-nadpis-stred">
+  <div className="el-nadpis-stred">
     <span aria-hidden="true" />
     <h2>{nadpis}</h2>
     <span aria-hidden="true" />

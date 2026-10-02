@@ -1,5 +1,5 @@
-// Umiestnenie: sablony/kronika/src/casti.tsx
-// Časti, ktoré sa opakujú na viacerých stránkach šablóny Kronika:
+// Umiestnenie: sablony/elita/src/casti.tsx
+// Časti, ktoré sa opakujú na viacerých stránkach šablóny Elita:
 // tmavá hlavička podstránky, filtre (pilulky), „Načítať ďalšie", stavy
 // načítania, karty článku / hráča / zápasu / videa, partneri a tabuľka.
 // Rozmery a písma zodpovedajú návrhom z Claude Design (News, Videá,
@@ -49,14 +49,14 @@ export const HlavickaStranky: React.FC<{
   children?: ReactNode;
   className?: string;
 }> = ({ stitok, nadpis, spat, children, className = '' }) => (
-  <header className={`kr-hlava ${className}`}>
-    <div className="kr-kontajner">
+  <header className={`el-hlava ${className}`}>
+    <div className="el-kontajner">
       {spat && (
-        <Link to={spat.odkaz} className="kr-spat">
+        <Link to={spat.odkaz} className="el-spat">
           <Ikona nazov="vlavo" velkost={14} /> {spat.text}
         </Link>
       )}
-      {stitok && <span className="kr-hlava__stitok">{stitok}</span>}
+      {stitok && <span className="el-hlava__stitok">{stitok}</span>}
       <h1>{nadpis}</h1>
       {children}
     </div>
@@ -84,13 +84,13 @@ export const Filtre = <K extends string>({
   popis: string;
   className?: string;
 }) => (
-  <div className={`kr-filtre ${className}`} role="group" aria-label={popis}>
+  <div className={`el-filtre ${className}`} role="group" aria-label={popis}>
     {moznosti.map((m) => (
       <button
         key={m.kluc}
         type="button"
         aria-pressed={aktivna === m.kluc}
-        className={`kr-filter${aktivna === m.kluc ? ' is-aktivny' : ''}`}
+        className={`el-filter${aktivna === m.kluc ? ' is-aktivny' : ''}`}
         onClick={() => onZmena(m.kluc)}
       >
         {m.nazov}
@@ -101,30 +101,30 @@ export const Filtre = <K extends string>({
 
 /** Pás záložiek na červenom podklade (tímy na súpiske a pri zápasoch). */
 export const PasZaloziek: React.FC<{ children: ReactNode; popis: string }> = ({ children, popis }) => (
-  <nav className="kr-pas-zaloziek" aria-label={popis}>
-    <div className="kr-kontajner kr-pas-zaloziek__vnutro">{children}</div>
+  <nav className="el-pas-zaloziek" aria-label={popis}>
+    <div className="el-kontajner el-pas-zaloziek__vnutro">{children}</div>
   </nav>
 );
 
 // ===== Stavy =====
 
 export const NacitatDalsie: React.FC<{ onClick: () => void; nacitava: boolean }> = ({ onClick, nacitava }) => (
-  <div className="kr-dalsie">
-    <button type="button" className="kr-tlacidlo-dalsie" onClick={onClick} disabled={nacitava}>
+  <div className="el-dalsie">
+    <button type="button" className="el-tlacidlo-dalsie" onClick={onClick} disabled={nacitava}>
       {nacitava ? 'Načítavam…' : 'Načítať ďalšie'}
     </button>
   </div>
 );
 
 export const Nacitava: React.FC<{ text?: string }> = ({ text = 'Načítavam…' }) => (
-  <div className="kr-nacitava" role="status">
+  <div className="el-nacitava" role="status">
     <span aria-hidden="true" />
     {text}
   </div>
 );
 
 export const Prazdne: React.FC<{ nadpis: string; text?: string; children?: ReactNode }> = ({ nadpis, text, children }) => (
-  <div className="kr-prazdne">
+  <div className="el-prazdne">
     <strong>{nadpis}</strong>
     {text && <p>{text}</p>}
     {children}
@@ -132,10 +132,10 @@ export const Prazdne: React.FC<{ nadpis: string; text?: string; children?: React
 );
 
 export const Chyba: React.FC<{ text: string }> = ({ text }) => (
-  <div className="kr-prazdne kr-prazdne--chyba" role="alert">
+  <div className="el-prazdne el-prazdne--chyba" role="alert">
     <strong>Niečo sa pokazilo</strong>
     <p>{text}</p>
-    <button type="button" className="kr-tlacidlo-dalsie" onClick={() => window.location.reload()}>
+    <button type="button" className="el-tlacidlo-dalsie" onClick={() => window.location.reload()}>
       Skúsiť znova
     </button>
   </div>
@@ -143,8 +143,8 @@ export const Chyba: React.FC<{ text: string }> = ({ text }) => (
 
 /** Obsah stránky obalený sekciou s bočnými okrajmi (bez hlavičky). */
 export const ChybaStranky: React.FC<{ text: string }> = ({ text }) => (
-  <div className="kr-sekcia kr-sekcia--hore">
-    <div className="kr-kontajner">
+  <div className="el-sekcia el-sekcia--hore">
+    <div className="el-kontajner">
       <Chyba text={text} />
     </div>
   </div>
@@ -155,7 +155,7 @@ export const ChybaStranky: React.FC<{ text: string }> = ({ text }) => (
 export const Obrazok: React.FC<{ src?: string | null; className: string; alt?: string }> = ({ src, className, alt = '' }) => {
   const url = obrazokUrl(src);
   return (
-    <span className={`${className} kr-obrazok${url ? '' : ' kr-obrazok--prazdny'}`}>
+    <span className={`${className} el-obrazok${url ? '' : ' el-obrazok--prazdny'}`}>
       {url && <img src={url} alt={alt} loading="lazy" onError={skryObrazok} />}
     </span>
   );
@@ -164,17 +164,17 @@ export const Obrazok: React.FC<{ src?: string | null; className: string; alt?: s
 // ===== Články =====
 
 export const MetaClanku: React.FC<{ clanok: Clanok }> = ({ clanok }) => (
-  <div className="kr-clanok__meta">
-    {clanok.kategoria && <span className="kr-clanok__kategoria">{clanok.kategoria.nazov}</span>}
-    <span className="kr-clanok__datum">{datum(clanok.publikovany_datum || clanok.vytvoreny)}</span>
+  <div className="el-clanok__meta">
+    {clanok.kategoria && <span className="el-clanok__kategoria">{clanok.kategoria.nazov}</span>}
+    <span className="el-clanok__datum">{datum(clanok.publikovany_datum || clanok.vytvoreny)}</span>
   </div>
 );
 
 /** Karta článku v mriežke (Novinky, Súvisiace novinky). */
 export const KartaClanku: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => (
-  <Link to={`/clanek/${c.slug}`} className="kr-karta">
-    <Obrazok src={c.obrazok} className="kr-karta__obrazok" />
-    <div className="kr-karta__text">
+  <Link to={`/clanek/${c.slug}`} className="el-karta">
+    <Obrazok src={c.obrazok} className="el-karta__obrazok" />
+    <div className="el-karta__text">
       <h4>{c.nazov}</h4>
       <MetaClanku clanok={c} />
     </div>
@@ -185,12 +185,12 @@ export const KartaClanku: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => (
 export const HlavnyClanok: React.FC<{ clanok: Clanok }> = ({ clanok: c }) => {
   const u = useUpravy();
   return (
-  <Link to={`/clanek/${c.slug}`} className="kr-hlavny-clanok">
-    <Obrazok src={c.obrazok} className="kr-hlavny-clanok__obrazok" />
-    <div className="kr-hlavny-clanok__text">
+  <Link to={`/clanek/${c.slug}`} className="el-hlavny-clanok">
+    <Obrazok src={c.obrazok} className="el-hlavny-clanok__obrazok" />
+    <div className="el-hlavny-clanok__text">
       <MetaClanku clanok={c} />
       <h2>{c.nazov}</h2>
-      <span className="kr-tlacidlo-obrys">
+      <span className="el-tlacidlo-obrys">
         {u.text('text_citat_viac', 'Čítať viac')}
         <Ikona nazov="sipka" velkost={14} />
       </span>
@@ -209,20 +209,20 @@ export const KartaVidea: React.FC<{ video: Video; onPrehrat: (v: Video) => void 
   const dlzka = dlzkaVidea(v.dlzka);
   const kategoria = kategoriaVidea(v);
   return (
-    <button type="button" className="kr-karta kr-karta--video" onClick={() => onPrehrat(v)} aria-label={`Prehrať video ${v.nazov}`}>
-      <span className="kr-karta__obrazok kr-karta__obrazok--video">
-        <Obrazok src={nahladVidea(v)} className="kr-video__obrazok" />
-        <span className="kr-video__prechod" aria-hidden="true" />
-        <span className="kr-video__play" aria-hidden="true">
+    <button type="button" className="el-karta el-karta--video" onClick={() => onPrehrat(v)} aria-label={`Prehrať video ${v.nazov}`}>
+      <span className="el-karta__obrazok el-karta__obrazok--video">
+        <Obrazok src={nahladVidea(v)} className="el-video__obrazok" />
+        <span className="el-video__prechod" aria-hidden="true" />
+        <span className="el-video__play" aria-hidden="true">
           <Ikona nazov="play" velkost={20} />
         </span>
-        {dlzka && <span className="kr-video__dlzka">{dlzka}</span>}
+        {dlzka && <span className="el-video__dlzka">{dlzka}</span>}
       </span>
-      <span className="kr-karta__text">
+      <span className="el-karta__text">
         <h4>{v.nazov}</h4>
-        <span className="kr-clanok__meta">
-          {kategoria && <span className="kr-clanok__kategoria">{kategoria}</span>}
-          {v.vytvorene && <span className="kr-clanok__datum">{datum(v.vytvorene)}</span>}
+        <span className="el-clanok__meta">
+          {kategoria && <span className="el-clanok__kategoria">{kategoria}</span>}
+          {v.vytvorene && <span className="el-clanok__datum">{datum(v.vytvorene)}</span>}
         </span>
       </span>
     </button>
@@ -241,20 +241,20 @@ export const KartaHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca | n
     ...(karty ? ([[st?.zlte_karty ?? 0, 'Karty']] as Array<[number, string]>) : []),
   ];
   return (
-    <Link to={`/players/${h.id}`} className="kr-hrac">
-      {fotka ? <img src={fotka} alt="" loading="lazy" className="kr-hrac__fotka" onError={skryObrazok} /> : <span className="kr-hrac__silueta" aria-hidden="true" />}
-      <span className="kr-hrac__prechod" aria-hidden="true" />
-      {h.narodnost && <span className="kr-hrac__narodnost">{h.narodnost}</span>}
-      <div className="kr-hrac__spodok">
-        <div className="kr-hrac__meno">
-          {h.cislo_dresu !== null && h.cislo_dresu !== undefined && <span className="kr-hrac__cislo">{h.cislo_dresu}</span>}
+    <Link to={`/players/${h.id}`} className="el-hrac">
+      {fotka ? <img src={fotka} alt="" loading="lazy" className="el-hrac__fotka" onError={skryObrazok} /> : <span className="el-hrac__silueta" aria-hidden="true" />}
+      <span className="el-hrac__prechod" aria-hidden="true" />
+      {h.narodnost && <span className="el-hrac__narodnost">{h.narodnost}</span>}
+      <div className="el-hrac__spodok">
+        <div className="el-hrac__meno">
+          {h.cislo_dresu !== null && h.cislo_dresu !== undefined && <span className="el-hrac__cislo">{h.cislo_dresu}</span>}
           <div>
-            <span className="kr-hrac__krstne">{h.meno}</span>
-            <span className="kr-hrac__priezvisko">{h.priezvisko}</span>
+            <span className="el-hrac__krstne">{h.meno}</span>
+            <span className="el-hrac__priezvisko">{h.priezvisko}</span>
           </div>
         </div>
-        <span className="kr-hrac__pozicia">{pozicia(h.pozicia) || ' '}</span>
-        <div className={`kr-hrac__staty${karty ? '' : ' kr-hrac__staty--3'}`}>
+        <span className="el-hrac__pozicia">{pozicia(h.pozicia) || ' '}</span>
+        <div className={`el-hrac__staty${karty ? '' : ' el-hrac__staty--3'}`}>
           {staty.map(([hodnota, nazov]) => (
             <div key={nazov}>
               <strong>{hodnota}</strong>
@@ -270,17 +270,17 @@ export const KartaHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca | n
 export const KartaClena: React.FC<{ clen: ClenTimu }> = ({ clen: c }) => {
   const fotka = obrazokUrl(c.fotka);
   return (
-    <Link to={`/staff/${c.id}`} className="kr-hrac kr-hrac--clen">
-      {fotka ? <img src={fotka} alt="" loading="lazy" className="kr-hrac__fotka" onError={skryObrazok} /> : <span className="kr-hrac__silueta" aria-hidden="true" />}
-      <span className="kr-hrac__prechod" aria-hidden="true" />
-      <div className="kr-hrac__spodok">
-        <div className="kr-hrac__meno">
+    <Link to={`/staff/${c.id}`} className="el-hrac el-hrac--clen">
+      {fotka ? <img src={fotka} alt="" loading="lazy" className="el-hrac__fotka" onError={skryObrazok} /> : <span className="el-hrac__silueta" aria-hidden="true" />}
+      <span className="el-hrac__prechod" aria-hidden="true" />
+      <div className="el-hrac__spodok">
+        <div className="el-hrac__meno">
           <div>
-            <span className="kr-hrac__krstne">{c.meno}</span>
-            <span className="kr-hrac__priezvisko">{c.priezvisko}</span>
+            <span className="el-hrac__krstne">{c.meno}</span>
+            <span className="el-hrac__priezvisko">{c.priezvisko}</span>
           </div>
         </div>
-        <span className="kr-hrac__pozicia kr-hrac__pozicia--posledna">{funkcia(c.funkcia)}</span>
+        <span className="el-hrac__pozicia el-hrac__pozicia--posledna">{funkcia(c.funkcia)}</span>
       </div>
     </Link>
   );
@@ -307,39 +307,39 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
   const stavText = STAV_KARTY[stav] ?? STAV_KARTY.naplanovany;
 
   return (
-    <article className="kr-zapas">
-      <div className="kr-zapas__hlava">
-        <span className={`kr-zapas__tag${doma ? ' is-doma' : ''}`}>{doma ? 'Doma' : 'Vonku'}</span>
-        <span className="kr-zapas__datum">{datumKratky(z.datum_cas)}</span>
-        {z.miesto && <span className="kr-zapas__miesto">{z.miesto}</span>}
-        <span className={`kr-zapas__stav ${stavText.trieda}`}>{stavText.text}</span>
+    <article className="el-zapas">
+      <div className="el-zapas__hlava">
+        <span className={`el-zapas__tag${doma ? ' is-doma' : ''}`}>{doma ? 'Doma' : 'Vonku'}</span>
+        <span className="el-zapas__datum">{datumKratky(z.datum_cas)}</span>
+        {z.miesto && <span className="el-zapas__miesto">{z.miesto}</span>}
+        <span className={`el-zapas__stav ${stavText.trieda}`}>{stavText.text}</span>
       </div>
-      <div className="kr-zapas__timy">
-        <div className="kr-zapas__tim">
+      <div className="el-zapas__timy">
+        <div className="el-zapas__tim">
           <Erb nazov={nazovDomacich(z)} logo={logoStrany(z, 'domaci', nastavenia.logo)} ton="tmavy" />
-          <span className="kr-zapas__nazov">{nazovDomacich(z)}</span>
-          {skore && <span className="kr-zapas__skore">{z.goly_domaci}</span>}
+          <span className="el-zapas__nazov">{nazovDomacich(z)}</span>
+          {skore && <span className="el-zapas__skore">{z.goly_domaci}</span>}
         </div>
-        <div className="kr-zapas__tim">
+        <div className="el-zapas__tim">
           <Erb nazov={nazovHosti(z)} logo={logoStrany(z, 'hostia', nastavenia.logo)} ton="akcent" />
-          <span className="kr-zapas__nazov">{nazovHosti(z)}</span>
-          {skore && <span className="kr-zapas__skore">{z.goly_hostia}</span>}
+          <span className="el-zapas__nazov">{nazovHosti(z)}</span>
+          {skore && <span className="el-zapas__skore">{z.goly_hostia}</span>}
         </div>
-        {!skore && <span className="kr-zapas__cas">{cas(z.datum_cas)}</span>}
+        {!skore && <span className="el-zapas__cas">{cas(z.datum_cas)}</span>}
       </div>
-      <div className="kr-zapas__ciara" />
-      <div className="kr-zapas__akcie">
+      <div className="el-zapas__ciara" />
+      <div className="el-zapas__akcie">
         {z.video_url && (
-          <a href={z.video_url} target="_blank" rel="noopener noreferrer" className="kr-zapas__tlacidlo kr-zapas__tlacidlo--tmave">
+          <a href={z.video_url} target="_blank" rel="noopener noreferrer" className="el-zapas__tlacidlo el-zapas__tlacidlo--tmave">
             Video
           </a>
         )}
         {!odohrany && vstupenky && (
-          <Odkaz to={vstupenky} className="kr-zapas__tlacidlo">
+          <Odkaz to={vstupenky} className="el-zapas__tlacidlo">
             {u.text('vstupenky_text', 'Vstupenky')}
           </Odkaz>
         )}
-        <Link to={`/matches/${z.id}`} className={`kr-zapas__tlacidlo${!z.video_url && (odohrany || !vstupenky) ? ' kr-zapas__tlacidlo--tmave' : ''}`}>
+        <Link to={`/matches/${z.id}`} className={`el-zapas__tlacidlo${!z.video_url && (odohrany || !vstupenky) ? ' el-zapas__tlacidlo--tmave' : ''}`}>
           {u.text('text_detail', 'Detail')}
         </Link>
       </div>
@@ -354,7 +354,7 @@ const HLAVNE_UROVNE = ['generalny', 'hlavny'];
 export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ partner: p, velke = false }) => {
   const logo = obrazokUrl(p.logo);
   const obsah = logo ? <img src={logo} alt={p.nazov} loading="lazy" onError={skryObrazok} /> : <span>{p.nazov}</span>;
-  const trieda = `kr-partner${velke ? ' kr-partner--velky' : ''}`;
+  const trieda = `el-partner${velke ? ' el-partner--velky' : ''}`;
   return p.web_url ? (
     <a href={p.web_url} target="_blank" rel="noopener noreferrer" className={trieda} title={p.nazov}>
       {obsah}
@@ -374,22 +374,22 @@ export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
   const prvi = (hlavni.length > 0 ? hlavni : partneri).slice(0, 4);
   const ostatni = partneri.filter((p) => !prvi.includes(p)).slice(0, 6);
   return (
-    <section className="kr-sekcia kr-partneri" aria-label="Partneri">
-      <div className="kr-kontajner">
+    <section className="el-sekcia el-partneri" aria-label="Partneri">
+      <div className="el-kontajner">
         <NadpisStredovy nadpis={u.text('partneri_nadpis', 'Partneri')} />
-        <div className="kr-partneri__rad kr-partneri__rad--hlavny">
+        <div className="el-partneri__rad el-partneri__rad--hlavny">
           {prvi.map((p) => (
             <LogoPartnera key={p.id} partner={p} velke />
           ))}
         </div>
         {ostatni.length > 0 && (
-          <div className="kr-partneri__rad">
+          <div className="el-partneri__rad">
             {ostatni.map((p) => (
               <LogoPartnera key={p.id} partner={p} />
             ))}
           </div>
         )}
-        <Link to="/sponzori" className="kr-partneri__vsetci">
+        <Link to="/sponzori" className="el-partneri__vsetci">
           {u.text('text_vsetci_partneri', 'Všetci partneri')}
         </Link>
       </div>
@@ -413,9 +413,9 @@ export const Forma: React.FC<{ forma?: string | null }> = ({ forma }) => {
   const typ = (z: string) => (z === 'W' || z === 'V' ? 'V' : z === 'D' || z === 'R' ? 'R' : 'P');
   const popis: Record<string, string> = { V: 'Výhra', R: 'Remíza', P: 'Prehra' };
   return (
-    <span className="kr-forma">
+    <span className="el-forma">
       {znaky.map((z, i) => (
-        <span key={i} className={`kr-forma__znak kr-forma__znak--${typ(z)}`} title={popis[typ(z)]}>
+        <span key={i} className={`el-forma__znak el-forma__znak--${typ(z)}`} title={popis[typ(z)]}>
           {typ(z)}
         </span>
       ))}
@@ -435,41 +435,41 @@ export const TabulkaSutaze: React.FC<{
   const logo = (r: RiadokTabulky) => r.tim_logo || r.custom_tim_logo || null;
   const plna = !kompaktna && !lenBody;
   return (
-    <div className="kr-tabulka-obal">
-      <table className="kr-tabulka kr-tabulka--sutaz">
+    <div className="el-tabulka-obal">
+      <table className="el-tabulka el-tabulka--sutaz">
         <thead>
           <tr>
-            <th className="kr-tabulka__poz">#</th>
-            <th className="kr-tabulka__tim">Tím</th>
+            <th className="el-tabulka__poz">#</th>
+            <th className="el-tabulka__tim">Tím</th>
             <th title="Zápasy">Z</th>
             {plna && (
               <>
-                <th title="Výhry" className="kr-tabulka__volitelne">V</th>
-                <th title="Remízy" className="kr-tabulka__volitelne">R</th>
-                <th title="Prehry" className="kr-tabulka__volitelne">P</th>
+                <th title="Výhry" className="el-tabulka__volitelne">V</th>
+                <th title="Remízy" className="el-tabulka__volitelne">R</th>
+                <th title="Prehry" className="el-tabulka__volitelne">P</th>
               </>
             )}
             {!lenBody && <th>Skóre</th>}
             <th title="Body">B</th>
-            {plna && forma && <th className="kr-tabulka__forma">Forma</th>}
+            {plna && forma && <th className="el-tabulka__forma">Forma</th>}
           </tr>
         </thead>
         <tbody>
           {riadky.map((r) => (
             <tr key={r.id} className={zvyraznitTim && r.tim_id === zvyraznitTim ? 'is-nas' : ''}>
-              <td className="kr-tabulka__poz">{r.pozicia}</td>
-              <td className="kr-tabulka__tim">
+              <td className="el-tabulka__poz">{r.pozicia}</td>
+              <td className="el-tabulka__tim">
                 <span>
                   <Erb nazov={nazov(r)} logo={logo(r)} />
-                  <span className="kr-tabulka__nazov">{nazov(r)}</span>
+                  <span className="el-tabulka__nazov">{nazov(r)}</span>
                 </span>
               </td>
               <td>{r.zapasy}</td>
               {plna && (
                 <>
-                  <td className="kr-tabulka__volitelne">{r.vitazstva}</td>
-                  <td className="kr-tabulka__volitelne">{r.remizy}</td>
-                  <td className="kr-tabulka__volitelne">{r.prehry}</td>
+                  <td className="el-tabulka__volitelne">{r.vitazstva}</td>
+                  <td className="el-tabulka__volitelne">{r.remizy}</td>
+                  <td className="el-tabulka__volitelne">{r.prehry}</td>
                 </>
               )}
               {!lenBody && (
@@ -477,9 +477,9 @@ export const TabulkaSutaze: React.FC<{
                   {r.goly_za}:{r.goly_proti}
                 </td>
               )}
-              <td className="kr-tabulka__body">{r.body}</td>
+              <td className="el-tabulka__body">{r.body}</td>
               {plna && forma && (
-                <td className="kr-tabulka__forma">
+                <td className="el-tabulka__forma">
                   <Forma forma={r.forma} />
                 </td>
               )}
@@ -502,8 +502,8 @@ export const vyrezTabulky = (riadky: RiadokTabulky[], timId: number | null | und
 
 /** Mriežka kariet s bočnými okrajmi stránky. */
 export const Sekcia: React.FC<{ children: ReactNode; className?: string; ariaLabel?: string; id?: string }> = ({ children, className = '', ariaLabel, id }) => (
-  <section className={`kr-sekcia ${className}`} aria-label={ariaLabel} id={id}>
-    <div className="kr-kontajner">{children}</div>
+  <section className={`el-sekcia ${className}`} aria-label={ariaLabel} id={id}>
+    <div className="el-kontajner">{children}</div>
   </section>
 );
 
@@ -541,22 +541,22 @@ export const OknoVidea: React.FC<{ video: Video; onZavriet: () => void }> = ({ v
     const predtym = document.activeElement as HTMLElement | null;
     const klaves = (e: KeyboardEvent) => e.key === 'Escape' && onZavriet();
     window.addEventListener('keydown', klaves);
-    document.body.classList.add('kr-bez-posunu');
+    document.body.classList.add('el-bez-posunu');
     zavriet.current?.focus();
     return () => {
       window.removeEventListener('keydown', klaves);
-      document.body.classList.remove('kr-bez-posunu');
+      document.body.classList.remove('el-bez-posunu');
       predtym?.focus?.();
     };
   }, [onZavriet]);
 
   return (
-    <div className="kr-okno" role="dialog" aria-modal="true" aria-label={v.nazov} onClick={onZavriet}>
-      <div className="kr-okno__box" onClick={(e) => e.stopPropagation()}>
-        <button ref={zavriet} type="button" className="kr-okno__zavriet" onClick={onZavriet} aria-label="Zavrieť">
+    <div className="el-okno" role="dialog" aria-modal="true" aria-label={v.nazov} onClick={onZavriet}>
+      <div className="el-okno__box" onClick={(e) => e.stopPropagation()}>
+        <button ref={zavriet} type="button" className="el-okno__zavriet" onClick={onZavriet} aria-label="Zavrieť">
           <Ikona nazov="zavriet" velkost={18} />
         </button>
-        <div className="kr-okno__media">
+        <div className="el-okno__media">
           {url && (
             <iframe
               src={url}
@@ -566,18 +566,18 @@ export const OknoVidea: React.FC<{ video: Video; onZavriet: () => void }> = ({ v
             />
           )}
         </div>
-        <div className="kr-okno__info">
+        <div className="el-okno__info">
           <h3>{v.nazov}</h3>
-          <div className="kr-clanok__meta">
-            {kategoria && <span className="kr-clanok__kategoria">{kategoria}</span>}
-            {dlzka && <span className="kr-okno__dlzka">{dlzka}</span>}
+          <div className="el-clanok__meta">
+            {kategoria && <span className="el-clanok__kategoria">{kategoria}</span>}
+            {dlzka && <span className="el-okno__dlzka">{dlzka}</span>}
             {v.zapas && (
-              <Link to={`/matches/${v.zapas.id}`} className="kr-okno__odkaz" onClick={onZavriet}>
+              <Link to={`/matches/${v.zapas.id}`} className="el-okno__odkaz" onClick={onZavriet}>
                 Detail zápasu
               </Link>
             )}
           </div>
-          {v.popis && <p className="kr-okno__popis">{v.popis}</p>}
+          {v.popis && <p className="el-okno__popis">{v.popis}</p>}
         </div>
       </div>
     </div>
