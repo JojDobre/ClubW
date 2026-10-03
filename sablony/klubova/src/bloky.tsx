@@ -5,8 +5,8 @@
 // a partneri vyzerajú rovnako ako na úvode.
 
 import React from 'react';
-import { HlavickaBloku, PREDVOLENE_BLOKY, adresaZapasovBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
-import { KartaClanku, KartaZapasu, LogoPartnera, Obrazok } from './casti';
+import { HlavickaBloku, PREDVOLENE_BLOKY, adresaZapasovBloku, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
+import { KartaClanku, KartaZapasu, LogoPartnera, ObrazOdkazu } from './casti';
 import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
 const ZapasyBloku: KomponentBloku = ({ blok: { data } }) => {
@@ -63,9 +63,11 @@ const PartneriBloku: KomponentBloku = ({ blok: { data } }) => {
 /** Farebné tóny kariet „Odkaz klubu" - rovnaké ako na úvode */
 const TONY_ODKAZU = ['var(--kl-tmava)', 'var(--kl-akcent)', '#c8862a'];
 
-/** Karty: vzhľad „Odkaz klubu" (ovál s názvom a tlačidlo ako na úvode), ostatné vzhľady kreslí jadro. */
+/**
+ * Karty: vzhľad „Odkaz klubu" (rám s názvom a tlačidlo ako na úvode), ostatné vzhľady kreslí jadro.
+ * Text položky sa ukáže v ráme nad názvom (prázdny = text z nastavení šablóny alebo názov klubu).
+ */
 const KartyBloku: KomponentBloku = (props) => {
-  const { nastavenia } = useNastavenia();
   const u = useUpravy();
   const { data, polozky = [] } = props.blok;
   if (data.vzhlad !== 'klub') {
@@ -80,14 +82,7 @@ const KartyBloku: KomponentBloku = (props) => {
           const nazov = String(p.nadpis || '');
           return (
             <div key={i} className="blok__polozka kl-odkaz-karta">
-              <div className="kl-odkaz-karta__obraz">
-                <Obrazok src={p.obrazok as string | null} className="kl-odkaz-karta__fotka" />
-                <span className="kl-odkaz-karta__ton" style={{ background: TONY_ODKAZU[i % TONY_ODKAZU.length] }} aria-hidden="true" />
-                <span className="kl-odkaz-karta__oval" aria-hidden="true">
-                  <small>{nastavenia.skratka || nastavenia.nazov}</small>
-                  <strong>{nazov}</strong>
-                </span>
-              </div>
+              <ObrazOdkazu obrazok={(p.obrazok as string | null) || null} ton={TONY_ODKAZU[i % TONY_ODKAZU.length]} nazov={nazov} stitok={String(p.text || '')} />
               <div className="kl-odkaz-karta__spodok">
                 <span>{nazov}</span>
                 {p.odkaz && (

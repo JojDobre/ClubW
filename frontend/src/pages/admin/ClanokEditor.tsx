@@ -20,6 +20,8 @@ import { naVstupDatumCas, zoVstupuDatumCas } from '../../utils/datum';
 import { timyApi } from '../../api/sport';
 import type { Clanok, Kategoria, StavClanku, ClanokNaUlozenie } from '../../api/typy';
 import { tr, lokalita } from '../../i18n';
+import { VyberZKniznice } from '../../components/admin/VyberZKniznice';
+import { souborUrl } from '../../config/api';
 import './ClanokEditor.css';
 
 const PRAZDNY: ClanokNaUlozenie & { slug?: string } = {
@@ -64,6 +66,8 @@ export const ClanokEditor: React.FC = () => {
   const [zmazatOtvorene, setZmazatOtvorene] = useState(false);
   const [maze, setMaze] = useState(false);
   const [nahrava, setNahrava] = useState(false);
+  /** Výber z knižnice médií: hlavný obrázok, alebo obrázok do textu (funkcia na vloženie) */
+  const [kniznica, setKniznica] = useState<null | { ciel: 'hlavny' } | { ciel: 'text'; vloz: (adresa: string, popis?: string) => void }>(null);
   const vyberSuboru = useRef<HTMLInputElement>(null);
   const [zmenene, setZmenene] = useState(false);
   const [poslednéUloženie, setPoslednéUloženie] = useState<Date | null>(null);
@@ -390,6 +394,7 @@ export const ClanokEditor: React.FC = () => {
             hodnota={formular.obsah}
             onZmena={(html) => zmen('obsah', html)}
             placeholder={tr('Text článku…')}
+            onObrazok={(vloz) => setKniznica({ ciel: 'text', vloz })}
           />
 
           {/* Krátky úvod */}
@@ -486,7 +491,7 @@ export const ClanokEditor: React.FC = () => {
             <div className="cw-ced__obrazok">
               {formular.obrazok ? (
                 <img
-                  src={formular.obrazok}
+                  src={souborUrl(formular.obrazok)}
                   alt={tr('Náhľad hlavného obrázka')}
                   onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                 />
@@ -515,6 +520,11 @@ export const ClanokEditor: React.FC = () => {
               >
                 <Icon nazov="galerie" velkost={14} />
                 {nahrava ? tr('Nahrávam…') : formular.obrazok ? tr('Zmeniť obrázok') : tr('Nahrať obrázok')}
+              </button>
+
+              <button type="button" className="cw-ced__btn" onClick={() => setKniznica({ ciel: 'hlavny' })} disabled={nahrava}>
+                <Icon nazov="galerie" velkost={14} />
+                {tr('Z knižnice')}
               </button>
 
               {formular.obrazok && (
@@ -625,6 +635,17 @@ export const ClanokEditor: React.FC = () => {
         nacitava={maze}
         onPotvrd={zmaz}
         onZrus={() => setZmazatOtvorene(false)}
+      />
+      <VyberZKniznice
+        otvorene={kniznica !== null}
+        onZavri={() => setKniznica(null)}
+        nadpis={kniznica?.ciel === 'text' ? tr('Vložiť obrázok') : tr('Hlavný obrázok')}
+        onVyber={(subory) => {
+          const subor = subory[0];
+          if (subor && kniznica?.ciel === 'hlavny') zmen('obrazok', subor.cesta);
+          if (subor && kniznica?.ciel === 'text') kniznica.vloz(subor.cesta, subor.alt_text || '');
+          setKniznica(null);
+        }}
       />
     </div>
   );

@@ -6,11 +6,11 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { BlokyStranky, ObsahSFormularmi, sanitizeHtml, useNastavenia, type BlokStranky } from '@clubw/jadro';
+import { BlokyStranky, ObsahSFormularmi, sanitizeHtml, type BlokStranky } from '@clubw/jadro';
 import { KLUBOVE_BLOKY } from '../bloky';
 import { NenajdenyObsah } from './Nenajdena';
 import { ChybaStranky, HlavickaStranky, Nacitava } from '../casti';
-import { hlavickaPrihlasenia, useApi, useMetaPopis, useNenajdene, useTitulok } from '../spolocne';
+import { hlavickaPrihlasenia, useApi, useMetaPopis, useNenajdene, useTitulok, useUpravy } from '../spolocne';
 
 interface TypStranky {
   id: number;
@@ -24,7 +24,7 @@ interface TypStranky {
 
 const Stranka: React.FC = () => {
   const { slug = '' } = useParams();
-  const { nastavenia } = useNastavenia();
+  const u = useUpravy();
   const nahladId = new URLSearchParams(window.location.search).get('nahlad');
   const stranka = useApi<TypStranky>(
     nahladId ? `/admin/pages/${encodeURIComponent(nahladId)}/nahlad` : `/pages/${encodeURIComponent(slug)}`,
@@ -46,7 +46,8 @@ const Stranka: React.FC = () => {
   return (
     <div className="kl-stranka kl-obsahova">
       {nahladId && <div className="kl-nahlad-pruh">Náhľad z administrácie - návštevníci stránku uvidia až po zverejnení.</div>}
-      <HlavickaStranky stitok={nastavenia.nazov} nadpis={s.nazov} />
+      {/* Štítok nad nadpisom z nastavení šablóny; prázdny = bez štítku */}
+      <HlavickaStranky stitok={u.text('stranka_stitok', '') || undefined} nadpis={s.nazov} />
       {s.obsah && (
         <div className="kl-clanok-detail__telo kl-clanok-detail__telo--bez-fotky">
           <ObsahSFormularmi html={sanitizeHtml(s.obsah)} className="kl-text" />

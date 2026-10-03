@@ -1716,6 +1716,7 @@
  "Vlastný spôsob s pokynmi pre zákazníka": "Mode personnalisé avec instructions pour le client",
  "Vlastný titulok": "Titre personnalisé",
  "Vloženie do stránky": "Intégration dans une page",
+ "Vložiť obrázok": "Insérer une image",
  "Vložte HTML/JS kód, ktorý dostanete od poskytovateľa brány (tlačidlo alebo formulár na zaplatenie). Zákazník ho uvidí po odoslaní objednávky. Kód beží v izolovanom rámci, nemá prístup k webu ani k prihláseniu.": "Collez le code HTML/JS fourni par le prestataire de la passerelle (bouton ou formulaire de paiement). Le client le voit après l'envoi de la commande. Le code s'exécute dans un cadre isolé, sans accès au site ni à la connexion.",
  "Vložte do obsahu stránky značku {znacka}": "Collez la balise {znacka} dans le contenu de la page",
  "Vložte ju do podmenu - v rozbaľovacom menu sa vpravo ukážu karty najnovších článkov (šablóna Klubová). Iné šablóny ukážu odkaz na zoznam článkov.": "Placez-le dans un sous-menu : le menu déroulant affichera à droite les cartes des derniers articles (modèle Klubová). Les autres modèles affichent un lien vers la liste des articles.",

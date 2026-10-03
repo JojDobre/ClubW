@@ -118,6 +118,35 @@ export const ulozMedium = async (
     metadata = null;
   }
 
+  // ===== SVG =====
+  // Vektorový obrázok (logo, ikona) môže obsahovať skripty, preto sa
+  // neukladá ako SVG - prevedie sa na priehľadný PNG (najviac 1200 bodov).
+  if (metadata && metadata.format === 'svg') {
+    let vystup: Buffer;
+    try {
+      vystup = await sharp(buffer, { density: 300 })
+        .resize(1200, 1200, { fit: 'inside', withoutEnlargement: false })
+        .png({ compressionLevel: 9 })
+        .toBuffer();
+    } catch {
+      throw new Error('SVG obrázok sa nepodarilo spracovať');
+    }
+    const nazovSuboru = `${zaklad}-${odlisovac}.png`;
+    const cielova = path.join(priecinok, nazovSuboru);
+    overCestu(cielova);
+    await fsPromises.writeFile(cielova, vystup);
+    const meta = await sharp(vystup).metadata();
+    return {
+      cesta: `/uploads/media/${mesiac}/${nazovSuboru}`,
+      nazovSuboru,
+      typ: 'obrazok',
+      mimeTyp: 'image/png',
+      velkost: vystup.length,
+      sirka: meta.width ?? null,
+      vyska: meta.height ?? null,
+    };
+  }
+
   if (metadata && metadata.format && FORMATY_OBRAZKOV.includes(metadata.format)) {
     if ((metadata.width || 0) > MAX_ROZMER || (metadata.height || 0) > MAX_ROZMER) {
       throw new Error(`Obrázok je príliš veľký (maximum ${MAX_ROZMER}×${MAX_ROZMER} bodov)`);
@@ -160,7 +189,7 @@ export const ulozMedium = async (
   const mimeDokumentu = PRIPONY_DOKUMENTOV[pripona];
   if (!mimeDokumentu) {
     throw new Error(
-      'Nepodporovaný typ súboru. Povolené sú obrázky (JPEG, PNG, WebP, GIF) ' +
+      'Nepodporovaný typ súboru. Povolené sú obrázky (JPEG, PNG, WebP, GIF, SVG) ' +
       `a dokumenty (${Object.keys(PRIPONY_DOKUMENTOV).join(', ')})`
     );
   }

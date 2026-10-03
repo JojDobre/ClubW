@@ -485,7 +485,7 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
 .kl-kruh-tlacidlo--vpravo { right: var(--kl-sipka-odsad, -24px); }
 
 .kl-zapas {
-  flex: 0 0 calc((100% - 40px) / 3); scroll-snap-align: start;
+  flex: 0 0 calc((100% - 40px) / 3); min-width: 0; scroll-snap-align: start;
   background: #ffffff; border: 1px solid var(--kl-tmava-8); border-radius: 24px; padding: 26px;
   box-shadow: 0px 12px 20px -15px color-mix(in srgb, var(--kl-tmava) 46%, transparent);
   display: flex; flex-direction: column; gap: 24px;
@@ -553,7 +553,7 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
 .kl-clanok__kategoria { color: var(--kl-akcent); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 .kl-clanok__datum { color: var(--kl-tmava-45); font-family: var(--kl-pismo); font-weight: 500; font-size: 13px; }
 
-.kl-clanky__bocne { display: flex; flex-direction: column; gap: 20px; justify-content: space-between; min-width: 0; }
+.kl-clanky__bocne { display: flex; flex-direction: column; gap: 24px; justify-content: flex-start; min-width: 0; }
 .kl-clanok-bocny { display: flex; gap: 16px; align-items: center; min-width: 0; text-decoration: none; color: var(--kl-tmava); transition: color 0.2s ease; }
 .kl-clanok-bocny:hover { color: var(--kl-akcent); }
 .kl-clanok-bocny__obrazok { width: 285px; max-width: 55%; aspect-ratio: 285 / 173; flex-shrink: 0; border-radius: 14px; }
@@ -693,15 +693,33 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
 
 .kl-odkaz { padding-top: 100px; padding-bottom: 120px; }
 .kl-odkaz-karta { border: 1px solid var(--kl-tmava-10); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
-.kl-odkaz-karta__obraz { position: relative; width: 100%; aspect-ratio: 1 / 1; }
+.kl-odkaz-karta__obraz { position: relative; width: 100%; aspect-ratio: 1 / 1; container-type: size; }
 .kl-odkaz-karta__fotka { position: absolute; inset: 0; filter: grayscale(1) contrast(1.1); }
 .kl-odkaz-karta__ton { position: absolute; inset: 0; mix-blend-mode: multiply; }
+/* Rám uprostred: rozmery podľa výšky obrázka, takže tvar ostane rovnaký aj na širokej karte */
 .kl-odkaz-karta__oval {
-  position: absolute; left: 19%; top: 11%; width: 62%; height: 78%; border-radius: 50%; border: 2px solid #ffffff;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 8px;
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(62cqh, 90cqw); height: 78cqh; border-radius: 50%; border: 2px solid #ffffff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 0 8%;
 }
-.kl-odkaz-karta__oval small { color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 600; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
-.kl-odkaz-karta__oval strong { color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: clamp(22px, 3vw, 32px); letter-spacing: 1px; text-transform: uppercase; line-height: 1.1; overflow-wrap: anywhere; }
+.kl-odkaz-karta__oval--kruh { width: min(74cqh, 90cqw); height: min(74cqh, 90cqw); }
+.kl-odkaz-karta__oval--stvorec { width: min(68cqh, 90cqw); height: min(68cqh, 90cqw); border-radius: 18px; }
+.kl-odkaz-karta__oval--stit, .kl-odkaz-karta__oval--sestuholnik, .kl-odkaz-karta__oval--bez { border: 0; border-radius: 0; }
+.kl-odkaz-karta__oval--stit { width: min(66cqh, 90cqw); height: 80cqh; padding: 0 12% 8%; }
+.kl-odkaz-karta__oval--sestuholnik { width: min(70cqh, 90cqw); height: 80cqh; padding: 0 12%; }
+.kl-odkaz-karta__oval--bez { width: 90cqw; height: 80cqh; }
+.kl-odkaz-karta__obrys { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.kl-odkaz-karta__obrys path { fill: none; stroke: #ffffff; stroke-width: 2; }
+.kl-odkaz-karta__oval > :not(svg) { position: relative; }
+/* Ikona (SVG alebo PNG) nad názvom - jednofarebná cez masku, alebo v pôvodných farbách */
+.kl-odkaz-karta__ikona {
+  display: block; width: min(30cqh, 40%); aspect-ratio: 1 / 1; margin-bottom: 8px; object-fit: contain;
+  -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+}
+/* Písmo podľa veľkosti karty - v menšej karte sa názov nezalomí uprostred slova */
+.kl-odkaz-karta__oval small { color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 600; font-size: clamp(9px, 3.2cqh, 13px); letter-spacing: 0.15em; text-transform: uppercase; }
+.kl-odkaz-karta__oval strong { color: #ffffff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: clamp(13px, 7.4cqh, 32px); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.1; overflow-wrap: break-word; hyphens: auto; }
 .kl-odkaz-karta__spodok { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; }
 .kl-odkaz-karta__spodok > span { color: var(--kl-tmava); font-family: var(--kl-nadpisy); font-weight: 800; font-size: 16px; letter-spacing: 0.5px; text-transform: uppercase; }
 
@@ -732,15 +750,21 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
    Pätička
    =================================================================== */
 
-.kl-paticka { background: var(--kl-tmava); padding: 80px var(--kl-okraj) 32px; }
-.kl-paticka__stlpce {
-  display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px;
-  padding-bottom: 48px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.kl-paticka { background: var(--kl-tmava); padding: 48px var(--kl-okraj) 28px; }
+/* Horný riadok pätičky: logo, text vedľa neho, siete vpravo */
+.kl-paticka__klub {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px;
+  padding-bottom: 32px; margin-bottom: 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.kl-paticka__logo { width: 64px; height: 64px; object-fit: contain; margin-bottom: 20px; display: block; }
-.kl-paticka__nazov { display: block; color: #fff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 20px; margin-bottom: 20px; }
-.kl-paticka__klub p { color: rgba(255, 255, 255, 0.5); font-family: var(--kl-pismo); font-weight: 500; font-size: 14px; line-height: 1.6; max-width: 280px; }
-.kl-siete { display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
+.kl-paticka__stlpce {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;
+  padding-bottom: 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.kl-paticka__logo { width: 56px; height: 56px; object-fit: contain; display: block; flex-shrink: 0; }
+.kl-paticka__nazov { display: block; flex-shrink: 0; color: #fff; font-family: var(--kl-nadpisy); font-weight: 800; font-size: 20px; }
+.kl-paticka__klub p { flex: 1 1 240px; max-width: 460px; color: rgba(255, 255, 255, 0.55); font-family: var(--kl-pismo); font-weight: 500; font-size: 14px; line-height: 1.55; }
+.kl-paticka__klub .kl-siete { margin: 0 0 0 auto; }
+.kl-siete { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 .kl-siete a {
   width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex; align-items: center; justify-content: center; text-decoration: none;
@@ -748,7 +772,7 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 .kl-siete a:hover { border-color: var(--kl-akcent); color: var(--kl-akcent); }
-.kl-paticka__stlpec { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.kl-paticka__stlpec { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .kl-paticka__stlpec h2 { color: var(--kl-akcent); font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; }
 .kl-paticka__stlpec a, .kl-paticka__stlpec span { color: #ffffff; font-family: var(--kl-pismo); font-weight: 500; font-size: 14px; text-decoration: none; transition: color 0.2s ease; }
 .kl-paticka__stlpec span { color: rgba(255, 255, 255, 0.6); }
@@ -881,6 +905,9 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
    =================================================================== */
 
 @media (max-width: 1180px) {
+  /* Štyria hlavní partneri v jednom rade (nie 3 + 1) */
+  .kl-partneri__rad--hlavny { gap: 20px; justify-content: center; }
+  .kl-partner--velky { width: 160px; height: 84px; }
   .kl-hlavicka__tlacidlo, .kl-hlavicka__admin { display: none; }
   .kl-menu { gap: 20px; margin-left: 8px; }
 
@@ -891,8 +918,6 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
   .kl-clanok-bocny { flex-direction: column; align-items: stretch; }
   .kl-clanok-bocny__obrazok { width: 100%; max-width: none; aspect-ratio: 4 / 3; border-radius: 16px; }
   .kl-socialne__mriezka { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-  .kl-paticka__stlpce { grid-template-columns: 1.4fr 1fr 1fr; }
-  .kl-paticka__klub { grid-column: 1 / -1; }
   .kl-kruh-tlacidlo--vlavo { left: -12px; }
   .kl-kruh-tlacidlo--vpravo { right: -12px; }
 }
@@ -926,6 +951,8 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
 
 @media (max-width: 900px) {
   .kl-mriezka-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Presne tri karty ostanú vedľa seba (pri dvoch stĺpcoch by tretia visela sama) */
+  .kl-mriezka-3:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   .kl-clanky__bocne { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kl-clanky__bocne > :nth-child(3) { display: none; }
   .kl-clanky__spodne { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1077,11 +1104,13 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
   }
 
   /* Pätička */
-  .kl-paticka { padding: 40px 20px 24px; border-radius: 28px 28px 0 0; }
-  .kl-paticka__stlpce { grid-template-columns: 1fr 1fr; gap: 28px 20px; padding-bottom: 28px; }
-  .kl-paticka__klub { grid-column: 1 / -1; }
+  .kl-paticka { padding: 32px 20px 24px; border-radius: 28px 28px 0 0; }
+  .kl-paticka__klub { gap: 14px 16px; padding-bottom: 24px; margin-bottom: 24px; }
+  .kl-paticka__logo { width: 48px; height: 48px; }
+  .kl-paticka__klub p { flex-basis: 200px; font-size: 13px; }
+  .kl-paticka__stlpce { grid-template-columns: 1fr 1fr; gap: 24px 20px; padding-bottom: 24px; }
   .kl-paticka__stlpec:last-child { grid-column: 1 / -1; }
-  .kl-paticka__stlpec { gap: 12px; }
+  .kl-paticka__stlpec { gap: 10px; }
   .kl-paticka__spodok { flex-direction: column; align-items: flex-start; gap: 12px; }
 
   /* Spodné záložky */
@@ -2874,6 +2903,15 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   min-width: min(100%, var(--kl-min));
 }
 .kl-bloky .blok__vyhody { --kl-min: 240px; }
+/* Štyri položky v trojstĺpcovej mriežke: na širokom okne štyri vedľa seba, na tablete 2 × 2 - nikdy 3 + 1 */
+.kl-bloky .blok__mriezka:not(.blok__mriezka--2):has(> :nth-child(4):last-child) { --kl-n: 4; --kl-min: 200px; }
+@media (max-width: 1180px) {
+  .kl-bloky .blok__mriezka:not(.blok__mriezka--2):has(> :nth-child(4):last-child) { --kl-n: 2; --kl-min: 260px; }
+}
+/* Tri položky na tablete ostanú v jednom rade (nie 2 + jedna cez celú šírku) */
+@media (min-width: 769px) {
+  .kl-bloky .blok__mriezka:not(.blok__mriezka--2):has(> :nth-child(3):last-child) { --kl-min: 200px; }
+}
 .kl-bloky .blok__dlazdice--velke { --kl-min: 230px; }
 /* Osoby a galéria zostávajú mriežkou (fotka cez celú šírku by bola obrovská),
    pri menej položkách než stĺpcov sa ale roztiahnu */
@@ -2901,7 +2939,28 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-bloky .blok__stadion-udaje dd { font-size: 17px; line-height: 1.35; }
   /* Odkaz klubu v bloku: karty pod sebou nižšie (na šírku), nech nie sú tri štvorce za sebou */
   .kl-bloky .blok__karty--klub .kl-odkaz-karta__obraz { aspect-ratio: 16 / 9; }
-  .kl-bloky .blok__karty--klub .kl-odkaz-karta__oval { left: 32%; width: 36%; }
+
+}
+
+/* ===================================================================
+   Tablet: zápasy a výsledky na úvode
+   Karty po dvoch na celú šírku, šípky v riadku nad kartami (vpravo,
+   oproti odkazu „Všetky zápasy") - nič nezakrýva okraje kariet.
+   =================================================================== */
+@media (min-width: 769px) and (max-width: 1180px) {
+  .kl-zapasy__vnutro { display: flex; flex-direction: column; }
+  .kl-zapasy__hlava { order: 1; padding-top: 48px; margin-bottom: 20px; }
+  .kl-zapasy__vsetky {
+    order: 2; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; margin-bottom: 20px;
+    color: #ffffff; text-decoration: none; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 14px;
+  }
+  .kl-zapasy__vsetky:hover { color: var(--kl-akcent); }
+  .kl-zapasy__ram { order: 3; }
+  .kl-kruh-tlacidlo--pas { top: -68px; transform: none; box-shadow: none; }
+  .kl-kruh-tlacidlo--vlavo { left: auto; right: 60px; }
+  .kl-kruh-tlacidlo--vpravo { right: 0; }
+  .kl-zapasy__pozadie { height: calc(100% - 170px); }
+  .kl-zapas { padding: 22px; gap: 20px; }
 }
 
 /* ===================================================================

@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
 import { SIETE, useSiete } from '../Rozlozenie';
-import { KartaHraca, KartaZapasu, MetaClanku, Obrazok, Partneri, embedVidea, useOknoVidea } from '../casti';
+import { KartaHraca, KartaZapasu, MetaClanku, ObrazOdkazu, Obrazok, Partneri, embedVidea, useOknoVidea } from '../casti';
 import {
   Ikona,
   NadpisSekcie,
@@ -291,6 +291,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
   const u = useUpravy();
   const [timId, setTimId] = useState<number | null>(timy[0]?.id ?? null);
   const pas = useRef<HTMLDivElement>(null);
+  const [pretekaPas, setPretekaPas] = useState(false);
   useEffect(() => {
     if (!timy.some((t) => t.id === timId)) setTimId(timy[0]?.id ?? null);
   }, [timy, timId]);
@@ -318,6 +319,18 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
     const karta = el.children[Math.max(pocetOdohranych - 1, 0)] as HTMLElement | undefined;
     el.scrollTo({ left: prva && karta ? karta.offsetLeft - prva.offsetLeft : 0 });
   }, [nacitava, pocetOdohranych, timId]);
+
+  // Šípky len keď sa karty do pásu nezmestia (na tablete sú po dvoch, na desktope po troch)
+  useEffect(() => {
+    const el = pas.current;
+    if (!el) return;
+    const over = () => setPretekaPas(el.scrollWidth > el.clientWidth + 4);
+    over();
+    if (!('ResizeObserver' in window)) return;
+    const pozorovatel = new ResizeObserver(over);
+    pozorovatel.observe(el);
+    return () => pozorovatel.disconnect();
+  }, [zapasy.length]);
 
   const posun = (smer: 1 | -1) => {
     const el = pas.current;
@@ -371,7 +384,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
               </div>
             )}
           </div>
-          {zapasy.length > 3 && (
+          {pretekaPas && (
             <>
               <button type="button" className="kl-kruh-tlacidlo kl-kruh-tlacidlo--pas kl-kruh-tlacidlo--vlavo" onClick={() => posun(-1)} aria-label="Predchádzajúce zápasy">
                 <Ikona nazov="vlavo" />
@@ -451,29 +464,39 @@ const NajnovsieClanky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
 // ===== Fanshop =====
 
 /**
- * Fanshop: so zapnutým obchodom odporúčané produkty (inak najnovšie)
- * s odkazom do obchodu; bez obchodu tri produkty z nastavení šablóny.
+ * Fanshop: produkty z obchodu (odporúčané, doplnené najnovšími do troch)
+ * alebo tri produkty z nastavení šablóny. Zdroj sa volí v nastaveniach -
+ * „automaticky" berie obchod, keď je zapnutý, inak produkty z nastavení.
  */
 const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
   const nadpis = u.text('fanshop_nadpis', 'Fanshop');
   const kupit = u.text('fanshop_tlacidlo', 'Kúpiť');
-  const zapnuty = Boolean(nastavenia.eshop?.zapnuty);
-  const odporucane = useApi<ProduktObchodu[]>(zapnuty ? '/eshop/produkty?odporucane=1&limit=3' : null);
-  const bezOdporucanych = zapnuty && !odporucane.nacitava && !odporucane.chyba && odporucane.data?.length === 0;
-  const najnovsie = useApi<ProduktObchodu[]>(bezOdporucanych ? '/eshop/produkty?limit=3' : null);
-  const zObchodu = (odporucane.data?.length ? odporucane.data : najnovsie.data) ?? [];
+  const obchodZapnuty = Boolean(nastavenia.eshop?.zapnuty);
+  const zdroj = String(s.fanshop_zdroj || 'auto');
+  const zObchodu = zdroj === 'obchod' ? obchodZapnuty : zdroj === 'nastavenia' ? false : obchodZapnuty;
+  const odporucane = useApi<ProduktObchodu[]>(zObchodu ? '/eshop/produkty?odporucane=1&limit=3' : null);
+  const najnovsie = useApi<ProduktObchodu[]>(zObchodu ? '/eshop/produkty?limit=6' : null);
+  // Odporúčané produkty majú prednosť, do troch ich doplnia najnovšie
+  const produktyObchodu = useMemo(() => {
+    const zoznam = [...(odporucane.data ?? [])];
+    for (const p of najnovsie.data ?? []) {
+      if (zoznam.length >= 3) break;
+      if (!zoznam.some((x) => x.id === p.id)) zoznam.push(p);
+    }
+    return zoznam.slice(0, 3);
+  }, [odporucane.data, najnovsie.data]);
 
-  if (zapnuty) {
-    if (zObchodu.length === 0) return null;
+  if (zObchodu) {
+    if (produktyObchodu.length === 0) return null;
     const mena = nastavenia.eshop?.mena ?? 'EUR';
     return (
       <section className="kl-sekcia kl-fanshop" aria-labelledby="kl-fanshop-nadpis">
         <div className="kl-kontajner">
           <NadpisSekcie nadpis={nadpis} odkaz="/obchod" id="kl-fanshop-nadpis" />
           <div className="kl-mriezka-3 kl-pas-mobil">
-            {zObchodu.map((p) => (
+            {produktyObchodu.map((p) => (
               <div key={p.id} className="kl-produkt">
                 <Link to={`/obchod/${p.slug}`} className="kl-produkt__odkaz" tabIndex={-1} aria-hidden="true">
                   <Obrazok src={p.obrazok} className="kl-produkt__obrazok" alt={p.nazov} />
@@ -493,11 +516,12 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
     );
   }
 
-  const obchod = String(s.fanshop_odkaz || '').trim() || null;
+  const obchod = String(s.fanshop_odkaz || '').trim() || (obchodZapnuty ? '/obchod' : null);
   const produkty = [1, 2, 3]
     .map((i) => ({
       i,
       obrazok: s[`produkt_${i}_obrazok`] as string | null,
+      nazov: String(s[`produkt_${i}_nazov`] || '').trim(),
       cena: (s[`produkt_${i}_cena`] as string | null) || '',
       odkaz: String(s[`produkt_${i}_odkaz`] || '').trim() || obchod,
     }))
@@ -510,7 +534,8 @@ const Fanshop: React.FC<{ s: Record<string, string | number | boolean | null> }>
         <div className="kl-mriezka-3 kl-pas-mobil">
           {produkty.map((p) => (
             <div key={p.i} className="kl-produkt">
-              <Obrazok src={p.obrazok} className="kl-produkt__obrazok" alt={p.cena ? `Produkt za ${p.cena}` : 'Produkt'} />
+              <Obrazok src={p.obrazok} className="kl-produkt__obrazok" alt={p.nazov || (p.cena ? `Produkt za ${p.cena}` : 'Produkt')} />
+              {p.nazov && <span className="kl-produkt__nazov">{p.nazov}</span>}
               <div className="kl-produkt__spodok">
                 <span className="kl-produkt__cena">{p.cena}</span>
                 {p.odkaz && (
@@ -699,13 +724,14 @@ const TONY = ['var(--kl-tmava)', 'var(--kl-akcent)', '#c8862a'];
 
 const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null> }> = ({ s }) => {
   const u = useUpravy();
-  const { nastavenia } = useNastavenia();
   const karty = [1, 2, 3]
     .map((i) => ({
       i,
       nazov: String(s[`odkaz_${i}_nazov`] || '').trim(),
       obrazok: s[`odkaz_${i}_obrazok`] as string | null,
       odkaz: String(s[`odkaz_${i}_odkaz`] || '').trim(),
+      stitok: String(s[`odkaz_${i}_stitok`] || '').trim(),
+      ikona: (s[`odkaz_${i}_ikona`] as string | null) || null,
     }))
     .filter((k) => k.nazov && k.obrazok);
   if (karty.length === 0) return null;
@@ -716,14 +742,7 @@ const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null>
         <div className="kl-mriezka-3 kl-pas-mobil">
           {karty.map((k) => (
             <div key={k.i} className="kl-odkaz-karta">
-              <div className="kl-odkaz-karta__obraz">
-                <Obrazok src={k.obrazok} className="kl-odkaz-karta__fotka" />
-                <span className="kl-odkaz-karta__ton" style={{ background: TONY[(k.i - 1) % TONY.length] }} aria-hidden="true" />
-                <span className="kl-odkaz-karta__oval" aria-hidden="true">
-                  <small>{nastavenia.skratka || nastavenia.nazov}</small>
-                  <strong>{k.nazov}</strong>
-                </span>
-              </div>
+              <ObrazOdkazu obrazok={k.obrazok} ton={TONY[(k.i - 1) % TONY.length]} nazov={k.nazov} stitok={k.stitok} ikona={k.ikona} />
               <div className="kl-odkaz-karta__spodok">
                 <span>{k.nazov}</span>
                 {k.odkaz && (

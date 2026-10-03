@@ -325,7 +325,8 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
           <span className="kl-zapas__nazov">{nazovHosti(z)}</span>
           {skore && <span className="kl-zapas__skore">{z.goly_hostia}</span>}
         </div>
-        {!skore && <span className="kl-zapas__cas">{cas(z.datum_cas)}</span>}
+        {/* Odohraný zápas bez zadaného výsledku neukazuje čas výkopu (vyzeralo by to ako skóre) */}
+        {!skore && <span className="kl-zapas__cas">{stav === 'ukonceny' ? '–:–' : cas(z.datum_cas)}</span>}
       </div>
       <div className="kl-zapas__ciara" />
       <div className="kl-zapas__akcie">
@@ -580,6 +581,63 @@ export const OknoVidea: React.FC<{ video: Video; onZavriet: () => void }> = ({ v
           {v.popis && <p className="kl-okno__popis">{v.popis}</p>}
         </div>
       </div>
+    </div>
+  );
+};
+
+// ===== Odkaz klubu (karta s rámom, textom a ikonou) =====
+
+/** Obrysy tvarov, ktoré sa nedajú nakresliť zaoblením rohov. */
+const OBRYSY_ODKAZU: Record<string, { viewBox: string; d: string }> = {
+  stit: { viewBox: '0 0 100 120', d: 'M50 2 L97 15 V57 C97 88 76 107 50 118 C24 107 3 88 3 57 V15 Z' },
+  sestuholnik: { viewBox: '0 0 100 115', d: 'M50 1.5 L98.5 29.5 V85.5 L50 113.5 L1.5 85.5 V29.5 Z' },
+};
+export const TVARY_ODKAZU = ['oval', 'kruh', 'stvorec', 'stit', 'sestuholnik', 'bez'];
+
+/**
+ * Obrázok karty „Odkaz klubu": čiernobiela fotka s farebným tónom
+ * a uprostred rám (ovál, kruh, štít…) s malým textom, ikonou a názvom.
+ * Tvar, text nad názvom a farbu ikon určujú nastavenia šablóny.
+ */
+export const ObrazOdkazu: React.FC<{ obrazok: string | null; ton: string; nazov: string; stitok?: string | null; ikona?: string | null }> = ({
+  obrazok,
+  ton,
+  nazov,
+  stitok,
+  ikona,
+}) => {
+  const { nastavenia } = useNastavenia();
+  const s = useNastaveniaSablony<Record<string, string | number | boolean | null>>();
+  const tvar = TVARY_ODKAZU.includes(String(s.odkazy_tvar)) ? String(s.odkazy_tvar) : 'oval';
+  const obrys = OBRYSY_ODKAZU[tvar];
+  const ukazatStitok = s.odkazy_ukazat_stitok !== false;
+  const spolocny = String(s.odkazy_stitok || '').trim().replace(/\{klub\}/g, nastavenia.nazov);
+  const text = ukazatStitok ? String(stitok || '').trim() || spolocny || nastavenia.skratka || nastavenia.nazov : '';
+  const urlIkony = obrazokUrl(ikona);
+  const farbit = s.odkazy_farbit_ikony !== false;
+  const farba = String(s.odkazy_farba_ikon || '').trim() || '#ffffff';
+  return (
+    <div className="kl-odkaz-karta__obraz">
+      <Obrazok src={obrazok} className="kl-odkaz-karta__fotka" />
+      <span className="kl-odkaz-karta__ton" style={{ background: ton }} aria-hidden="true" />
+      <span className={`kl-odkaz-karta__oval kl-odkaz-karta__oval--${tvar}`} aria-hidden="true">
+        {obrys && (
+          <svg className="kl-odkaz-karta__obrys" viewBox={obrys.viewBox} preserveAspectRatio="none">
+            <path d={obrys.d} vectorEffect="non-scaling-stroke" />
+          </svg>
+        )}
+        {urlIkony &&
+          (farbit ? (
+            <span
+              className="kl-odkaz-karta__ikona"
+              style={{ background: farba, WebkitMaskImage: `url("${urlIkony}")`, maskImage: `url("${urlIkony}")` } as React.CSSProperties}
+            />
+          ) : (
+            <img className="kl-odkaz-karta__ikona" src={urlIkony} alt="" loading="lazy" />
+          ))}
+        {text && <small>{text}</small>}
+        <strong>{nazov}</strong>
+      </span>
     </div>
   );
 };
