@@ -363,7 +363,7 @@ export const adresaZapasovBloku = (data: BlokStranky['data']) => {
   const dnes = new Date().toISOString().slice(0, 10);
   return data.rezim === 'vysledky'
     ? `/matches?status=ukonceny&limit=${pocet}${tim}`
-    : `/matches?status=naplanovany&od_datumu=${dnes}&limit=50${tim}`;
+    : `/matches?status=naplanovany&od_datumu=${dnes}&poradie=asc&limit=50${tim}`;
 };
 
 const Zapasy: KomponentBloku = ({ blok: { data } }) => {

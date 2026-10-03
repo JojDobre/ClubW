@@ -630,10 +630,10 @@ const Uvod: React.FC = () => {
 
   // Zápasy vybraného tímu (prehľad) a hlavného tímu (lišta, najbližší zápas)
   const vysledky = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=ukonceny&limit=4` : null);
-  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&limit=10` : null);
+  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=10` : null);
   const zive = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=prebieha&limit=2` : null);
   const listaVysledky = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=ukonceny&limit=3` : null);
-  const listaBuduce = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=naplanovany&od_datumu=${dnes()}&limit=4` : null);
+  const listaBuduce = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=4` : null);
   const nacitavaZapasy = timy.nacitava || vysledky.nacitava || buduce.nacitava;
 
   const program = useMemo(() => [...(buduce.data ?? [])].sort(podlaCasu), [buduce.data]);

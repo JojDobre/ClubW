@@ -198,7 +198,7 @@ const PasZapasov: React.FC = () => {
   const id = hlavny?.id;
   const odohrane = useApi<Zapas[]>(id ? `/matches?tim_id=${id}&status=ukonceny&limit=${Math.ceil(pocet / 2)}` : null);
   const zive = useApi<Zapas[]>(id ? `/matches?tim_id=${id}&status=prebieha&limit=2` : null);
-  const buduce = useApi<Zapas[]>(id ? `/matches?tim_id=${id}&status=naplanovany&od_datumu=${dnes()}&limit=${pocet}` : null);
+  const buduce = useApi<Zapas[]>(id ? `/matches?tim_id=${id}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=${pocet}` : null);
   const pas = useRef<HTMLDivElement>(null);
   const [kraje, setKraje] = useState({ zaciatok: true, koniec: false });
   const moznoZavriet = u.zapnute('pas_zavriet');

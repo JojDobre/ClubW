@@ -126,7 +126,7 @@ const Uvod: React.FC = () => {
   const filterTimu = hlavny ? `&tim_id=${hlavny.id}` : '';
   const timyNacitane = !timy.nacitava;
 
-  const buduce = useApi<Zapas[]>(timyNacitane ? `/matches?status=naplanovany&od_datumu=${dnes()}&limit=50${filterTimu}` : null);
+  const buduce = useApi<Zapas[]>(timyNacitane ? `/matches?status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=50${filterTimu}` : null);
   const vysledky = useApi<Zapas[]>(timyNacitane ? `/matches?status=ukonceny&limit=1${filterTimu}` : null);
   const clanky = useApi<Clanok[]>(`/articles?limit=${pocetClankov}`);
   const hraci = useApi<{ hraci: Hrac[] }>(s.ukazat_hracov && hlavny ? `/teams/${hlavny.id}/players` : null);

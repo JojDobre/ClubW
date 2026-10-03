@@ -79,7 +79,7 @@ const Uvod: React.FC = () => {
   const pocet = Math.min(Math.max(Number(s.pocet_clankov) || 4, 2), 9);
 
   const clanky = useData<Clanok[]>(`/articles?limit=${pocet}`);
-  const buduce = useData<Zapas[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&limit=50`);
+  const buduce = useData<Zapas[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&poradie=asc&limit=50`);
   const vysledky = useData<Zapas[]>('/matches?status=ukonceny&limit=1');
   const partneri = useData<Partner[]>(s.ukazat_partnerov ? '/sponsors?limit=30' : null);
 

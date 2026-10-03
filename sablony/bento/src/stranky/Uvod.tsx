@@ -854,7 +854,7 @@ const Uvod: React.FC = () => {
 
   const vysledky = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=ukonceny&limit=4` : null);
   const zive = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=prebieha&limit=2` : null);
-  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&limit=20` : null);
+  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=20` : null);
   const nacitavaZapasy = timy.nacitava || vysledky.nacitava || zive.nacitava || buduce.nacitava;
 
   const program = useMemo(() => [...(buduce.data ?? [])].sort(podlaCasu), [buduce.data]);

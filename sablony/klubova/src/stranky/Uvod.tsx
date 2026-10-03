@@ -298,7 +298,7 @@ const ZapasyAVysledky: React.FC<{ timy: Tim[]; vstupenky: string | null }> = ({ 
 
   const vysledky = useApi<Zapas[]>(timId ? `/matches?tim_id=${timId}&status=ukonceny&limit=3` : null);
   const zive = useApi<Zapas[]>(timId ? `/matches?tim_id=${timId}&status=prebieha&limit=3` : null);
-  const buduce = useApi<Zapas[]>(timId ? `/matches?tim_id=${timId}&status=naplanovany&od_datumu=${dnes()}&limit=50` : null);
+  const buduce = useApi<Zapas[]>(timId ? `/matches?tim_id=${timId}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=50` : null);
   const nacitava = vysledky.nacitava || zive.nacitava || buduce.nacitava;
 
   const zapasy = useMemo(() => {

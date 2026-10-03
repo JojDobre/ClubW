@@ -38,7 +38,7 @@ const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const clanky = useData<ClanokVZozname[]>('/articles?limit=3');
   // Zoznam zápasov je zoradený od najnovšieho - najbližšie berieme z konca
-  const buduce = useData<ZapasVZozname[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&limit=50`);
+  const buduce = useData<ZapasVZozname[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&poradie=asc&limit=50`);
   const vysledky = useData<ZapasVZozname[]>('/matches?status=ukonceny&limit=3');
   const najblizsie = [...(buduce.data ?? [])].sort((a, b) => a.datum_cas.localeCompare(b.datum_cas)).slice(0, 3);
 

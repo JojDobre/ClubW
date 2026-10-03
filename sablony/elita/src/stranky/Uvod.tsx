@@ -336,7 +336,7 @@ const ZapasovaKarta: React.FC<{ tim: Tim; ligy: Liga[]; vstupenky: string | null
   const u = useUpravy();
   const odohrane = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=ukonceny&limit=3`);
   const zive = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=prebieha&limit=1`);
-  const buduce = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=naplanovany&od_datumu=${dnes()}&limit=3`);
+  const buduce = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=3`);
   const liga = u.zapnute('ukazat_tabulku') ? ligy.find((l) => l.tim_id === tim.id && l.format !== 'turnaj') ?? null : null;
   const tabulka = useApi<RiadokTabulky[]>(liga ? `/leagues/${liga.id}/table` : null);
 
