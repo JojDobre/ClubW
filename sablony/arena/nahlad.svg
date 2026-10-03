@@ -1,46 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-  <rect width="600" height="400" fill="#f2f4f7"/>
-  <!-- bočný panel -->
-  <rect width="132" height="400" fill="#12161c"/>
-  <rect x="14" y="16" width="26" height="26" rx="7" fill="#ffffff"/>
-  <path d="M27 21 l8 3 v6 c0 5 -3.5 8 -8 10 c-4.5 -2 -8 -5 -8 -10 v-6 z" fill="#16c172"/>
-  <rect x="46" y="21" width="64" height="7" rx="2" fill="#ffffff"/>
-  <rect x="46" y="32" width="44" height="5" rx="2" fill="#ffffff" fill-opacity="0.35"/>
-  <rect x="14" y="56" width="104" height="20" rx="6" fill="#ffffff" fill-opacity="0.08"/>
-  <g fill="#ffffff" fill-opacity="0.08"><rect x="14" y="90" width="104" height="20" rx="6" fill="#ffffff" fill-opacity="0.12"/></g>
-  <rect x="20" y="94" width="12" height="12" rx="3" fill="#16c172"/>
-  <rect x="38" y="97" width="50" height="6" rx="2" fill="#ffffff"/>
-  <g fill="#ffffff" fill-opacity="0.12"><rect x="20" y="120" width="12" height="12" rx="3"/><rect x="20" y="144" width="12" height="12" rx="3"/><rect x="20" y="168" width="12" height="12" rx="3"/><rect x="20" y="192" width="12" height="12" rx="3"/><rect x="20" y="216" width="12" height="12" rx="3"/></g>
-  <g fill="#ffffff" fill-opacity="0.55"><rect x="38" y="123" width="44" height="6" rx="2"/><rect x="38" y="147" width="56" height="6" rx="2"/><rect x="38" y="171" width="40" height="6" rx="2"/><rect x="38" y="195" width="50" height="6" rx="2"/><rect x="38" y="219" width="36" height="6" rx="2"/></g>
-  <rect x="14" y="298" width="104" height="54" rx="9" fill="#ffffff" fill-opacity="0.07"/>
-  <circle cx="28" cy="318" r="6" fill="#ffffff"/><circle cx="28" cy="334" r="6" fill="#16c172"/>
-  <rect x="40" y="315" width="54" height="5" rx="2" fill="#ffffff" fill-opacity="0.8"/><rect x="40" y="331" width="46" height="5" rx="2" fill="#ffffff" fill-opacity="0.8"/>
-  <rect x="14" y="362" width="104" height="22" rx="7" fill="#16c172"/>
-  <!-- lišta -->
-  <rect x="152" y="16" width="90" height="6" rx="2" fill="#1a1f27" fill-opacity="0.4"/>
-  <rect x="528" y="10" width="56" height="18" rx="6" fill="#12161c"/>
-  <rect x="132" y="38" width="468" height="1" fill="#e4e7ec"/>
-  <!-- prehľad -->
-  <rect x="152" y="54" width="70" height="6" rx="2" fill="#16c172"/>
-  <rect x="152" y="66" width="200" height="14" rx="3" fill="#1a1f27"/>
-  <g fill="#ffffff" stroke="#e4e7ec"><rect x="400" y="58" width="56" height="26" rx="7"/><rect x="462" y="58" width="56" height="26" rx="7"/><rect x="524" y="58" width="60" height="26" rx="7"/></g>
-  <!-- zápasový widget + tabuľka -->
-  <rect x="152" y="96" width="282" height="128" rx="12" fill="#12161c"/>
-  <circle cx="214" cy="152" r="18" fill="#ffffff"/><circle cx="372" cy="152" r="18" fill="#16c172"/>
-  <rect x="270" y="142" width="46" height="18" rx="3" fill="#ffffff"/>
-  <g fill="#ffffff" fill-opacity="0.1"><rect x="168" y="194" width="26" height="20" rx="5"/><rect x="198" y="194" width="26" height="20" rx="5"/><rect x="228" y="194" width="26" height="20" rx="5"/><rect x="258" y="194" width="26" height="20" rx="5"/></g>
-  <rect x="356" y="196" width="62" height="16" rx="5" fill="#16c172"/>
-  <rect x="444" y="96" width="140" height="128" rx="12" fill="#ffffff" stroke="#e4e7ec"/>
-  <g fill="#1a1f27" fill-opacity="0.12"><rect x="456" y="124" width="116" height="8" rx="2"/><rect x="456" y="152" width="116" height="8" rx="2"/><rect x="456" y="166" width="116" height="8" rx="2"/><rect x="456" y="180" width="116" height="8" rx="2"/><rect x="456" y="194" width="116" height="8" rx="2"/></g>
-  <rect x="456" y="138" width="116" height="8" rx="2" fill="#16c172" fill-opacity="0.35"/>
-  <rect x="456" y="108" width="40" height="6" rx="2" fill="#1a1f27"/>
-  <!-- novinky + výsledky -->
-  <rect x="152" y="234" width="282" height="150" rx="12" fill="#ffffff" stroke="#e4e7ec"/>
-  <rect x="164" y="262" width="128" height="88" rx="8" fill="#c9d3dc"/>
-  <rect x="302" y="270" width="118" height="10" rx="2" fill="#1a1f27"/><rect x="302" y="286" width="90" height="10" rx="2" fill="#1a1f27"/>
-  <g fill="#1a1f27" fill-opacity="0.2"><rect x="302" y="306" width="118" height="5" rx="2"/><rect x="302" y="316" width="100" height="5" rx="2"/></g>
-  <rect x="444" y="234" width="140" height="150" rx="12" fill="#ffffff" stroke="#e4e7ec"/>
-  <g fill="#f2f4f7"><rect x="456" y="262" width="22" height="22" rx="5"/><rect x="456" y="296" width="22" height="22" rx="5"/><rect x="456" y="330" width="22" height="22" rx="5"/></g>
-  <g fill="#1a1f27" fill-opacity="0.3"><rect x="486" y="266" width="70" height="5" rx="2"/><rect x="486" y="276" width="60" height="5" rx="2"/><rect x="486" y="300" width="70" height="5" rx="2"/><rect x="486" y="310" width="56" height="5" rx="2"/><rect x="486" y="334" width="70" height="5" rx="2"/><rect x="486" y="344" width="62" height="5" rx="2"/></g>
-  <rect x="564" y="268" width="10" height="10" rx="3" fill="#16a34a"/><rect x="564" y="302" width="10" height="10" rx="3" fill="#a0a7b3"/><rect x="564" y="336" width="10" height="10" rx="3" fill="#16a34a"/>
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d2a4a"/>
+      <stop offset="1" stop-color="#0e1116"/>
+    </linearGradient>
+    <radialGradient id="g" cx="0" cy="1" r="0.8">
+      <stop offset="0" stop-color="#2f6bff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2f6bff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="r"><rect x="8" y="8" width="584" height="262" rx="22"/></clipPath>
+  </defs>
+  <rect width="600" height="400" fill="#f1f2f4"/>
+  <!-- hero v zaoblenom ráme -->
+  <g clip-path="url(#r)">
+    <rect x="8" y="8" width="584" height="262" fill="url(#t)"/>
+    <rect x="8" y="8" width="584" height="262" fill="url(#g)"/>
+    <text x="300" y="190" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="168" letter-spacing="-8" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="2">FKD</text>
+  </g>
+  <!-- plávajúci ostrov navigácie -->
+  <rect x="40" y="22" width="520" height="40" rx="14" fill="#0e1116" fill-opacity="0.85" stroke="#ffffff" stroke-opacity="0.14"/>
+  <rect x="47" y="28" width="28" height="28" rx="9" fill="#ffffff"/>
+  <path d="M61 32 l8 3 v6 c0 5 -3.5 8 -8 10 c-4.5 -2 -8 -5 -8 -10 v-6 z" fill="#2f6bff"/>
+  <rect x="84" y="38" width="30" height="8" rx="2" fill="#ffffff"/>
+  <rect x="190" y="39" width="34" height="6" rx="3" fill="#ffffff" fill-opacity="0.7"/>
+  <rect x="236" y="39" width="40" height="6" rx="3" fill="#ffffff" fill-opacity="0.7"/>
+  <rect x="288" y="39" width="30" height="6" rx="3" fill="#ffffff" fill-opacity="0.7"/>
+  <rect x="330" y="39" width="38" height="6" rx="3" fill="#ffffff" fill-opacity="0.7"/>
+  <circle cx="474" cy="42" r="7" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <rect x="490" y="29" width="62" height="26" rx="9" fill="#2f6bff"/>
+  <rect x="503" y="39" width="36" height="6" rx="3" fill="#ffffff"/>
+  <!-- titulok -->
+  <rect x="40" y="150" width="62" height="14" rx="7" fill="#ffffff" fill-opacity="0.16"/>
+  <circle cx="49" cy="157" r="3" fill="#c6f432"/>
+  <rect x="40" y="174" width="250" height="18" rx="3" fill="#ffffff"/>
+  <rect x="40" y="198" width="190" height="18" rx="3" fill="#ffffff"/>
+  <circle cx="54" cy="238" r="12" fill="#ffffff"/>
+  <path d="M49 238 h9 m-3 -3 l3 3 l-3 3" stroke="#0e1116" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="96" y="235" width="34" height="5" rx="2.5" fill="#c6f432"/>
+  <rect x="136" y="235" width="20" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.3"/>
+  <!-- sklenená karta zápasu -->
+  <rect x="396" y="128" width="168" height="124" rx="16" fill="#ffffff" fill-opacity="0.1" stroke="#ffffff" stroke-opacity="0.2"/>
+  <rect x="408" y="140" width="56" height="5" rx="2.5" fill="#c6f432"/>
+  <circle cx="430" cy="172" r="13" fill="#2f6bff"/>
+  <circle cx="530" cy="172" r="13" fill="#ffffff"/>
+  <rect x="465" y="166" width="30" height="12" rx="3" fill="#ffffff"/>
+  <rect x="408" y="198" width="34" height="20" rx="6" fill="#000000" fill-opacity="0.3"/>
+  <rect x="446" y="198" width="34" height="20" rx="6" fill="#000000" fill-opacity="0.3"/>
+  <rect x="484" y="198" width="34" height="20" rx="6" fill="#000000" fill-opacity="0.3"/>
+  <rect x="522" y="198" width="30" height="20" rx="6" fill="#000000" fill-opacity="0.3"/>
+  <rect x="408" y="226" width="68" height="16" rx="6" fill="#2f6bff"/>
+  <rect x="482" y="226" width="70" height="16" rx="6" fill="#ffffff" fill-opacity="0.16"/>
+  <!-- naklonený neónový pás -->
+  <g transform="rotate(-2.2 300 274)">
+    <rect x="-20" y="260" width="640" height="28" fill="#c6f432"/>
+    <rect x="20" y="271" width="70" height="7" rx="3" fill="#0e1116"/>
+    <rect x="96" y="268" width="26" height="13" rx="6.5" fill="#0e1116"/>
+    <rect x="128" y="271" width="60" height="7" rx="3" fill="#0e1116"/>
+    <rect x="220" y="271" width="80" height="7" rx="3" fill="#0e1116"/>
+    <rect x="306" y="268" width="26" height="13" rx="6.5" fill="#0e1116"/>
+    <rect x="338" y="271" width="56" height="7" rx="3" fill="#0e1116"/>
+    <rect x="426" y="271" width="74" height="7" rx="3" fill="#0e1116"/>
+    <rect x="506" y="268" width="26" height="13" rx="6.5" fill="#0e1116"/>
+    <rect x="538" y="271" width="50" height="7" rx="3" fill="#0e1116"/>
+  </g>
+  <!-- novinky - karusel -->
+  <rect x="40" y="314" width="120" height="16" rx="3" fill="#12151b"/>
+  <circle cx="530" cy="322" r="10" fill="#ffffff" stroke="#e2e4e9"/>
+  <circle cx="554" cy="322" r="10" fill="#0e1116"/>
+  <rect x="40" y="342" width="200" height="70" rx="14" fill="#33415c"/>
+  <rect x="248" y="342" width="110" height="70" rx="14" fill="#4a5a7a"/>
+  <rect x="366" y="342" width="110" height="70" rx="14" fill="#2b3550"/>
+  <rect x="484" y="342" width="110" height="70" rx="14" fill="#56688c"/>
 </svg>
