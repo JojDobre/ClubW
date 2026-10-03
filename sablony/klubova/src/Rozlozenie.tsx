@@ -883,16 +883,17 @@ export const Paticka: React.FC = () => {
   return (
     <footer className="kl-paticka">
       <div className="kl-kontajner">
+        {/* Horný riadok: logo, text vedľa neho a siete vpravo - pätička ostane nízka */}
+        <div className="kl-paticka__klub">
+          {nastavenia.logo ? (
+            <img src={souborUrl(nastavenia.logo)} alt={nastavenia.nazov} className="kl-paticka__logo" />
+          ) : (
+            <strong className="kl-paticka__nazov">{nastavenia.nazov}</strong>
+          )}
+          {text && <p>{text}</p>}
+          {u.zapnute('ukazat_siete_paticka') && <SocialneIkony />}
+        </div>
         <div className="kl-paticka__stlpce">
-          <div className="kl-paticka__klub">
-            {nastavenia.logo ? (
-              <img src={souborUrl(nastavenia.logo)} alt={nastavenia.nazov} className="kl-paticka__logo" />
-            ) : (
-              <strong className="kl-paticka__nazov">{nastavenia.nazov}</strong>
-            )}
-            {text && <p>{text}</p>}
-            {u.zapnute('ukazat_siete_paticka') && <SocialneIkony />}
-          </div>
           <div className="kl-paticka__stlpec">
             <h2>{u.text('paticka_klub', 'Klub')}</h2>
             {polozky.slice(0, 5).map((p) => (

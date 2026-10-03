@@ -5,7 +5,7 @@
 // Rozmery a písma zodpovedajú návrhom z Claude Design (News, Videá,
 // Fotogaléria, Súpiska, Profil hráča).
 
-import React, { type ReactNode } from 'react';
+import React, { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 import {
@@ -325,7 +325,8 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
           <span className="kl-zapas__nazov">{nazovHosti(z)}</span>
           {skore && <span className="kl-zapas__skore">{z.goly_hostia}</span>}
         </div>
-        {!skore && <span className="kl-zapas__cas">{cas(z.datum_cas)}</span>}
+        {/* Odohraný zápas bez zadaného výsledku neukazuje čas výkopu (vyzeralo by to ako skóre) */}
+        {!skore && <span className="kl-zapas__cas">{stav === 'ukonceny' ? '–:–' : cas(z.datum_cas)}</span>}
       </div>
       <div className="kl-zapas__ciara" />
       <div className="kl-zapas__akcie">
@@ -349,12 +350,56 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
 
 // ===== Partneri =====
 
-const HLAVNE_UROVNE = ['generalny', 'hlavny'];
+export type VelkostLoga = 'velke' | 'stredne' | 'male';
 
-export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ partner: p, velke = false }) => {
+interface UrovenPartnerov {
+  id: number;
+  nazov: string;
+  poradie: number;
+  velkost_loga: VelkostLoga;
+}
+
+export interface SkupinaPartnerov {
+  kluc: string;
+  nazov: string | null;
+  velkost: VelkostLoga;
+  polozky: Partner[];
+}
+
+const VELKOSTI: VelkostLoga[] = ['velke', 'stredne', 'male'];
+/** Staršie pevné úrovne partnerov (bez úrovne z administrácie). */
+const STARE_UROVNE: Record<string, VelkostLoga> = { generalny: 'velke', hlavny: 'velke', partner: 'stredne', dodavatel: 'male' };
+
+/**
+ * Partneri zoskupení podľa úrovní z administrácie (Sponzori → Úrovne):
+ * v poradí úrovní, každá úroveň vlastný rad s veľkosťou loga podľa
+ * nastavenia úrovne. Partneri bez úrovne sú na konci.
+ */
+export const useSkupinyPartnerov = (partneri: Partner[]): SkupinaPartnerov[] => {
+  const urovne = useApi<UrovenPartnerov[]>(partneri.length ? '/sponsor-levels' : null);
+  return useMemo(() => {
+    const zoradene = [...(urovne.data ?? [])].sort((a, b) => a.poradie - b.poradie || a.id - b.id);
+    const skupiny: SkupinaPartnerov[] = zoradene.map((u) => ({
+      kluc: `u${u.id}`,
+      nazov: u.nazov,
+      velkost: VELKOSTI.includes(u.velkost_loga) ? u.velkost_loga : 'stredne',
+      polozky: partneri.filter((p) => p.uroven_id === u.id),
+    }));
+    // Bez úrovne: podľa staršieho označenia (generálny/hlavný = veľké logo), inak stredné
+    const bezUrovne = partneri.filter((p) => !p.uroven_id || !zoradene.some((u) => u.id === p.uroven_id));
+    for (const velkost of VELKOSTI) {
+      const polozky = bezUrovne.filter((p) => (STARE_UROVNE[p.uroven ?? ''] ?? 'stredne') === velkost);
+      if (polozky.length) skupiny.push({ kluc: `bez-${velkost}`, nazov: null, velkost, polozky });
+    }
+    return skupiny.filter((g) => g.polozky.length > 0);
+  }, [partneri, urovne.data]);
+};
+
+export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean; velkost?: VelkostLoga }> = ({ partner: p, velke = false, velkost }) => {
   const logo = obrazokUrl(p.logo);
   const obsah = logo ? <img src={logo} alt={p.nazov} loading="lazy" onError={skryObrazok} /> : <span>{p.nazov}</span>;
-  const trieda = `kl-partner${velke ? ' kl-partner--velky' : ''}`;
+  const v = velkost ?? (velke ? 'velke' : 'stredne');
+  const trieda = `kl-partner kl-partner--${v}${v === 'velke' ? ' kl-partner--velky' : ''}`;
   return p.web_url ? (
     <a href={p.web_url} target="_blank" rel="noopener noreferrer" className={trieda} title={p.nazov}>
       {obsah}
@@ -366,29 +411,31 @@ export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ 
   );
 };
 
-/** Partneri: hlavní vo veľkom rade, ostatní v menšom (spodok každej stránky). */
+/** Rady partnerov po úrovniach (pyramída bez nadpisov) - na úvode, na spodku podstránok aj v bloku stránky. */
+export const RadyPartnerov: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
+  const skupiny = useSkupinyPartnerov(partneri);
+  return (
+    <div className="kl-partneri__rady">
+      {skupiny.map((g) => (
+        <div key={g.kluc} className={`kl-partneri__rad kl-partneri__rad--${g.velkost}`}>
+          {g.polozky.map((p) => (
+            <LogoPartnera key={p.id} partner={p} velkost={g.velkost} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Partneri: rad za radom podľa úrovní partnerstva a veľkosti loga z administrácie. */
 export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
   const u = useUpravy();
   if (partneri.length === 0) return null;
-  const hlavni = partneri.filter((p) => p.uroven && HLAVNE_UROVNE.includes(p.uroven));
-  const prvi = (hlavni.length > 0 ? hlavni : partneri).slice(0, 4);
-  const ostatni = partneri.filter((p) => !prvi.includes(p)).slice(0, 6);
   return (
     <section className="kl-sekcia kl-partneri" aria-label="Partneri">
       <div className="kl-kontajner">
         <NadpisStredovy nadpis={u.text('partneri_nadpis', 'Partneri')} />
-        <div className="kl-partneri__rad kl-partneri__rad--hlavny">
-          {prvi.map((p) => (
-            <LogoPartnera key={p.id} partner={p} velke />
-          ))}
-        </div>
-        {ostatni.length > 0 && (
-          <div className="kl-partneri__rad">
-            {ostatni.map((p) => (
-              <LogoPartnera key={p.id} partner={p} />
-            ))}
-          </div>
-        )}
+        <RadyPartnerov partneri={partneri} />
         <Link to="/sponzori" className="kl-partneri__vsetci">
           {u.text('text_vsetci_partneri', 'Všetci partneri')}
         </Link>
@@ -400,7 +447,7 @@ export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
 /** Partneri na spodku podstránky - riadi ich nastavenie „Ukázať partnerov". */
 export const PartneriStranky: React.FC = () => {
   const s = useNastaveniaSablony<{ ukazat_partnerov: boolean }>();
-  const partneri = useApi<Partner[]>(s.ukazat_partnerov === false ? null : '/sponsors');
+  const partneri = useApi<Partner[]>(s.ukazat_partnerov === false ? null : '/sponsors?limit=500');
   return <Partneri partneri={partneri.data ?? []} />;
 };
 
@@ -580,6 +627,63 @@ export const OknoVidea: React.FC<{ video: Video; onZavriet: () => void }> = ({ v
           {v.popis && <p className="kl-okno__popis">{v.popis}</p>}
         </div>
       </div>
+    </div>
+  );
+};
+
+// ===== Odkaz klubu (karta s rámom, textom a ikonou) =====
+
+/** Obrysy tvarov, ktoré sa nedajú nakresliť zaoblením rohov. */
+const OBRYSY_ODKAZU: Record<string, { viewBox: string; d: string }> = {
+  stit: { viewBox: '0 0 100 120', d: 'M50 2 L97 15 V57 C97 88 76 107 50 118 C24 107 3 88 3 57 V15 Z' },
+  sestuholnik: { viewBox: '0 0 100 115', d: 'M50 1.5 L98.5 29.5 V85.5 L50 113.5 L1.5 85.5 V29.5 Z' },
+};
+export const TVARY_ODKAZU = ['oval', 'kruh', 'stvorec', 'stit', 'sestuholnik', 'bez'];
+
+/**
+ * Obrázok karty „Odkaz klubu": čiernobiela fotka s farebným tónom
+ * a uprostred rám (ovál, kruh, štít…) s malým textom, ikonou a názvom.
+ * Tvar, text nad názvom a farbu ikon určujú nastavenia šablóny.
+ */
+export const ObrazOdkazu: React.FC<{ obrazok: string | null; ton: string; nazov: string; stitok?: string | null; ikona?: string | null }> = ({
+  obrazok,
+  ton,
+  nazov,
+  stitok,
+  ikona,
+}) => {
+  const { nastavenia } = useNastavenia();
+  const s = useNastaveniaSablony<Record<string, string | number | boolean | null>>();
+  const tvar = TVARY_ODKAZU.includes(String(s.odkazy_tvar)) ? String(s.odkazy_tvar) : 'oval';
+  const obrys = OBRYSY_ODKAZU[tvar];
+  const ukazatStitok = s.odkazy_ukazat_stitok !== false;
+  const spolocny = String(s.odkazy_stitok || '').trim().replace(/\{klub\}/g, nastavenia.nazov);
+  const text = ukazatStitok ? String(stitok || '').trim() || spolocny || nastavenia.skratka || nastavenia.nazov : '';
+  const urlIkony = obrazokUrl(ikona);
+  const farbit = s.odkazy_farbit_ikony !== false;
+  const farba = String(s.odkazy_farba_ikon || '').trim() || '#ffffff';
+  return (
+    <div className="kl-odkaz-karta__obraz">
+      <Obrazok src={obrazok} className="kl-odkaz-karta__fotka" />
+      <span className="kl-odkaz-karta__ton" style={{ background: ton }} aria-hidden="true" />
+      <span className={`kl-odkaz-karta__oval kl-odkaz-karta__oval--${tvar}`} aria-hidden="true">
+        {obrys && (
+          <svg className="kl-odkaz-karta__obrys" viewBox={obrys.viewBox} preserveAspectRatio="none">
+            <path d={obrys.d} vectorEffect="non-scaling-stroke" />
+          </svg>
+        )}
+        {urlIkony &&
+          (farbit ? (
+            <span
+              className="kl-odkaz-karta__ikona"
+              style={{ background: farba, WebkitMaskImage: `url("${urlIkony}")`, maskImage: `url("${urlIkony}")` } as React.CSSProperties}
+            />
+          ) : (
+            <img className="kl-odkaz-karta__ikona" src={urlIkony} alt="" loading="lazy" />
+          ))}
+        {text && <small>{text}</small>}
+        <strong>{nazov}</strong>
+      </span>
     </div>
   );
 };

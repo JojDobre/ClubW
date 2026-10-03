@@ -1716,6 +1716,7 @@
  "Vlastný spôsob s pokynmi pre zákazníka": "Método propio con instrucciones para el cliente",
  "Vlastný titulok": "Título propio",
  "Vloženie do stránky": "Inserción en una página",
+ "Vložiť obrázok": "Insertar imagen",
  "Vložte HTML/JS kód, ktorý dostanete od poskytovateľa brány (tlačidlo alebo formulár na zaplatenie). Zákazník ho uvidí po odoslaní objednávky. Kód beží v izolovanom rámci, nemá prístup k webu ani k prihláseniu.": "Pega el código HTML/JS que te da el proveedor de la pasarela (botón o formulario de pago). El cliente lo verá tras enviar el pedido. El código se ejecuta en un marco aislado, sin acceso a la web ni al inicio de sesión.",
  "Vložte do obsahu stránky značku {znacka}": "Pega la etiqueta {znacka} en el contenido de la página",
  "Vložte ju do podmenu - v rozbaľovacom menu sa vpravo ukážu karty najnovších článkov (šablóna Klubová). Iné šablóny ukážu odkaz na zoznam článkov.": "Colóquelo en un submenú: el menú desplegable mostrará a la derecha tarjetas de los últimos artículos (plantilla Klubová). Otras plantillas muestran un enlace a la lista de artículos.",

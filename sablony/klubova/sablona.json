@@ -457,6 +457,28 @@
       "predvolene": true
     },
     {
+      "kluc": "fanshop_zdroj",
+      "typ": "vyber",
+      "menovka": "Produkty vo fanshope",
+      "skupina": "Úvod - fanshop",
+      "predvolene": "auto",
+      "napoveda": "Automaticky = produkty z obchodu, keď je obchod zapnutý (odporúčané, doplnené najnovšími), inak tri produkty nižšie.",
+      "moznosti": [
+        {
+          "hodnota": "auto",
+          "popis": "Automaticky"
+        },
+        {
+          "hodnota": "obchod",
+          "popis": "Z obchodu (E-shop)"
+        },
+        {
+          "hodnota": "nastavenia",
+          "popis": "Tri produkty z týchto nastavení"
+        }
+      ]
+    },
+    {
       "kluc": "fanshop_nadpis",
       "typ": "text",
       "menovka": "Nadpis",
@@ -475,13 +497,20 @@
       "typ": "odkaz",
       "menovka": "Fanshop: odkaz na obchod",
       "skupina": "Úvod - fanshop",
-      "napoveda": "Len bez vlastného obchodu. So zapnutým obchodom (E-shop v administrácii) sa ukážu odporúčané produkty a odkaz vedie do obchodu."
+      "napoveda": "Kam vedie „Zobraziť všetky\" a tlačidlá pri produktoch z nastavení. Prázdne = obchod, ak je zapnutý."
     },
     {
       "kluc": "produkt_1_obrazok",
       "typ": "obrazok",
       "menovka": "Fanshop: produkt 1 - fotka",
       "skupina": "Úvod - fanshop"
+    },
+    {
+      "kluc": "produkt_1_nazov",
+      "typ": "text",
+      "menovka": "Produkt 1: názov",
+      "skupina": "Úvod - fanshop",
+      "predvolene": ""
     },
     {
       "kluc": "produkt_1_cena",
@@ -503,6 +532,13 @@
       "skupina": "Úvod - fanshop"
     },
     {
+      "kluc": "produkt_2_nazov",
+      "typ": "text",
+      "menovka": "Produkt 2: názov",
+      "skupina": "Úvod - fanshop",
+      "predvolene": ""
+    },
+    {
       "kluc": "produkt_2_cena",
       "typ": "text",
       "menovka": "Fanshop: produkt 2 - cena",
@@ -519,6 +555,13 @@
       "typ": "obrazok",
       "menovka": "Fanshop: produkt 3 - fotka",
       "skupina": "Úvod - fanshop"
+    },
+    {
+      "kluc": "produkt_3_nazov",
+      "typ": "text",
+      "menovka": "Produkt 3: názov",
+      "skupina": "Úvod - fanshop",
+      "predvolene": ""
     },
     {
       "kluc": "produkt_3_cena",
@@ -653,6 +696,69 @@
       "predvolene": "Odkaz klubu"
     },
     {
+      "kluc": "odkazy_tvar",
+      "typ": "vyber",
+      "menovka": "Tvar rámu v kartách",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": "oval",
+      "moznosti": [
+        {
+          "hodnota": "oval",
+          "popis": "Ovál"
+        },
+        {
+          "hodnota": "kruh",
+          "popis": "Kruh"
+        },
+        {
+          "hodnota": "stvorec",
+          "popis": "Zaoblený štvorec"
+        },
+        {
+          "hodnota": "stit",
+          "popis": "Štít (erb)"
+        },
+        {
+          "hodnota": "sestuholnik",
+          "popis": "Šesťuholník"
+        },
+        {
+          "hodnota": "bez",
+          "popis": "Bez rámu"
+        }
+      ]
+    },
+    {
+      "kluc": "odkazy_ukazat_stitok",
+      "typ": "prepinac",
+      "menovka": "Malý text nad názvom",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": true
+    },
+    {
+      "kluc": "odkazy_stitok",
+      "typ": "text",
+      "menovka": "Malý text nad názvom (spoločný)",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": "",
+      "napoveda": "Prázdne = skratka alebo názov klubu. Každá karta môže mať vlastný text. {klub} = názov klubu."
+    },
+    {
+      "kluc": "odkazy_farbit_ikony",
+      "typ": "prepinac",
+      "menovka": "Ikony jednou farbou",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": true,
+      "napoveda": "Vypnuté = ikona v pôvodných farbách."
+    },
+    {
+      "kluc": "odkazy_farba_ikon",
+      "typ": "farba",
+      "menovka": "Farba ikon",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": "#FFFFFF"
+    },
+    {
       "kluc": "odkaz_1_nazov",
       "typ": "text",
       "menovka": "Odkaz klubu 1: nadpis",
@@ -666,6 +772,22 @@
       "menovka": "Odkaz klubu 1: fotka",
       "skupina": "Úvod - odkaz klubu",
       "napoveda": "Zobrazí sa čiernobielo s farebným tónom."
+    },
+    {
+      "kluc": "odkaz_1_ikona",
+      "typ": "obrazok",
+      "menovka": "Karta 1: ikona (SVG alebo PNG)",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": null,
+      "napoveda": "Logo alebo ikona nad názvom, ideálne SVG alebo PNG s priehľadným pozadím."
+    },
+    {
+      "kluc": "odkaz_1_stitok",
+      "typ": "text",
+      "menovka": "Karta 1: malý text nad názvom",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": "",
+      "napoveda": "Prázdne = spoločný text."
     },
     {
       "kluc": "odkaz_1_odkaz",
@@ -689,6 +811,20 @@
       "skupina": "Úvod - odkaz klubu"
     },
     {
+      "kluc": "odkaz_2_ikona",
+      "typ": "obrazok",
+      "menovka": "Karta 2: ikona (SVG alebo PNG)",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": null
+    },
+    {
+      "kluc": "odkaz_2_stitok",
+      "typ": "text",
+      "menovka": "Karta 2: malý text nad názvom",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": ""
+    },
+    {
       "kluc": "odkaz_2_odkaz",
       "typ": "odkaz",
       "menovka": "Odkaz klubu 2: odkaz",
@@ -707,6 +843,20 @@
       "typ": "obrazok",
       "menovka": "Odkaz klubu 3: fotka",
       "skupina": "Úvod - odkaz klubu"
+    },
+    {
+      "kluc": "odkaz_3_ikona",
+      "typ": "obrazok",
+      "menovka": "Karta 3: ikona (SVG alebo PNG)",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": null
+    },
+    {
+      "kluc": "odkaz_3_stitok",
+      "typ": "text",
+      "menovka": "Karta 3: malý text nad názvom",
+      "skupina": "Úvod - odkaz klubu",
+      "predvolene": ""
     },
     {
       "kluc": "odkaz_3_odkaz",
@@ -919,6 +1069,14 @@
       "menovka": "Štatistiky (/stats): štítok",
       "skupina": "Nadpisy podstránok",
       "predvolene": "Štatistiky"
+    },
+    {
+      "kluc": "stranka_stitok",
+      "typ": "text",
+      "menovka": "Stránky z administrácie: štítok nad nadpisom",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "",
+      "napoveda": "Napr. pri stránke Štadión alebo O klube. Prázdne = bez štítku. {klub} = názov klubu."
     },
     {
       "kluc": "text_zobrazit_vsetky",

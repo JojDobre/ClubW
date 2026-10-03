@@ -1716,6 +1716,7 @@
  "Vlastný spôsob s pokynmi pre zákazníka": "Custom method with instructions for the customer",
  "Vlastný titulok": "Custom title",
  "Vloženie do stránky": "Embedding in a page",
+ "Vložiť obrázok": "Insert image",
  "Vložte HTML/JS kód, ktorý dostanete od poskytovateľa brány (tlačidlo alebo formulár na zaplatenie). Zákazník ho uvidí po odoslaní objednávky. Kód beží v izolovanom rámci, nemá prístup k webu ani k prihláseniu.": "Paste the HTML/JS code you get from the gateway provider (a pay button or form). The customer sees it after sending the order. The code runs in an isolated frame with no access to the website or the login.",
  "Vložte do obsahu stránky značku {znacka}": "Paste the tag {znacka} into the page content",
  "Vložte ju do podmenu - v rozbaľovacom menu sa vpravo ukážu karty najnovších článkov (šablóna Klubová). Iné šablóny ukážu odkaz na zoznam článkov.": "Place it in a submenu - the dropdown will show cards of the latest articles on the right (Klubová template). Other templates show a link to the article list.",

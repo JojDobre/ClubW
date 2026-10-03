@@ -36,4 +36,18 @@ describe('ulozMedium', () => {
     expect(ulozeny.cesta).toMatch(/\.jpg$/);
     expect(ulozeny.mimeTyp).toBe('image/jpeg');
   });
+
+  it('SVG sa prevedie na priehľadný PNG (bez skriptov zo SVG)', async () => {
+    const svg = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><script>alert(1)</script><circle cx="12" cy="12" r="10" fill="#0b6e4f"/></svg>'
+    );
+    const ulozeny = await ulozMedium(svg, 'ikona.svg');
+    expect(ulozeny.cesta).toMatch(/\.png$/);
+    expect(ulozeny.mimeTyp).toBe('image/png');
+    expect(ulozeny.typ).toBe('obrazok');
+    const meta = await sharp(path.join(koren, ulozeny.cesta)).metadata();
+    expect(meta.format).toBe('png');
+    expect(meta.hasAlpha).toBe(true);
+    expect(meta.width).toBe(1200);
+  });
 });

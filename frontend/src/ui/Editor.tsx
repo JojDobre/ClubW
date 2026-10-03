@@ -37,12 +37,55 @@ interface EditorProps {
   placeholder?: string;
   /** Minimálna výška plochy na písanie */
   minVyska?: number;
+  /**
+   * Tlačidlo „Obrázok" v paneli: editor si zapamätá miesto kurzora
+   * a zavolá túto funkciu; tá (napr. po výbere z knižnice) zavolá vloz.
+   */
+  onObrazok?: (vloz: (adresa: string, popis?: string) => void) => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
-  hodnota, onZmena, placeholder = tr('Začnite písať…'), minVyska = 260,
+  hodnota, onZmena, placeholder = tr('Začnite písať…'), minVyska = 260, onObrazok,
 }) => {
   const plochaRef = useRef<HTMLDivElement>(null);
+  const rozsahRef = useRef<Range | null>(null);
+
+  /** Zapamätá miesto kurzora v ploche - po výbere obrázka sa naň vloží. */
+  const zapamatajKurzor = () => {
+    const vyber = window.getSelection();
+    const plocha = plochaRef.current;
+    rozsahRef.current =
+      vyber && vyber.rangeCount > 0 && plocha && plocha.contains(vyber.getRangeAt(0).commonAncestorContainer)
+        ? vyber.getRangeAt(0).cloneRange()
+        : null;
+  };
+
+  const vlozObrazok = useCallback(
+    (adresa: string, popis = '') => {
+      const plocha = plochaRef.current;
+      if (!plocha || !adresa) return;
+      plocha.focus();
+      const vyber = window.getSelection();
+      if (vyber) {
+        vyber.removeAllRanges();
+        if (rozsahRef.current) {
+          vyber.addRange(rozsahRef.current);
+        } else {
+          // Bez kurzora v texte sa obrázok pridá na koniec
+          const koniec = document.createRange();
+          koniec.selectNodeContents(plocha);
+          koniec.collapse(false);
+          vyber.addRange(koniec);
+        }
+      }
+      const img = document.createElement('img');
+      img.setAttribute('src', adresa);
+      img.setAttribute('alt', popis);
+      document.execCommand('insertHTML', false, `<p>${img.outerHTML}</p>`);
+      onZmena(plocha.innerHTML);
+    },
+    [onZmena]
+  );
 
   // Obsah nastavujeme len vtedy, keď sa líši od toho, čo je v ploche.
   // Bez tejto kontroly by React pri každom písmene prekreslil plochu
@@ -94,6 +137,21 @@ export const Editor: React.FC<EditorProps> = ({
             {n.znak}
           </button>
         ))}
+        {onObrazok && (
+          <button
+            type="button"
+            title={tr('Vložiť obrázok')}
+            aria-label={tr('Vložiť obrázok')}
+            className="cw-editor-box__nastroj"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              zapamatajKurzor();
+              onObrazok(vlozObrazok);
+            }}
+          >
+            🖼
+          </button>
+        )}
       </div>
 
       <div
