@@ -164,6 +164,8 @@ export interface Partner {
   id: number;
   nazov: string;
   uroven: 'generalny' | 'hlavny' | 'partner' | 'dodavatel' | null;
+  /** Úroveň partnerstva z administrácie (názov, poradie, veľkosť loga) */
+  uroven_id?: number | null;
   logo: string | null;
   web_url: string | null;
   poradie?: number;

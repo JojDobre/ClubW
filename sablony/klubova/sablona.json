@@ -887,6 +887,14 @@
       "predvolene": "Partneri"
     },
     {
+      "kluc": "partneri_nazvy_urovni",
+      "typ": "prepinac",
+      "menovka": "Názvy úrovní nad radmi partnerov",
+      "skupina": "Partneri",
+      "predvolene": true,
+      "napoveda": "Partneri sú zoskupení podľa úrovní zo Sponzori → Úrovne partnerstva, v ich poradí a s veľkosťou loga podľa úrovne."
+    },
+    {
       "kluc": "stranka_clanky_stitok",
       "typ": "text",
       "menovka": "Novinky (/clanky): štítok",

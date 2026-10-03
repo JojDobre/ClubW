@@ -778,7 +778,7 @@ const Uvod: React.FC = () => {
   const timy = useApi<Tim[]>('/teams');
   const videa = useApi<Video[]>('/videos?limit=3');
   const u = useUpravy();
-  const partneri = useApi<Partner[]>(u.zapnute('ukazat_partnerov_uvod') ? '/sponsors' : null);
+  const partneri = useApi<Partner[]>(u.zapnute('ukazat_partnerov_uvod') ? '/sponsors?limit=500' : null);
 
   const zoradeneTimy = useMemo(
     () => [...(timy.data ?? [])].sort((a, b) => (a.poradie ?? 0) - (b.poradie ?? 0) || a.id - b.id),

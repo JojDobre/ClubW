@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { HlavickaBloku, PREDVOLENE_BLOKY, adresaZapasovBloku, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
-import { KartaClanku, KartaZapasu, LogoPartnera, ObrazOdkazu } from './casti';
+import { KartaClanku, KartaZapasu, ObrazOdkazu, RadyPartnerov } from './casti';
 import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
 const ZapasyBloku: KomponentBloku = ({ blok: { data } }) => {
@@ -52,9 +52,7 @@ const PartneriBloku: KomponentBloku = ({ blok: { data } }) => {
     <>
       <HlavickaBloku nadpis={data.nadpis} />
       <div className="kl-bloky__partneri">
-        {partneri.data.map((p) => (
-          <LogoPartnera key={p.id} partner={p} velke />
-        ))}
+        <RadyPartnerov partneri={partneri.data} />
       </div>
     </>
   );

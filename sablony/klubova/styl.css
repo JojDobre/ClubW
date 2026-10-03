@@ -732,20 +732,25 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
    =================================================================== */
 
 .kl-partneri .kl-nadpis-stred { margin-bottom: 48px; }
-.kl-partneri__rad { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
-/* Menej log ako šírka riadku - rozostúpené od okraja k okraju pôsobia stratene */
-@media (min-width: 769px) {
-  .kl-partneri__rad:not(.kl-partneri__rad--hlavny) { justify-content: center; column-gap: 48px; }
+/* Rady podľa úrovní partnerstva z administrácie - poradie aj veľkosť loga určuje úroveň */
+.kl-partneri__rady { display: flex; flex-direction: column; gap: 36px; }
+.kl-partneri__skupina { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.kl-partneri__uroven {
+  margin: 0; color: var(--kl-tmava-45); text-align: center;
+  font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
 }
-.kl-partneri__rad--hlavny { gap: 32px; margin-bottom: 44px; }
+.kl-partneri__rad { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 20px 48px; width: 100%; }
+.kl-partneri__rad--velke { gap: 24px 40px; }
+.kl-partneri__rad--male { gap: 14px 36px; }
 .kl-partner {
-  width: 120px; height: 60px; flex-shrink: 0; border-radius: 10px;
+  width: 150px; height: 76px; flex-shrink: 0; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; padding: 6px;
   filter: grayscale(1); opacity: 0.55; transition: opacity 0.2s ease, filter 0.2s ease;
   color: var(--kl-tmava); text-decoration: none; text-align: center;
   font-family: var(--kl-nadpisy); font-weight: 700; font-size: 13px;
 }
-.kl-partner--velky { width: 190px; height: 100px; border-radius: 12px; opacity: 0.65; font-size: 16px; }
+.kl-partner--velke, .kl-partner--velky { width: 210px; height: 110px; border-radius: 12px; opacity: 0.7; font-size: 16px; }
+.kl-partner--male { width: 110px; height: 56px; font-size: 12px; }
 .kl-partner:hover { opacity: 1; filter: grayscale(0); }
 .kl-partner img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .kl-partneri__vsetci { display: none; }
@@ -909,9 +914,10 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
    =================================================================== */
 
 @media (max-width: 1180px) {
-  /* Štyria hlavní partneri v jednom rade (nie 3 + 1) */
-  .kl-partneri__rad--hlavny { gap: 20px; justify-content: center; }
-  .kl-partner--velky { width: 160px; height: 84px; }
+  /* Menšie logá na tablete - rad s veľkými logami sa zmestí bez osamoteného loga */
+  .kl-partneri__rad--velke { gap: 20px 28px; }
+  .kl-partner--velke, .kl-partner--velky { width: 170px; height: 90px; }
+  .kl-partner--stredne { width: 130px; height: 66px; }
   .kl-hlavicka__tlacidlo, .kl-hlavicka__admin { display: none; }
   .kl-menu { gap: 20px; margin-left: 8px; }
 
@@ -1097,10 +1103,15 @@ a.kl-hero__nadpis:hover { color: var(--kl-akcent); text-decoration: none; }
   /* Partneri */
   .kl-partneri { padding-bottom: 40px; }
   .kl-partneri .kl-nadpis-stred { margin-bottom: 22px; }
+  .kl-partneri__rady { gap: 18px; }
+  .kl-partneri__skupina { gap: 10px; }
+  .kl-partneri__uroven { font-size: 11px; }
   .kl-partneri__rad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .kl-partneri__rad--hlavny { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 10px; gap: 10px; }
-  .kl-partner, .kl-partner--velky { width: 100%; height: 64px; background: var(--kl-tmava-4); border-radius: 14px; padding: 10px; opacity: 0.85; }
-  .kl-partner--velky { height: 84px; }
+  .kl-partneri__rad--velke { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kl-partneri__rad--male { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .kl-partner, .kl-partner--velke, .kl-partner--velky, .kl-partner--male { width: 100%; height: 64px; background: var(--kl-tmava-4); border-radius: 14px; padding: 10px; opacity: 0.85; }
+  .kl-partner--velke, .kl-partner--velky { height: 84px; }
+  .kl-partner--male { height: 52px; padding: 8px; border-radius: 12px; }
   .kl-partneri__vsetci {
     display: flex; justify-content: center; margin-top: 16px; padding: 14px; border-radius: 14px;
     background: var(--kl-tmava-6); color: var(--kl-tmava); text-decoration: none;
@@ -2451,7 +2462,7 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 .kl-bloky .blok__adresa, .kl-bloky .blok__popis-videa { margin-top: 14px; color: var(--kl-tmava-65); font-family: var(--kl-pismo); font-weight: 600; font-size: 15px; }
 
 /* Partneri */
-.kl-bloky__partneri { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.kl-bloky__partneri { display: block; }
 
 @media (max-width: 1180px) {
   .kl-bloky .blok__mriezka--4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -2460,7 +2471,7 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-bloky .blok__mriezka, .kl-bloky .blok__mriezka--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kl-bloky .blok__dvojica { grid-template-columns: 1fr; }
   .kl-bloky .blok__dvojica--vpravo .blok__dvojica-obrazok { order: 0; }
-  .kl-bloky__partneri { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 }
 @media (max-width: 768px) {
   .kl-bloky .blok { padding: 40px 16px; }
@@ -2493,7 +2504,7 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 @media (max-width: 480px) {
   .kl-bloky .blok--karty .blok__mriezka { grid-template-columns: 1fr; }
   .kl-bloky .blok--galeria .blok__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .kl-bloky__partneri { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
 }
 
 /* ===================================================================

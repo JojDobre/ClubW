@@ -5,7 +5,7 @@
 // Rozmery a písma zodpovedajú návrhom z Claude Design (News, Videá,
 // Fotogaléria, Súpiska, Profil hráča).
 
-import React, { type ReactNode } from 'react';
+import React, { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 import {
@@ -350,12 +350,56 @@ export const KartaZapasu: React.FC<{ zapas: Zapas; vstupenky?: string | null }> 
 
 // ===== Partneri =====
 
-const HLAVNE_UROVNE = ['generalny', 'hlavny'];
+export type VelkostLoga = 'velke' | 'stredne' | 'male';
 
-export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ partner: p, velke = false }) => {
+interface UrovenPartnerov {
+  id: number;
+  nazov: string;
+  poradie: number;
+  velkost_loga: VelkostLoga;
+}
+
+export interface SkupinaPartnerov {
+  kluc: string;
+  nazov: string | null;
+  velkost: VelkostLoga;
+  polozky: Partner[];
+}
+
+const VELKOSTI: VelkostLoga[] = ['velke', 'stredne', 'male'];
+/** Staršie pevné úrovne partnerov (bez úrovne z administrácie). */
+const STARE_UROVNE: Record<string, VelkostLoga> = { generalny: 'velke', hlavny: 'velke', partner: 'stredne', dodavatel: 'male' };
+
+/**
+ * Partneri zoskupení podľa úrovní z administrácie (Sponzori → Úrovne):
+ * v poradí úrovní, každá úroveň vlastný rad s veľkosťou loga podľa
+ * nastavenia úrovne. Partneri bez úrovne sú na konci.
+ */
+export const useSkupinyPartnerov = (partneri: Partner[]): SkupinaPartnerov[] => {
+  const urovne = useApi<UrovenPartnerov[]>(partneri.length ? '/sponsor-levels' : null);
+  return useMemo(() => {
+    const zoradene = [...(urovne.data ?? [])].sort((a, b) => a.poradie - b.poradie || a.id - b.id);
+    const skupiny: SkupinaPartnerov[] = zoradene.map((u) => ({
+      kluc: `u${u.id}`,
+      nazov: u.nazov,
+      velkost: VELKOSTI.includes(u.velkost_loga) ? u.velkost_loga : 'stredne',
+      polozky: partneri.filter((p) => p.uroven_id === u.id),
+    }));
+    // Bez úrovne: podľa staršieho označenia (generálny/hlavný = veľké logo), inak stredné
+    const bezUrovne = partneri.filter((p) => !p.uroven_id || !zoradene.some((u) => u.id === p.uroven_id));
+    for (const velkost of VELKOSTI) {
+      const polozky = bezUrovne.filter((p) => (STARE_UROVNE[p.uroven ?? ''] ?? 'stredne') === velkost);
+      if (polozky.length) skupiny.push({ kluc: `bez-${velkost}`, nazov: null, velkost, polozky });
+    }
+    return skupiny.filter((g) => g.polozky.length > 0);
+  }, [partneri, urovne.data]);
+};
+
+export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean; velkost?: VelkostLoga }> = ({ partner: p, velke = false, velkost }) => {
   const logo = obrazokUrl(p.logo);
   const obsah = logo ? <img src={logo} alt={p.nazov} loading="lazy" onError={skryObrazok} /> : <span>{p.nazov}</span>;
-  const trieda = `kl-partner${velke ? ' kl-partner--velky' : ''}`;
+  const v = velkost ?? (velke ? 'velke' : 'stredne');
+  const trieda = `kl-partner kl-partner--${v}${v === 'velke' ? ' kl-partner--velky' : ''}`;
   return p.web_url ? (
     <a href={p.web_url} target="_blank" rel="noopener noreferrer" className={trieda} title={p.nazov}>
       {obsah}
@@ -367,29 +411,36 @@ export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean }> = ({ 
   );
 };
 
-/** Partneri: hlavní vo veľkom rade, ostatní v menšom (spodok každej stránky). */
+/** Rady partnerov po úrovniach - na úvode, na spodku podstránok aj v bloku stránky. */
+export const RadyPartnerov: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
+  const u = useUpravy();
+  const skupiny = useSkupinyPartnerov(partneri);
+  const nazvy = u.zapnute('partneri_nazvy_urovni') && skupiny.filter((g) => g.nazov).length > 1;
+  return (
+    <div className="kl-partneri__rady">
+      {skupiny.map((g) => (
+        <div key={g.kluc} className={`kl-partneri__skupina kl-partneri__skupina--${g.velkost}`}>
+          {nazvy && g.nazov && <h3 className="kl-partneri__uroven">{g.nazov}</h3>}
+          <div className={`kl-partneri__rad kl-partneri__rad--${g.velkost}`}>
+            {g.polozky.map((p) => (
+              <LogoPartnera key={p.id} partner={p} velkost={g.velkost} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Partneri: rad za radom podľa úrovní partnerstva a veľkosti loga z administrácie. */
 export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
   const u = useUpravy();
   if (partneri.length === 0) return null;
-  const hlavni = partneri.filter((p) => p.uroven && HLAVNE_UROVNE.includes(p.uroven));
-  const prvi = (hlavni.length > 0 ? hlavni : partneri).slice(0, 4);
-  const ostatni = partneri.filter((p) => !prvi.includes(p)).slice(0, 6);
   return (
     <section className="kl-sekcia kl-partneri" aria-label="Partneri">
       <div className="kl-kontajner">
         <NadpisStredovy nadpis={u.text('partneri_nadpis', 'Partneri')} />
-        <div className="kl-partneri__rad kl-partneri__rad--hlavny">
-          {prvi.map((p) => (
-            <LogoPartnera key={p.id} partner={p} velke />
-          ))}
-        </div>
-        {ostatni.length > 0 && (
-          <div className="kl-partneri__rad">
-            {ostatni.map((p) => (
-              <LogoPartnera key={p.id} partner={p} />
-            ))}
-          </div>
-        )}
+        <RadyPartnerov partneri={partneri} />
         <Link to="/sponzori" className="kl-partneri__vsetci">
           {u.text('text_vsetci_partneri', 'Všetci partneri')}
         </Link>
@@ -401,7 +452,7 @@ export const Partneri: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
 /** Partneri na spodku podstránky - riadi ich nastavenie „Ukázať partnerov". */
 export const PartneriStranky: React.FC = () => {
   const s = useNastaveniaSablony<{ ukazat_partnerov: boolean }>();
-  const partneri = useApi<Partner[]>(s.ukazat_partnerov === false ? null : '/sponsors');
+  const partneri = useApi<Partner[]>(s.ukazat_partnerov === false ? null : '/sponsors?limit=500');
   return <Partneri partneri={partneri.data ?? []} />;
 };
 
