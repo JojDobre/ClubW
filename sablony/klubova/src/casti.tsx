@@ -411,21 +411,16 @@ export const LogoPartnera: React.FC<{ partner: Partner; velke?: boolean; velkost
   );
 };
 
-/** Rady partnerov po úrovniach - na úvode, na spodku podstránok aj v bloku stránky. */
+/** Rady partnerov po úrovniach (pyramída bez nadpisov) - na úvode, na spodku podstránok aj v bloku stránky. */
 export const RadyPartnerov: React.FC<{ partneri: Partner[] }> = ({ partneri }) => {
-  const u = useUpravy();
   const skupiny = useSkupinyPartnerov(partneri);
-  const nazvy = u.zapnute('partneri_nazvy_urovni') && skupiny.filter((g) => g.nazov).length > 1;
   return (
     <div className="kl-partneri__rady">
       {skupiny.map((g) => (
-        <div key={g.kluc} className={`kl-partneri__skupina kl-partneri__skupina--${g.velkost}`}>
-          {nazvy && g.nazov && <h3 className="kl-partneri__uroven">{g.nazov}</h3>}
-          <div className={`kl-partneri__rad kl-partneri__rad--${g.velkost}`}>
-            {g.polozky.map((p) => (
-              <LogoPartnera key={p.id} partner={p} velkost={g.velkost} />
-            ))}
-          </div>
+        <div key={g.kluc} className={`kl-partneri__rad kl-partneri__rad--${g.velkost}`}>
+          {g.polozky.map((p) => (
+            <LogoPartnera key={p.id} partner={p} velkost={g.velkost} />
+          ))}
         </div>
       ))}
     </div>
