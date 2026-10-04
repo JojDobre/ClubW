@@ -2355,9 +2355,6 @@ a.ar-partner-karta:hover { border-color: var(--ar-akcent); transform: translateY
   /* Údaje štadióna pod sebou, s menším písmom */
   .ar-bloky .blok__stadion-udaje { grid-template-columns: 1fr; gap: 10px; }
   .ar-bloky .blok__stadion-udaje dd { font-size: 17px; line-height: 1.35; }
-  /* Odkaz klubu v bloku: karty pod sebou nižšie (na šírku), nech nie sú tri štvorce za sebou */
-  .ar-bloky .blok__karty--klub .ar-odkaz-karta__obraz { aspect-ratio: 16 / 9; }
-  .ar-bloky .blok__karty--klub .ar-odkaz-karta__oval { left: 32%; width: 36%; }
 }
 
 
@@ -3453,6 +3450,37 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 /* Viac sekcií na jednom mieste úvodu - rovnaký odstup ako medzi sekciami úvodu */
 .ar-u-sekcie .blok + .blok { padding-top: clamp(56px, 7vw, 104px); }
 
+/* ===== Blok „Odkaz klubu" - karty s oválom a tlačidlom ===== */
+
+.ar-odkaz-karta { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: var(--ar-r); background: #ffffff; border: 1px solid var(--ar-linka); transition: border-color 0.2s ease, box-shadow 0.25s ease; }
+.ar-odkaz-karta:hover { border-color: var(--ar-svetla); box-shadow: 0 22px 44px -32px rgba(16, 24, 40, 0.5); }
+.ar-odkaz-karta__obraz { position: relative; isolation: isolate; aspect-ratio: 4 / 3; overflow: hidden; container-type: size; background: var(--ar-primarna); }
+.ar-odkaz-karta__fotka { position: absolute; inset: 0; z-index: -2; }
+.ar-odkaz-karta__fotka img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.1); transition: transform 0.6s var(--ar-pohyb); }
+.ar-odkaz-karta:hover .ar-odkaz-karta__fotka img { transform: scale(1.05); }
+.ar-odkaz-karta__ton { position: absolute; inset: 0; z-index: -1; opacity: 0.82; mix-blend-mode: multiply; }
+.ar-odkaz-karta__oval {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  width: min(84cqw, 118cqh); height: 66cqh; padding: 0 9%; border: 2px solid rgba(255, 255, 255, 0.9); border-radius: 50%;
+  color: #ffffff; text-align: center;
+}
+.ar-odkaz-karta__oval small { font-size: clamp(9px, 4.4cqh, 12px); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.8; }
+.ar-odkaz-karta__oval strong { max-width: 100%; font-family: var(--ar-nadpisy); font-weight: 700; font-size: clamp(14px, min(8cqh, 6.4cqw), 28px); line-height: 1.05; letter-spacing: -0.02em; text-transform: uppercase; overflow-wrap: break-word; }
+.ar-odkaz-karta__spodok { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 16px 20px; }
+.ar-odkaz-karta__spodok > span { min-width: 0; font-family: var(--ar-nadpisy); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-odkaz-karta__spodok .ar-tlacidlo-obrys { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 16px; border: 0; border-radius: 999px; background: var(--ar-plocha); color: var(--ar-text); font-size: 13.5px; text-decoration: none; }
+.ar-odkaz-karta__spodok .ar-tlacidlo-obrys:hover { background: var(--ar-primarna); color: #ffffff; }
+@media (max-width: 640px) {
+  /* Karty pod sebou na šírku, nech nie sú tri vysoké obrázky za sebou */
+  .ar-odkaz-karta__obraz { aspect-ratio: 16 / 9; }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  /* Tri karty odkazu klubu v jednom rade aj na tablete - bez osamotenej roztiahnutej tretej */
+  .ar-bloky .blok__mriezka.blok__karty--klub { --ar-min: 190px; --ar-medzera: 14px; }
+  .ar-bloky .blok__karty--klub .ar-odkaz-karta__spodok { flex-direction: column; align-items: flex-start; padding: 14px; }
+}
+
 /* ===================================================================
    Mobil a tablet - nič sa neprekrýva ani nepresvitá
    =================================================================== */
@@ -3528,4 +3556,14 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 }
 @media (min-width: 641px) and (max-width: 1024px) {
   .ar-nastroje .ar-vyber { margin-left: auto; }
+}
+
+/* Potvrdenie objednávky na mobile: suma a variabilný symbol každý na vlastnom riadku */
+@media (max-width: 640px) {
+  .ar-platba-box__hlava { gap: 8px 12px; }
+  .ar-platba-box__hlava strong { flex: 1 1 calc(100% - 40px); }
+  .ar-platba-box__hlava .ar-odznak { margin-left: 32px; }
+  .ar-platba-box__udaje { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .ar-platba-box__udaje div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .ar-platba-box__udaje dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 }
