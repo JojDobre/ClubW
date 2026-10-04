@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ObsahSFormularmi } from '../../components/FormularWeb';
-import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
+import { HlavickaBloku, HlavickaBlokuKontext, Html, Obr, OdkazBloku, obrazokBloku, odkazVsetkychBloku, type VlastnostiHlavickyBloku } from './pomocky';
 import { useData } from '../pomocky';
 import { kotvaBloku, type BlokStranky, type KomponentBloku } from './typy';
 import { ROZSIRENE_BLOKY } from './BlokyRozsirene';
@@ -18,6 +18,7 @@ import { BLOKY_KLUBU } from './BlokyKlubu';
 import './bloky.css';
 
 export { HlavickaBloku, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
+export type { VlastnostiHlavickyBloku } from './pomocky';
 
 const iniciely = (meno: string) =>
   meno
@@ -459,10 +460,12 @@ export const BlokyStranky: React.FC<{
   className?: string;
   predvolenyVzhlad?: boolean;
   komponenty?: Partial<Record<string, KomponentBloku>>;
-}> = ({ bloky, className = '', predvolenyVzhlad = true, komponenty = {} }) => {
+  /** Vlastná hlavička blokov (nadpis + odkaz) v dizajne šablóny */
+  hlavicka?: React.ComponentType<VlastnostiHlavickyBloku>;
+}> = ({ bloky, className = '', predvolenyVzhlad = true, komponenty = {}, hlavicka }) => {
   const viditelne = (bloky ?? []).filter((b) => b && !b.skryty && (komponenty[b.typ] || PREDVOLENE_BLOKY[b.typ]));
   if (viditelne.length === 0) return null;
-  return (
+  const obsah = (
     <div className={`bloky${predvolenyVzhlad ? ' bloky--zakladne' : ''}${className ? ` ${className}` : ''}`}>
       {viditelne.map((b) => {
         const Komponent = (komponenty[b.typ] || PREDVOLENE_BLOKY[b.typ])!;
@@ -480,6 +483,7 @@ export const BlokyStranky: React.FC<{
       })}
     </div>
   );
+  return hlavicka ? <HlavickaBlokuKontext.Provider value={hlavicka}>{obsah}</HlavickaBlokuKontext.Provider> : obsah;
 };
 
 export default BlokyStranky;

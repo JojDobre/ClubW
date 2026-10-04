@@ -3452,3 +3452,80 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 }
 /* Viac sekcií na jednom mieste úvodu - rovnaký odstup ako medzi sekciami úvodu */
 .ar-u-sekcie .blok + .blok { padding-top: clamp(56px, 7vw, 104px); }
+
+/* ===================================================================
+   Mobil a tablet - nič sa neprekrýva ani nepresvitá
+   =================================================================== */
+
+@media (max-width: 1024px) {
+  /* Po posune sa ostrov prilepí k hornému okraju - obsah nad ním nepresvitá */
+  .ar-ostrov.is-zmensena { top: 0; width: 100%; }
+  .ar-ostrov.is-zmensena .ar-ostrov__vnutro {
+    padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right));
+    border-width: 0 0 1px; border-radius: 0 0 20px 20px; background: var(--ar-primarna);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .ar-ostrov.is-otvorena .ar-ostrov__vnutro { background: var(--ar-primarna); }
+  .ar-panel { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* Karta zápasu v hero je plná, fotka a obrys cez ňu nepresvitajú */
+  .ar-hero__zapas {
+    background: color-mix(in srgb, var(--ar-primarna) 86%, transparent);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+}
+@media (max-width: 1100px) {
+  /* Keď je karta zápasu pod titulkom, obrysový nápis by sa krížil s textom */
+  .ar-hero__obrys { display: none; }
+}
+@media (max-width: 760px) {
+  .ar-hero__ram::after { background: linear-gradient(180deg, rgba(8, 10, 14, 0.55) 0%, rgba(8, 10, 14, 0.35) 40%, color-mix(in srgb, var(--ar-primarna) 96%, transparent) 78%); }
+}
+@media (max-width: 640px) {
+  .ar-ostrov.is-zmensena .ar-ostrov__vnutro { height: 58px; border-radius: 0 0 18px 18px; }
+}
+
+/* Panel nástrojov (zápasy, súpiska): na menších obrazovkách sa neprilepuje -
+   pod ostrovom by cez medzeru presvitali riadky */
+@media (max-width: 1024px) {
+  .ar-nastroje { position: relative; top: auto; background: #ffffff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .ar-rozpis__mesiac, .ar-zostava__skupina { scroll-margin-top: 84px; }
+}
+@media (max-width: 640px) {
+  .ar-nastroje { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; overflow: visible; }
+  .ar-segment { width: 100%; }
+  .ar-segment button { flex: 1 0 auto; justify-content: center; }
+  .ar-nastroje .ar-vyber { width: 100%; padding: 0 4px 0 14px; }
+  .ar-nastroje .ar-vyber span { display: inline; }
+  .ar-nastroje .ar-vyber select { flex: 1; min-width: 0; max-width: none; }
+}
+
+/* Sekcia už má bočný okraj - kontajner v nej ho nepridáva druhýkrát */
+.ar-sekcia > .ar-kontajner { width: min(100%, var(--ar-sirka-obsahu)); }
+
+@media (max-width: 640px) {
+  /* Filtre v jednom riadku s vodorovným posunom namiesto zalamovania */
+  .ar-filtre { flex-wrap: nowrap; width: auto; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ar-filtre::-webkit-scrollbar { display: none; }
+  .ar .ar-filter { flex-shrink: 0; }
+  .ar-segment button { padding: 9px 11px; }
+}
+
+/* Súpiska na mobile: štatistiky ako drobný riadok pod menom (brankári vidia minúty) */
+@media (max-width: 640px) {
+  .ar-hriadok { grid-template-columns: 44px 56px minmax(0, 1fr) 28px; grid-template-rows: auto auto; row-gap: 6px; align-items: center; }
+  .ar-hriadok__cislo, .ar-hriadok__foto, .ar-hriadok__sipka { grid-row: 1 / 3; }
+  .ar-hriadok__foto { width: 56px; height: 56px; }
+  .ar-hriadok__meno { grid-column: 3; grid-row: 1; align-self: end; }
+  .ar-hriadok__staty { display: flex; flex-wrap: wrap; grid-column: 3; grid-row: 2; align-self: start; gap: 2px 10px; padding: 0; border: 0; }
+  .ar-hriadok__staty .ar-hriadok__udaj { flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 4px; flex-shrink: 0; overflow: visible; font-size: 13px; }
+  .ar-hriadok__staty .ar-hriadok__udaj small { font-size: 9.5px; letter-spacing: 0.06em; }
+  .ar-hriadok__sipka { grid-column: 4; }
+}
+
+/* Tablet: tri karty v rade sa ešte zmestia, dve vedľa seba by nechali dieru */
+@media (min-width: 721px) and (max-width: 900px) {
+  .ar-mriezka-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  .ar-nastroje .ar-vyber { margin-left: auto; }
+}

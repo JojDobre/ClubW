@@ -54,6 +54,7 @@ export { default as ZapasPriebeh } from '../components/ZapasPriebeh';
 // zobrazenie; šablóna môže vzhľad vypnúť a jednotlivé typy nahradiť
 export { BlokyStranky, PREDVOLENE_BLOKY, HlavickaBloku, OdkazBloku, obrazokBloku, odkazVsetkychBloku, adresaZapasovBloku } from './bloky/BlokyStranky';
 export type { BlokStranky, TypBloku, PozadieBloku, KomponentBloku } from './bloky/typy';
+export type { VlastnostiHlavickyBloku } from './bloky/pomocky';
 export { kotvaBloku } from './bloky/typy';
 // Automatické bloky s údajmi klubu (tabuľka, strelci, káder…) - výber tímu a ligy
 export { BLOKY_KLUBU, useTimBloku, useLigaBloku } from './bloky/BlokyKlubu';

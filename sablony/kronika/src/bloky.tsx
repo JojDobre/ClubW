@@ -5,7 +5,7 @@
 // a partneri vyzerajú rovnako ako na úvode.
 
 import React from 'react';
-import { HlavickaBloku, PREDVOLENE_BLOKY, SekcieUvodu, adresaZapasovBloku, odkazVsetkychBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
+import { HlavickaBloku, PREDVOLENE_BLOKY, SekcieUvodu, adresaZapasovBloku, odkazVsetkychBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku, type VlastnostiHlavickyBloku } from '@clubw/jadro';
 import { KartaClanku, KartaZapasu, LogoPartnera, Obrazok } from './casti';
 import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
@@ -118,6 +118,6 @@ export const KLUBOVE_BLOKY: Partial<Record<string, KomponentBloku>> = {
 };
 
 /** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode") v dizajne šablóny. */
-export const Sekcie: React.FC<{ p: string }> = ({ p }) => (
-  <SekcieUvodu pozicia={p} predvolenyVzhlad={false} className="kr-bloky kr-u-sekcie" komponenty={KLUBOVE_BLOKY} />
+export const Sekcie: React.FC<{ p: string; hlavicka?: React.ComponentType<VlastnostiHlavickyBloku> }> = ({ p, hlavicka }) => (
+  <SekcieUvodu pozicia={p} predvolenyVzhlad={false} className="kr-bloky kr-u-sekcie" komponenty={KLUBOVE_BLOKY} hlavicka={hlavicka} />
 );

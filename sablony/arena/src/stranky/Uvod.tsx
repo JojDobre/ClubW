@@ -11,10 +11,10 @@
 //  7. médiá - video, fotogaléria a fanshop, výzva na členstvo.
 // Partneri sú v pätičke. Sekcie bez obsahu sa neukážu.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
-import { Sekcie } from '../bloky';
+import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { podlaCasu, useHlavnyTim } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea } from '../casti';
 import {
@@ -91,6 +91,13 @@ const HlavaSekcie: React.FC<{ stitok?: string; nadpis: string; odkaz?: string | 
     </div>
   </div>
 );
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return <HlavaSekcie nadpis={nadpis || ''} stitok={uvod} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />;
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 /** Šípky vodorovného karuselu. */
 const useKarusel = () => {

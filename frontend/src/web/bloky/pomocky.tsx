@@ -1,7 +1,7 @@
 // Umiestnenie: frontend/src/web/bloky/pomocky.tsx
 // Spoločné súčasti blokov stránok (obrázok, odkaz, hlavička, HTML).
 
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { souborUrl } from '../../config/api';
 import { sanitizeHtml } from '../../utils/sanitize';
@@ -28,12 +28,29 @@ export const Obr: React.FC<{ src?: string | null; alt?: string; className?: stri
   return adresa ? <img src={adresa} alt={alt} loading="lazy" className={className} /> : null;
 };
 
+/** Čo dostane hlavička bloku - nadpis, úvod a voliteľný odkaz „Zobraziť všetky". */
+export interface VlastnostiHlavickyBloku {
+  nadpis?: string;
+  uvod?: string;
+  odkaz?: string | null;
+  textOdkazu?: string | null;
+}
+
+/**
+ * Vlastná hlavička blokov od šablóny (napr. nadpis sekcie úvodu s odkazom
+ * presne ako ostatné sekcie). Nastavuje ju BlokyStranky / SekcieUvodu
+ * vlastnosťou `hlavicka`.
+ */
+export const HlavickaBlokuKontext = createContext<React.ComponentType<VlastnostiHlavickyBloku> | null>(null);
+
 /**
  * Nadpis a úvod bloku (spoločné pre väčšinu typov). S `odkaz` je vedľa
  * nadpisu odkaz „Zobraziť všetky" (napr. na všetky články rubriky).
  */
-export const HlavickaBloku: React.FC<{ nadpis?: string; uvod?: string; odkaz?: string | null; textOdkazu?: string | null }> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+export const HlavickaBloku: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const Vlastna = useContext(HlavickaBlokuKontext);
   if (!nadpis && !uvod && !odkaz) return null;
+  if (Vlastna) return <Vlastna nadpis={nadpis} uvod={uvod} odkaz={odkaz} textOdkazu={textOdkazu} />;
   const texty = (
     <>
       {nadpis && <h2 className="blok__nadpis">{nadpis}</h2>}

@@ -234,12 +234,24 @@ export const KartaVidea: React.FC<{ video: Video; onPrehrat: (v: Video) => void 
 // ===== Hráči =====
 
 /** Karta hráča: fotka 3:4, číslo, meno, pozícia a štatistiky. */
+/** Štatistiky na karte: brankár má namiesto gólov a asistencií minúty a čisté kontá. */
+export const statyHraca = (h: Hrac, st?: StatistikaHraca | null): Array<[number, string]> =>
+  h.pozicia === 'brankar'
+    ? [
+        [st?.zapasy ?? 0, 'Zápasy'],
+        [st?.minuty ?? 0, 'Minúty'],
+        [st?.ciste_konta ?? 0, 'Č. kontá'],
+      ]
+    : [
+        [st?.zapasy ?? 0, 'Zápasy'],
+        [st?.goly ?? 0, 'Góly'],
+        [st?.asistencie ?? 0, 'Asist.'],
+      ];
+
 export const KartaHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca | null; karty?: boolean }> = ({ hrac: h, statistika: st, karty = false }) => {
   const fotka = obrazokUrl(h.fotka);
   const staty: Array<[number, string]> = [
-    [st?.zapasy ?? 0, 'Zápasy'],
-    [st?.goly ?? 0, 'Góly'],
-    [st?.asistencie ?? 0, 'Asist.'],
+    ...statyHraca(h, st),
     ...(karty ? ([[st?.zlte_karty ?? 0, 'Karty']] as Array<[number, string]>) : []),
   ];
   return (

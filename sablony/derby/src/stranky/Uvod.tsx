@@ -12,10 +12,10 @@
 //     sociálne siete a úspechy.
 // Partneri sú nad pätičkou. Sekcie bez obsahu sa neukážu.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
-import { Sekcie } from '../bloky';
+import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { IkonaSiete, podlaCasu, useHlavnyTim, useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -85,6 +85,13 @@ const HlavaSekcie: React.FC<{ nadpis: string; stitok?: string | null; odkaz?: st
     </div>
   );
 };
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return <HlavaSekcie nadpis={nadpis || ''} stitok={uvod} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />;
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 const useOdpocet = (ciel: string | null, zapnuty: boolean) => {
   const [teraz, setTeraz] = useState(() => Date.now());

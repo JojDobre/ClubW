@@ -91,8 +91,14 @@ describe('štatistiky hráčov tímu', () => {
     expect(stav).toBe(200);
     const s1 = telo.data.find((s: any) => s.hrac_id === hrac1.id);
     const s2 = telo.data.find((s: any) => s.hrac_id === hrac2.id);
-    expect(s1).toEqual({ hrac_id: hrac1.id, zapasy: 4, goly: 3, asistencie: 0, zlte_karty: 1, cervene_karty: 0 });
-    expect(s2).toEqual({ hrac_id: hrac2.id, zapasy: 1, goly: 0, asistencie: 1, zlte_karty: 0, cervene_karty: 0 });
+    expect(s1).toEqual({ hrac_id: hrac1.id, zapasy: 4, minuty: 285, ciste_konta: 3, goly: 3, asistencie: 0, zlte_karty: 1, cervene_karty: 0 });
+    expect(s2).toEqual({ hrac_id: hrac2.id, zapasy: 1, minuty: 0, ciste_konta: 0, goly: 0, asistencie: 1, zlte_karty: 0, cervene_karty: 0 });
+  });
+
+  it('čisté konto počíta len hráčom v základnej zostave bez inkasovaného gólu', async () => {
+    const { telo } = await zavolaj(tim.id);
+    const s2 = telo.data.find((s: any) => s.hrac_id === hrac2.id);
+    expect(s2.ciste_konta).toBe(0);
   });
 
   it('s ?liga_id= počíta len zápasy jednej súťaže', async () => {

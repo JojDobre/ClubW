@@ -8,10 +8,10 @@
 // fanshop, klub v číslach so sieťami a partneri. Sekcie bez obsahu
 // sa neukážu.
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
-import { Sekcie } from '../bloky';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -75,6 +75,18 @@ const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; textOdkazu?
     </div>
   );
 };
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <HlavaSekcie nadpis={nadpis || ''} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 /** Rubrika a dátum článku. */
 const Meta: React.FC<{ clanok: Clanok; autor?: boolean }> = ({ clanok: c, autor = false }) => (
@@ -385,7 +397,7 @@ const Kader: React.FC<{ tim: Tim; nadpis: string }> = ({ tim, nadpis }) => {
                   </strong>
                   <small>
                     {pozicia(h.pozicia)}
-                    {st ? ` · ${st.zapasy} záp. · ${st.goly} gólov` : ''}
+                    {st ? ` · ${st.zapasy} záp. · ${h.pozicia === 'brankar' ? `${st.minuty ?? 0} min.` : `${st.goly} gólov`}` : ''}
                   </small>
                 </span>
               </span>

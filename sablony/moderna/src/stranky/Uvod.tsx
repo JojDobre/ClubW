@@ -6,9 +6,9 @@
 // fotky a videá, tmavý panel s výzvou a partneri. Každú voliteľnú
 // sekciu si správca zapne alebo vypne v nastaveniach šablóny.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony, SekcieUvodu } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony, SekcieUvodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
 import {
   Erb,
   Ikona,
@@ -115,7 +115,11 @@ const Odpocet: React.FC<{ kedy: string; svetly?: boolean }> = ({ kedy, svetly = 
 };
 
 /** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
-const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="md-bloky md-u-sekcie" />;
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return <NadpisSekcie stitok={uvod} nadpis={nadpis || ''} odkaz={odkaz || undefined} textOdkazu={textOdkazu || undefined} id={id} />;
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="md-bloky md-u-sekcie" hlavicka={HlavickaSekcie} />;
 
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();

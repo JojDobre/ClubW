@@ -138,6 +138,9 @@ export interface Strankovanie {
 export interface StatistikaHraca {
   hrac_id: number;
   zapasy: number;
+  /** Odohrané minúty a čisté kontá (zobrazujú sa brankárom) */
+  minuty?: number;
+  ciste_konta?: number;
   goly: number;
   asistencie: number;
   zlte_karty: number;
@@ -586,7 +589,7 @@ export const Odkaz: React.FC<{ to: string; className?: string; children: ReactNo
   );
 
 /** Nadpis sekcie: VEĽKÝ NADPIS | Zobraziť všetky (podľa návrhu). */
-export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; svetly?: boolean; id?: string }> = ({ nadpis, odkaz, svetly = false, id }) => {
+export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; textOdkazu?: string | null; svetly?: boolean; id?: string }> = ({ nadpis, odkaz, textOdkazu, svetly = false, id }) => {
   const u = useUpravy();
   return (
   <div className={`kl-nadpis${svetly ? ' kl-nadpis--svetly' : ''}`}>
@@ -594,7 +597,7 @@ export const NadpisSekcie: React.FC<{ nadpis: string; odkaz?: string | null; sve
     <span className="kl-nadpis__ciara" aria-hidden="true" />
     {odkaz && (
       <Odkaz to={odkaz} className="kl-nadpis__odkaz">
-        {u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
+        {textOdkazu || u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
       </Odkaz>
     )}
   </div>

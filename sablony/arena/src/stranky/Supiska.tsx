@@ -9,7 +9,7 @@ import React, { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useNastavenia } from '@clubw/jadro';
 import { NenajdenyObsah } from './Nenajdena';
-import { ChybaStranky, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
+import { ChybaStranky, HlavickaStranky, Nacitava, Prazdne, Sekcia, statyHraca } from '../casti';
 import {
   Ikona,
   POZICIE,
@@ -59,9 +59,11 @@ const RiadokHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca }> = ({ h
       <Udaj nazov="Národnosť">{h.narodnost || '–'}</Udaj>
       <Udaj nazov="Vek">{h.vek ?? '–'}</Udaj>
       <span className="ar-hriadok__staty">
-        <Udaj nazov="Zápasy">{st?.zapasy ?? 0}</Udaj>
-        <Udaj nazov="Góly">{st?.goly ?? 0}</Udaj>
-        <Udaj nazov="Asist.">{st?.asistencie ?? 0}</Udaj>
+        {statyHraca(h, st).map(([hodnota, nazov]) => (
+          <Udaj key={nazov} nazov={nazov}>
+            {hodnota}
+          </Udaj>
+        ))}
       </span>
       <Ikona nazov="sipka" velkost={15} className="ar-hriadok__sipka" />
     </Link>

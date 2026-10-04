@@ -55,7 +55,7 @@
 /* Čísla */
 .bloky--zakladne .blok__cisla { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin: 0; }
 .bloky--zakladne .blok__cisla dt { color: var(--blok-akcent); font-size: 2.4rem; font-weight: 800; line-height: 1; }
-.bloky--zakladne .blok__cisla dd { margin: 6px 0 0; color: var(--blok-tlmeny); }
+.bloky--zakladne .blok__cisla dd { margin: 6px 0 0; color: var(--blok-tlmeny); text-align: left; }
 
 /* Obrázok s textom */
 .bloky--zakladne .blok__dvojica { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }

@@ -6,10 +6,10 @@
 // štatistikami, úspechy, sociálne siete, odkaz klubu a partneri.
 // Sekcie bez obsahu (žiadne videá, produkty, úspechy...) sa neukážu.
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
-import { Sekcie } from '../bloky';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { SIETE, useSiete } from '../Rozlozenie';
 import { KartaHraca, KartaZapasu, MetaClanku, ObrazOdkazu, Obrazok, Partneri, embedVidea, useOknoVidea } from '../casti';
 import {
@@ -765,6 +765,18 @@ const OdkazKlubu: React.FC<{ s: Record<string, string | number | boolean | null>
 
 const vyberTim = (timy: Tim[], id?: number | null) =>
   (id ? timy.find((t) => t.id === Number(id)) : null) ?? timy.find((t) => t.typ === 'muzi') ?? timy[0] ?? null;
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <NadpisSekcie nadpis={nadpis || ''} odkaz={odkaz} textOdkazu={textOdkazu} id={id} />
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();

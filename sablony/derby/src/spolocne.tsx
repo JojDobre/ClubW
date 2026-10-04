@@ -138,6 +138,9 @@ export interface Strankovanie {
 export interface StatistikaHraca {
   hrac_id: number;
   zapasy: number;
+  /** Odohrané minúty a čisté kontá (zobrazujú sa brankárom) */
+  minuty?: number;
+  ciste_konta?: number;
   goly: number;
   asistencie: number;
   zlte_karty: number;

@@ -2,9 +2,9 @@
 // Úvodná stránka šablóny Štadión: veľká fotka, odpočet do najbližšieho
 // zápasu, posledný výsledok, aktuality, anketa a pás partnerov.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useData, useNastavenia, useNastaveniaSablony, SekcieUvodu } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useData, useNastavenia, useNastaveniaSablony, SekcieUvodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
 
 interface Nastavenia extends Record<string, string | number | boolean | null> {
   uvodna_fotka: string | null;
@@ -74,7 +74,19 @@ const Odpocet: React.FC<{ kedy: string }> = ({ kedy }) => {
 };
 
 /** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
-const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="st-u-sekcie" />;
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <div className="st-sekcia__hlava">
+        <h2 id={id}>{nadpis}</h2>
+        {odkaz && <Link to={odkaz}>{textOdkazu || 'Zobraziť všetky'}</Link>}
+      </div>
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="st-u-sekcie" hlavicka={HlavickaSekcie} />;
 
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
