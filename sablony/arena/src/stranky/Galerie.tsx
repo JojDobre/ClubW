@@ -1,7 +1,7 @@
 // Umiestnenie: sablony/arena/src/stranky/Galerie.tsx
-// Fotogaléria (podľa návrhu Fotogaléria z Claude Design): pilulky podľa
-// toho, k čomu galéria patrí (zápasy, tímy, články, klub), prvých šesť
-// albumov vo veľkých kartách po troch, ďalšie po štyroch a „Načítať ďalšie".
+// Fotogaléria: pilulky podľa toho, k čomu galéria patrí (zápasy, tímy,
+// články, klub) a albumy v mozaike rôzne veľkých dlaždíc (vzor sa
+// opakuje po siedmich) s názvom na fotke, „Načítať ďalšie".
 
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -23,27 +23,11 @@ type Typ = '' | 'zapas' | 'tim' | 'clanok' | 'volna';
 
 const NAZVY: Record<Exclude<Typ, ''>, string> = { zapas: 'Zápasy', tim: 'Tímy', clanok: 'Články', volna: 'Klub' };
 const NA_STRANU = 12;
-const VELKYCH = 6;
 
 const stitok = (g: Galeria) => {
   if (g.typ_priradenia === 'tim') return g.tim?.nazov || NAZVY.tim;
   return NAZVY[(g.typ_priradenia ?? 'volna') as Exclude<Typ, ''>] ?? NAZVY.volna;
 };
-
-const KartaGalerie: React.FC<{ galeria: Galeria; velka?: boolean }> = ({ galeria: g, velka = false }) => (
-  <Link to={`/galleries/${g.id}`} className={`ar-karta ar-karta--galeria${velka ? ' ar-karta--velka' : ''}`}>
-    <Obrazok src={g.nahladovy_obrazok} className="ar-karta__obrazok" />
-    <div className="ar-karta__text">
-      <h4>{g.nazov}</h4>
-      <div className="ar-clanok__meta">
-        <span className="ar-clanok__kategoria">{stitok(g)}</span>
-        <span className="ar-clanok__datum">
-          {g.pocet_obrazkov} {sklon(g.pocet_obrazkov, 'fotka', 'fotky', 'fotiek')}
-        </span>
-      </div>
-    </div>
-  </Link>
-);
 
 /** Počty galérií podľa typu - filtre bez obsahu sa neukážu. */
 const usePocty = () => {
@@ -77,9 +61,6 @@ const Galerie: React.FC = () => {
     setParametre(nove, { replace: true });
   };
 
-  const velke = zoznam.polozky.slice(0, VELKYCH);
-  const male = zoznam.polozky.slice(VELKYCH);
-
   return (
     <div className="ar-stranka ar-galerie">
       <HlavickaStranky stitok={u.text('stranka_galerie_stitok', 'Médiá')} nadpis={u.text('stranka_galerie_nadpis', 'Fotogaléria')} />
@@ -108,18 +89,19 @@ const Galerie: React.FC = () => {
       ) : (
         <>
           <Sekcia className={`ar-sekcia--mriezka${typy.length > 1 ? '' : ' ar-sekcia--hore'}`}>
-            <div className="ar-mriezka-3 ar-mriezka-3--karty">
-              {velke.map((g) => (
-                <KartaGalerie key={g.id} galeria={g} velka />
+            <div className="ar-mozaika">
+              {zoznam.polozky.map((g, i) => (
+                <Link key={g.id} to={`/galleries/${g.id}`} className={`ar-mozaika__dlazdica ar-mozaika__dlazdica--${(i % 7) + 1}`}>
+                  <Obrazok src={g.nahladovy_obrazok} className="ar-mozaika__obrazok" />
+                  <span className="ar-mozaika__text">
+                    <small>
+                      {stitok(g)} · {g.pocet_obrazkov} {sklon(g.pocet_obrazkov, 'fotka', 'fotky', 'fotiek')}
+                    </small>
+                    <strong>{g.nazov}</strong>
+                  </span>
+                </Link>
               ))}
             </div>
-            {male.length > 0 && (
-              <div className="ar-mriezka-4 ar-mriezka-4--galerie">
-                {male.map((g) => (
-                  <KartaGalerie key={g.id} galeria={g} />
-                ))}
-              </div>
-            )}
           </Sekcia>
           <Sekcia className="ar-sekcia--dalsie">{zoznam.dalsie && <NacitatDalsie nacitava={zoznam.nacitava} onClick={zoznam.nacitajDalsie} />}</Sekcia>
         </>

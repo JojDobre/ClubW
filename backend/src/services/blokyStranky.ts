@@ -35,6 +35,8 @@ const NADPIS = T(150);
 const UVOD = T(600);
 const STLPCE: Pole = { typ: 'vyber', moznosti: ['2', '3', '4'] };
 const ZAROVNANIE: Pole = { typ: 'vyber', moznosti: ['vlavo', 'stred'] };
+/** Výber tímu, ligy… - 0 alebo prázdne = predvolený (hlavný tím, liga hlavného tímu) */
+const ID: Pole = { typ: 'cislo', min: 0, max: 1_000_000 };
 const MAX_STLPCOV_TABULKY = 8;
 const MAX_RIADKOV_TABULKY = 100;
 
@@ -80,11 +82,20 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
   video: { polia: { nadpis: NADPIS, url: T(300), popis: T(200) } },
   mapa: { polia: { nadpis: NADPIS, adresa: T(200) } },
   formular: { polia: { slug: T(100) } },
-  clanky: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, rubrika: T(100) } },
+  clanky: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, rubrika: T(100), vzhlad: { typ: 'vyber', moznosti: ['karty', 'zoznam'] } } },
   zapasy: {
     polia: { nadpis: NADPIS, tim_id: { typ: 'cislo', min: 0, max: 1_000_000 }, rezim: { typ: 'vyber', moznosti: ['program', 'vysledky'] }, pocet: { typ: 'cislo', min: 1, max: 12 } },
   },
   partneri: { polia: { nadpis: NADPIS } },
+  // Automatické bloky s údajmi klubu (aj ako sekcie úvodnej stránky šablóny)
+  tabulka_ligy: { polia: { nadpis: NADPIS, liga_id: ID, kompaktna: { typ: 'prepinac' } } },
+  strelci: { polia: { nadpis: NADPIS, liga_id: ID, typ: { typ: 'vyber', moznosti: ['gol', 'asistencia'] }, pocet: { typ: 'cislo', min: 1, max: 20 } } },
+  statistiky_timu: { polia: { nadpis: NADPIS, tim_id: ID } },
+  hraci: { polia: { nadpis: NADPIS, tim_id: ID, pocet: { typ: 'cislo', min: 1, max: 40 } } },
+  videa: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 } } },
+  galerie: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 } } },
+  produkty: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 } } },
+  udalosti: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 } } },
   tlacidla: {
     polia: { nadpis: NADPIS, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'obrazkove', 'velke'] }, zarovnanie: ZAROVNANIE, stlpce: { typ: 'vyber', moznosti: ['2', '3', '4'] } },
     polozky: {

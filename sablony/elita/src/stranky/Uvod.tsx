@@ -11,6 +11,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { podlaCasu, useHlavnyTim } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -781,13 +782,21 @@ const Uvod: React.FC = () => {
   return (
     <div className="el-uvod">
       {sHero && <Slider clanky={hero} nacitava={zvyraznene.nacitava || clanky.nacitava} nahradnaFotka={(s.uvod_fotka as string | null) || null} />}
+      <Sekcie p="po_slideri" />
       {u.zapnute('ukazat_zapasy') && hlavny && <ZapasovaKarta tim={hlavny} ligy={ligy.data ?? []} vstupenky={vstupenky} prekryva={sHero} />}
+      <Sekcie p="po_zapase" />
       {u.zapnute('ukazat_novinky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {u.zapnute('ukazat_hracov') && timHracov && <Kader tim={timHracov} nadpis={u.text('hraci_nadpis', 'Prvý tím')} />}
+      <Sekcie p="po_kadri" />
       {u.zapnute('ukazat_sezonu') && hlavny && <Sezona tim={hlavny} nadpis={u.text('sezona_nadpis', 'Sezóna v číslach')} />}
+      <Sekcie p="po_sezone" />
       {u.zapnute('ukazat_videa') && <KlubTV videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      <Sekcie p="po_fanshope" />
       <Clenstvo s={s} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

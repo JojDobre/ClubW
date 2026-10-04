@@ -1,16 +1,22 @@
 // Umiestnenie: sablony/arena/src/stranky/Supiska.tsx
-// Súpiska (podľa návrhu Súpiska z Claude Design) - slúži pre /teams aj
-// /teams/:id. Červený pás so záložkami tímov, pilulky pozícií (posunú
-// stránku ku skupine), hráči po pozíciách v kartách so štatistikami
-// sezóny a na konci realizačný tím.
+// Súpiska - slúži pre /teams aj /teams/:id. Nie mriežka kariet, ale
+// zostava ako v športovej aplikácii: panel nástrojov so skokom na pozíciu
+// a výberom tímu, hráči po pozíciách v širokých riadkoch (veľké číslo,
+// fotka, meno, národnosť, vek, zápasy, góly, asistencie) a na konci
+// realizačný tím v kompaktných kartách.
 
-import React, { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useNastavenia } from '@clubw/jadro';
 import { NenajdenyObsah } from './Nenajdena';
-import { ChybaStranky, Filtre, HlavickaStranky, KartaClena, KartaHraca, Nacitava, PasZaloziek, Prazdne, Sekcia } from '../casti';
+import { ChybaStranky, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
 import {
+  Ikona,
   POZICIE,
+  funkcia,
+  obrazokUrl,
+  skryObrazok,
+  sklon,
   useApi,
   useTitulok,
   zoradTimy,
@@ -33,34 +39,80 @@ const podlaPozicie = (hraci: Hrac[]) => {
     .map(([kluc, zoznam]) => ({ kluc, nazov: POZICIE[kluc]?.mnozne ?? 'Ďalší hráči', hraci: zoznam }));
 };
 
+const Udaj: React.FC<{ nazov: string; children: React.ReactNode }> = ({ nazov, children }) => (
+  <span className="ar-hriadok__udaj">
+    <small>{nazov}</small>
+    {children}
+  </span>
+);
+
+const RiadokHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca }> = ({ hrac: h, statistika: st }) => {
+  const fotka = obrazokUrl(h.fotka);
+  return (
+    <Link to={`/players/${h.id}`} className="ar-hriadok">
+      <span className="ar-hriadok__cislo">{h.cislo_dresu ?? '–'}</span>
+      <span className="ar-hriadok__foto">{fotka ? <img src={fotka} alt="" loading="lazy" onError={skryObrazok} /> : <span className="ar-hrac__silueta" aria-hidden="true" />}</span>
+      <span className="ar-hriadok__meno">
+        <small>{h.meno}</small>
+        <strong>{h.priezvisko}</strong>
+      </span>
+      <Udaj nazov="Národnosť">{h.narodnost || '–'}</Udaj>
+      <Udaj nazov="Vek">{h.vek ?? '–'}</Udaj>
+      <span className="ar-hriadok__staty">
+        <Udaj nazov="Zápasy">{st?.zapasy ?? 0}</Udaj>
+        <Udaj nazov="Góly">{st?.goly ?? 0}</Udaj>
+        <Udaj nazov="Asist.">{st?.asistencie ?? 0}</Udaj>
+      </span>
+      <Ikona nazov="sipka" velkost={15} className="ar-hriadok__sipka" />
+    </Link>
+  );
+};
+
 const SupiskaTimu: React.FC<{ tim: Tim; timy: Tim[] }> = ({ tim, timy }) => {
+  const navigate = useNavigate();
   const hraci = useApi<{ hraci: Hrac[] }>(`/teams/${tim.id}/players`);
   const statistiky = useApi<StatistikaHraca[]>(`/teams/${tim.id}/players/stats`);
   const clenovia = useApi<{ realizacny_tim: ClenTimu[] }>(`/teams/${tim.id}/staff`);
-  const [pozicia, setPozicia] = useState('');
   const podlaId = useMemo(() => new Map((statistiky.data ?? []).map((s) => [s.hrac_id, s])), [statistiky.data]);
   const skupiny = podlaPozicie(hraci.data?.hraci ?? []);
   const realizacny = clenovia.data?.realizacny_tim ?? [];
+  const pocetHracov = skupiny.reduce((n, s) => n + s.hraci.length, 0);
 
   const posunNa = (kluc: string) => {
-    setPozicia(kluc);
-    const ciel = document.getElementById(kluc ? `ar-skupina-${kluc}` : 'ar-supiska');
-    if (!ciel) return;
-    const hlavicka = document.querySelector<HTMLElement>('.ar-hlavicka')?.offsetHeight ?? 0;
-    window.scrollTo({ top: ciel.getBoundingClientRect().top + window.scrollY - hlavicka - 16, behavior: 'smooth' });
+    const ciel = document.getElementById(`ar-skupina-${kluc}`);
+    if (ciel) window.scrollTo({ top: ciel.getBoundingClientRect().top + window.scrollY - 170, behavior: 'smooth' });
   };
 
   return (
     <>
-      {timy.length > 1 && (
-        <PasZaloziek popis="Tímy">
-          {timy.map((t) => (
-            <Link key={t.id} to={`/teams/${t.id}`} className={`ar-zalozka-timu${t.id === tim.id ? ' is-aktivna' : ''}`} aria-current={t.id === tim.id ? 'page' : undefined}>
-              {t.nazov}
-            </Link>
+      <div className="ar-kontajner ar-nastroje">
+        <div className="ar-segment" role="group" aria-label="Pozície">
+          {skupiny.map((s) => (
+            <button key={s.kluc} type="button" onClick={() => posunNa(s.kluc)}>
+              {s.nazov}
+              <small>{s.hraci.length}</small>
+            </button>
           ))}
-        </PasZaloziek>
-      )}
+          {realizacny.length > 0 && (
+            <button type="button" onClick={() => posunNa('realizacny-tim')}>
+              Realizačný tím
+              <small>{realizacny.length}</small>
+            </button>
+          )}
+        </div>
+        {timy.length > 1 && (
+          <label className="ar-vyber">
+            <span>Tím</span>
+            <select value={String(tim.id)} onChange={(e) => navigate(`/teams/${e.target.value}`)}>
+              {timy.map((t) => (
+                <option key={t.id} value={String(t.id)}>
+                  {t.nazov}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       {hraci.nacitava ? (
         <Nacitava text="Načítavam súpisku…" />
@@ -69,38 +121,54 @@ const SupiskaTimu: React.FC<{ tim: Tim; timy: Tim[] }> = ({ tim, timy }) => {
           <Prazdne nadpis="Súpiska zatiaľ nie je zverejnená" />
         </Sekcia>
       ) : (
-        <div id="ar-supiska">
-          <Sekcia className="ar-sekcia--filtre ar-sekcia--pozicie">
-            <Filtre
-              popis="Pozície"
-              aktivna={pozicia}
-              onZmena={posunNa}
-              moznosti={[
-                { kluc: '', nazov: 'Všetci' },
-                ...skupiny.map((s) => ({ kluc: s.kluc, nazov: s.nazov })),
-                ...(realizacny.length > 0 ? [{ kluc: 'realizacny-tim', nazov: 'Realizačný tím' }] : []),
-              ]}
-            />
-          </Sekcia>
+        <div className="ar-kontajner ar-zostava" id="ar-supiska">
+          {pocetHracov > 0 && (
+            <p className="ar-zostava__suhrn">
+              <strong>{pocetHracov}</strong> {sklon(pocetHracov, 'hráč', 'hráči', 'hráčov')} na súpiske
+              {realizacny.length > 0 && (
+                <>
+                  {' '}
+                  · <strong>{realizacny.length}</strong> v realizačnom tíme
+                </>
+              )}
+            </p>
+          )}
           {skupiny.map((s) => (
-            <Sekcia key={s.kluc} className="ar-skupina" id={`ar-skupina-${s.kluc}`} ariaLabel={s.nazov}>
-              <h2 className="ar-skupina__nadpis">{s.nazov}</h2>
-              <div className="ar-mriezka-4 ar-mriezka-4--hraci">
+            <section key={s.kluc} className="ar-zostava__skupina" id={`ar-skupina-${s.kluc}`} aria-label={s.nazov}>
+              <header className="ar-zostava__hlava">
+                <span aria-hidden="true">{String(s.hraci.length).padStart(2, '0')}</span>
+                <h2>{s.nazov}</h2>
+              </header>
+              <div className="ar-zostava__riadky">
                 {s.hraci.map((h) => (
-                  <KartaHraca key={h.id} hrac={h} statistika={podlaId.get(h.id)} />
+                  <RiadokHraca key={h.id} hrac={h} statistika={podlaId.get(h.id)} />
                 ))}
               </div>
-            </Sekcia>
+            </section>
           ))}
           {realizacny.length > 0 && (
-            <Sekcia className="ar-skupina" id="ar-skupina-realizacny-tim" ariaLabel="Realizačný tím">
-              <h2 className="ar-skupina__nadpis">Realizačný tím</h2>
-              <div className="ar-mriezka-4 ar-mriezka-4--hraci">
-                {realizacny.map((c) => (
-                  <KartaClena key={c.id} clen={c} />
-                ))}
+            <section className="ar-zostava__skupina" id="ar-skupina-realizacny-tim" aria-label="Realizačný tím">
+              <header className="ar-zostava__hlava">
+                <span aria-hidden="true">{String(realizacny.length).padStart(2, '0')}</span>
+                <h2>Realizačný tím</h2>
+              </header>
+              <div className="ar-zostava__clenovia">
+                {realizacny.map((c) => {
+                  const fotka = obrazokUrl(c.fotka);
+                  return (
+                    <Link key={c.id} to={`/staff/${c.id}`} className="ar-clen">
+                      <span className="ar-hriadok__foto">{fotka ? <img src={fotka} alt="" loading="lazy" onError={skryObrazok} /> : <span className="ar-hrac__silueta" aria-hidden="true" />}</span>
+                      <span>
+                        <small>{funkcia(c.funkcia)}</small>
+                        <strong>
+                          {c.meno} {c.priezvisko}
+                        </strong>
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
-            </Sekcia>
+            </section>
           )}
         </div>
       )}

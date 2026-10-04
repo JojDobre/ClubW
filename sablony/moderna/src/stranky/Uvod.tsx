@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony, SekcieUvodu } from '@clubw/jadro';
 import {
   Erb,
   Ikona,
@@ -114,6 +114,9 @@ const Odpocet: React.FC<{ kedy: string; svetly?: boolean }> = ({ kedy, svetly = 
   );
 };
 
+/** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="md-bloky md-u-sekcie" />;
+
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const s = useNastaveniaSablony<Nastavenia>();
@@ -208,6 +211,7 @@ const Uvod: React.FC = () => {
         </div>
       </section>
 
+      <Sekcie p="po_hero" />
       {/* ===== Rýchle odkazy ===== */}
       <nav className="md-rychle" aria-label="Rýchle odkazy">
         <div className="md-kontajner md-rychle__mriezka">
@@ -242,6 +246,7 @@ const Uvod: React.FC = () => {
         </div>
       </nav>
 
+      <Sekcie p="po_odkazoch" />
       {/* ===== Match Centre ===== */}
       {(najblizsi || posledny) && (
         <section className="md-sekcia md-aurora" aria-labelledby="md-mc">
@@ -270,6 +275,7 @@ const Uvod: React.FC = () => {
         </section>
       )}
 
+      <Sekcie p="po_zapasoch" />
       {/* ===== Správy ===== */}
       <section className="md-sekcia" aria-labelledby="md-spravy">
         <div className="md-kontajner">
@@ -296,6 +302,7 @@ const Uvod: React.FC = () => {
         </div>
       </section>
 
+      <Sekcie p="po_spravach" />
       {/* ===== Hráči ===== */}
       {s.ukazat_hracov && hlavny && hraciUvodu.length > 0 && (
         <section className="md-sekcia md-mesh" aria-labelledby="md-hraci">
@@ -310,6 +317,7 @@ const Uvod: React.FC = () => {
         </section>
       )}
 
+      <Sekcie p="po_hracoch" />
       {/* ===== Tabuľka a anketa ===== */}
       {((s.ukazat_tabulku && liga && (tabulka.data ?? []).length > 0) || s.ukazat_anketu) && (
         <section className="md-sekcia" aria-label="Tabuľka a anketa">
@@ -409,6 +417,7 @@ const Uvod: React.FC = () => {
           </div>
         </section>
       )}
+      <Sekcie p="koniec" />
     </div>
   );
 };

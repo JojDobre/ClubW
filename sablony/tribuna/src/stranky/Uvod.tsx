@@ -16,6 +16,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { IkonaSiete, podlaCasu, useHlavnyTim, useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -923,11 +924,17 @@ const Uvod: React.FC = () => {
   return (
     <div className="tb-uvod">
       {u.zapnute('ukazat_clanky') && <Hero clanky={hero} nacitava={zvyraznene.nacitava || clanky.nacitava} nahradnaFotka={(s.uvod_fotka as string | null) || null} />}
+      <Sekcie p="po_hero" />
       {u.zapnute('ukazat_zapasy') && hlavny && <ZapasovyDen tim={hlavny} ligy={ligy.data ?? []} vstupenky={vstupenky} />}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_novinky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {hlavny && <Klub tim={hlavny} hraciTim={timHracov} />}
+      <Sekcie p="po_klube" />
       {u.zapnute('ukazat_videa') && <KlubTV videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       <Komunita s={s} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

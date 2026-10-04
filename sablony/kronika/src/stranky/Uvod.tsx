@@ -11,6 +11,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -660,6 +661,7 @@ const Uvod: React.FC = () => {
   return (
     <div className="kr-uvod">
       {u.zapnute('ukazat_zapasy') && u.zapnute('ukazat_listu_zapasov') && <Skore zapasy={lista} />}
+      <Sekcie p="po_skore" />
       {u.zapnute('ukazat_clanky') && (
         <Titulka
           hlavny={hlavny}
@@ -671,14 +673,21 @@ const Uvod: React.FC = () => {
           nahradnaFotka={(s.uvod_fotka as string | null) || null}
         />
       )}
+      <Sekcie p="po_titulke" />
       {u.zapnute('ukazat_zapasy') && timyZapasov.length > 0 && (
         <PrehladZapasov timy={timyZapasov} timId={tid} setTimId={setTimId} program={program} vysledky={odohrane} tabulka={dataTabulky} nacitava={nacitavaZapasy} />
       )}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_hracov') && timHracov && <Kader tim={timHracov} nadpis={String(s.hraci_nadpis || '').trim() || `Káder · ${timHracov.nazov}`} />}
+      <Sekcie p="po_kadri" />
       {u.zapnute('ukazat_videa') && <Videa videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      <Sekcie p="po_fanshope" />
       <Klub s={s} />
+      <Sekcie p="po_klube" />
       <Partneri partneri={partneri.data ?? []} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

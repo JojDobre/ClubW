@@ -14,6 +14,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { podlaCasu, useHlavnyTim } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea } from '../casti';
 import {
@@ -673,13 +674,21 @@ const Uvod: React.FC = () => {
   return (
     <div className="ar-uvod">
       {u.zapnute('ukazat_clanky') && <Hero clanky={hero} zapas={u.zapnute('ukazat_zapas_hero') ? najblizsi : null} vstupenky={vstupenky} nahradnaFotka={(s.uvod_fotka as string | null) || null} />}
+      <Sekcie p="po_hero" />
       {u.zapnute('ukazat_pas') && <Pas zapasy={[...minule.slice(-3), ...(zive.data ?? []), ...dalsie]} />}
+      <Sekcie p="po_pase" />
       {u.zapnute('ukazat_novinky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {u.zapnute('ukazat_zapasy') && hlavny && <Zapasy tim={hlavny} minule={minule.slice(-2).reverse()} dalsie={dalsie.slice(0, 3)} riadok={riadok} liga={liga} />}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_sezonu') && hlavny && <Sezona tim={hlavny} />}
+      <Sekcie p="po_sezone" />
       {u.zapnute('ukazat_hracov') && timHracov && <Kader tim={timHracov} />}
+      <Sekcie p="po_kadri" />
       <Media s={s} videa={videa.data ?? []} />
+      <Sekcie p="po_mediach" />
       {u.zapnute('ukazat_vyzvu') && <Vyzva s={s} />}
+      <Sekcie p="koniec" />
     </div>
   );
 };

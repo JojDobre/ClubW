@@ -1,20 +1,24 @@
 // Umiestnenie: sablony/arena/src/stranky/Zapasy.tsx
-// Zápasy klubu: červený pás so záložkami tímov (ako na súpiske), pilulky
-// Všetky / Program / Výsledky a karty zápasov z úvodnej stránky zoskupené podľa
-// mesiaca. Tím a zobrazenie sa držia v adrese (?tim=1&zobrazit=vysledky).
+// Zápasy klubu ako rozpis sezóny - nie mriežka kariet:
+//  - v tmavej hlavičke bilancia sezóny (výhry, remízy, prehry, skóre),
+//  - plávajúci panel nástrojov: prepínač Program / Výsledky / Celá sezóna
+//    a výber tímu,
+//  - vľavo prilepený zoznam mesiacov (skok na mesiac), vpravo zápasy ako
+//    široké riadky po mesiacoch s dňom, miestom, skóre a výsledkom klubu.
+// Tím a zobrazenie sa držia v adrese (?tim=1&zobrazit=vysledky).
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useNastaveniaSablony } from '@clubw/jadro';
-import { Chyba, Filtre, HlavickaStranky, KartaZapasu, Nacitava, PasZaloziek, Prazdne, Sekcia } from '../casti';
-import { podlaMesiaca, useApi, useTitulok, useVolbaVAdrese, zoradTimy, useUpravy, type Tim, type Zapas } from '../spolocne';
+import { Chyba, HlavickaStranky, Nacitava, Prazdne, RiadokRozpisu, Sekcia } from '../casti';
+import { podlaMesiaca, useApi, useTitulok, useVolbaVAdrese, vysledokKlubu, zoradTimy, useUpravy, type Tim, type Zapas } from '../spolocne';
 
-type Zobrazenie = 'vsetky' | 'program' | 'vysledky';
+type Zobrazenie = 'program' | 'vysledky' | 'vsetky';
+
+const kotvaMesiaca = (mesiac: string) => `ar-mesiac-${mesiac.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, '-')}`;
 
 const Zapasy: React.FC = () => {
   const u = useUpravy();
   const [parametre, setParametre] = useSearchParams();
-  const s = useNastaveniaSablony<{ vstupenky_odkaz: string | null }>();
   const timId = parametre.get('tim') ?? '';
   const timy = useApi<Tim[]>('/teams');
   const zapasy = useApi<Zapas[]>(`/matches?limit=500${timId ? `&tim_id=${encodeURIComponent(timId)}` : ''}`);
@@ -26,13 +30,27 @@ const Zapasy: React.FC = () => {
     .filter((z) => (z.status === 'naplanovany' || z.status === 'odlozeny' || z.status === 'prebieha') && new Date(z.datum_cas).getTime() >= hranica)
     .sort((a, b) => a.datum_cas.localeCompare(b.datum_cas));
   const vysledky = vsetky.filter((z) => !program.includes(z) && z.status !== 'zruseny').sort((a, b) => b.datum_cas.localeCompare(a.datum_cas));
-
-  // Všetky zápasy chronologicky ako rozpis sezóny
-  const vsetkyZapasy = [...vsetky].sort((a, b) => a.datum_cas.localeCompare(b.datum_cas));
-  const [zobrazenie, setZobrazenie] = useVolbaVAdrese<Zobrazenie>('zobrazit', ['vsetky', 'program', 'vysledky'], 'vsetky');
-  const zobrazene = zobrazenie === 'program' ? program : zobrazenie === 'vysledky' ? vysledky : vsetkyZapasy;
+  const sezona = [...vsetky].sort((a, b) => a.datum_cas.localeCompare(b.datum_cas));
+  // Bez programu sa rovno ukážu výsledky
+  const [zobrazenie, setZobrazenie] = useVolbaVAdrese<Zobrazenie>('zobrazit', ['program', 'vysledky', 'vsetky'], 'program');
+  const aktivne = zobrazenie === 'program' && program.length === 0 && !zapasy.nacitava ? 'vysledky' : zobrazenie;
+  const zobrazene = aktivne === 'program' ? program : aktivne === 'vysledky' ? vysledky : sezona;
+  const mesiace = podlaMesiaca(zobrazene);
   const zoradeneTimy = zoradTimy(timy.data);
-  const vstupenky = (s.vstupenky_odkaz || '').trim() || null;
+
+  const bilancia = useMemo(() => {
+    const b = { V: 0, R: 0, P: 0, za: 0, proti: 0 };
+    for (const z of vysledky) {
+      const v = vysledokKlubu(z);
+      if (!v) continue;
+      b[v]++;
+      const domaci = Boolean(z.domaci_tim_id);
+      b.za += (domaci ? z.goly_domaci : z.goly_hostia) ?? 0;
+      b.proti += (domaci ? z.goly_hostia : z.goly_domaci) ?? 0;
+    }
+    return b;
+  }, [vysledky]);
+  const odohrane = bilancia.V + bilancia.R + bilancia.P;
 
   const zvolTim = (id: string) => {
     const nove = new URLSearchParams(parametre);
@@ -40,39 +58,71 @@ const Zapasy: React.FC = () => {
     else nove.delete('tim');
     setParametre(nove, { replace: true });
   };
+  const skocNa = (mesiac: string) => {
+    const ciel = document.getElementById(kotvaMesiaca(mesiac));
+    if (ciel) window.scrollTo({ top: ciel.getBoundingClientRect().top + window.scrollY - 170, behavior: 'smooth' });
+  };
 
   return (
-    <div className="ar-stranka ar-zapasy-stranka">
-      <HlavickaStranky stitok={u.text('stranka_zapasy_stitok', 'Program a výsledky')} nadpis={u.text('stranka_zapasy_nadpis', 'Zápasy')} />
+    <div className="ar-stranka ar-rozpis-stranka">
+      <HlavickaStranky stitok={u.text('stranka_zapasy_stitok', 'Program a výsledky')} nadpis={u.text('stranka_zapasy_nadpis', 'Zápasy')}>
+        {odohrane > 0 && (
+          <dl className="ar-bilancia-hlavy" aria-label="Bilancia odohraných zápasov">
+            <div>
+              <dt>{odohrane}</dt>
+              <dd>zápasov</dd>
+            </div>
+            <div className="is-v">
+              <dt>{bilancia.V}</dt>
+              <dd>výhier</dd>
+            </div>
+            <div>
+              <dt>{bilancia.R}</dt>
+              <dd>remíz</dd>
+            </div>
+            <div className="is-p">
+              <dt>{bilancia.P}</dt>
+              <dd>prehier</dd>
+            </div>
+            <div>
+              <dt>
+                {bilancia.za}:{bilancia.proti}
+              </dt>
+              <dd>skóre</dd>
+            </div>
+          </dl>
+        )}
+      </HlavickaStranky>
 
-      {zoradeneTimy.length > 1 && (
-        <PasZaloziek popis="Tím">
-          {[{ id: '', nazov: 'Všetky tímy' }, ...zoradeneTimy.map((t) => ({ id: String(t.id), nazov: t.nazov }))].map((t) => (
-            <button
-              key={t.id || 'vsetky'}
-              type="button"
-              className={`ar-zalozka-timu${timId === t.id ? ' is-aktivna' : ''}`}
-              aria-pressed={timId === t.id}
-              onClick={() => zvolTim(t.id)}
-            >
-              {t.nazov}
+      <div className="ar-kontajner ar-nastroje">
+        <div className="ar-segment" role="group" aria-label="Zobrazenie">
+          {(
+            [
+              ['program', 'Program', program.length],
+              ['vysledky', 'Výsledky', vysledky.length],
+              ['vsetky', 'Celá sezóna', sezona.length],
+            ] as const
+          ).map(([kluc, nazov, pocet]) => (
+            <button key={kluc} type="button" className={aktivne === kluc ? 'is-aktivny' : ''} aria-pressed={aktivne === kluc} onClick={() => setZobrazenie(kluc)}>
+              {nazov}
+              <small>{pocet}</small>
             </button>
           ))}
-        </PasZaloziek>
-      )}
-
-      <Sekcia className="ar-sekcia--filtre">
-        <Filtre<Zobrazenie>
-          popis="Všetky zápasy, program alebo výsledky"
-          aktivna={zobrazenie}
-          onZmena={setZobrazenie}
-          moznosti={[
-            { kluc: 'vsetky', nazov: `Všetky${vsetkyZapasy.length ? ` (${vsetkyZapasy.length})` : ''}` },
-            { kluc: 'program', nazov: `Program${program.length ? ` (${program.length})` : ''}` },
-            { kluc: 'vysledky', nazov: `Výsledky${vysledky.length ? ` (${vysledky.length})` : ''}` },
-          ]}
-        />
-      </Sekcia>
+        </div>
+        {zoradeneTimy.length > 1 && (
+          <label className="ar-vyber">
+            <span>Tím</span>
+            <select value={timId} onChange={(e) => zvolTim(e.target.value)}>
+              <option value="">Všetky tímy</option>
+              {zoradeneTimy.map((t) => (
+                <option key={t.id} value={String(t.id)}>
+                  {t.nazov}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       {zapasy.nacitava ? (
         <Nacitava text="Načítavam zápasy…" />
@@ -82,22 +132,39 @@ const Zapasy: React.FC = () => {
         </Sekcia>
       ) : zobrazene.length === 0 ? (
         <Sekcia>
-          <Prazdne
-            nadpis={zobrazenie === 'program' ? 'Žiadne naplánované zápasy' : zobrazenie === 'vysledky' ? 'Zatiaľ žiadne odohrané zápasy' : 'Zatiaľ tu nie sú žiadne zápasy'}
-            text={zobrazenie === 'program' ? 'Program zverejníme hneď, ako bude známy.' : undefined}
-          />
+          <Prazdne nadpis={aktivne === 'program' ? 'Žiadne naplánované zápasy' : 'Zatiaľ tu nie sú žiadne zápasy'} text={aktivne === 'program' ? 'Program zverejníme hneď, ako bude známy.' : undefined} />
         </Sekcia>
       ) : (
-        podlaMesiaca(zobrazene).map((m) => (
-          <Sekcia key={m.mesiac} className="ar-skupina" ariaLabel={m.mesiac}>
-            <h2 className="ar-skupina__nadpis">{m.mesiac}</h2>
-            <div className="ar-mriezka-3 ar-mriezka-zapasov">
-              {m.zapasy.map((z) => (
-                <KartaZapasu key={z.id} zapas={z} vstupenky={vstupenky} />
+        <div className="ar-kontajner ar-rozpis">
+          {mesiace.length > 1 && (
+            <nav className="ar-rozpis__mesiace" aria-label="Mesiace">
+              <span>Mesiace</span>
+              {mesiace.map((m) => (
+                <button key={m.mesiac} type="button" onClick={() => skocNa(m.mesiac)}>
+                  {m.mesiac}
+                  <small>{m.zapasy.length}</small>
+                </button>
               ))}
-            </div>
-          </Sekcia>
-        ))
+            </nav>
+          )}
+          <div className="ar-rozpis__zoznam">
+            {mesiace.map((m) => {
+              const [nazov, rok] = m.mesiac.split(' ');
+              return (
+                <section key={m.mesiac} id={kotvaMesiaca(m.mesiac)} className="ar-rozpis__mesiac" aria-label={m.mesiac}>
+                  <h2>
+                    {nazov} <span>{rok}</span>
+                  </h2>
+                  <div className="ar-rozpis__riadky">
+                    {m.zapasy.map((z) => (
+                      <RiadokRozpisu key={z.id} zapas={z} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -5,5 +5,24 @@
   "autor": "ClubW",
   "popis": "Pôvodný vzhľad webu - svetlá hlavička s menu, úvodná stránka s aktualitami, zápasmi a anketou. Farby a logo berie z Nastavení klubu. Ostatné šablóny (aj predvolená Klubová) z nej preberajú stránky, ktoré samy nenahradia.",
   "api": 1,
-  "nahlad": "nahlad.svg"
+  "nahlad": "nahlad.svg",
+  "nastavenia": [
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_uvode",
+          "popis": "Pod uvítaním"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci"
+        }
+      ]
+    }
+  ]
 }

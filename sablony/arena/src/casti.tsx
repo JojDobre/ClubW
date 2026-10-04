@@ -27,6 +27,8 @@ import {
   pozicia,
   skryObrazok,
   stavZapasu,
+  vysledokKlubu,
+  zaKolko,
   useApi,
   useUpravy,
   type Clanok,
@@ -627,5 +629,74 @@ export const OknoVidea: React.FC<{ video: Video; onZavriet: () => void }> = ({ v
         </div>
       </div>
     </div>
+  );
+};
+
+// ===== Riadok rozpisu zápasov (stránka Zápasy) =====
+
+const SKRATKY_DNI = ['ne', 'po', 'ut', 'st', 'št', 'pi', 'so'];
+const NAZVY_VYSLEDKOV = { V: 'Výhra', R: 'Remíza', P: 'Prehra' } as const;
+
+/**
+ * Jeden zápas v rozpise: deň v mesiaci, súťaž a miesto, dvojica tímov so
+ * skóre alebo časom výkopu a napravo výsledok klubu alebo „o 3 dni".
+ */
+export const RiadokRozpisu: React.FC<{ zapas: Zapas }> = ({ zapas: z }) => {
+  const { nastavenia } = useNastavenia();
+  const stav = stavZapasu(z);
+  const skore = maVysledok(z) && stav !== 'naplanovany';
+  const v = skore ? vysledokKlubu(z) : null;
+  const d = new Date(z.datum_cas);
+  const doma = hrameDoma(z);
+  const kedy = zaKolko(z.datum_cas);
+  return (
+    <Link to={`/matches/${z.id}`} className={`ar-rriadok${skore ? ' is-odohrany' : ''}${v ? ` is-${v.toLowerCase()}` : ''}${stav === 'prebieha' ? ' is-zivy' : ''}`}>
+      <span className="ar-rriadok__den">
+        <strong>{d.getDate()}</strong>
+        <small>{SKRATKY_DNI[d.getDay()]}</small>
+      </span>
+      <span className="ar-rriadok__info">
+        <span className={`ar-rriadok__miesto${doma ? ' is-doma' : ''}`}>{z.typ_zapasu === 'neutralne' ? 'Neutrálne' : doma ? 'Doma' : 'Vonku'}</span>
+        <small>{[z.liga_nazov, z.kolo ? `${z.kolo}. kolo` : null].filter(Boolean).join(' · ') || 'Zápas'}</small>
+      </span>
+      <span className="ar-rriadok__duel">
+        <span className="ar-rriadok__tim ar-rriadok__tim--domaci">
+          <strong>{nazovDomacich(z)}</strong>
+          <Erb nazov={nazovDomacich(z)} logo={logoStrany(z, 'domaci', nastavenia.logo)} />
+        </span>
+        <span className="ar-rriadok__stred">
+          {skore ? (
+            <b>
+              {z.goly_domaci}
+              <i>:</i>
+              {z.goly_hostia}
+            </b>
+          ) : (
+            <b className="ar-rriadok__cas">{stav === 'odlozeny' ? 'odl.' : stav === 'zruseny' ? '—' : cas(z.datum_cas)}</b>
+          )}
+        </span>
+        <span className="ar-rriadok__tim">
+          <Erb nazov={nazovHosti(z)} logo={logoStrany(z, 'hostia', nastavenia.logo)} ton="akcent" />
+          <strong>{nazovHosti(z)}</strong>
+        </span>
+      </span>
+      <span className="ar-rriadok__stav">
+        {stav === 'prebieha' ? (
+          <b className="ar-live">Live</b>
+        ) : v ? (
+          <span className={`ar-rriadok__vysledok is-${v.toLowerCase()}`}>
+            <b>{v}</b>
+            {NAZVY_VYSLEDKOV[v]}
+          </span>
+        ) : skore ? (
+          <span className="ar-rriadok__vysledok">Koniec</span>
+        ) : stav === 'odlozeny' ? (
+          <span className="ar-rriadok__vysledok">Odložený</span>
+        ) : (
+          <span className="ar-rriadok__kedy">{kedy || 'Program'}</span>
+        )}
+        <Ikona nazov="sipka" velkost={15} className="ar-rriadok__sipka" />
+      </span>
+    </Link>
   );
 };

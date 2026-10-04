@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -904,8 +905,11 @@ const Uvod: React.FC = () => {
         {dataTabulky && bocne.includes('poradie') && <DlazdicaTabulky liga={dataTabulky.liga} riadky={dataTabulky.riadky} timId={tid} />}
       </div>
 
+      <Sekcie p="po_hero" />
       {u.zapnute('ukazat_pas') && <Pas polozky={pas} />}
+      <Sekcie p="po_pase" />
       {u.zapnute('ukazat_clanky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {u.zapnute('ukazat_zapasy') && timyZapasov.length > 0 && (
         <ZapasoveCentrum
           timy={timyZapasov}
@@ -917,12 +921,19 @@ const Uvod: React.FC = () => {
           nacitava={nacitavaZapasy}
         />
       )}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_hracov') && timHracov && <Hraci tim={timHracov} nadpis={String(s.hraci_nadpis || '').trim() || timHracov.nazov} />}
+      <Sekcie p="po_hracoch" />
       {u.zapnute('ukazat_videa') && <Videa videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      <Sekcie p="po_fanshope" />
       <Komunita s={s} ukazatSiete={u.zapnute('ukazat_siete')} />
+      <Sekcie p="po_komunite" />
       {u.zapnute('ukazat_odkazy') && <OdkazKlubu s={s} />}
+      <Sekcie p="po_odkazoch" />
       <Partneri partneri={partneri.data ?? []} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

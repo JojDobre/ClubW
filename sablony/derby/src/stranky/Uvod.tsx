@@ -15,6 +15,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cenaText, souborUrl, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { Sekcie } from '../bloky';
 import { IkonaSiete, podlaCasu, useHlavnyTim, useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -830,10 +831,15 @@ const Uvod: React.FC = () => {
           nahradnaFotka={(s.uvod_fotka as string | null) || null}
         />
       )}
+      <Sekcie p="po_titulke" />
       {u.zapnute('ukazat_zapasy') && hlavny && <PasZapasov tim={hlavny} minule={zapasy.minule} zive={zapasy.zive} dalsie={zapasy.dalsie} />}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_novinky') && <Novinky clanky={novinky} tim={hlavny} ligy={ligy.data ?? []} dalsie={zapasy.dalsie} />}
+      <Sekcie p="po_novinkach" />
       {u.zapnute('ukazat_hracov') && timHracov && <Kader tim={timHracov} nadpis={u.text('hraci_nadpis', 'Prvý tím')} />}
+      <Sekcie p="po_kadri" />
       <Media s={s} videa={videa.data ?? []} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

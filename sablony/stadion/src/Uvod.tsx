@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useData, useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useData, useNastavenia, useNastaveniaSablony, SekcieUvodu } from '@clubw/jadro';
 
 interface Nastavenia extends Record<string, string | number | boolean | null> {
   uvodna_fotka: string | null;
@@ -73,6 +73,9 @@ const Odpocet: React.FC<{ kedy: string }> = ({ kedy }) => {
   );
 };
 
+/** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="st-u-sekcie" />;
+
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const s = useNastaveniaSablony<Nastavenia>();
@@ -134,6 +137,7 @@ const Uvod: React.FC = () => {
         </Link>
       )}
 
+      <Sekcie p="po_hero" />
       <div className="st-sekcia">
         <div className="st-sekcia__hlava">
           <h2>Aktuality</h2>
@@ -169,12 +173,14 @@ const Uvod: React.FC = () => {
         )}
       </div>
 
+      <Sekcie p="po_aktualitach" />
       {s.ukazat_anketu && (
         <div className="st-sekcia st-sekcia--anketa">
           <AnketaWeb najnovsia />
         </div>
       )}
 
+      <Sekcie p="po_ankete" />
       {s.ukazat_partnerov && (partneri.data ?? []).length > 0 && (
         <div className="st-partneri">
           <h2>Partneri klubu</h2>
@@ -197,6 +203,7 @@ const Uvod: React.FC = () => {
           </Link>
         </div>
       )}
+      <Sekcie p="koniec" />
     </div>
   );
 };

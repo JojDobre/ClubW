@@ -1,16 +1,15 @@
 // Umiestnenie: sablony/arena/src/stranky/Videa.tsx
-// Videá (podľa návrhu Videá z Claude Design): kategórie ako pilulky,
-// veľké video cez celú šírku, mriežka troch videí a „Načítať ďalšie".
+// Videá ako klubová televízia: kategórie ako pilulky, vľavo veľké vybrané
+// video s popisom, vpravo číslovaný playlist s náhľadmi (výber zmení
+// hlavné video).
 // Kliknutie otvorí okno s prehrávačom YouTube (bez cookies) alebo Vimeo -
 // dovtedy sa z cudzích serverov načítajú len náhľady.
 // ?zapas=<id> ukáže len videá z jedného zápasu.
 
 import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Chyba, Filtre, HlavickaStranky, KartaVidea, NacitatDalsie, Nacitava, Obrazok, Prazdne, Sekcia, kategoriaVidea, nahladVidea, useOknoVidea } from '../casti';
-import { Ikona, dlzkaVidea, useApi, useTitulok, useUpravy, type Video } from '../spolocne';
-
-const NA_STRANU = 6;
+import { Chyba, Filtre, HlavickaStranky, Nacitava, Obrazok, Prazdne, Sekcia, kategoriaVidea, nahladVidea, useOknoVidea } from '../casti';
+import { Ikona, datum, dlzkaVidea, sklon, useApi, useTitulok, useUpravy, type Video } from '../spolocne';
 
 const HlavneVideo: React.FC<{ video: Video; onPrehrat: (v: Video) => void }> = ({ video: v, onPrehrat }) => {
   const dlzka = dlzkaVidea(v.dlzka);
@@ -35,7 +34,7 @@ const Videa: React.FC = () => {
   const zapas = parametre.get('zapas');
   const kategoria = parametre.get('kategoria') ?? '';
   const videa = useApi<Video[]>(`/videos?limit=500${zapas ? `&zapas_id=${encodeURIComponent(zapas)}` : ''}`);
-  const [pocet, setPocet] = useState({ filter: '', n: NA_STRANU });
+  const [aktivne, setAktivne] = useState<number | null>(null);
   const { otvor, okno } = useOknoVidea();
   useTitulok('Videá');
 
@@ -50,8 +49,7 @@ const Videa: React.FC = () => {
   }, [videa.data]);
 
   const vybrane = (videa.data ?? []).filter((v) => !kategoria || kategoriaVidea(v).toLowerCase() === kategoria);
-  const zobrazit = pocet.filter === kategoria ? pocet.n : NA_STRANU;
-  const [hlavne, ...ostatne] = vybrane;
+  const hlavne = vybrane.find((v) => v.id === aktivne) ?? vybrane[0];
 
   const zvolKategoriu = (k: string) => {
     const nove = new URLSearchParams(parametre);
@@ -87,23 +85,46 @@ const Videa: React.FC = () => {
           <Prazdne nadpis="Zatiaľ tu nie sú žiadne videá" />
         </Sekcia>
       ) : (
-        <>
-          <Sekcia className={`ar-sekcia--hlavny-clanok${kategorie.length ? '' : ' ar-sekcia--hore'}`}>
+        <div className={`ar-kontajner ar-tv${kategorie.length ? '' : ' ar-tv--hore'}`}>
+          <div className="ar-tv__hlavne">
             <HlavneVideo video={hlavne} onPrehrat={otvor} />
-          </Sekcia>
-          {ostatne.length > 0 && (
-            <Sekcia className="ar-sekcia--mriezka">
-              <div className="ar-mriezka-3 ar-mriezka-3--karty">
-                {ostatne.slice(0, zobrazit).map((v) => (
-                  <KartaVidea key={v.id} video={v} onPrehrat={otvor} />
-                ))}
+            <div className="ar-tv__info">
+              <span className="ar-tv__meta">
+                {kategoriaVidea(hlavne) && <b>{kategoriaVidea(hlavne)}</b>}
+                {hlavne.vytvorene && datum(hlavne.vytvorene)}
+              </span>
+              <h2>{hlavne.nazov}</h2>
+              {hlavne.popis && <p>{hlavne.popis}</p>}
+            </div>
+          </div>
+          {vybrane.length > 1 && (
+            <div className="ar-tv__playlist">
+              <div className="ar-tv__hlava">
+                <strong>Playlist</strong>
+                <small>
+                  {vybrane.length} {sklon(vybrane.length, 'video', 'videá', 'videí')}
+                </small>
               </div>
-            </Sekcia>
+              <ol>
+                {vybrane.map((v, i) => (
+                  <li key={v.id}>
+                    <button type="button" className={`ar-tv__polozka${v.id === hlavne.id ? ' is-aktivna' : ''}`} onClick={() => setAktivne(v.id)} aria-pressed={v.id === hlavne.id}>
+                      <span className="ar-tv__poradie">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="ar-tv__nahlad">
+                        <Obrazok src={nahladVidea(v)} className="ar-tv__obrazok" />
+                        {dlzkaVidea(v.dlzka) && <small>{dlzkaVidea(v.dlzka)}</small>}
+                      </span>
+                      <span className="ar-tv__nazov">
+                        <strong>{v.nazov}</strong>
+                        <small>{kategoriaVidea(v) || (v.vytvorene ? datum(v.vytvorene) : '')}</small>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
-          <Sekcia className="ar-sekcia--dalsie">
-            {ostatne.length > zobrazit && <NacitatDalsie nacitava={false} onClick={() => setPocet({ filter: kategoria, n: zobrazit + NA_STRANU })} />}
-          </Sekcia>
-        </>
+        </div>
       )}
       {okno}
     </div>

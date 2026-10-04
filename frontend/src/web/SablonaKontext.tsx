@@ -92,6 +92,7 @@ const nastavPremenne = (nastavenia: Record<string, HodnotaNastavenia>) => {
   const koren = document.documentElement;
   for (const [kluc, hodnota] of Object.entries(nastavenia)) {
     const premenna = `--sablona-${kluc.replace(/_/g, '-')}`;
+    if (Array.isArray(hodnota)) continue;
     if (hodnota === null || hodnota === '') {
       koren.style.removeProperty(premenna);
     } else if (typeof hodnota === 'boolean') {

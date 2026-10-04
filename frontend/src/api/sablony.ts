@@ -3,8 +3,11 @@
 
 import api from '../app/apiKlient';
 
-export type TypNastaveniaSablony = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz';
-export type HodnotaNastaveniaSablony = string | number | boolean | null;
+import type { BlokStranky } from '../web/bloky/typy';
+
+export type TypNastaveniaSablony = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz' | 'sekcie';
+/** Typ „sekcie" má ako hodnotu zoznam blokov (vlastné sekcie úvodu). */
+export type HodnotaNastaveniaSablony = string | number | boolean | null | BlokStranky[];
 
 export interface NastavenieSablony {
   kluc: string;
@@ -17,6 +20,8 @@ export interface NastavenieSablony {
   moznosti?: Array<{ hodnota: string; popis: string }>;
   min?: number;
   max?: number;
+  /** Typ „sekcie": miesta na úvode, kam sa dá sekcia vložiť */
+  pozicie?: Array<{ hodnota: string; popis: string }>;
 }
 
 export interface SablonaWebu {

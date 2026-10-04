@@ -77,6 +77,31 @@
       "menovka": "Anketa na úvode",
       "skupina": "Sekcie úvodu",
       "predvolene": true
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_hero",
+          "popis": "Pod úvodom a výsledkom"
+        },
+        {
+          "hodnota": "po_aktualitach",
+          "popis": "Pod aktualitami"
+        },
+        {
+          "hodnota": "po_ankete",
+          "popis": "Pod anketou (nad partnermi)"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod partnermi)"
+        }
+      ]
     }
   ]
 }

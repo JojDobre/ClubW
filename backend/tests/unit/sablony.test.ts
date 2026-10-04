@@ -95,6 +95,40 @@ describe('hodnoty nastavení', () => {
   });
 });
 
+describe('vlastné sekcie úvodu', () => {
+  const m = overManifest({
+    ...zakladny,
+    nastavenia: [
+      { kluc: 'sekcie_uvodu', typ: 'sekcie', menovka: 'Vlastné sekcie', pozicie: [{ hodnota: 'pod_hero', popis: 'Pod hero' }, { hodnota: 'koniec', popis: 'Na konci' }] },
+    ],
+  });
+  const n = m.nastavenia[0];
+
+  it('prenesie pozície a odmietne sekcie bez pozícií', () => {
+    expect(n.pozicie?.map((p) => p.hodnota)).toEqual(['pod_hero', 'koniec']);
+    expect(() => overManifest({ ...zakladny, nastavenia: [{ kluc: 'x', typ: 'sekcie', menovka: 'X' }] })).toThrow(ChybaSablony);
+    expect(() => overManifest({ ...zakladny, nastavenia: [{ kluc: 'x', typ: 'sekcie', menovka: 'X', pozicie: ['Zlá pozícia'] }] })).toThrow(ChybaSablony);
+  });
+
+  it('overí bloky, doplní pozíciu a predvolene vráti prázdny zoznam', () => {
+    const { hodnota } = overHodnotu(n, [
+      { typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 40 } },
+      { typ: 'tabulka_ligy', pozicia: 'neznama', data: { liga_id: 1, kompaktna: true } },
+    ]) as { hodnota: Array<Record<string, any>> };
+    expect(hodnota).toHaveLength(2);
+    expect(hodnota[0]).toMatchObject({ typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 12 } });
+    expect(hodnota[1]).toMatchObject({ typ: 'tabulka_ligy', pozicia: 'pod_hero', data: { liga_id: 1, kompaktna: true } });
+    expect(overHodnotu(n, null)).toEqual({ hodnota: [] });
+    expect(hodnotyNastaveni(m, {}).sekcie_uvodu).toEqual([]);
+  });
+
+  it('odmietne neznámy typ bloku a príliš veľa sekcií', () => {
+    expect(overHodnotu(n, [{ typ: 'skript', data: {} }]).chyba).toMatch(/Neznámy typ/);
+    expect(overHodnotu(n, 'text').chyba).toBeTruthy();
+    expect(overHodnotu(n, Array.from({ length: 31 }, () => ({ typ: 'partneri', data: {} }))).chyba).toMatch(/najviac/);
+  });
+});
+
 describe('inštalácia balíka', () => {
   it('nainštaluje šablónu z priečinka v balíku a potom ju aktualizuje', async () => {
     const prva = await nainstalujZBalika(zip({ 'moja/sablona.json': JSON.stringify(zakladny), 'moja/styl.css': 'a{}' }));

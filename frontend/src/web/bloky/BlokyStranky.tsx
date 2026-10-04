@@ -14,6 +14,7 @@ import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku } from './pomocky';
 import { useData } from '../pomocky';
 import { kotvaBloku, type BlokStranky, type KomponentBloku } from './typy';
 import { ROZSIRENE_BLOKY } from './BlokyRozsirene';
+import { BLOKY_KLUBU } from './BlokyKlubu';
 import './bloky.css';
 
 export { HlavickaBloku, OdkazBloku, obrazokBloku } from './pomocky';
@@ -326,7 +327,7 @@ const Clanky: KomponentBloku = ({ blok: { data } }) => {
   return (
     <>
       <HlavickaBloku nadpis={data.nadpis} />
-      <div className="blok__mriezka blok__mriezka--3">
+      <div className={data.vzhlad === 'zoznam' ? 'blok__mriezka blok__mriezka--2 blok__karty--vodorovne' : 'blok__mriezka blok__mriezka--3'}>
         {clanky.data.map((c) => (
           <Link key={c.id} to={`/clanek/${c.slug}`} className="blok__polozka blok__karta">
             {obrazokBloku(c.obrazok) && (
@@ -445,6 +446,7 @@ export const PREDVOLENE_BLOKY: Record<string, KomponentBloku> = {
   zapasy: Zapasy,
   partneri: Partneri,
   ...ROZSIRENE_BLOKY,
+  ...BLOKY_KLUBU,
 };
 
 /**

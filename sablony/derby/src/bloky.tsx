@@ -5,7 +5,7 @@
 // a partneri vyzerajú rovnako ako na úvode.
 
 import React from 'react';
-import { HlavickaBloku, PREDVOLENE_BLOKY, adresaZapasovBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
+import { HlavickaBloku, PREDVOLENE_BLOKY, SekcieUvodu, adresaZapasovBloku, useNastavenia, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
 import { KartaClanku, KartaZapasu, Obrazok, RadyPartnerov } from './casti';
 import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
@@ -29,9 +29,14 @@ const ZapasyBloku: KomponentBloku = ({ blok: { data } }) => {
   );
 };
 
-const ClankyBloku: KomponentBloku = ({ blok: { data } }) => {
+const ClankyBloku: KomponentBloku = (props) => {
+  const { data } = props.blok;
   const pocet = Number(data.pocet) || 3;
-  const clanky = useApi<Clanok[]>(`/articles?limit=${pocet}${data.rubrika ? `&category=${encodeURIComponent(data.rubrika)}` : ''}`);
+  const clanky = useApi<Clanok[]>(data.vzhlad === 'zoznam' ? null : `/articles?limit=${pocet}${data.rubrika ? `&category=${encodeURIComponent(data.rubrika)}` : ''}`);
+  if (data.vzhlad === 'zoznam') {
+    const Predvolene = PREDVOLENE_BLOKY.clanky;
+    return <Predvolene {...props} />;
+  }
   if (!clanky.data?.length) return null;
   return (
     <>
@@ -109,3 +114,8 @@ export const KLUBOVE_BLOKY: Partial<Record<string, KomponentBloku>> = {
   clanky: ClankyBloku,
   partneri: PartneriBloku,
 };
+
+/** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode") v dizajne šablóny. */
+export const Sekcie: React.FC<{ p: string }> = ({ p }) => (
+  <SekcieUvodu pozicia={p} predvolenyVzhlad={false} className="dr-bloky dr-u-sekcie" komponenty={KLUBOVE_BLOKY} />
+);

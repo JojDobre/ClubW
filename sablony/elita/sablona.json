@@ -806,6 +806,47 @@
       "menovka": "Text za copyrightom",
       "skupina": "Pätička",
       "predvolene": "Všetky práva vyhradené."
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_slideri",
+          "popis": "Pod hlavnými správami"
+        },
+        {
+          "hodnota": "po_zapase",
+          "popis": "Pod zápasovou kartou"
+        },
+        {
+          "hodnota": "po_novinkach",
+          "popis": "Pod novinkami"
+        },
+        {
+          "hodnota": "po_kadri",
+          "popis": "Pod kádrom"
+        },
+        {
+          "hodnota": "po_sezone",
+          "popis": "Pod sezónou v číslach"
+        },
+        {
+          "hodnota": "po_videach",
+          "popis": "Pod Klub TV"
+        },
+        {
+          "hodnota": "po_fanshope",
+          "popis": "Pod fanshopom"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod členstvom)"
+        }
+      ]
     }
   ]
 }

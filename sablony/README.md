@@ -72,9 +72,24 @@ na ktoré sa `styl.css` odkazuje relatívne (`url(fonts/nazov.woff2)`).
   Nahratie balíka s rovnakým slugom šablónu **aktualizuje** (nastavenia ostanú).
 - `verzia` - napr. `1.0.0`; pri aktualizácii ju zvýšte, prehliadače si tak stiahnu nové súbory.
 - `api` - verzia rozhrania šablón (teraz `1`). Šablónu pre novšie rozhranie systém odmietne.
-- Typy nastavení: `farba`, `text`, `dlhy_text`, `vyber`, `prepinac`, `cislo`, `obrazok`
-  a `odkaz` (stránka webu `/...`, `https://`, `mailto:` alebo `tel:`).
+- Typy nastavení: `farba`, `text`, `dlhy_text`, `vyber`, `prepinac`, `cislo`, `obrazok`,
+  `sekcie` (pozri nižšie) a `odkaz` (stránka webu `/...`, `https://`, `mailto:` alebo `tel:`).
   Správca ich vyplní v administrácii cez **Prispôsobiť**.
+- Typ `sekcie` - vlastné sekcie úvodnej stránky. Správca pridáva ľubovoľný počet
+  sekcií (články z rubriky, tabuľka súťaže, strelci, sezóna v číslach, káder,
+  videá, galérie, produkty, udalosti z kalendára, text, výzva a ďalšie bloky
+  stránok) a každej vyberie miesto na úvode. Miesta opíšete v `pozicie`:
+
+  ```json
+  { "kluc": "sekcie_uvodu", "typ": "sekcie", "menovka": "Vlastné sekcie na úvode",
+    "skupina": "Úvod - vlastné sekcie",
+    "pozicie": [{ "hodnota": "po_hero", "popis": "Pod hlavnými správami" },
+                { "hodnota": "koniec", "popis": "Na konci" }] }
+  ```
+
+  V úvode na každé miesto vložte `<SekcieUvodu pozicia="po_hero" />` z `@clubw/jadro`
+  (rovnaké voľby `className`, `predvolenyVzhlad` a `komponenty` ako `BlokyStranky`,
+  sekcie sa teda kreslia v dizajne šablóny). Bez pridaných sekcií sa nevykreslí nič.
 - `skupina` - nepovinný názov záložky v okne Prispôsobiť (napr. „Úvod - zápasy").
   Pri viacerých skupinách má okno záložky a vyhľadávanie; poradie skupín je podľa
   prvého výskytu v zozname. Šablóna môže mať najviac 200 nastavení.
@@ -178,6 +193,8 @@ objednávke prepočíta a overí sklad. Odkaz na košík v hlavičke ukazujte le
 | `useSablona()` | slug, názov a verzia aktívnej šablóny |
 | `useMenuWebu()`, `OdkazMenu` | menu z **Menu a odkazy** – najviac 3 úrovne: hlavná položka → podmenu → odkazy v kategórii. Kategória má `odkaz: null` (`OdkazMenu` ju vykreslí ako `<span>`), položka môže mať `obrazok` pre kartu v podmenu |
 | `BlokyStranky`, `BlokStranky` | bloky stránky pod textom (časová os, karty osôb, čísla, galéria, otázky…). `<BlokyStranky bloky={stranka.bloky} />` kreslí predvolený vzhľad; s `predvolenyVzhlad={false}` šablóna štýluje triedy `.blok`, `.blok--casova-os`, `.blok__polozka`… sama a cez `komponenty={{ zapasy: VlastnyBlok }}` nahradí vybrané typy |
+| `SekcieUvodu`, `useSekcieUvodu` | vlastné sekcie úvodu z nastavenia typu `sekcie` na jednom mieste: `<SekcieUvodu pozicia="po_hero" className="moja-bloky" predvolenyVzhlad={false} komponenty={MOJE_BLOKY} />` |
+| `BLOKY_KLUBU`, `useTimBloku`, `useLigaBloku` | automatické bloky s údajmi klubu (tabuľka, strelci, sezóna v číslach, káder, videá, galérie, produkty, udalosti) a výber tímu/ligy, ktorý používajú (prázdne = hlavný tím a jeho súťaž) |
 | `useData('/articles?limit=3')` | načítanie dát z verejného API (`{ data, nacitava, chyba }`) |
 | `apiUrl()`, `souborUrl()` | adresa API a nahratých súborov (`/uploads/...`) |
 | `Cast` | vykreslí inú časť - napr. `<Cast nazov="Paticka" />` |
