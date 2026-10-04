@@ -12,21 +12,16 @@ import { Link } from 'react-router-dom';
 import { useData } from '../pomocky';
 import { useNastavenia } from '../../context/NastaveniaContext';
 import { cenaText } from '../eshop';
-import { HlavickaBloku, Obr, OdkazBloku, obrazokBloku } from './pomocky';
+import { HlavickaBloku, Obr, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
 import type { KomponentBloku } from './typy';
 
 const datumKratky = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('sk-SK', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
 const pocetZ = (hodnota: unknown, predvolene: number, max: number) => Math.min(max, Math.max(1, Number(hodnota) || predvolene));
 const kladneId = (hodnota: unknown) => (Number(hodnota) > 0 ? Number(hodnota) : null);
 
-/** Odkaz „Zobraziť všetko" pod blokom. */
-const Viac: React.FC<{ to: string; text: string }> = ({ to, text }) => (
-  <div className="blok__akcie">
-    <OdkazBloku to={to} className="blok__tlacidlo blok__tlacidlo--viac">
-      {text}
-    </OdkazBloku>
-  </div>
-);
+/** Odkaz „Zobraziť všetky" vedľa nadpisu - len keď ho správca v bloku zapol. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const vsetky = (data: Record<string, any>, adresa: string | null) => (data.odkaz_vsetky === true && adresa ? adresa : null);
 
 // ===== Výber tímu a ligy =====
 
@@ -95,7 +90,12 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
   const kompaktna = data.kompaktna === true;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis || liga.nazov || 'Tabuľka'} uvod={data.nadpis && liga.nazov ? liga.nazov : undefined} />
+      <HlavickaBloku
+        nadpis={data.nadpis || liga.nazov || 'Tabuľka'}
+        uvod={data.nadpis && liga.nazov ? liga.nazov : undefined}
+        odkaz={vsetky(data, `/leagues/${liga.id}`)}
+        textOdkazu={data.text_odkazu || 'Celá súťaž'}
+      />
       <div className="blok__tabulka-obal">
         <table className="blok__tabulka blok__tabulka--liga">
           <thead>
@@ -141,7 +141,6 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
           </tbody>
         </table>
       </div>
-      <Viac to={`/leagues/${liga.id}`} text="Celá súťaž" />
     </>
   );
 };
@@ -163,7 +162,12 @@ const Strelci: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis || (typ === 'gol' ? 'Najlepší strelci' : 'Najviac asistencií')} uvod={liga?.nazov || undefined} />
+      <HlavickaBloku
+        nadpis={data.nadpis || (typ === 'gol' ? 'Najlepší strelci' : 'Najviac asistencií')}
+        uvod={liga?.nazov || undefined}
+        odkaz={vsetky(data, liga ? `/leagues/${liga.id}` : null)}
+        textOdkazu={data.text_odkazu}
+      />
       <div className="blok__tabulka-obal">
         <table className="blok__tabulka blok__tabulka--strelci">
           <thead>
@@ -239,7 +243,7 @@ const StatistikyTimu: KomponentBloku = ({ blok: { data } }) => {
   ];
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis || 'Sezóna v číslach'} />
+      <HlavickaBloku nadpis={data.nadpis || 'Sezóna v číslach'} odkaz={vsetky(data, `/matches?tim=${timId}&zobrazit=vysledky`)} textOdkazu={data.text_odkazu || 'Všetky výsledky'} />
       <dl className="blok__cisla blok__cisla--sezona">
         {polozky.map(([hodnota, popis]) => (
           <div key={popis} className="blok__polozka">
@@ -280,7 +284,7 @@ const Hraci: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis || 'Káder'} />
+      <HlavickaBloku nadpis={data.nadpis || 'Káder'} odkaz={vsetky(data, `/teams/${timId}`)} textOdkazu={data.text_odkazu || 'Celý káder'} />
       <div className="blok__mriezka blok__mriezka--4 blok__osoby--karty blok__hraci">
         {zoznam.map((h) => (
           <Link key={h.id} to={`/players/${h.id}`} className="blok__polozka blok__osoba">
@@ -299,7 +303,6 @@ const Hraci: KomponentBloku = ({ blok: { data } }) => {
           </Link>
         ))}
       </div>
-      <Viac to={`/teams/${timId}`} text="Celý káder" />
     </>
   );
 };
@@ -315,9 +318,9 @@ interface KartaUdaj {
   text?: string;
 }
 
-const KartyUdajov: React.FC<{ nadpis: string; polozky: KartaUdaj[]; viac?: { to: string; text: string }; trieda: string }> = ({ nadpis, polozky, viac, trieda }) => (
+const KartyUdajov: React.FC<{ nadpis: string; polozky: KartaUdaj[]; viac?: { to: string | null; text: string }; trieda: string }> = ({ nadpis, polozky, viac, trieda }) => (
   <>
-    <HlavickaBloku nadpis={nadpis} />
+    <HlavickaBloku nadpis={nadpis} odkaz={viac?.to} textOdkazu={viac?.text} />
     <div className={`blok__mriezka blok__mriezka--${polozky.length === 4 || polozky.length > 6 ? 4 : 3} blok__karty--klasicke ${trieda}`}>
       {polozky.map((p) => (
         <OdkazBloku key={p.kluc} to={p.odkaz} className="blok__polozka blok__karta">
@@ -334,7 +337,6 @@ const KartyUdajov: React.FC<{ nadpis: string; polozky: KartaUdaj[]; viac?: { to:
         </OdkazBloku>
       ))}
     </div>
-    {viac && <Viac to={viac.to} text={viac.text} />}
   </>
 );
 
@@ -357,7 +359,7 @@ const Videa: KomponentBloku = ({ blok: { data } }) => {
     <KartyUdajov
       nadpis={data.nadpis || 'Videá'}
       trieda="blok__videa"
-      viac={{ to: '/videa', text: 'Všetky videá' }}
+      viac={{ to: odkazVsetkychBloku('videa', data), text: data.text_odkazu || 'Všetky videá' }}
       polozky={zoznam.map((v) => ({ kluc: v.id, odkaz: v.url, obrazok: v.nahlad_url || v.nahlad, nadpis: v.nazov, nad: v.kategoria || datumKratky(v.vytvorene) }))}
     />
   );
@@ -380,7 +382,7 @@ const Galerie: KomponentBloku = ({ blok: { data } }) => {
     <KartyUdajov
       nadpis={data.nadpis || 'Fotogalérie'}
       trieda="blok__galerie"
-      viac={{ to: '/galleries', text: 'Všetky galérie' }}
+      viac={{ to: odkazVsetkychBloku('galerie', data), text: data.text_odkazu || 'Všetky galérie' }}
       polozky={zoznam.map((g) => ({
         kluc: g.id,
         odkaz: `/galleries/${g.id}`,
@@ -413,7 +415,7 @@ const Produkty: KomponentBloku = ({ blok: { data } }) => {
     <KartyUdajov
       nadpis={data.nadpis || 'Fanshop'}
       trieda="blok__produkty"
-      viac={{ to: '/obchod', text: 'Do obchodu' }}
+      viac={{ to: odkazVsetkychBloku('produkty', data), text: data.text_odkazu || 'Do obchodu' }}
       polozky={zoznam.map((p) => ({
         kluc: p.id,
         odkaz: `/obchod/${p.slug}`,
@@ -445,7 +447,7 @@ const Udalosti: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis || 'Pripravujeme'} />
+      <HlavickaBloku nadpis={data.nadpis || 'Pripravujeme'} odkaz={odkazVsetkychBloku('udalosti', data)} textOdkazu={data.text_odkazu || 'Celý kalendár'} />
       <ul className="blok__zapasy blok__udalosti">
         {zoznam.map((u) => (
           <li key={`${u.id}-${u.datum_vyskytu}`} className="blok__polozka">
@@ -460,7 +462,6 @@ const Udalosti: KomponentBloku = ({ blok: { data } }) => {
           </li>
         ))}
       </ul>
-      <Viac to="/calendar" text="Celý kalendár" />
     </>
   );
 };

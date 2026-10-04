@@ -3435,3 +3435,20 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
   .ar-tv__playlist { border-radius: 22px; }
   .ar-u-sekcie .blok { padding: 64px 16px 0; }
 }
+
+/* Odkaz „Zobraziť všetky" vedľa nadpisu bloku / vlastnej sekcie */
+.ar-bloky .blok__vsetky { gap: 10px; padding: 10px 12px 10px 18px; border: 0; background: var(--ar-primarna); color: #ffffff; font-family: var(--ar-pismo); font-weight: 800; font-size: 13.5px; }
+.ar-bloky .blok__vsetky:hover { background: var(--ar-svetla); }
+.ar-bloky .blok__vsetky span { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
+.ar-bloky .blok--pozadie-tmave .blok__vsetky { background: #ffffff; color: var(--ar-primarna); }
+.ar-bloky .blok--pozadie-tmave .blok__vsetky span { background: var(--ar-plocha); }
+
+/* Mriežky kariet (bloky, súvisiace články…) sa na menších obrazovkách zalamujú */
+@media (max-width: 900px) {
+  .ar-mriezka-3, .ar-mriezka-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+}
+@media (max-width: 560px) {
+  .ar-mriezka-3, .ar-mriezka-4 { grid-template-columns: minmax(0, 1fr); }
+}
+/* Viac sekcií na jednom mieste úvodu - rovnaký odstup ako medzi sekciami úvodu */
+.ar-u-sekcie .blok + .blok { padding-top: clamp(56px, 7vw, 104px); }

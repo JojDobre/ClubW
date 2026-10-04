@@ -3424,3 +3424,11 @@ html.db-animuje .db-odhal:not(.is-videny) { opacity: 0; translate: 0 34px; scale
   .db-u-partneri__stopa { animation: none !important; }
   .db-odhal { transform: none !important; translate: none !important; scale: none !important; }
 }
+
+/* Bloky a vlastné sekcie úvodu: mriežka kariet sa na menších obrazovkách zalamuje */
+@media (max-width: 900px) {
+  .db-bloky .db-mriezka-3:not(.db-mriezka-zapasov) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .db-bloky .db-mriezka-3:not(.db-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
+}

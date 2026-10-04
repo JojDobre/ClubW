@@ -112,11 +112,12 @@ describe('vlastné sekcie úvodu', () => {
 
   it('overí bloky, doplní pozíciu a predvolene vráti prázdny zoznam', () => {
     const { hodnota } = overHodnotu(n, [
-      { typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 40 } },
+      { typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 40, odkaz_vsetky: true, text_odkazu: 'Všetky správy A-tímu' } },
       { typ: 'tabulka_ligy', pozicia: 'neznama', data: { liga_id: 1, kompaktna: true } },
     ]) as { hodnota: Array<Record<string, any>> };
     expect(hodnota).toHaveLength(2);
-    expect(hodnota[0]).toMatchObject({ typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 12 } });
+    expect(hodnota[0]).toMatchObject({ typ: 'clanky', pozicia: 'koniec', data: { nadpis: 'A-tím', rubrika: 'a-tim', pocet: 12, odkaz_vsetky: true, text_odkazu: 'Všetky správy A-tímu' } });
+    expect(hodnota[1].data.odkaz_vsetky).toBe(false);
     expect(hodnota[1]).toMatchObject({ typ: 'tabulka_ligy', pozicia: 'pod_hero', data: { liga_id: 1, kompaktna: true } });
     expect(overHodnotu(n, null)).toEqual({ hodnota: [] });
     expect(hodnotyNastaveni(m, {}).sekcie_uvodu).toEqual([]);

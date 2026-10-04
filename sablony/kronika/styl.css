@@ -2782,3 +2782,11 @@ td.kr-tabulka__body { font-family: var(--kr-serif); font-size: 16px; }
 @media (prefers-reduced-motion: reduce) {
   .kr *, .kr *::before, .kr *::after { transition: none !important; animation: none !important; }
 }
+
+/* Bloky a vlastné sekcie úvodu: mriežka kariet sa na menších obrazovkách zalamuje */
+@media (max-width: 900px) {
+  .kr-bloky .kr-mriezka-3:not(.kr-mriezka-zapasov) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .kr-bloky .kr-mriezka-3:not(.kr-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
+}

@@ -2397,5 +2397,7 @@
  "Sekcie sa zobrazia na vybranom mieste úvodnej stránky v tomto poradí.": "Las secciones aparecen en el lugar elegido de la página de inicio en este orden.",
  "Zatiaľ žiadne vlastné sekcie. Pridajte napríklad články z rubriky, tabuľku súťaže alebo strelcov a vyberte, medzi ktoré sekcie úvodu sa vložia.": "Aún no hay secciones propias. Añade, por ejemplo, artículos de una categoría, la clasificación o los goleadores y elige entre qué secciones de la página de inicio se insertan.",
  "Pridať sekciu": "Añadir sección",
- "Vyberte typ sekcie": "Elige el tipo de sección"
+ "Vyberte typ sekcie": "Elige el tipo de sección",
+ "Odkaz „Zobraziť všetky“ vedľa nadpisu": "Enlace «Ver todo» junto al título",
+ "Text odkazu": "Texto del enlace"
 }

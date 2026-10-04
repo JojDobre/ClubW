@@ -2397,5 +2397,7 @@
  "Sekcie sa zobrazia na vybranom mieste úvodnej stránky v tomto poradí.": "Die Abschnitte erscheinen an der gewählten Stelle der Startseite in dieser Reihenfolge.",
  "Zatiaľ žiadne vlastné sekcie. Pridajte napríklad články z rubriky, tabuľku súťaže alebo strelcov a vyberte, medzi ktoré sekcie úvodu sa vložia.": "Noch keine eigenen Abschnitte. Fügen Sie z. B. Artikel einer Rubrik, die Tabelle oder die Torschützen hinzu und wählen Sie, zwischen welche Abschnitte der Startseite sie kommen.",
  "Pridať sekciu": "Abschnitt hinzufügen",
- "Vyberte typ sekcie": "Abschnittstyp wählen"
+ "Vyberte typ sekcie": "Abschnittstyp wählen",
+ "Odkaz „Zobraziť všetky“ vedľa nadpisu": "Link „Alle anzeigen“ neben der Überschrift",
+ "Text odkazu": "Linktext"
 }

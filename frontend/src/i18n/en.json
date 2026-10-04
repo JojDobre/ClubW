@@ -2397,5 +2397,7 @@
  "Sekcie sa zobrazia na vybranom mieste úvodnej stránky v tomto poradí.": "Sections appear at the chosen place on the home page in this order.",
  "Zatiaľ žiadne vlastné sekcie. Pridajte napríklad články z rubriky, tabuľku súťaže alebo strelcov a vyberte, medzi ktoré sekcie úvodu sa vložia.": "No custom sections yet. Add, for example, articles from a category, the league table or top scorers and choose between which home page sections they go.",
  "Pridať sekciu": "Add section",
- "Vyberte typ sekcie": "Choose section type"
+ "Vyberte typ sekcie": "Choose section type",
+ "Odkaz „Zobraziť všetky“ vedľa nadpisu": "“View all” link next to the heading",
+ "Text odkazu": "Link text"
 }

@@ -3091,3 +3091,11 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
   .kl-uspechy__zoznam > :last-child:nth-child(odd), .kl-socialne__mriezka > :last-child:nth-child(odd) { grid-column: auto; }
   .kl-hero { height: 64svh; }
 }
+
+/* Bloky a vlastné sekcie úvodu: mriežka kariet sa na menších obrazovkách zalamuje */
+@media (max-width: 900px) {
+  .kl-bloky .kl-mriezka-3:not(.kl-mriezka-zapasov) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .kl-bloky .kl-mriezka-3:not(.kl-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
+}

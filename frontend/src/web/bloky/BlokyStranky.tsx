@@ -10,14 +10,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ObsahSFormularmi } from '../../components/FormularWeb';
-import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku } from './pomocky';
+import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
 import { useData } from '../pomocky';
 import { kotvaBloku, type BlokStranky, type KomponentBloku } from './typy';
 import { ROZSIRENE_BLOKY } from './BlokyRozsirene';
 import { BLOKY_KLUBU } from './BlokyKlubu';
 import './bloky.css';
 
-export { HlavickaBloku, OdkazBloku, obrazokBloku } from './pomocky';
+export { HlavickaBloku, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
 
 const iniciely = (meno: string) =>
   meno
@@ -326,7 +326,7 @@ const Clanky: KomponentBloku = ({ blok: { data } }) => {
   if (!clanky.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('clanky', data)} textOdkazu={data.text_odkazu} />
       <div className={data.vzhlad === 'zoznam' ? 'blok__mriezka blok__mriezka--2 blok__karty--vodorovne' : 'blok__mriezka blok__mriezka--3'}>
         {clanky.data.map((c) => (
           <Link key={c.id} to={`/clanek/${c.slug}`} className="blok__polozka blok__karta">
@@ -376,7 +376,7 @@ const Zapasy: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('zapasy', data)} textOdkazu={data.text_odkazu} />
       <ul className="blok__zapasy">
         {zoznam.map((z) => (
           <li key={z.id} className="blok__polozka">
@@ -406,7 +406,7 @@ const Partneri: KomponentBloku = ({ blok: { data } }) => {
   if (!partneri.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('partneri', data)} textOdkazu={data.text_odkazu} />
       <div className="blok__partneri">
         {partneri.data.map((p) => {
           const obsah = obrazokBloku(p.logo) ? <Obr src={p.logo} alt={p.nazov} /> : <span>{p.nazov}</span>;

@@ -28,14 +28,62 @@ export const Obr: React.FC<{ src?: string | null; alt?: string; className?: stri
   return adresa ? <img src={adresa} alt={alt} loading="lazy" className={className} /> : null;
 };
 
-/** Nadpis a úvod bloku (spoločné pre väčšinu typov). */
-export const HlavickaBloku: React.FC<{ nadpis?: string; uvod?: string }> = ({ nadpis, uvod }) =>
-  nadpis || uvod ? (
-    <header className="blok__hlavicka">
+/**
+ * Nadpis a úvod bloku (spoločné pre väčšinu typov). S `odkaz` je vedľa
+ * nadpisu odkaz „Zobraziť všetky" (napr. na všetky články rubriky).
+ */
+export const HlavickaBloku: React.FC<{ nadpis?: string; uvod?: string; odkaz?: string | null; textOdkazu?: string | null }> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  if (!nadpis && !uvod && !odkaz) return null;
+  const texty = (
+    <>
       {nadpis && <h2 className="blok__nadpis">{nadpis}</h2>}
       {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+  if (!odkaz) return <header className="blok__hlavicka">{texty}</header>;
+  return (
+    <header className="blok__hlavicka blok__hlavicka--s-odkazom">
+      <div className="blok__hlavicka-text">{texty}</div>
+      <OdkazBloku to={odkaz} className="blok__vsetky">
+        {textOdkazu?.trim() || 'Zobraziť všetky'}
+        <span aria-hidden="true">→</span>
+      </OdkazBloku>
     </header>
-  ) : null;
+  );
+};
+
+/**
+ * Kam vedie „Zobraziť všetky" pri bloku s údajmi webu, keď ho správca
+ * zapol (odkaz_vsetky). Bloky s predvoleným tímom alebo ligou (tabuľka,
+ * strelci, káder) si adresu skladajú samy, keď poznajú vybraný tím.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const odkazVsetkychBloku = (typ: string, data: Record<string, any> | null | undefined): string | null => {
+  if (!data || data.odkaz_vsetky !== true) return null;
+  const tim = Number(data.tim_id) > 0 ? Number(data.tim_id) : null;
+  switch (typ) {
+    case 'clanky':
+      return data.rubrika ? `/clanky?rubrika=${encodeURIComponent(String(data.rubrika))}` : '/clanky';
+    case 'zapasy': {
+      const q = new URLSearchParams();
+      if (tim) q.set('tim', String(tim));
+      if (data.rezim === 'vysledky') q.set('zobrazit', 'vysledky');
+      return `/matches${q.toString() ? `?${q}` : ''}`;
+    }
+    case 'partneri':
+      return '/sponzori';
+    case 'videa':
+      return '/videa';
+    case 'galerie':
+      return '/galleries';
+    case 'produkty':
+      return '/obchod';
+    case 'udalosti':
+      return '/calendar';
+    default:
+      return null;
+  }
+};
 
 export const Html: React.FC<{ html?: string; className?: string }> = ({ html, className = 'blok__text' }) =>
   html ? <ObsahSFormularmi html={sanitizeHtml(html)} className={className} /> : null;

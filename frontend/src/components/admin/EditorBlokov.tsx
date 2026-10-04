@@ -105,6 +105,19 @@ const ZAROVNANIE: DefPola = {
     { hodnota: 'stred', popis: tr('Na stred') },
   ],
 };
+/** Odkaz „Zobraziť všetky" vedľa nadpisu (bloky s údajmi webu) */
+const VSETKY_POLIA: DefPola[] = [
+  { kluc: 'odkaz_vsetky', menovka: tr('Odkaz „Zobraziť všetky“ vedľa nadpisu'), druh: 'prepinac' },
+  {
+    kluc: 'text_odkazu',
+    menovka: tr('Text odkazu'),
+    druh: 'text',
+    max: 40,
+    placeholder: tr('Zobraziť všetky'),
+    ak: (d) => d.odkaz_vsetky === true,
+  },
+];
+
 const NIE_KLASICKE = (d: Record<string, unknown>) => d.vzhlad === 'obrazkove' || d.vzhlad === 'velke';
 
 /** Všetky typy blokov - poradie = poradie v ponuke „Pridať blok". */
@@ -729,7 +742,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Najnovšie články'),
     popis: tr('Automaticky posledné články, aj z jednej rubriky'),
     ikona: 'clanky',
-    data: { nadpis: tr('Najnovšie články'), pocet: 3 },
+    data: { nadpis: tr('Najnovšie články'), pocet: 3, odkaz_vsetky: true },
     polia: [
       NADPIS,
       { kluc: 'pocet', menovka: tr('Počet článkov'), druh: 'cislo' },
@@ -743,6 +756,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
           { hodnota: 'zoznam', popis: tr('Zoznam (obrázok vedľa textu)') },
         ],
       },
+      ...VSETKY_POLIA,
     ],
   },
   {
@@ -751,7 +765,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Zápasy'),
     popis: tr('Automaticky najbližšie zápasy alebo posledné výsledky'),
     ikona: 'zapasy',
-    data: { nadpis: tr('Najbližšie zápasy'), rezim: 'program', pocet: 3 },
+    data: { nadpis: tr('Najbližšie zápasy'), rezim: 'program', pocet: 3, odkaz_vsetky: true },
     polia: [
       NADPIS,
       {
@@ -765,6 +779,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
       },
       { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim' },
       { kluc: 'pocet', menovka: tr('Počet zápasov'), druh: 'cislo' },
+      ...VSETKY_POLIA,
     ],
   },
   {
@@ -773,8 +788,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Tabuľka súťaže'),
     popis: tr('Automaticky aktuálna tabuľka ligy'),
     ikona: 'ligy',
-    data: { nadpis: tr('Tabuľka') },
-    polia: [NADPIS, { kluc: 'liga_id', menovka: tr('Súťaž'), druh: 'liga' }, { kluc: 'kompaktna', menovka: tr('Skrátená tabuľka (len zápasy a body)'), druh: 'prepinac' }],
+    data: { nadpis: tr('Tabuľka'), odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'liga_id', menovka: tr('Súťaž'), druh: 'liga' }, { kluc: 'kompaktna', menovka: tr('Skrátená tabuľka (len zápasy a body)'), druh: 'prepinac' }, ...VSETKY_POLIA],
   },
   {
     typ: 'strelci',
@@ -782,7 +797,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Najlepší strelci'),
     popis: tr('Rebríček strelcov alebo asistencií v súťaži'),
     ikona: 'hraci',
-    data: { nadpis: tr('Najlepší strelci'), typ: 'gol', pocet: 5 },
+    data: { nadpis: tr('Najlepší strelci'), typ: 'gol', pocet: 5, odkaz_vsetky: true },
     polia: [
       NADPIS,
       { kluc: 'liga_id', menovka: tr('Súťaž'), druh: 'liga' },
@@ -796,6 +811,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
         ],
       },
       { kluc: 'pocet', menovka: tr('Počet hráčov'), druh: 'cislo', max: 20 },
+      ...VSETKY_POLIA,
     ],
   },
   {
@@ -804,8 +820,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Sezóna v číslach'),
     popis: tr('Zápasy, výhry, remízy, prehry, skóre a čisté kontá tímu'),
     ikona: 'dashboard',
-    data: { nadpis: tr('Sezóna v číslach') },
-    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }],
+    data: { nadpis: tr('Sezóna v číslach'), odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }, ...VSETKY_POLIA],
   },
   {
     typ: 'hraci',
@@ -813,8 +829,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Káder'),
     popis: tr('Hráči tímu s fotkou, číslom a pozíciou'),
     ikona: 'timy',
-    data: { nadpis: tr('Káder'), pocet: 8 },
-    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }, { kluc: 'pocet', menovka: tr('Počet hráčov'), druh: 'cislo', max: 40 }],
+    data: { nadpis: tr('Káder'), pocet: 8, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }, { kluc: 'pocet', menovka: tr('Počet hráčov'), druh: 'cislo', max: 40 }, ...VSETKY_POLIA],
   },
   {
     typ: 'udalosti',
@@ -822,8 +838,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Udalosti z kalendára'),
     popis: tr('Najbližšie akcie klubu z kalendára'),
     ikona: 'kalendar',
-    data: { nadpis: tr('Pripravujeme'), pocet: 4 },
-    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet udalostí'), druh: 'cislo' }],
+    data: { nadpis: tr('Pripravujeme'), pocet: 4, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet udalostí'), druh: 'cislo' }, ...VSETKY_POLIA],
   },
   {
     typ: 'videa',
@@ -831,8 +847,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Najnovšie videá'),
     popis: tr('Automaticky posledné videá z Videogalérie'),
     ikona: 'videa',
-    data: { nadpis: tr('Videá'), pocet: 3 },
-    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet videí'), druh: 'cislo' }],
+    data: { nadpis: tr('Videá'), pocet: 3, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet videí'), druh: 'cislo' }, ...VSETKY_POLIA],
   },
   {
     typ: 'galerie',
@@ -840,8 +856,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Najnovšie fotogalérie'),
     popis: tr('Automaticky posledné galérie'),
     ikona: 'galerie',
-    data: { nadpis: tr('Fotogalérie'), pocet: 3 },
-    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet galérií'), druh: 'cislo' }],
+    data: { nadpis: tr('Fotogalérie'), pocet: 3, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet galérií'), druh: 'cislo' }, ...VSETKY_POLIA],
   },
   {
     typ: 'produkty',
@@ -849,8 +865,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Produkty fanshopu'),
     popis: tr('Produkty z obchodu (keď je obchod zapnutý)'),
     ikona: 'kosik',
-    data: { nadpis: tr('Fanshop'), pocet: 4 },
-    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet produktov'), druh: 'cislo' }],
+    data: { nadpis: tr('Fanshop'), pocet: 4, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet produktov'), druh: 'cislo' }, ...VSETKY_POLIA],
   },
   {
     typ: 'partneri',
@@ -858,8 +874,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Partneri'),
     popis: tr('Logá partnerov z časti Sponzori'),
     ikona: 'timy',
-    data: { nadpis: tr('Naši partneri') },
-    polia: [NADPIS],
+    data: { nadpis: tr('Naši partneri'), odkaz_vsetky: true },
+    polia: [NADPIS, ...VSETKY_POLIA],
   },
   {
     typ: 'kontakt',

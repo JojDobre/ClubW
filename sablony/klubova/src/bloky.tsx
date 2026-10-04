@@ -5,7 +5,7 @@
 // a partneri vyzerajú rovnako ako na úvode.
 
 import React from 'react';
-import { HlavickaBloku, PREDVOLENE_BLOKY, SekcieUvodu, adresaZapasovBloku, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
+import { HlavickaBloku, PREDVOLENE_BLOKY, SekcieUvodu, adresaZapasovBloku, odkazVsetkychBloku, useNastaveniaSablony, type KomponentBloku } from '@clubw/jadro';
 import { KartaClanku, KartaZapasu, ObrazOdkazu, RadyPartnerov } from './casti';
 import { Ikona, Odkaz, useApi, useUpravy, type Clanok, type Partner, type Zapas } from './spolocne';
 
@@ -19,7 +19,7 @@ const ZapasyBloku: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('zapasy', data)} textOdkazu={data.text_odkazu} />
       <div className="kl-mriezka-3 kl-mriezka-zapasov">
         {zoznam.map((z) => (
           <KartaZapasu key={z.id} zapas={z} vstupenky={(s.vstupenky_odkaz || '').trim() || null} />
@@ -40,7 +40,7 @@ const ClankyBloku: KomponentBloku = (props) => {
   if (!clanky.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('clanky', data)} textOdkazu={data.text_odkazu} />
       <div className="kl-mriezka-3">
         {clanky.data.map((c) => (
           <KartaClanku key={c.id} clanok={c} />
@@ -55,7 +55,7 @@ const PartneriBloku: KomponentBloku = ({ blok: { data } }) => {
   if (!partneri.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('partneri', data)} textOdkazu={data.text_odkazu} />
       <div className="kl-bloky__partneri">
         <RadyPartnerov partneri={partneri.data} />
       </div>

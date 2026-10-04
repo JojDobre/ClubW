@@ -2397,5 +2397,7 @@
  "Sekcie sa zobrazia na vybranom mieste úvodnej stránky v tomto poradí.": "Les sections s'affichent à l'endroit choisi de la page d'accueil dans cet ordre.",
  "Zatiaľ žiadne vlastné sekcie. Pridajte napríklad články z rubriky, tabuľku súťaže alebo strelcov a vyberte, medzi ktoré sekcie úvodu sa vložia.": "Aucune section personnalisée pour l'instant. Ajoutez par exemple des articles d'une rubrique, le classement ou les buteurs et choisissez entre quelles sections de l'accueil ils s'insèrent.",
  "Pridať sekciu": "Ajouter une section",
- "Vyberte typ sekcie": "Choisissez le type de section"
+ "Vyberte typ sekcie": "Choisissez le type de section",
+ "Odkaz „Zobraziť všetky“ vedľa nadpisu": "Lien « Tout voir » à côté du titre",
+ "Text odkazu": "Texte du lien"
 }
