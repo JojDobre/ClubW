@@ -55,7 +55,7 @@
 /* Čísla */
 .bloky--zakladne .blok__cisla { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin: 0; }
 .bloky--zakladne .blok__cisla dt { color: var(--blok-akcent); font-size: 2.4rem; font-weight: 800; line-height: 1; }
-.bloky--zakladne .blok__cisla dd { margin: 6px 0 0; color: var(--blok-tlmeny); }
+.bloky--zakladne .blok__cisla dd { margin: 6px 0 0; color: var(--blok-tlmeny); text-align: left; }
 
 /* Obrázok s textom */
 .bloky--zakladne .blok__dvojica { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
@@ -241,3 +241,37 @@
   .bloky--zakladne .blok__karty--vodorovne .blok__karta { flex-direction: column; }
   .registracia__riadok, .registracia__typy { grid-template-columns: 1fr; }
 }
+
+/* ===== Automatické bloky klubu - štruktúra pre všetky šablóny =====
+   (aj s vypnutým predvoleným vzhľadom: logo tímu v tabuľke nesmie
+   prerásť riadok, tlačidlo „Zobraziť všetko" pod blokom) */
+.blok__tabulka-tim { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.blok__tabulka-tim > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blok__tabulka-logo { flex-shrink: 0; width: 22px !important; height: 22px !important; max-width: none; object-fit: contain; display: block; }
+.blok__tabulka--liga td:first-child, .blok__tabulka--strelci td:first-child { width: 1%; white-space: nowrap; }
+.blok__tabulka--liga td:not(:nth-child(2)), .blok__tabulka--liga th:not(:nth-child(2)) { text-align: center; }
+.blok__tabulka--liga td:nth-child(2) { width: 100%; }
+.blok__tabulka--strelci td:last-child, .blok__tabulka--strelci th:last-child { text-align: center; }
+.blok__hlavicka--s-odkazom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; max-width: none !important; }
+.blok__hlavicka--s-odkazom .blok__hlavicka-text { min-width: 0; }
+.blok__vsetky {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent); color: inherit; text-decoration: none;
+  font-size: 14px; font-weight: 700; line-height: 1.2; white-space: nowrap; transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.blok__vsetky:hover { background: color-mix(in srgb, currentColor 8%, transparent); border-color: currentColor; }
+.blok__vsetky span { transition: transform 0.2s ease; }
+.blok__vsetky:hover span { transform: translateX(3px); }
+.bloky--zakladne .blok__vsetky { color: var(--blok-akcent); }
+.blok__udalosti { list-style: none; padding: 0; }
+.blok__udalosti { display: flex; flex-direction: column; margin: 0; border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.blok__udalosti > li { margin: 0; padding: 0; border: 0; background: none; }
+.blok__udalosti > li > a { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) auto; align-items: center; gap: 6px 20px; padding: 16px 4px; border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent); color: inherit; text-decoration: none; }
+.blok__udalosti > li > a:hover strong { text-decoration: underline; }
+.blok__udalosti small { font-size: 0.85em; opacity: 0.65; }
+.blok__udalosti strong { font-size: 1.05em; }
+@media (max-width: 640px) {
+  .blok__udalosti > li > a { grid-template-columns: minmax(0, 1fr); }
+}
+.bloky--zakladne .blok__tabulka a { color: inherit; font-weight: 600; text-decoration: none; }
+.bloky--zakladne .blok__tabulka a:hover { text-decoration: underline; }

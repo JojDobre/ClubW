@@ -941,5 +941,9 @@
  "Žiadny súbor nebol nahraný": "Žádný soubor nebyl nahrán",
  "Žiadny súbor sa nepodarilo uložiť": "Žádný soubor se nepodařilo uložit",
  "Žiadny zo zadaných súborov nie je obrázok v knižnici": "Žádný ze zadaných souborů není obrázek v knihovně",
- "„{0}\" môže mať najviac {1} znakov": "„{0}\" může mít nejvýše {1} znaků"
+ "„{0}\" môže mať najviac {1} znakov": "„{0}\" může mít nejvýše {1} znaků",
+ "{0} ({1}): sekcie potrebujú 1 až 30 pozícií": "{0} ({1}): sekce potřebují 1 až 30 pozic",
+ "{0} ({1}): pozícia musí byť kľúč malými písmenami (napr. pod_hero)": "{0} ({1}): pozice musí být klíč malými písmeny (např. pod_hero)",
+ "sekcie musia byť zoznam": "sekce musí být seznam",
+ "najviac {0} sekcií": "nejvýše {0} sekcí"
 }

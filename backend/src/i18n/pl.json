@@ -941,5 +941,9 @@
  "Žiadny súbor nebol nahraný": "Nie wgrano żadnego pliku",
  "Žiadny súbor sa nepodarilo uložiť": "Nie udało się zapisać żadnego pliku",
  "Žiadny zo zadaných súborov nie je obrázok v knižnici": "Żaden z podanych plików nie jest obrazkiem w bibliotece",
- "„{0}\" môže mať najviac {1} znakov": "„{0}” może mieć maksymalnie {1} znaków"
+ "„{0}\" môže mať najviac {1} znakov": "„{0}” może mieć maksymalnie {1} znaków",
+ "{0} ({1}): sekcie potrebujú 1 až 30 pozícií": "{0} ({1}): sekcje wymagają od 1 do 30 pozycji",
+ "{0} ({1}): pozícia musí byť kľúč malými písmenami (napr. pod_hero)": "{0} ({1}): pozycja musi być kluczem pisanym małymi literami (np. pod_hero)",
+ "sekcie musia byť zoznam": "sekcje muszą być listą",
+ "najviac {0} sekcií": "najwyżej {0} sekcji"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "kronika",
   "nazov": "Kronika",
-  "verzia": "1.0.0",
+  "verzia": "1.0.1",
   "autor": "ClubW",
   "popis": "Elegantná editoriálna šablóna v štýle športového magazínu: teplý papierový podklad, serifové titulky, tenké linky a jedna farba klubu. Hlavička ako titulka novín, výsledková lišta, titulný článok s bočným stĺpcom najnovších správ, prehľad zápasov s tabuľkou, káder, tmavá sekcia videí, fanshop a partneri. Všetky podstránky vrátane obchodu, článkov s iniciálou a detailu zápasu.",
   "api": 1,
@@ -705,6 +705,47 @@
       "menovka": "Text za copyrightom",
       "skupina": "Pätička",
       "predvolene": "Všetky práva vyhradené."
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_skore",
+          "popis": "Pod lištou výsledkov"
+        },
+        {
+          "hodnota": "po_titulke",
+          "popis": "Pod titulnou stranou"
+        },
+        {
+          "hodnota": "po_zapasoch",
+          "popis": "Pod prehľadom zápasov"
+        },
+        {
+          "hodnota": "po_kadri",
+          "popis": "Pod kádrom"
+        },
+        {
+          "hodnota": "po_videach",
+          "popis": "Pod videami"
+        },
+        {
+          "hodnota": "po_fanshope",
+          "popis": "Pod fanshopom"
+        },
+        {
+          "hodnota": "po_klube",
+          "popis": "Pod sekciou klubu (nad partnermi)"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod partnermi)"
+        }
+      ]
     }
   ]
 }

@@ -11,13 +11,13 @@ import { Badge, Button, Editor, Icon, Input, Select, Switch, Textarea } from '..
 import { PoleObrazka } from './PoleObrazka';
 import { useNacitanie } from '../../app/useNacitanie';
 import { formulareApi } from '../../api/formulare';
-import { stadionyApi, timyApi } from '../../api/sport';
+import { ligyApi, stadionyApi, timyApi } from '../../api/sport';
 import { kategorieSpravaApi } from '../../api/obsah';
 import { kotvaBloku, type BlokStranky } from '../../web/bloky/typy';
 import { tr } from '../../i18n';
 import './EditorBlokov.css';
 
-type DruhPola = 'text' | 'dlhy' | 'html' | 'obrazok' | 'odkaz' | 'cislo' | 'vyber' | 'prepinac' | 'tabulka' | 'formular' | 'rubrika' | 'tim' | 'stadion';
+type DruhPola = 'text' | 'dlhy' | 'html' | 'obrazok' | 'odkaz' | 'cislo' | 'vyber' | 'prepinac' | 'tabulka' | 'formular' | 'rubrika' | 'tim' | 'liga' | 'stadion';
 
 interface DefPola {
   kluc: string;
@@ -105,6 +105,19 @@ const ZAROVNANIE: DefPola = {
     { hodnota: 'stred', popis: tr('Na stred') },
   ],
 };
+/** Odkaz „Zobraziť všetky" vedľa nadpisu (bloky s údajmi webu) */
+const VSETKY_POLIA: DefPola[] = [
+  { kluc: 'odkaz_vsetky', menovka: tr('Odkaz „Zobraziť všetky“ vedľa nadpisu'), druh: 'prepinac' },
+  {
+    kluc: 'text_odkazu',
+    menovka: tr('Text odkazu'),
+    druh: 'text',
+    max: 40,
+    placeholder: tr('Zobraziť všetky'),
+    ak: (d) => d.odkaz_vsetky === true,
+  },
+];
+
 const NIE_KLASICKE = (d: Record<string, unknown>) => d.vzhlad === 'obrazkove' || d.vzhlad === 'velke';
 
 /** Všetky typy blokov - poradie = poradie v ponuke „Pridať blok". */
@@ -729,8 +742,22 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Najnovšie články'),
     popis: tr('Automaticky posledné články, aj z jednej rubriky'),
     ikona: 'clanky',
-    data: { nadpis: tr('Najnovšie články'), pocet: 3 },
-    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet článkov'), druh: 'cislo' }, { kluc: 'rubrika', menovka: tr('Rubrika'), druh: 'rubrika' }],
+    data: { nadpis: tr('Najnovšie články'), pocet: 3, odkaz_vsetky: true },
+    polia: [
+      NADPIS,
+      { kluc: 'pocet', menovka: tr('Počet článkov'), druh: 'cislo' },
+      { kluc: 'rubrika', menovka: tr('Rubrika'), druh: 'rubrika' },
+      {
+        kluc: 'vzhlad',
+        menovka: tr('Vzhľad'),
+        druh: 'vyber',
+        moznosti: [
+          { hodnota: 'karty', popis: tr('Karty s obrázkom') },
+          { hodnota: 'zoznam', popis: tr('Zoznam (obrázok vedľa textu)') },
+        ],
+      },
+      ...VSETKY_POLIA,
+    ],
   },
   {
     typ: 'zapasy',
@@ -738,7 +765,7 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Zápasy'),
     popis: tr('Automaticky najbližšie zápasy alebo posledné výsledky'),
     ikona: 'zapasy',
-    data: { nadpis: tr('Najbližšie zápasy'), rezim: 'program', pocet: 3 },
+    data: { nadpis: tr('Najbližšie zápasy'), rezim: 'program', pocet: 3, odkaz_vsetky: true },
     polia: [
       NADPIS,
       {
@@ -752,7 +779,94 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
       },
       { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim' },
       { kluc: 'pocet', menovka: tr('Počet zápasov'), druh: 'cislo' },
+      ...VSETKY_POLIA,
     ],
+  },
+  {
+    typ: 'tabulka_ligy',
+    skupina: 'klub',
+    nazov: tr('Tabuľka súťaže'),
+    popis: tr('Automaticky aktuálna tabuľka ligy'),
+    ikona: 'ligy',
+    data: { nadpis: tr('Tabuľka'), odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'liga_id', menovka: tr('Súťaž'), druh: 'liga' }, { kluc: 'kompaktna', menovka: tr('Skrátená tabuľka (len zápasy a body)'), druh: 'prepinac' }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'strelci',
+    skupina: 'klub',
+    nazov: tr('Najlepší strelci'),
+    popis: tr('Rebríček strelcov alebo asistencií v súťaži'),
+    ikona: 'hraci',
+    data: { nadpis: tr('Najlepší strelci'), typ: 'gol', pocet: 5, odkaz_vsetky: true },
+    polia: [
+      NADPIS,
+      { kluc: 'liga_id', menovka: tr('Súťaž'), druh: 'liga' },
+      {
+        kluc: 'typ',
+        menovka: tr('Rebríček'),
+        druh: 'vyber',
+        moznosti: [
+          { hodnota: 'gol', popis: tr('Góly') },
+          { hodnota: 'asistencia', popis: tr('Asistencie') },
+        ],
+      },
+      { kluc: 'pocet', menovka: tr('Počet hráčov'), druh: 'cislo', max: 20 },
+      ...VSETKY_POLIA,
+    ],
+  },
+  {
+    typ: 'statistiky_timu',
+    skupina: 'klub',
+    nazov: tr('Sezóna v číslach'),
+    popis: tr('Zápasy, výhry, remízy, prehry, skóre a čisté kontá tímu'),
+    ikona: 'dashboard',
+    data: { nadpis: tr('Sezóna v číslach'), odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'hraci',
+    skupina: 'klub',
+    nazov: tr('Káder'),
+    popis: tr('Hráči tímu s fotkou, číslom a pozíciou'),
+    ikona: 'timy',
+    data: { nadpis: tr('Káder'), pocet: 8, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'tim_id', menovka: tr('Tím'), druh: 'tim', placeholder: tr('Hlavný tím') }, { kluc: 'pocet', menovka: tr('Počet hráčov'), druh: 'cislo', max: 40 }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'udalosti',
+    skupina: 'klub',
+    nazov: tr('Udalosti z kalendára'),
+    popis: tr('Najbližšie akcie klubu z kalendára'),
+    ikona: 'kalendar',
+    data: { nadpis: tr('Pripravujeme'), pocet: 4, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet udalostí'), druh: 'cislo' }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'videa',
+    skupina: 'media',
+    nazov: tr('Najnovšie videá'),
+    popis: tr('Automaticky posledné videá z Videogalérie'),
+    ikona: 'videa',
+    data: { nadpis: tr('Videá'), pocet: 3, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet videí'), druh: 'cislo' }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'galerie',
+    skupina: 'media',
+    nazov: tr('Najnovšie fotogalérie'),
+    popis: tr('Automaticky posledné galérie'),
+    ikona: 'galerie',
+    data: { nadpis: tr('Fotogalérie'), pocet: 3, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet galérií'), druh: 'cislo' }, ...VSETKY_POLIA],
+  },
+  {
+    typ: 'produkty',
+    skupina: 'klub',
+    nazov: tr('Produkty fanshopu'),
+    popis: tr('Produkty z obchodu (keď je obchod zapnutý)'),
+    ikona: 'kosik',
+    data: { nadpis: tr('Fanshop'), pocet: 4, odkaz_vsetky: true },
+    polia: [NADPIS, { kluc: 'pocet', menovka: tr('Počet produktov'), druh: 'cislo' }, ...VSETKY_POLIA],
   },
   {
     typ: 'partneri',
@@ -760,8 +874,8 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     nazov: tr('Partneri'),
     popis: tr('Logá partnerov z časti Sponzori'),
     ikona: 'timy',
-    data: { nadpis: tr('Naši partneri') },
-    polia: [NADPIS],
+    data: { nadpis: tr('Naši partneri'), odkaz_vsetky: true },
+    polia: [NADPIS, ...VSETKY_POLIA],
   },
   {
     typ: 'kontakt',
@@ -904,6 +1018,7 @@ interface Zdroje {
   formulare: Array<{ hodnota: string; popis: string }>;
   rubriky: Array<{ hodnota: string; popis: string }>;
   timy: Array<{ hodnota: string; popis: string }>;
+  ligy: Array<{ hodnota: string; popis: string }>;
   stadiony: Array<{ hodnota: string; popis: string }>;
 }
 
@@ -1098,7 +1213,7 @@ const PoleBloku: React.FC<{
     case 'obrazok':
       return <PoleObrazka menovka={pole.menovka} hodnota={text || null} onZmena={onZmena} tvar="siroky" napoveda={pole.napoveda} />;
     case 'cislo':
-      return <Input menovka={pole.menovka} type="number" min={1} max={12} value={text} onChange={(e) => onZmena(e.target.value === '' ? null : Number(e.target.value))} />;
+      return <Input menovka={pole.menovka} type="number" min={1} max={pole.max ?? 12} value={text} onChange={(e) => onZmena(e.target.value === '' ? null : Number(e.target.value))} />;
     case 'prepinac':
       return (
         <div className="cw-blok__prepinac-pole">
@@ -1126,12 +1241,22 @@ const PoleBloku: React.FC<{
       return <Select menovka={pole.menovka} value={text} prazdna={tr('Vyberte formulár')} moznosti={zdroje.formulare} onChange={(e) => onZmena(e.target.value)} />;
     case 'rubrika':
       return <Select menovka={pole.menovka} value={text} prazdna={tr('Všetky rubriky')} moznosti={zdroje.rubriky} onChange={(e) => onZmena(e.target.value)} />;
+    case 'liga':
+      return (
+        <Select
+          menovka={pole.menovka}
+          value={text && text !== '0' ? text : ''}
+          prazdna={tr('Súťaž hlavného tímu')}
+          moznosti={zdroje.ligy}
+          onChange={(e) => onZmena(e.target.value ? Number(e.target.value) : null)}
+        />
+      );
     case 'tim':
       return (
         <Select
           menovka={pole.menovka}
           value={text && text !== '0' ? text : ''}
-          prazdna={tr('Všetky tímy')}
+          prazdna={pole.placeholder || tr('Všetky tímy')}
           moznosti={zdroje.timy}
           onChange={(e) => onZmena(e.target.value ? Number(e.target.value) : null)}
         />
@@ -1155,7 +1280,17 @@ const PoleBloku: React.FC<{
 export const EditorBlokov: React.FC<{
   bloky: BlokStranky[];
   onZmena: (bloky: BlokStranky[]) => void;
-}> = ({ bloky, onZmena }) => {
+  /**
+   * Vlastné sekcie úvodu šablóny: miesta na stránke, kam sa blok vloží.
+   * Každý blok potom dostane výber pozície.
+   */
+  pozicie?: Array<{ hodnota: string; popis: string }>;
+  nadpis?: string;
+  popis?: string;
+  prazdne?: string;
+  textPridat?: string;
+  max?: number;
+}> = ({ bloky, onZmena, pozicie, nadpis, popis, prazdne, textPridat, max = 60 }) => {
   const [rozbalene, setRozbalene] = useState<Set<string>>(new Set());
   const [rozbalenePolozky, setRozbalenePolozky] = useState<Set<string>>(new Set());
   const [ponuka, setPonuka] = useState(false);
@@ -1164,6 +1299,7 @@ export const EditorBlokov: React.FC<{
   const rubriky = useNacitanie((signal) => kategorieSpravaApi.vypis(signal));
   const timy = useNacitanie((signal) => timyApi.vypis(signal));
   const stadiony = useNacitanie((signal) => stadionyApi.vypis(signal));
+  const ligy = useNacitanie((signal) => ligyApi.vypis(signal));
   const [hladanyTyp, setHladanyTyp] = useState('');
   const zdroje: Zdroje = {
     formulare: (formulare.data ?? []).map((f) => ({
@@ -1177,6 +1313,10 @@ export const EditorBlokov: React.FC<{
     timy: (timy.data ?? []).map((t) => ({
       hodnota: String(t.id),
       popis: t.nazov,
+    })),
+    ligy: (ligy.data ?? []).map((l) => ({
+      hodnota: String(l.id),
+      popis: l.sezona ? `${l.nazov} (${l.sezona})` : l.nazov,
     })),
     stadiony: (stadiony.data ?? []).map((s) => ({
       hodnota: String(s.id),
@@ -1208,6 +1348,8 @@ export const EditorBlokov: React.FC<{
       pozadie: 'biele',
       skryty: false,
     };
+    // Nová sekcia ide na rovnaké miesto ako posledná pridaná, inak na prvé
+    if (pozicie?.length) blok.pozicia = bloky[bloky.length - 1]?.pozicia ?? pozicie[0].hodnota;
     const sPolozkami = def.polozky && (!def.polozky.ak || def.polozky.ak(blok.data));
     if (sPolozkami) blok.polozky = rychly?.polozky ? rychly.polozky.map((x) => ({ ...x })) : [{}];
     onZmena([...bloky, blok]);
@@ -1225,11 +1367,13 @@ export const EditorBlokov: React.FC<{
   return (
     <div className="cw-bloky">
       <div className="cw-bloky__hlava">
-        <span className="cw-field__label">{tr('Bloky stránky')}</span>
-        <small>{tr('Zobrazia sa pod textom stránky v tomto poradí.')}</small>
+        <span className="cw-field__label">{nadpis ?? tr('Bloky stránky')}</span>
+        <small>{popis ?? tr('Zobrazia sa pod textom stránky v tomto poradí.')}</small>
       </div>
 
-      {bloky.length === 0 && <p className="cw-bloky__prazdne">{tr('Stránka zatiaľ nemá žiadne bloky. Pridajte napríklad časovú os histórie alebo karty vedenia klubu.')}</p>}
+      {bloky.length === 0 && (
+        <p className="cw-bloky__prazdne">{prazdne ?? tr('Stránka zatiaľ nemá žiadne bloky. Pridajte napríklad časovú os histórie alebo karty vedenia klubu.')}</p>
+      )}
 
       <ol className="cw-bloky__zoznam">
         {bloky.map((b, i) => {
@@ -1248,6 +1392,7 @@ export const EditorBlokov: React.FC<{
                     <small>{zhrnutie(b) || def.popis}</small>
                   </span>
                 </button>
+                {pozicie && <Badge>{pozicie.find((p) => p.hodnota === b.pozicia)?.popis ?? pozicie[0]?.popis}</Badge>}
                 {b.skryty && <Badge>{tr('Skrytý')}</Badge>}
                 <div className="cw-blok__akcie">
                   <Button velkost="sm" variant="ghost" disabled={i === 0} onClick={() => presun(i, -1)} aria-label={tr('Posunúť blok vyššie')}>
@@ -1267,6 +1412,14 @@ export const EditorBlokov: React.FC<{
 
               {otvoreny && (
                 <div className="cw-blok__telo">
+                  {pozicie && (
+                    <Select
+                      menovka={tr('Kde sa sekcia zobrazí')}
+                      value={pozicie.some((p) => p.hodnota === b.pozicia) ? b.pozicia : pozicie[0]?.hodnota}
+                      moznosti={pozicie}
+                      onChange={(e) => uprav(i, { pozicia: e.target.value })}
+                    />
+                  )}
                   {def.polia
                     .filter((pole) => !pole.ak || pole.ak(b.data ?? {}))
                     .map((pole) => (
@@ -1366,9 +1519,11 @@ export const EditorBlokov: React.FC<{
                     />
                     <Switch zapnute={Boolean(b.skryty)} onZmena={(v) => uprav(i, { skryty: v })} menovka={tr('Skryť blok na webe')} />
                   </div>
-                  <small className="cw-blok__kotva">
-                    {tr('Odkaz na tento blok:')} <code>#{kotvaBloku(b)}</code>
-                  </small>
+                  {!pozicie && (
+                    <small className="cw-blok__kotva">
+                      {tr('Odkaz na tento blok:')} <code>#{kotvaBloku(b)}</code>
+                    </small>
+                  )}
                 </div>
               )}
             </li>
@@ -1379,13 +1534,14 @@ export const EditorBlokov: React.FC<{
       {ponuka ? (
         <div className="cw-bloky__ponuka">
           <div className="cw-bloky__ponuka-hlava">
-            <strong>{tr('Vyberte typ bloku')}</strong>
+            <strong>{pozicie ? tr('Vyberte typ sekcie') : tr('Vyberte typ bloku')}</strong>
             <Button velkost="sm" variant="ghost" onClick={() => setPonuka(false)} aria-label={tr('Zavrieť')}>
               <Icon nazov="zavriet" velkost={14} />
             </Button>
           </div>
           <Input value={hladanyTyp} onChange={(e) => setHladanyTyp(e.target.value)} placeholder={tr('Hľadať blok…')} aria-label={tr('Hľadať blok…')} autoFocus />
-          {SKUPINY_BLOKOV.map((skupina) => {
+          {/* Na úvode sú najčastejšie automatické sekcie s údajmi klubu - idú prvé */}
+          {(pozicie ? (['klub', 'media', 'zaklad', 'obsah'] as SkupinaBlokov[]).map((k) => SKUPINY_BLOKOV.find((x) => x.kluc === k)!) : SKUPINY_BLOKOV).map((skupina) => {
             const hladane = hladanyTyp.trim().toLowerCase();
             const sedi = (d: { nazov: string; popis: string }) => !hladane || `${d.nazov} ${d.popis}`.toLowerCase().includes(hladane);
             const typy = [
@@ -1414,8 +1570,8 @@ export const EditorBlokov: React.FC<{
           })}
         </div>
       ) : (
-        <Button variant="secondary" ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setPonuka(true)} disabled={bloky.length >= 60}>
-          {tr('Pridať blok')}
+        <Button variant="secondary" ikona={<Icon nazov="plus" velkost={15} />} onClick={() => setPonuka(true)} disabled={bloky.length >= max}>
+          {textPridat ?? tr('Pridať blok')}
         </Button>
       )}
     </div>

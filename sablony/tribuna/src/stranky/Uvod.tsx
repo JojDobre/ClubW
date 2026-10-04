@@ -13,9 +13,10 @@
 //  6. bento „Komunita" - fanshop, sociálne siete, úspechy a členstvo.
 // Partneri sú nad pätičkou. Sekcie bez obsahu sa neukážu.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { IkonaSiete, podlaCasu, useHlavnyTim, useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -86,6 +87,13 @@ const HlavaSekcie: React.FC<{ nadpis: string; stitok?: string | null; odkaz?: st
     </div>
   );
 };
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return <HlavaSekcie nadpis={nadpis || ''} stitok={uvod} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />;
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 // ===== 1. Hero =====
 
@@ -365,7 +373,7 @@ const ZapasovyDen: React.FC<{ tim: Tim; ligy: Liga[]; vstupenky: string | null }
   const u = useUpravy();
   const odohrane = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=ukonceny&limit=3`);
   const zive = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=prebieha&limit=1`);
-  const buduce = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=naplanovany&od_datumu=${dnes()}&limit=3`);
+  const buduce = useApi<Zapas[]>(`/matches?tim_id=${tim.id}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=3`);
   const liga = u.zapnute('ukazat_tabulku') ? ligy.find((l) => l.tim_id === tim.id && l.format !== 'turnaj') ?? null : null;
   const tabulka = useApi<RiadokTabulky[]>(liga ? `/leagues/${liga.id}/table` : null);
 
@@ -923,11 +931,17 @@ const Uvod: React.FC = () => {
   return (
     <div className="tb-uvod">
       {u.zapnute('ukazat_clanky') && <Hero clanky={hero} nacitava={zvyraznene.nacitava || clanky.nacitava} nahradnaFotka={(s.uvod_fotka as string | null) || null} />}
+      <Sekcie p="po_hero" />
       {u.zapnute('ukazat_zapasy') && hlavny && <ZapasovyDen tim={hlavny} ligy={ligy.data ?? []} vstupenky={vstupenky} />}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_novinky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {hlavny && <Klub tim={hlavny} hraciTim={timHracov} />}
+      <Sekcie p="po_klube" />
       {u.zapnute('ukazat_videa') && <KlubTV videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       <Komunita s={s} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

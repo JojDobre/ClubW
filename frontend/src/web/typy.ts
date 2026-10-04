@@ -63,8 +63,8 @@ export interface DefiniciaSablony {
   casti?: Partial<CastiSablony>;
 }
 
-/** Hodnota nastavenia šablóny (farba, text, prepínač...). */
-export type HodnotaNastavenia = string | number | boolean | null;
+/** Hodnota nastavenia šablóny (farba, text, prepínač...; typ „sekcie" = zoznam blokov). */
+export type HodnotaNastavenia = string | number | boolean | null | Array<Record<string, unknown>>;
 
 /** Aktívna šablóna podľa servera (/api/sablony/aktivna). */
 export interface AktivnaSablona {

@@ -2,9 +2,9 @@
 // Úvodná stránka základnej šablóny - klub, najnovšie články,
 // najbližšie zápasy, posledné výsledky a anketa.
 
-import React from 'react';
+import React, { useId } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useData, useNastavenia } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useData, useNastavenia, SekcieUvodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
 import './Uvod.css';
 
 interface ClanokVZozname {
@@ -34,11 +34,26 @@ const datum = (d?: string | null) =>
 const datumCas = (d: string) =>
   new Date(d).toLocaleString('sk-SK', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+/** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <div className="zk-uvod__nadpis">
+        <h2 id={id}>{nadpis}</h2>
+        {odkaz && <Link to={odkaz}>{textOdkazu || 'Zobraziť všetky'} →</Link>}
+      </div>
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="zk-u-sekcie" hlavicka={HlavickaSekcie} />;
+
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const clanky = useData<ClanokVZozname[]>('/articles?limit=3');
   // Zoznam zápasov je zoradený od najnovšieho - najbližšie berieme z konca
-  const buduce = useData<ZapasVZozname[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&limit=50`);
+  const buduce = useData<ZapasVZozname[]>(`/matches?status=naplanovany&od_datumu=${new Date().toISOString().slice(0, 10)}&poradie=asc&limit=50`);
   const vysledky = useData<ZapasVZozname[]>('/matches?status=ukonceny&limit=3');
   const najblizsie = [...(buduce.data ?? [])].sort((a, b) => a.datum_cas.localeCompare(b.datum_cas)).slice(0, 3);
 
@@ -49,6 +64,7 @@ const Uvod: React.FC = () => {
         {(nastavenia.slogan || nastavenia.meta_popis) && <p>{nastavenia.slogan || nastavenia.meta_popis}</p>}
       </section>
 
+      <Sekcie p="po_uvode" />
       <div className="zk-uvod__mriezka">
         <section className="zk-uvod__clanky" aria-labelledby="zk-aktuality">
           <div className="zk-uvod__nadpis">
@@ -131,6 +147,7 @@ const Uvod: React.FC = () => {
           <AnketaWeb najnovsia />
         </aside>
       </div>
+      <Sekcie p="koniec" />
     </div>
   );
 };

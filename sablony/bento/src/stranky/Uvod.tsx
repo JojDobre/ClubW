@@ -9,11 +9,12 @@
 // videá, fanshop, čísla klubu, siete s výzvou a pás partnerov.
 // Dlaždice bez obsahu sa neukážu a mriežka sa zaplní ostatnými.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { useSiete } from '../Rozlozenie';
-import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
+import { Obrazok, embedVidea, statyHraca, useOknoVidea, vyrezTabulky } from '../casti';
 import {
   Erb,
   Ikona,
@@ -56,7 +57,7 @@ const sutazZapasu = (z: Zapas) => [z.liga_nazov, z.kolo ? `${z.kolo}. kolo` : nu
 const pozadieUrl = (url: string | null) => (url ? `url("${url.replace(/"/g, '%22')}")` : undefined);
 
 /** Nadpis sekcie: nadpis vľavo, „Zobraziť všetky" vpravo. */
-const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; id: string; children?: React.ReactNode }> = ({ nadpis, odkaz, id, children }) => {
+const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; textOdkazu?: string; id: string; children?: React.ReactNode }> = ({ nadpis, odkaz, textOdkazu, id, children }) => {
   const u = useUpravy();
   return (
     <div className="db-u-hlava">
@@ -64,13 +65,25 @@ const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; id: string;
       {children}
       {odkaz && (
         <Odkaz to={odkaz} className="db-u-hlava__odkaz">
-          {u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
+          {textOdkazu || u.text('text_zobrazit_vsetky', 'Zobraziť všetky')}
           <Ikona nazov="sipka" velkost={14} />
         </Odkaz>
       )}
     </div>
   );
 };
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <HlavaSekcie nadpis={nadpis || ''} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 // ===== Hero karta =====
 
@@ -470,15 +483,11 @@ const KartickaHraca: React.FC<{ hrac: Hrac; st?: StatistikaHraca; i: number }> =
           <strong>{h.priezvisko}</strong>
         </span>
         <span className="db-u-karticka__staty">
-          <span>
-            <b>{st?.zapasy ?? 0}</b> záp.
-          </span>
-          <span>
-            <b>{st?.goly ?? 0}</b> góly
-          </span>
-          <span>
-            <b>{st?.asistencie ?? 0}</b> asist.
-          </span>
+          {statyHraca(h, st).map(([hodnota, nazov]) => (
+            <span key={nazov}>
+              <b>{hodnota}</b> {nazov === 'Zápasy' ? 'záp.' : nazov.toLowerCase()}
+            </span>
+          ))}
         </span>
       </span>
     </Link>
@@ -854,7 +863,7 @@ const Uvod: React.FC = () => {
 
   const vysledky = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=ukonceny&limit=4` : null);
   const zive = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=prebieha&limit=2` : null);
-  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&limit=20` : null);
+  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=20` : null);
   const nacitavaZapasy = timy.nacitava || vysledky.nacitava || zive.nacitava || buduce.nacitava;
 
   const program = useMemo(() => [...(buduce.data ?? [])].sort(podlaCasu), [buduce.data]);
@@ -904,8 +913,11 @@ const Uvod: React.FC = () => {
         {dataTabulky && bocne.includes('poradie') && <DlazdicaTabulky liga={dataTabulky.liga} riadky={dataTabulky.riadky} timId={tid} />}
       </div>
 
+      <Sekcie p="po_hero" />
       {u.zapnute('ukazat_pas') && <Pas polozky={pas} />}
+      <Sekcie p="po_pase" />
       {u.zapnute('ukazat_clanky') && <Novinky clanky={novinky} />}
+      <Sekcie p="po_novinkach" />
       {u.zapnute('ukazat_zapasy') && timyZapasov.length > 0 && (
         <ZapasoveCentrum
           timy={timyZapasov}
@@ -917,12 +929,19 @@ const Uvod: React.FC = () => {
           nacitava={nacitavaZapasy}
         />
       )}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_hracov') && timHracov && <Hraci tim={timHracov} nadpis={String(s.hraci_nadpis || '').trim() || timHracov.nazov} />}
+      <Sekcie p="po_hracoch" />
       {u.zapnute('ukazat_videa') && <Videa videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      <Sekcie p="po_fanshope" />
       <Komunita s={s} ukazatSiete={u.zapnute('ukazat_siete')} />
+      <Sekcie p="po_komunite" />
       {u.zapnute('ukazat_odkazy') && <OdkazKlubu s={s} />}
+      <Sekcie p="po_odkazoch" />
       <Partneri partneri={partneri.data ?? []} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

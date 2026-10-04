@@ -194,7 +194,7 @@ export const SocialneSiete: React.FC<{ className?: string; velkost?: number }> =
 /** Najbližší zápas hlavného tímu v hornej lište (ako pás s výkopom na weboch klubov). */
 const ZapasListy: React.FC = () => {
   const { hlavny } = useHlavnyTim();
-  const buduce = useApi<Zapas[]>(hlavny ? `/matches?tim_id=${hlavny.id}&status=naplanovany&od_datumu=${dnes()}&limit=3` : null);
+  const buduce = useApi<Zapas[]>(hlavny ? `/matches?tim_id=${hlavny.id}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=3` : null);
   const z = [...(buduce.data ?? [])].sort(podlaCasu)[0];
   if (!z) return null;
   return (

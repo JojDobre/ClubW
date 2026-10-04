@@ -3179,3 +3179,11 @@ a.tb-dlazdica:hover { transform: translateY(-3px); box-shadow: 0 1px 0 rgba(0, 0
   .tb-kom__clenstvo > .tb-tlacidlo { justify-self: stretch; }
   .tb-kom__uspechy li strong { font-size: 34px; }
 }
+
+/* Bloky a vlastné sekcie úvodu: mriežka kariet sa na menších obrazovkách zalamuje */
+@media (max-width: 900px) {
+  .tb-bloky .tb-mriezka-3:not(.tb-mriezka-zapasov) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .tb-bloky .tb-mriezka-3:not(.tb-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
+}

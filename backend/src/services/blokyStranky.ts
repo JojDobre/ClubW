@@ -35,6 +35,10 @@ const NADPIS = T(150);
 const UVOD = T(600);
 const STLPCE: Pole = { typ: 'vyber', moznosti: ['2', '3', '4'] };
 const ZAROVNANIE: Pole = { typ: 'vyber', moznosti: ['vlavo', 'stred'] };
+/** Výber tímu, ligy… - 0 alebo prázdne = predvolený (hlavný tím, liga hlavného tímu) */
+const ID: Pole = { typ: 'cislo', min: 0, max: 1_000_000 };
+/** Odkaz „Zobraziť všetky" vedľa nadpisu bloku (články, zápasy, tabuľka…) */
+const VSETKY: Record<string, Pole> = { odkaz_vsetky: { typ: 'prepinac' }, text_odkazu: T(40) };
 const MAX_STLPCOV_TABULKY = 8;
 const MAX_RIADKOV_TABULKY = 100;
 
@@ -80,11 +84,20 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
   video: { polia: { nadpis: NADPIS, url: T(300), popis: T(200) } },
   mapa: { polia: { nadpis: NADPIS, adresa: T(200) } },
   formular: { polia: { slug: T(100) } },
-  clanky: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, rubrika: T(100) } },
+  clanky: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, rubrika: T(100), vzhlad: { typ: 'vyber', moznosti: ['karty', 'zoznam'] }, ...VSETKY } },
   zapasy: {
-    polia: { nadpis: NADPIS, tim_id: { typ: 'cislo', min: 0, max: 1_000_000 }, rezim: { typ: 'vyber', moznosti: ['program', 'vysledky'] }, pocet: { typ: 'cislo', min: 1, max: 12 } },
+    polia: { nadpis: NADPIS, tim_id: { typ: 'cislo', min: 0, max: 1_000_000 }, rezim: { typ: 'vyber', moznosti: ['program', 'vysledky'] }, pocet: { typ: 'cislo', min: 1, max: 12 }, ...VSETKY },
   },
-  partneri: { polia: { nadpis: NADPIS } },
+  partneri: { polia: { nadpis: NADPIS, ...VSETKY } },
+  // Automatické bloky s údajmi klubu (aj ako sekcie úvodnej stránky šablóny)
+  tabulka_ligy: { polia: { nadpis: NADPIS, liga_id: ID, kompaktna: { typ: 'prepinac' }, ...VSETKY } },
+  strelci: { polia: { nadpis: NADPIS, liga_id: ID, typ: { typ: 'vyber', moznosti: ['gol', 'asistencia'] }, pocet: { typ: 'cislo', min: 1, max: 20 }, ...VSETKY } },
+  statistiky_timu: { polia: { nadpis: NADPIS, tim_id: ID, ...VSETKY } },
+  hraci: { polia: { nadpis: NADPIS, tim_id: ID, pocet: { typ: 'cislo', min: 1, max: 40 }, ...VSETKY } },
+  videa: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, ...VSETKY } },
+  galerie: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, ...VSETKY } },
+  produkty: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, ...VSETKY } },
+  udalosti: { polia: { nadpis: NADPIS, pocet: { typ: 'cislo', min: 1, max: 12 }, ...VSETKY } },
   tlacidla: {
     polia: { nadpis: NADPIS, vzhlad: { typ: 'vyber', moznosti: ['klasicke', 'obrazkove', 'velke'] }, zarovnanie: ZAROVNANIE, stlpce: { typ: 'vyber', moznosti: ['2', '3', '4'] } },
     polozky: {
@@ -248,7 +261,7 @@ export const textBlokov = (bloky: BlokStranky[] | null | undefined): string => {
   // Len textové polia podľa schémy (nie výber, odkazy ani obrázky)
   const texty = (polia: Record<string, Pole>, udaje: Record<string, unknown>) =>
     Object.entries(polia)
-      .filter(([kluc, pole]) => (pole.typ === 'text' || pole.typ === 'html') && !['url', 'email', 'telefon', 'slug', 'rubrika'].includes(kluc))
+      .filter(([kluc, pole]) => (pole.typ === 'text' || pole.typ === 'html') && !['url', 'email', 'telefon', 'slug', 'rubrika', 'text_odkazu'].includes(kluc))
       .map(([kluc]) => udaje[kluc])
       .filter((h): h is string => typeof h === 'string' && h.length > 0)
       .map((h) => h.replace(/<[^>]*>/g, ' '));

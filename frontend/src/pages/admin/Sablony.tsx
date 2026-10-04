@@ -27,6 +27,7 @@ import { useNacitanie } from '../../app/useNacitanie';
 import { useAuth } from '../../app/AuthContext';
 import { souborUrl } from '../../config/api';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
+import { EditorBlokov } from '../../components/admin/EditorBlokov';
 import { sablonyApi, type HodnotaNastaveniaSablony, type NastavenieSablony, type SablonaWebu } from '../../api/sablony';
 import { tr } from '../../i18n';
 import './Sablony.css';
@@ -64,6 +65,19 @@ const PoleNastavenia: React.FC<{
       );
     case 'prepinac':
       return <Switch zapnute={hodnota === true} onZmena={onZmena} menovka={n.menovka} popis={n.napoveda} />;
+    case 'sekcie':
+      return (
+        <EditorBlokov
+          bloky={Array.isArray(hodnota) ? hodnota : []}
+          onZmena={onZmena}
+          pozicie={n.pozicie ?? []}
+          nadpis={n.menovka}
+          popis={n.napoveda ?? tr('Sekcie sa zobrazia na vybranom mieste úvodnej stránky v tomto poradí.')}
+          prazdne={tr('Zatiaľ žiadne vlastné sekcie. Pridajte napríklad články z rubriky, tabuľku súťaže alebo strelcov a vyberte, medzi ktoré sekcie úvodu sa vložia.')}
+          textPridat={tr('Pridať sekciu')}
+          max={30}
+        />
+      );
     case 'vyber':
       return (
         <Select
@@ -254,7 +268,7 @@ export const Sablony: React.FC = () => {
   const obnovPredvolene = () => {
     if (!upravovana) return;
     const predvolene: Record<string, HodnotaNastaveniaSablony> = {};
-    for (const n of upravovana.nastavenia) predvolene[n.kluc] = n.predvolene ?? (n.typ === 'prepinac' ? false : null);
+    for (const n of upravovana.nastavenia) predvolene[n.kluc] = n.predvolene ?? (n.typ === 'prepinac' ? false : n.typ === 'sekcie' ? [] : null);
     setHodnoty(predvolene);
   };
 

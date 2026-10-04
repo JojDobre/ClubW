@@ -295,14 +295,26 @@ export const getTeamPlayerStats = async (req: Request, res: Response): Promise<v
       required: true,
     };
 
-    // Odohrané zápasy: hráč bol v zostave ukončeného zápasu
+    // Odohrané zápasy, minúty a čisté kontá zo zostáv ukončených zápasov
     const zostavy = (await ZapasZostava.findAll({
-      attributes: ['hrac_id', [fn('COUNT', fn('DISTINCT', col('ZapasZostava.zapas_id'))), 'zapasy']],
+      attributes: ['hrac_id', 'zapas_id', 'zaradenie', 'odohrane_minuty'],
       where: { hrac_id: idHracov },
-      include: [{ ...zapas, where: { ...zapas.where, status: 'ukonceny' } }],
-      group: ['ZapasZostava.hrac_id'],
+      include: [
+        {
+          ...zapas,
+          attributes: ['domaci_tim_id', 'hostujuci_tim_id', 'goly_domaci', 'goly_hostia'],
+          where: { ...zapas.where, status: 'ukonceny' },
+        },
+      ],
       raw: true,
-    })) as unknown as Array<{ hrac_id: number; zapasy: string }>;
+      nest: true,
+    })) as unknown as Array<{
+      hrac_id: number;
+      zapas_id: number;
+      zaradenie: 'zakladna' | 'lavicka';
+      odohrane_minuty: number | null;
+      zapas: { domaci_tim_id: number | null; hostujuci_tim_id: number | null; goly_domaci: number | null; goly_hostia: number | null };
+    }>;
 
     const udalosti = (await ZapasStatistika.findAll({
       attributes: ['hrac_id', 'typ', [fn('COUNT', col('ZapasStatistika.id')), 'pocet']],
@@ -312,14 +324,27 @@ export const getTeamPlayerStats = async (req: Request, res: Response): Promise<v
       raw: true,
     })) as unknown as Array<{ hrac_id: number; typ: string; pocet: string }>;
 
-    const podlaHraca = new Map<number, { hrac_id: number; zapasy: number; goly: number; asistencie: number; zlte_karty: number; cervene_karty: number }>();
+    type Riadok = { hrac_id: number; zapasy: number; minuty: number; ciste_konta: number; goly: number; asistencie: number; zlte_karty: number; cervene_karty: number };
+    const podlaHraca = new Map<number, Riadok>();
     const zaznam = (id: number) => {
-      if (!podlaHraca.has(id)) podlaHraca.set(id, { hrac_id: id, zapasy: 0, goly: 0, asistencie: 0, zlte_karty: 0, cervene_karty: 0 });
+      if (!podlaHraca.has(id)) podlaHraca.set(id, { hrac_id: id, zapasy: 0, minuty: 0, ciste_konta: 0, goly: 0, asistencie: 0, zlte_karty: 0, cervene_karty: 0 });
       return podlaHraca.get(id)!;
     };
     idHracov.forEach(zaznam);
+    const videne = new Set<string>();
+    zostavy.forEach((r) => {
+      const kluc = `${r.hrac_id}-${r.zapas_id}`;
+      if (videne.has(kluc)) return;
+      videne.add(kluc);
+      const riadok = zaznam(r.hrac_id);
+      riadok.zapasy += 1;
+      riadok.minuty += Number(r.odohrane_minuty) || 0;
+      // Čisté konto: hráč začínal a súper nedal gól
+      const z = r.zapas;
+      const inkasovane = z.domaci_tim_id === validation.id ? z.goly_hostia : z.hostujuci_tim_id === validation.id ? z.goly_domaci : null;
+      if (r.zaradenie === 'zakladna' && inkasovane === 0) riadok.ciste_konta += 1;
+    });
     // COUNT vracia pg driver ako reťazec
-    zostavy.forEach((r) => (zaznam(r.hrac_id).zapasy = Number(r.zapasy)));
     const STLPCE: Record<string, 'goly' | 'asistencie' | 'zlte_karty' | 'cervene_karty'> = {
       gol: 'goly',
       asistencia: 'asistencie',

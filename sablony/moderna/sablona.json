@@ -1,7 +1,7 @@
 {
   "slug": "moderna",
   "nazov": "Moderná",
-  "verzia": "1.1.0",
+  "verzia": "1.1.1",
   "autor": "ClubW",
   "popis": "Prémiový redakčný vzhľad: veľké fotky, zaoblené karty, jemné tiene a Match Centre ako hlavný prvok úvodnej stránky. Na mobile sa správa ako športová aplikácia so spodnou navigáciou. Nahrádza všetky stránky webu a farby berie z Nastavení klubu.",
   "api": 1,
@@ -119,6 +119,39 @@
       "skupina": "Panel s výzvou",
       "napoveda": "Napr. /vstupenky alebo https://...",
       "predvolene": "/vstupenky"
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_hero",
+          "popis": "Pod úvodom"
+        },
+        {
+          "hodnota": "po_odkazoch",
+          "popis": "Pod rýchlymi odkazmi"
+        },
+        {
+          "hodnota": "po_zapasoch",
+          "popis": "Pod Match Centre"
+        },
+        {
+          "hodnota": "po_spravach",
+          "popis": "Pod správami"
+        },
+        {
+          "hodnota": "po_hracoch",
+          "popis": "Pod hráčmi"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci"
+        }
+      ]
     }
   ]
 }

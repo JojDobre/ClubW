@@ -1,7 +1,7 @@
 {
   "slug": "tribuna",
   "nazov": "Tribúna",
-  "verzia": "1.0.0",
+  "verzia": "1.0.1",
   "autor": "ClubW",
   "popis": "Klasický klubový web striedaný s bento mriežkami, inšpirovaný webmi tradičných klubov: horná lišta s najbližším zápasom, biela hlavička s erbom, názvom a sloganom a menu v páse farby klubu, hlavné správy s fotkou cez celú šírku, mozaika dlaždíc zápasového dňa (odpočet, výsledok, tabuľka), klasické novinky, hráč v popredí so sezónou v číslach, pás Klub TV, dlaždice fanshopu, sietí, úspechov a členstva a partneri ako pyramída nad pätičkou. Písmo Oswald, zelená a zlatá.",
   "api": 1,
@@ -888,6 +888,39 @@
       "menovka": "Text za copyrightom",
       "skupina": "Pätička",
       "predvolene": "Všetky práva vyhradené."
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_hero",
+          "popis": "Pod hlavnými správami"
+        },
+        {
+          "hodnota": "po_zapasoch",
+          "popis": "Pod zápasovým dňom"
+        },
+        {
+          "hodnota": "po_novinkach",
+          "popis": "Pod novinkami"
+        },
+        {
+          "hodnota": "po_klube",
+          "popis": "Pod sekciou klubu"
+        },
+        {
+          "hodnota": "po_videach",
+          "popis": "Pod Klub TV"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod komunitou)"
+        }
+      ]
     }
   ]
 }

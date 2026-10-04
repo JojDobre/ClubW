@@ -10,13 +10,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ObsahSFormularmi } from '../../components/FormularWeb';
-import { HlavickaBloku, Html, Obr, OdkazBloku, obrazokBloku } from './pomocky';
+import { HlavickaBloku, HlavickaBlokuKontext, Html, Obr, OdkazBloku, obrazokBloku, odkazVsetkychBloku, type VlastnostiHlavickyBloku } from './pomocky';
 import { useData } from '../pomocky';
 import { kotvaBloku, type BlokStranky, type KomponentBloku } from './typy';
 import { ROZSIRENE_BLOKY } from './BlokyRozsirene';
+import { BLOKY_KLUBU } from './BlokyKlubu';
 import './bloky.css';
 
-export { HlavickaBloku, OdkazBloku, obrazokBloku } from './pomocky';
+export { HlavickaBloku, OdkazBloku, obrazokBloku, odkazVsetkychBloku } from './pomocky';
+export type { VlastnostiHlavickyBloku } from './pomocky';
 
 const iniciely = (meno: string) =>
   meno
@@ -325,8 +327,8 @@ const Clanky: KomponentBloku = ({ blok: { data } }) => {
   if (!clanky.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
-      <div className="blok__mriezka blok__mriezka--3">
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('clanky', data)} textOdkazu={data.text_odkazu} />
+      <div className={data.vzhlad === 'zoznam' ? 'blok__mriezka blok__mriezka--2 blok__karty--vodorovne' : 'blok__mriezka blok__mriezka--3'}>
         {clanky.data.map((c) => (
           <Link key={c.id} to={`/clanek/${c.slug}`} className="blok__polozka blok__karta">
             {obrazokBloku(c.obrazok) && (
@@ -363,7 +365,7 @@ export const adresaZapasovBloku = (data: BlokStranky['data']) => {
   const dnes = new Date().toISOString().slice(0, 10);
   return data.rezim === 'vysledky'
     ? `/matches?status=ukonceny&limit=${pocet}${tim}`
-    : `/matches?status=naplanovany&od_datumu=${dnes}&limit=50${tim}`;
+    : `/matches?status=naplanovany&od_datumu=${dnes}&poradie=asc&limit=50${tim}`;
 };
 
 const Zapasy: KomponentBloku = ({ blok: { data } }) => {
@@ -375,7 +377,7 @@ const Zapasy: KomponentBloku = ({ blok: { data } }) => {
   if (zoznam.length === 0) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('zapasy', data)} textOdkazu={data.text_odkazu} />
       <ul className="blok__zapasy">
         {zoznam.map((z) => (
           <li key={z.id} className="blok__polozka">
@@ -405,7 +407,7 @@ const Partneri: KomponentBloku = ({ blok: { data } }) => {
   if (!partneri.data?.length) return null;
   return (
     <>
-      <HlavickaBloku nadpis={data.nadpis} />
+      <HlavickaBloku nadpis={data.nadpis} odkaz={odkazVsetkychBloku('partneri', data)} textOdkazu={data.text_odkazu} />
       <div className="blok__partneri">
         {partneri.data.map((p) => {
           const obsah = obrazokBloku(p.logo) ? <Obr src={p.logo} alt={p.nazov} /> : <span>{p.nazov}</span>;
@@ -445,6 +447,7 @@ export const PREDVOLENE_BLOKY: Record<string, KomponentBloku> = {
   zapasy: Zapasy,
   partneri: Partneri,
   ...ROZSIRENE_BLOKY,
+  ...BLOKY_KLUBU,
 };
 
 /**
@@ -457,10 +460,12 @@ export const BlokyStranky: React.FC<{
   className?: string;
   predvolenyVzhlad?: boolean;
   komponenty?: Partial<Record<string, KomponentBloku>>;
-}> = ({ bloky, className = '', predvolenyVzhlad = true, komponenty = {} }) => {
+  /** Vlastná hlavička blokov (nadpis + odkaz) v dizajne šablóny */
+  hlavicka?: React.ComponentType<VlastnostiHlavickyBloku>;
+}> = ({ bloky, className = '', predvolenyVzhlad = true, komponenty = {}, hlavicka }) => {
   const viditelne = (bloky ?? []).filter((b) => b && !b.skryty && (komponenty[b.typ] || PREDVOLENE_BLOKY[b.typ]));
   if (viditelne.length === 0) return null;
-  return (
+  const obsah = (
     <div className={`bloky${predvolenyVzhlad ? ' bloky--zakladne' : ''}${className ? ` ${className}` : ''}`}>
       {viditelne.map((b) => {
         const Komponent = (komponenty[b.typ] || PREDVOLENE_BLOKY[b.typ])!;
@@ -478,6 +483,7 @@ export const BlokyStranky: React.FC<{
       })}
     </div>
   );
+  return hlavicka ? <HlavickaBlokuKontext.Provider value={hlavicka}>{obsah}</HlavickaBlokuKontext.Provider> : obsah;
 };
 
 export default BlokyStranky;

@@ -1,7 +1,7 @@
 {
   "slug": "bento",
   "nazov": "Dynamic Football Bento",
-  "verzia": "1.0.0",
+  "verzia": "1.0.1",
   "autor": "ClubW",
   "popis": "Športová šablóna v štýle bento: obsah je poskladaný zo zaoblených dlaždíc na jednotnom podklade. Veľká hero karta s článkami, dlaždice najbližšieho zápasu, výsledku a tabuľky, novinky, zápasové centrum, hráči, videá, fanshop, komunita a partneri. Na mobile plávajúca lišta so záložkami.",
   "api": 1,
@@ -880,6 +880,55 @@
       "menovka": "Text za copyrightom",
       "skupina": "Pätička",
       "predvolene": "Všetky práva vyhradené."
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_hero",
+          "popis": "Pod úvodnými dlaždicami"
+        },
+        {
+          "hodnota": "po_pase",
+          "popis": "Pod pásom výsledkov"
+        },
+        {
+          "hodnota": "po_novinkach",
+          "popis": "Pod novinkami"
+        },
+        {
+          "hodnota": "po_zapasoch",
+          "popis": "Pod zápasovým centrom"
+        },
+        {
+          "hodnota": "po_hracoch",
+          "popis": "Pod hráčmi"
+        },
+        {
+          "hodnota": "po_videach",
+          "popis": "Pod videami"
+        },
+        {
+          "hodnota": "po_fanshope",
+          "popis": "Pod fanshopom"
+        },
+        {
+          "hodnota": "po_komunite",
+          "popis": "Pod komunitou"
+        },
+        {
+          "hodnota": "po_odkazoch",
+          "popis": "Pod odkazom klubu (nad partnermi)"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod partnermi)"
+        }
+      ]
     }
   ]
 }

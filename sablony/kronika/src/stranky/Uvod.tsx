@@ -8,9 +8,10 @@
 // fanshop, klub v číslach so sieťami a partneri. Sekcie bez obsahu
 // sa neukážu.
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu } from '@clubw/jadro';
+import { cenaText, useNastavenia, useNastaveniaSablony, type ProduktObchodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { useSiete } from '../Rozlozenie';
 import { Obrazok, embedVidea, useOknoVidea, vyrezTabulky } from '../casti';
 import {
@@ -74,6 +75,18 @@ const HlavaSekcie: React.FC<{ nadpis: string; odkaz?: string | null; textOdkazu?
     </div>
   );
 };
+
+/** Nadpis vlastnej sekcie úvodu - rovnaký ako pri ostatných sekciách (odkaz „Zobraziť všetky" vedľa názvu). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return (
+    <>
+      <HlavaSekcie nadpis={nadpis || ''} odkaz={odkaz} textOdkazu={textOdkazu || undefined} id={id} />
+      {uvod && <p className="blok__uvod">{uvod}</p>}
+    </>
+  );
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 /** Rubrika a dátum článku. */
 const Meta: React.FC<{ clanok: Clanok; autor?: boolean }> = ({ clanok: c, autor = false }) => (
@@ -384,7 +397,7 @@ const Kader: React.FC<{ tim: Tim; nadpis: string }> = ({ tim, nadpis }) => {
                   </strong>
                   <small>
                     {pozicia(h.pozicia)}
-                    {st ? ` · ${st.zapasy} záp. · ${st.goly} gólov` : ''}
+                    {st ? ` · ${st.zapasy} záp. · ${h.pozicia === 'brankar' ? `${st.minuty ?? 0} min.` : `${st.goly} gólov`}` : ''}
                   </small>
                 </span>
               </span>
@@ -630,10 +643,10 @@ const Uvod: React.FC = () => {
 
   // Zápasy vybraného tímu (prehľad) a hlavného tímu (lišta, najbližší zápas)
   const vysledky = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=ukonceny&limit=4` : null);
-  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&limit=10` : null);
+  const buduce = useApi<Zapas[]>(tid ? `/matches?tim_id=${tid}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=10` : null);
   const zive = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=prebieha&limit=2` : null);
   const listaVysledky = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=ukonceny&limit=3` : null);
-  const listaBuduce = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=naplanovany&od_datumu=${dnes()}&limit=4` : null);
+  const listaBuduce = useApi<Zapas[]>(prvyTim ? `/matches?tim_id=${prvyTim}&status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=4` : null);
   const nacitavaZapasy = timy.nacitava || vysledky.nacitava || buduce.nacitava;
 
   const program = useMemo(() => [...(buduce.data ?? [])].sort(podlaCasu), [buduce.data]);
@@ -660,6 +673,7 @@ const Uvod: React.FC = () => {
   return (
     <div className="kr-uvod">
       {u.zapnute('ukazat_zapasy') && u.zapnute('ukazat_listu_zapasov') && <Skore zapasy={lista} />}
+      <Sekcie p="po_skore" />
       {u.zapnute('ukazat_clanky') && (
         <Titulka
           hlavny={hlavny}
@@ -671,14 +685,21 @@ const Uvod: React.FC = () => {
           nahradnaFotka={(s.uvod_fotka as string | null) || null}
         />
       )}
+      <Sekcie p="po_titulke" />
       {u.zapnute('ukazat_zapasy') && timyZapasov.length > 0 && (
         <PrehladZapasov timy={timyZapasov} timId={tid} setTimId={setTimId} program={program} vysledky={odohrane} tabulka={dataTabulky} nacitava={nacitavaZapasy} />
       )}
+      <Sekcie p="po_zapasoch" />
       {u.zapnute('ukazat_hracov') && timHracov && <Kader tim={timHracov} nadpis={String(s.hraci_nadpis || '').trim() || `Káder · ${timHracov.nazov}`} />}
+      <Sekcie p="po_kadri" />
       {u.zapnute('ukazat_videa') && <Videa videa={videa.data ?? []} />}
+      <Sekcie p="po_videach" />
       {u.zapnute('ukazat_fanshop') && <Fanshop s={s} />}
+      <Sekcie p="po_fanshope" />
       <Klub s={s} />
+      <Sekcie p="po_klube" />
       <Partneri partneri={partneri.data ?? []} />
+      <Sekcie p="koniec" />
     </div>
   );
 };

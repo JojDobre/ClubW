@@ -130,6 +130,7 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
       do_datumu, 
       search, 
       include_details,
+      poradie,
       page = '1',
       limit = '20'
     } = req.query;
@@ -198,7 +199,8 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
     const { rows: matches, count } = await Zapas.findAndCountAll({
       where: whereConditions,
       include: includeOptions,
-      order: [['datum_cas', 'DESC']],
+      // poradie=asc - od najskoršieho (program zápasov: najbližšie zápasy aj pri malom limite)
+      order: [['datum_cas', poradie === 'asc' ? 'ASC' : 'DESC']],
       limit: limitNum,
       offset
     });

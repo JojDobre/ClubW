@@ -6,9 +6,9 @@
 // fotky a videá, tmavý panel s výzvou a partneri. Každú voliteľnú
 // sekciu si správca zapne alebo vypne v nastaveniach šablóny.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
+import { AnketaWeb, souborUrl, useNastavenia, useNastaveniaSablony, SekcieUvodu, type VlastnostiHlavickyBloku } from '@clubw/jadro';
 import {
   Erb,
   Ikona,
@@ -114,6 +114,13 @@ const Odpocet: React.FC<{ kedy: string; svetly?: boolean }> = ({ kedy, svetly = 
   );
 };
 
+/** Vlastné sekcie úvodu (nastavenie „Vlastné sekcie na úvode"). */
+const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku> = ({ nadpis, uvod, odkaz, textOdkazu }) => {
+  const id = useId();
+  return <NadpisSekcie stitok={uvod} nadpis={nadpis || ''} odkaz={odkaz || undefined} textOdkazu={textOdkazu || undefined} id={id} />;
+};
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="md-bloky md-u-sekcie" hlavicka={HlavickaSekcie} />;
+
 const Uvod: React.FC = () => {
   const { nastavenia } = useNastavenia();
   const s = useNastaveniaSablony<Nastavenia>();
@@ -126,7 +133,7 @@ const Uvod: React.FC = () => {
   const filterTimu = hlavny ? `&tim_id=${hlavny.id}` : '';
   const timyNacitane = !timy.nacitava;
 
-  const buduce = useApi<Zapas[]>(timyNacitane ? `/matches?status=naplanovany&od_datumu=${dnes()}&limit=50${filterTimu}` : null);
+  const buduce = useApi<Zapas[]>(timyNacitane ? `/matches?status=naplanovany&od_datumu=${dnes()}&poradie=asc&limit=50${filterTimu}` : null);
   const vysledky = useApi<Zapas[]>(timyNacitane ? `/matches?status=ukonceny&limit=1${filterTimu}` : null);
   const clanky = useApi<Clanok[]>(`/articles?limit=${pocetClankov}`);
   const hraci = useApi<{ hraci: Hrac[] }>(s.ukazat_hracov && hlavny ? `/teams/${hlavny.id}/players` : null);
@@ -208,6 +215,7 @@ const Uvod: React.FC = () => {
         </div>
       </section>
 
+      <Sekcie p="po_hero" />
       {/* ===== Rýchle odkazy ===== */}
       <nav className="md-rychle" aria-label="Rýchle odkazy">
         <div className="md-kontajner md-rychle__mriezka">
@@ -242,6 +250,7 @@ const Uvod: React.FC = () => {
         </div>
       </nav>
 
+      <Sekcie p="po_odkazoch" />
       {/* ===== Match Centre ===== */}
       {(najblizsi || posledny) && (
         <section className="md-sekcia md-aurora" aria-labelledby="md-mc">
@@ -270,6 +279,7 @@ const Uvod: React.FC = () => {
         </section>
       )}
 
+      <Sekcie p="po_zapasoch" />
       {/* ===== Správy ===== */}
       <section className="md-sekcia" aria-labelledby="md-spravy">
         <div className="md-kontajner">
@@ -296,6 +306,7 @@ const Uvod: React.FC = () => {
         </div>
       </section>
 
+      <Sekcie p="po_spravach" />
       {/* ===== Hráči ===== */}
       {s.ukazat_hracov && hlavny && hraciUvodu.length > 0 && (
         <section className="md-sekcia md-mesh" aria-labelledby="md-hraci">
@@ -310,6 +321,7 @@ const Uvod: React.FC = () => {
         </section>
       )}
 
+      <Sekcie p="po_hracoch" />
       {/* ===== Tabuľka a anketa ===== */}
       {((s.ukazat_tabulku && liga && (tabulka.data ?? []).length > 0) || s.ukazat_anketu) && (
         <section className="md-sekcia" aria-label="Tabuľka a anketa">
@@ -409,6 +421,7 @@ const Uvod: React.FC = () => {
           </div>
         </section>
       )}
+      <Sekcie p="koniec" />
     </div>
   );
 };

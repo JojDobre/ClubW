@@ -25,6 +25,7 @@ import zlib from 'zlib';
 import crypto from 'crypto';
 import AdmZip from 'adm-zip';
 import { sanitizePlainText } from '../utils/sanitize';
+import { ChybaBlokovError, ocistiBloky } from './blokyStranky';
 
 /** Verzia rozhrania šablón, ktorú systém podporuje. */
 export const API_SABLON = 1;
@@ -71,8 +72,10 @@ const MAX_ROZBALENE = 40 * 1024 * 1024;
 
 // ===== Manifest =====
 
-export type TypNastavenia = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz';
-const TYPY_NASTAVENI: TypNastavenia[] = ['farba', 'text', 'dlhy_text', 'vyber', 'prepinac', 'obrazok', 'cislo', 'odkaz'];
+export type TypNastavenia = 'farba' | 'text' | 'dlhy_text' | 'vyber' | 'prepinac' | 'obrazok' | 'cislo' | 'odkaz' | 'sekcie';
+const TYPY_NASTAVENI: TypNastavenia[] = ['farba', 'text', 'dlhy_text', 'vyber', 'prepinac', 'obrazok', 'cislo', 'odkaz', 'sekcie'];
+/** Najviac vlastných sekcií v jednom nastavení typu „sekcie". */
+export const MAX_SEKCII = 30;
 /** Najviac nastavení v jednej šablóne (skupiny ich v administrácii delia na záložky). */
 const MAX_NASTAVENI = 200;
 /** Odkaz: stránka webu (/...), iný web (https://), e-mail, telefón alebo kotva. */
@@ -85,8 +88,14 @@ export interface NastavenieSablony {
   napoveda?: string;
   /** Skupina v administrácii (záložka), napr. „Úvod - zápasy" */
   skupina?: string;
-  predvolene?: string | number | boolean | null;
+  predvolene?: string | number | boolean | null | unknown[];
   moznosti?: Array<{ hodnota: string; popis: string }>;
+  /**
+   * Typ „sekcie": miesta na stránke, kam môže správca vložiť vlastnú
+   * sekciu (blok), napr. „pod hlavnými správami". Hodnota nastavenia je
+   * zoznam blokov stránky, každý s poľom `pozicia`.
+   */
+  pozicie?: Array<{ hodnota: string; popis: string }>;
   min?: number;
   max?: number;
 }
@@ -159,6 +168,19 @@ const overNastavenie = (n: any, i: number): NastavenieSablony => {
       const popis = typeof m === 'string' ? m : m?.popis ?? m?.hodnota;
       if (typeof hodnota !== 'string' || !hodnota || hodnota.length > 60) {
         throw new ChybaSablony(`${kde} (${n.kluc}): neplatná možnosť výberu`);
+      }
+      return { hodnota, popis: kratkyText(popis, 80) ?? hodnota };
+    });
+  }
+  if (n.typ === 'sekcie') {
+    if (!Array.isArray(n.pozicie) || n.pozicie.length === 0 || n.pozicie.length > 30) {
+      throw new ChybaSablony(`${kde} (${n.kluc}): sekcie potrebujú 1 až 30 pozícií`);
+    }
+    vysledok.pozicie = n.pozicie.map((m: any) => {
+      const hodnota = typeof m === 'string' ? m : m?.hodnota;
+      const popis = typeof m === 'string' ? m : m?.popis ?? m?.hodnota;
+      if (typeof hodnota !== 'string' || !VZOR_KLUCA.test(hodnota)) {
+        throw new ChybaSablony(`${kde} (${n.kluc}): pozícia musí byť kľúč malými písmenami (napr. pod_hero)`);
       }
       return { hodnota, popis: kratkyText(popis, 80) ?? hodnota };
     });
@@ -519,8 +541,32 @@ export const zmazSablonu = async (slug: string): Promise<void> => {
 
 // ===== Hodnoty nastavení =====
 
+/**
+ * Vlastné sekcie: zoznam blokov stránky (rovnaká schéma ako bloky
+ * stránok), každý s pozíciou z manifestu. Neznáma pozícia = prvá.
+ */
+const overSekcie = (n: NastavenieSablony, v: unknown): { hodnota?: unknown; chyba?: string } => {
+  if (v === null || v === undefined || v === '') return { hodnota: [] };
+  if (!Array.isArray(v)) return { chyba: 'sekcie musia byť zoznam' };
+  if (v.length > MAX_SEKCII) return { chyba: `najviac ${MAX_SEKCII} sekcií` };
+  const pozicie = (n.pozicie ?? []).map((p) => p.hodnota);
+  try {
+    const bloky = ocistiBloky(v);
+    return {
+      hodnota: bloky.map((b, i) => {
+        const pozicia = String((v[i] as Record<string, unknown> | null)?.pozicia ?? '');
+        return { ...b, pozicia: pozicie.includes(pozicia) ? pozicia : pozicie[0] };
+      }),
+    };
+  } catch (e) {
+    if (e instanceof ChybaBlokovError) return { chyba: e.message };
+    throw e;
+  }
+};
+
 /** Overí jednu hodnotu nastavenia podľa jeho typu. */
 export const overHodnotu = (n: NastavenieSablony, v: unknown): { hodnota?: unknown; chyba?: string } => {
+  if (n.typ === 'sekcie') return overSekcie(n, v);
   if (v === null || v === undefined || v === '') {
     return { hodnota: n.typ === 'prepinac' ? false : null };
   }
@@ -570,7 +616,7 @@ export const hodnotyNastaveni = (sablona: ManifestSablony, ulozene: Record<strin
       const { hodnota, chyba } = overHodnotu(n, ulozene[n.kluc]);
       vysledok[n.kluc] = chyba ? n.predvolene ?? null : hodnota;
     } else {
-      vysledok[n.kluc] = n.predvolene ?? (n.typ === 'prepinac' ? false : null);
+      vysledok[n.kluc] = n.predvolene ?? (n.typ === 'prepinac' ? false : n.typ === 'sekcie' ? [] : null);
     }
   }
   return vysledok;

@@ -941,5 +941,9 @@
  "Žiadny súbor nebol nahraný": "No file was uploaded",
  "Žiadny súbor sa nepodarilo uložiť": "No file could be saved",
  "Žiadny zo zadaných súborov nie je obrázok v knižnici": "None of the given files is an image in the library",
- "„{0}\" môže mať najviac {1} znakov": "\"{0}\" can have at most {1} characters"
+ "„{0}\" môže mať najviac {1} znakov": "\"{0}\" can have at most {1} characters",
+ "{0} ({1}): sekcie potrebujú 1 až 30 pozícií": "{0} ({1}): sections need 1 to 30 positions",
+ "{0} ({1}): pozícia musí byť kľúč malými písmenami (napr. pod_hero)": "{0} ({1}): position must be a lowercase key (e.g. pod_hero)",
+ "sekcie musia byť zoznam": "sections must be a list",
+ "najviac {0} sekcií": "at most {0} sections"
 }

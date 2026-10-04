@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.9.0",
+  "verzia": "1.9.1",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -1156,6 +1156,55 @@
       "skupina": "Pätička",
       "napoveda": "Napr. „© 2026 FK Dolina. Všetky práva vyhradené.\"",
       "predvolene": "Všetky práva vyhradené."
+    },
+    {
+      "kluc": "sekcie_uvodu",
+      "typ": "sekcie",
+      "menovka": "Vlastné sekcie na úvode",
+      "skupina": "Úvod - vlastné sekcie",
+      "napoveda": "Pridajte vlastné sekcie - články z rubriky, tabuľku súťaže, strelcov, sezónu v číslach, káder, videá, galérie, produkty, udalosti, text, výzvu a ďalšie. Každej vyberte miesto medzi sekciami úvodu.",
+      "pozicie": [
+        {
+          "hodnota": "po_slideri",
+          "popis": "Pod hlavnými správami"
+        },
+        {
+          "hodnota": "po_zapasoch",
+          "popis": "Pod zápasmi a výsledkami"
+        },
+        {
+          "hodnota": "po_clankoch",
+          "popis": "Pod najnovšími článkami"
+        },
+        {
+          "hodnota": "po_fanshope",
+          "popis": "Pod fanshopom"
+        },
+        {
+          "hodnota": "po_videach",
+          "popis": "Pod videami"
+        },
+        {
+          "hodnota": "po_hracoch",
+          "popis": "Pod hráčmi"
+        },
+        {
+          "hodnota": "po_uspechoch",
+          "popis": "Pod úspechmi"
+        },
+        {
+          "hodnota": "po_sietach",
+          "popis": "Pod sociálnymi sieťami"
+        },
+        {
+          "hodnota": "po_odkazoch",
+          "popis": "Pod odkazom klubu (nad partnermi)"
+        },
+        {
+          "hodnota": "koniec",
+          "popis": "Na konci (pod partnermi)"
+        }
+      ]
     }
   ]
 }

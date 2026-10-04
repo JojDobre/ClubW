@@ -46,6 +46,8 @@ export interface BlokStranky {
   polozky?: Array<Record<string, any>>;
   pozadie?: PozadieBloku;
   skryty?: boolean;
+  /** Vlastná sekcia úvodu šablóny: miesto na stránke (pozícia z manifestu) */
+  pozicia?: string;
 }
 
 /** Vlastné zobrazenie jedného typu bloku v šablóne (bloky = všetky viditeľné bloky stránky, napr. pre podmenu). */
