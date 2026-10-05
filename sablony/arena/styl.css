@@ -3698,3 +3698,8 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 .ar-tabulka .ar-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
 .ar-tabulka__tim > span { min-width: 0; }
 .ar-tabulka__tim > span > .ar-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Stránky bez tmavej hlavičky (detail produktu): plávajúca navigácia nie je
+   priehľadná - pod ňou nie je hero, ale svetlý podklad */
+.ar:has(.ar-produkt-stranka) .ar-ostrov__vnutro { background: var(--ar-primarna); border-color: transparent; }
+.ar:has(.ar-produkt-stranka) .ar-ostrov.is-zmensena .ar-ostrov__vnutro { background: color-mix(in srgb, var(--ar-primarna) 96%, transparent); }
