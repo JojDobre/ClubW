@@ -24,6 +24,7 @@ import Stadion from '../models/Stadion';
 import LigaTurnaj from '../models/LigaTurnaj';
 import Galeria from '../models/Galeria';
 import GaleriaObrazok from '../models/GaleriaObrazok';
+import { zmazSuboryFotiek } from '../services/suboryGalerie';
 import Zapas from '../models/Zapas';
 import KalendarUdalost from '../models/KalendarUdalost';
 import Formular from '../models/Formular';
@@ -68,6 +69,8 @@ interface TypArchivu {
   prekazkaObnovy?: (zaznam: any) => Promise<string | null>;
   /** Čo treba urobiť po obnove (napr. prepočítať tabuľku ligy) */
   poObnove?: (zaznam: any) => Promise<void>;
+  /** Trvalé zmazanie, ak treba viac než destroy() (napr. upratať súbory) */
+  zmazTrvalo?: (zaznam: any) => Promise<void>;
 }
 
 const TYPY: Record<string, TypArchivu> = {
@@ -147,6 +150,12 @@ const TYPY: Record<string, TypArchivu> = {
     // Pri zmazaní galérie sa skryli aj jej fotky - vrátime ich späť
     poObnove: async (g: any) => {
       await GaleriaObrazok.update({ aktivity: true }, { where: { galeria_id: g.id, aktivity: false } });
+    },
+    // Fotky zmaže databáza spolu s galériou (CASCADE), súbory z disku my
+    zmazTrvalo: async (g: any) => {
+      const obrazky = await GaleriaObrazok.findAll({ where: { galeria_id: g.id } });
+      await g.destroy();
+      await zmazSuboryFotiek(obrazky);
     },
   },
 
@@ -377,7 +386,8 @@ export const zmazTrvalo = async (req: Request, res: Response): Promise<void> => 
     }
 
     const nazov = nastavenia.popis(zaznam);
-    await zaznam.destroy();
+    if (nastavenia.zmazTrvalo) await nastavenia.zmazTrvalo(zaznam);
+    else await zaznam.destroy();
 
     res.json({
       success: true,
