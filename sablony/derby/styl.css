@@ -3073,3 +3073,11 @@ a.dr-dlazdica:hover { transform: translateY(-3px); box-shadow: 0 1px 0 rgba(0, 0
 @media (max-width: 560px) {
   .dr-bloky .dr-mriezka-3:not(.dr-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.dr-tabulka .dr-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.dr-tabulka__tim > span { min-width: 0; }
+.dr-tabulka__tim > span > .dr-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr-mtabulka .dr-mtabulka__tim { width: 100%; max-width: 0; }
+.dr-mtabulka__tim > span > span { min-width: 0; max-width: none; }

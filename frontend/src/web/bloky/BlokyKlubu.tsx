@@ -109,9 +109,9 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
               {!lenBody && <th scope="col">Z</th>}
               {!kompaktna && !lenBody && (
                 <>
-                  <th scope="col">V</th>
-                  <th scope="col">R</th>
-                  <th scope="col">P</th>
+                  <th scope="col" className="blok__tabulka-volitelne">V</th>
+                  <th scope="col" className="blok__tabulka-volitelne">R</th>
+                  <th scope="col" className="blok__tabulka-volitelne">P</th>
                   <th scope="col">Skóre</th>
                 </>
               )}
@@ -129,9 +129,9 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
                 {!lenBody && <td data-stlpec="Z">{r.zapasy}</td>}
                 {!kompaktna && !lenBody && (
                   <>
-                    <td data-stlpec="V">{r.vitazstva}</td>
-                    <td data-stlpec="R">{r.remizy}</td>
-                    <td data-stlpec="P">{r.prehry}</td>
+                    <td data-stlpec="V" className="blok__tabulka-volitelne">{r.vitazstva}</td>
+                    <td data-stlpec="R" className="blok__tabulka-volitelne">{r.remizy}</td>
+                    <td data-stlpec="P" className="blok__tabulka-volitelne">{r.prehry}</td>
                     <td data-stlpec="Skóre">
                       {r.goly_za}:{r.goly_proti}
                     </td>

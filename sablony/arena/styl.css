@@ -3692,3 +3692,9 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 
 /* Mobilné menu: obsah panela sa nezmenšuje, keď sa rozbalí dlhá položka (panel sa posúva) */
 .ar-mmenu__panel > * { flex-shrink: 0; }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.ar-tabulka .ar-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.ar-tabulka__tim > span { min-width: 0; }
+.ar-tabulka__tim > span > .ar-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

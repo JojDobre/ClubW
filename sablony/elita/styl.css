@@ -2996,3 +2996,10 @@ td.el-tabulka__body { font-stretch: 112%; font-weight: 900; font-size: 15px; }
 @media (max-width: 560px) {
   .el-bloky .el-mriezka-3:not(.el-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.el-tabulka .el-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.el-tabulka__tim > span { min-width: 0; }
+.el-tabulka__tim > span > .el-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.el-mc__tabulka .el-mc__ttim { max-width: 0; }
