@@ -112,6 +112,12 @@ export interface ManifestSablony {
   styl: string | null;
   skript: string | null;
   nastavenia: NastavenieSablony[];
+  /**
+   * Preklady textov administrácie (menovky, nápovedy, skupiny, možnosti)
+   * do ďalších jazykov: { "en": { "Slovenský text": "English text" } }.
+   * Vstavané šablóny ich majú v spoločnom slovníku administrácie.
+   */
+  preklady: Record<string, Record<string, string>>;
 }
 
 export interface Sablona extends ManifestSablony {
@@ -252,7 +258,31 @@ export const overManifest = (surovy: unknown, ocakavanySlug?: string): ManifestS
     styl: cestaSuboru(m.styl, 'styl', ['.css']),
     skript: cestaSuboru(m.skript, 'skript', ['.js']),
     nastavenia: overene,
+    preklady: overPreklady(m.preklady),
   };
+};
+
+const JAZYKY_PREKLADOV = ['en', 'cs', 'pl', 'de', 'es', 'fr'];
+const MAX_PREKLADOV = 3000;
+
+/**
+ * Preklady z manifestu: len známe jazyky a dvojice text → text. Čo nesedí,
+ * sa ticho vynechá - chybný preklad nesmie zablokovať celú šablónu.
+ */
+const overPreklady = (surove: unknown): Record<string, Record<string, string>> => {
+  const vysledok: Record<string, Record<string, string>> = {};
+  if (!surove || typeof surove !== 'object' || Array.isArray(surove)) return vysledok;
+  for (const jazyk of JAZYKY_PREKLADOV) {
+    const slovnik = (surove as Record<string, unknown>)[jazyk];
+    if (!slovnik || typeof slovnik !== 'object' || Array.isArray(slovnik)) continue;
+    const overeny: Record<string, string> = {};
+    for (const [kluc, hodnota] of Object.entries(slovnik as Record<string, unknown>).slice(0, MAX_PREKLADOV)) {
+      if (typeof hodnota !== 'string' || !kluc || kluc.length > 3000 || hodnota.length > 3000) continue;
+      overeny[kluc] = sanitizePlainText(hodnota);
+    }
+    if (Object.keys(overeny).length) vysledok[jazyk] = overeny;
+  }
+  return vysledok;
 };
 
 /** Načíta a overí šablónu z priečinka vrátane existencie jej súborov. */

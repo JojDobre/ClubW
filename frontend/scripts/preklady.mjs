@@ -79,9 +79,40 @@ for (const j of JAZYKY) {
   if (chyb.length || zleParametre.length) chyba = true;
   chyb.forEach((k) => (chybajuce[k] = kluce.get(k)));
 }
+// ===== Texty vstavaných šablón (sablony/*/sablona.json) =====
+// Menovky, skupiny, nápovedy a možnosti nastavení sa prekladajú zo
+// spoločného slovníka src/i18n/sablony/<jazyk>.json.
+const SABLONY = path.resolve(koren, '..', 'sablony');
+const textySablon = new Map(); // text -> šablóna
+for (const s of fs.readdirSync(SABLONY)) {
+  const manifest = path.join(SABLONY, s, 'sablona.json');
+  if (!fs.existsSync(manifest)) continue;
+  const m = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+  const pridaj = (t) => { if (typeof t === 'string' && t.trim() && !textySablon.has(t)) textySablon.set(t, s); };
+  pridaj(m.popis);
+  for (const n of m.nastavenia ?? []) {
+    pridaj(n.menovka); pridaj(n.skupina); pridaj(n.napoveda);
+    for (const x of [...(n.moznosti ?? []), ...(n.pozicie ?? [])]) pridaj(x.popis);
+  }
+}
+const chybajuceSablony = {};
+for (const j of JAZYKY) {
+  const subor = path.join(I18N, 'sablony', `${j}.json`);
+  const slovnik = fs.existsSync(subor) ? JSON.parse(fs.readFileSync(subor, 'utf8')) : {};
+  const chyb = [...textySablon.keys()].filter((k) => !slovnik[k]);
+  const nepouzite = Object.keys(slovnik).filter((k) => !textySablon.has(k));
+  const zleParametre = [...textySablon.keys()].filter((k) => slovnik[k] && [...k.matchAll(/\{(\w+)\}/g)].some((m) => !slovnik[k].includes(m[0])));
+  console.log(`${j} (šablóny): ${textySablon.size} textov, chýba ${chyb.length}, nepoužité ${nepouzite.length}, zlé parametre ${zleParametre.length}`);
+  if (argumenty.includes('--podrobne')) chyb.forEach((k) => console.log(`   chýba: ${k}  (${textySablon.get(k)})`));
+  zleParametre.slice(0, 20).forEach((k) => console.log(`   parameter: ${k} → ${slovnik[k]}`));
+  if (chyb.length || zleParametre.length) chyba = true;
+  chyb.forEach((k) => (chybajuceSablony[k] = textySablon.get(k)));
+}
+if (Object.keys(chybajuceSablony).length) chybajuce['[šablóny]'] = chybajuceSablony;
+
 const i = argumenty.indexOf('--chybajuce');
 if (i >= 0) fs.writeFileSync(argumenty[i + 1], JSON.stringify(chybajuce, null, 1));
 if (argumenty.includes('--kontrola') && chyba) {
-  console.error(`Chýbajú preklady - doplňte ich do src/i18n/${JAZYKY.join('/')}.json`);
+  console.error(`Chýbajú preklady - doplňte ich do src/i18n/${JAZYKY.join('/')}.json (texty šablón do src/i18n/sablony/)`);
   process.exit(1);
 }

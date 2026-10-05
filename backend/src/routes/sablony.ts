@@ -153,6 +153,7 @@ adminSablonyRouter.get('/', authenticateToken, requirePermission('sablony', 'cit
         nahlad: sablona ? adresa(sablona, sablona.nahlad) : null,
         ma_skript: Boolean(sablona?.skript),
         nastavenia: sablona?.nastavenia ?? [],
+        preklady: sablona?.preklady ?? {},
         hodnoty: sablona ? hodnotyNastaveni(sablona, nastavenia.nastavenia_sablon?.[slug]) : {},
       })),
     });
