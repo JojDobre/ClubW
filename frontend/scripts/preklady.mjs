@@ -27,7 +27,7 @@ const prejdi = (d) => {
   for (const p of fs.readdirSync(d, { withFileTypes: true })) {
     const plna = path.join(d, p.name);
     if (p.isDirectory()) prejdi(plna);
-    else if (/\.(ts|tsx)$/.test(p.name) && !/\.d\.ts$/.test(p.name)) subory.push(plna);
+    else if (/\.(ts|tsx)$/.test(p.name) && !/\.(d|test)\.tsx?$/.test(p.name)) subory.push(plna);
   }
 };
 prejdi(SRC);

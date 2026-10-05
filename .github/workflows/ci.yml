@@ -99,13 +99,105 @@ jobs:
         working-directory: frontend
         run: npx tsc --noEmit
 
-      - name: Preklady administrácie (cs, en)
+      - name: Preklady administrácie a šablón (cs, en, pl, de, es, fr)
         working-directory: frontend
         run: npm run preklady -- --kontrola
+
+      - name: Jednotkové testy
+        working-directory: frontend
+        run: npm test
 
       - name: Produkčný build
         working-directory: frontend
         run: npx vite build
+
+  e2e:
+    name: Testy v prehliadači (šablóny a administrácia)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: clubw_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: development
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: clubw_e2e
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+      JWT_SECRET: ci_only_secret_nie_je_produkcny
+      LICENSE_CHECK_DISABLED: 'true'
+      E2E_EMAIL: e2e@test.sk
+      E2E_HESLO: modra lavica pri tichom rybniku
+      E2E_API: http://127.0.0.1:3100
+      E2E_URL: http://127.0.0.1:4173
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Inštalácia závislostí
+        run: npm ci
+
+      - name: Databáza a správca
+        working-directory: backend
+        run: |
+          npx sequelize-cli db:migrate
+          npx tsx scripts/vytvor-spravcu.ts --email "$E2E_EMAIL" --meno "E2E Správca" --heslo "$E2E_HESLO"
+
+      - name: Spustenie backendu
+        working-directory: backend
+        run: |
+          PORT=3100 nohup npx tsx src/index.ts > ../backend-e2e.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3100/health && exit 0; sleep 1; done
+          cat ../backend-e2e.log; exit 1
+
+      - name: Produkčný build webu a náhľad
+        working-directory: frontend
+        run: |
+          npx vite build
+          API_PROXY=http://127.0.0.1:3100 nohup npx vite preview --port 4173 --host 127.0.0.1 > ../preview-e2e.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ > /dev/null && exit 0; sleep 1; done
+          cat ../preview-e2e.log; exit 1
+
+      - name: Demo dáta
+        working-directory: frontend
+        run: npm run e2e:data
+
+      - name: Prehliadač Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Testy
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Výsledky pri chybe
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-vysledky
+          path: |
+            frontend/e2e-report
+            frontend/e2e-vysledky
+            backend-e2e.log
+          retention-days: 7
 
   license-server:
     name: Licenčný server

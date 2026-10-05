@@ -74,9 +74,14 @@ export const ulozenyJazyk = async (): Promise<Jazyk> => {
   return 'sk';
 };
 
+// Slovníky jazykov ako samostatné súbory buildu - import(`./${j}.json`)
+// z vlastného priečinka Vite nevie spracovať a slovník by v produkcii chýbal
+const SLOVNIKY = import.meta.glob<{ default: Record<string, string> }>(['./*.json', '!./dynamicke.json']);
+
 /** Načíta slovník jazyka. Volá sa raz pred vykreslením administrácie. */
 export const nacitajJazyk = async (j: Jazyk): Promise<void> => {
-  slovnik = j === 'sk' ? {} : (await import(`./${j}.json`)).default;
+  const nacitaj = SLOVNIKY[`./${j}.json`];
+  slovnik = j === 'sk' || !nacitaj ? {} : (await nacitaj()).default;
   aktualny = j;
   document.documentElement.lang = j;
 };
