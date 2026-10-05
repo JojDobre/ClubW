@@ -3689,3 +3689,6 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
 .ar-mmenu__karta:hover .ar-mmenu__karta-nazov { color: var(--ar-neon); }
 /* Pole hľadania v mobilnom menu sa v stĺpci nezmršťuje */
 .ar-mmenu__hladanie { flex-shrink: 0; min-height: 52px; }
+
+/* Mobilné menu: obsah panela sa nezmenšuje, keď sa rozbalí dlhá položka (panel sa posúva) */
+.ar-mmenu__panel > * { flex-shrink: 0; }

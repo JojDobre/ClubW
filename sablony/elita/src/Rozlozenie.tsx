@@ -60,7 +60,8 @@ const jeAktivnaPolozka = (p: PolozkaMenu, pathname: string): boolean =>
 const useTlacidloHlavicky = () => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
-  const text = u.text('tlacidlo_text', 'Vstupenky');
+  // Predvolený text dopĺňa server; vymazaný text (null) tlačidlo skryje.
+  const text = u.text('tlacidlo_text', '');
   const odkaz = String(u.s.tlacidlo_odkaz || '').trim() || (nastavenia.kontakt?.email ? `mailto:${nastavenia.kontakt.email}` : '');
   return text && odkaz ? { text, odkaz } : null;
 };
