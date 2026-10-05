@@ -2531,7 +2531,6 @@
  "Meno odosielateľa": "Sender name",
  "Prázdne = názov klubu.": "Empty = club name.",
  "E-mail odosielateľa": "Sender e-mail",
- "Musí patriť k schránke alebo k overenej doméne.": "Must belong to the mailbox or a verified domain.",
  "Odpovede posielať na": "Send replies to",
  "Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.": "Where a reply goes when someone answers the e-mail. Empty = club e-mail from Settings.",
  "Pätička e-mailov": "E-mail footer",
@@ -2659,5 +2658,7 @@
  "Návod na nastavenie e-mailov": "E-mail setup guide",
  "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Step by step: creating a hosting mailbox, choosing an e-mail service, DNS records against spam, templates and troubleshooting. (The guide is in Slovak.)",
  "Zobraziť návod": "View guide",
- "Stiahnuť návod": "Download guide"
+ "Stiahnuť návod": "Download guide",
+ "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Empty = the login mailbox. The domain can be anything, but the address must belong to the mailbox you sign in to, or to a domain verified in the e-mail service.",
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Differs from the login mailbox {email}. A hosting mailbox or Gmail usually won't send such an e-mail - if it is not an alias of this mailbox, leave the field empty."
 }

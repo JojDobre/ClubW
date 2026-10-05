@@ -2531,7 +2531,6 @@
  "Meno odosielateľa": "Nombre del remitente",
  "Prázdne = názov klubu.": "Vacío = nombre del club.",
  "E-mail odosielateľa": "Correo del remitente",
- "Musí patriť k schránke alebo k overenej doméne.": "Debe pertenecer al buzón o a un dominio verificado.",
  "Odpovede posielať na": "Enviar respuestas a",
  "Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.": "A dónde llega la respuesta cuando alguien responde al correo. Vacío = correo del club en Configuración.",
  "Pätička e-mailov": "Pie de los correos",
@@ -2659,5 +2658,7 @@
  "Návod na nastavenie e-mailov": "Guía de configuración del correo",
  "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Paso a paso: crear un buzón en el hosting, elegir un servicio de correo, registros DNS contra el spam, plantillas y solución de problemas. (La guía está en eslovaco.)",
  "Zobraziť návod": "Ver la guía",
- "Stiahnuť návod": "Descargar la guía"
+ "Stiahnuť návod": "Descargar la guía",
+ "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Vacío = el buzón de inicio de sesión. El dominio puede ser cualquiera, pero la dirección debe pertenecer al buzón con el que inicia sesión o a un dominio verificado en el servicio de correo.",
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Difiere del buzón de inicio de sesión {email}. Un buzón de hosting o Gmail normalmente no enviarán ese correo; si no es un alias de este buzón, deje el campo vacío."
 }

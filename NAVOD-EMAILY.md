@@ -11,6 +11,13 @@ o vlastnom SMTP serveri.
 > a heslo schránky a stlačte **Poslať skúšobný e-mail**. Keď príde,
 > uložte. Potom si skontrolujte DNS záznamy (kapitola 6).
 
+> **`vasklub.sk` v príkladoch je len ukážka** - dosaďte svoju doménu,
+> nech sa volá akokoľvek (nemusí obsahovať názov klubu). Dôležité je
+> jediné: **e-mail odosielateľa musí patriť k schránke, do ktorej sa
+> prihlasujete** (pri službách ako Brevo k doméne, ktorú ste v službe
+> overili). Ak pole *E-mail odosielateľa* necháte prázdne, použije sa
+> prihlasovacia schránka - to funguje vždy.
+
 ---
 
 ## 1. Čo web posiela
@@ -211,7 +218,7 @@ môžete prejsť na `p=quarantine`.
 | Server, port, zabezpečenie | údaje SMTP (tlačidlá Rýchleho vyplnenia) |
 | Používateľské meno, heslo | schránka alebo login/kľúč služby; heslo sa ukladá zašifrované |
 | Meno odosielateľa | napr. „FK Dolina" (prázdne = názov klubu) |
-| E-mail odosielateľa | `noreply@vasklub.sk` - musí patriť k schránke alebo overenej doméne |
+| E-mail odosielateľa | **prázdne = prihlasovacia schránka** (odporúčané pri hostingu a Gmaile). Iná adresa funguje len ak je to alias tej istej schránky alebo adresa na doméne overenej v službe (Brevo, Mailgun…) |
 | Odpovede posielať na | kam pôjdu odpovede ľudí, napr. `info@vasklub.sk` |
 | Pätička | text pod každým e-mailom (môže obsahovať `{{klub}}`, `{{web}}`) |
 | Koľko za minútu | limit hromadných e-mailov (hosting 20-50, služby viac) |
@@ -307,7 +314,9 @@ vyžaduje GDPR aj pravidlá Gmailu a Yahoo.
 | *Prihlásenie na SMTP server zlyhalo* | zlé meno alebo heslo | meno je zvyčajne celá adresa; pri Gmaile treba heslo aplikácie, pri Brevo SMTP kľúč |
 | *Nesprávne zabezpečenie spojenia* | port a zabezpečenie nesedia | 465 → SSL, 587 → STARTTLS |
 | *Nepodarilo sa spojiť so serverom* | zlá adresa servera alebo blokovaný port | skontrolujte server; niektorí poskytovatelia VPS blokujú odchádzajúce SMTP - skúste 587 aj 465, prípadne požiadajte o odblokovanie |
-| *Server odmietol odosielateľa* | e-mail odosielateľa nepatrí k schránke | nastavte e-mail odosielateľa rovnaký ako prihlasovacia schránka, alebo overte doménu v službe |
+| *Server odmietol odosielateľa* | e-mail odosielateľa nepatrí k schránke, do ktorej sa prihlasujete (napr. prihlásenie `jozko@gmail.com`, odosielateľ `info@mojklub.sk`) | pole *E-mail odosielateľa* nechajte prázdne alebo vpíšte presne prihlasovaciu adresu; pri Brevo/Mailgun overte doménu odosielateľa v službe. Hláška obsahuje aj doslovnú odpoveď servera - pošlite ju podpore hostingu, ak si neviete rady |
+| *Server odmietol adresu príjemcu* | adresa príjemcu neexistuje alebo ju server nepozná | skontrolujte adresu, na ktorú e-mail ide |
+| *Server odmietol e-mail* | server e-mail vyhodnotil ako spam alebo prekročili ste limit | pozrite odpoveď servera v hláške; skontrolujte SPF/DKIM (kapitola 6) a limit za minútu |
 | E-maily chodia do spamu | chýba SPF/DKIM/DMARC | kapitola 6, test na mail-tester.com |
 | Odkazy v e-mailoch vedú na `localhost` | na serveri chýba `WEB_URL` | požiadajte dodávateľa webu, aby nastavil `WEB_URL` v `backend/.env` |
 | Logo sa v e-maile neukazuje | logo nie je dostupné z internetu | skontrolujte `WEB_URL` a logo v Nastaveniach klubu |

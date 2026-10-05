@@ -117,6 +117,11 @@ export const NastaveniaEmailov: React.FC = () => {
   }
 
   const env = nastavenia.data?.env;
+  // Prázdny odosielateľ = prihlasovacia schránka (ak je to e-mailová adresa)
+  const jeAdresa = (t?: string | null) => !!t && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.trim());
+  const prihlasenie = f.smtp_pouzivatel?.trim() ?? '';
+  const odosielatelEmail = f.odosielatel_email?.trim() ?? '';
+  const ineAkoPrihlasenie = jeAdresa(prihlasenie) && jeAdresa(odosielatelEmail) && prihlasenie.toLowerCase() !== odosielatelEmail.toLowerCase();
 
   return (
     <div className="cw-screen">
@@ -184,7 +189,7 @@ export const NastaveniaEmailov: React.FC = () => {
             menovka={tr('Používateľské meno')}
             value={f.smtp_pouzivatel ?? ''}
             onChange={(e) => zmen({ smtp_pouzivatel: e.target.value })}
-            placeholder="noreply@vasklub.sk"
+            placeholder="schranka@domena.sk"
             napoveda={tr('Pri schránke na hostingu je to celá e-mailová adresa, pri službách ako Brevo prihlasovacie meno zo sekcie SMTP.')}
             autoComplete="off"
           />
@@ -225,8 +230,13 @@ export const NastaveniaEmailov: React.FC = () => {
               type="email"
               value={f.odosielatel_email ?? ''}
               onChange={(e) => zmen({ odosielatel_email: e.target.value })}
-              placeholder="noreply@vasklub.sk"
-              napoveda={tr('Musí patriť k schránke alebo k overenej doméne.')}
+              placeholder={jeAdresa(prihlasenie) ? prihlasenie : ''}
+              napoveda={tr('Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.')}
+              chyba={
+                ineAkoPrihlasenie
+                  ? tr('Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.', { email: prihlasenie })
+                  : undefined
+              }
             />
           </div>
           <Input
@@ -234,7 +244,7 @@ export const NastaveniaEmailov: React.FC = () => {
             type="email"
             value={f.odpovedat_na ?? ''}
             onChange={(e) => zmen({ odpovedat_na: e.target.value })}
-            placeholder="info@vasklub.sk"
+            placeholder="info@domena.sk"
             napoveda={tr('Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.')}
           />
           <Textarea
