@@ -9,6 +9,7 @@
 import { lazy } from 'react';
 
 const obchod = () => import('./stranky/Obchod');
+const ligy = () => import('./stranky/Ligy');
 import type { CastiSablony } from '@clubw/jadro';
 import { Rozlozenie, Hlavicka, Paticka, Nacitavanie } from './Rozlozenie';
 
@@ -25,8 +26,8 @@ export const casti: CastiSablony = {
   Tim: lazy(() => import('./stranky/TeamDetail')),
   Hrac: lazy(() => import('./stranky/PlayerDetail')),
   ClenRealizacnehoTimu: lazy(() => import('./stranky/StaffDetail')),
-  Ligy: lazy(() => import('./stranky/Leagues')),
-  Liga: lazy(() => import('./stranky/LeagueDetail')),
+  Ligy: lazy(() => ligy().then((m) => ({ default: m.Ligy }))),
+  Liga: lazy(() => ligy().then((m) => ({ default: m.Liga }))),
   Zapasy: lazy(() => import('./stranky/Matches')),
   Zapas: lazy(() => import('./stranky/MatchDetail')),
   Kalendar: lazy(() => import('./stranky/CalendarPage')),
