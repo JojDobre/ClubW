@@ -27,7 +27,6 @@ import {
   Ikona,
   Odkaz,
   cas,
-  datum,
   datumKratky,
   denVTyzdni,
   dnes,
@@ -201,7 +200,6 @@ const ClankyMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void; trieda?:
       {(clanky.data ?? []).map((c) => (
         <Link key={c.id} to={`/clanek/${c.slug}`} className={trieda} onClick={zavriet}>
           <span className="ar-panel__obrazok">{c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : null}</span>
-          <span className="ar-panel__datum">{datum(c.publikovany_datum || c.vytvoreny)}</span>
           <span className="ar-panel__titulok">{c.nazov}</span>
         </Link>
       ))}
