@@ -501,7 +501,7 @@ export const TabulkaSutaze: React.FC<{
           <tr>
             <th className="ar-tabulka__poz">#</th>
             <th className="ar-tabulka__tim">Tím</th>
-            <th title="Zápasy">Z</th>
+            {!lenBody && <th title="Zápasy">Z</th>}
             {plna && (
               <>
                 <th title="Výhry" className="ar-tabulka__volitelne">V</th>
@@ -524,7 +524,7 @@ export const TabulkaSutaze: React.FC<{
                   <span className="ar-tabulka__nazov">{nazov(r)}</span>
                 </span>
               </td>
-              <td>{r.zapasy}</td>
+              {!lenBody && <td>{r.zapasy}</td>}
               {plna && (
                 <>
                   <td className="ar-tabulka__volitelne">{r.vitazstva}</td>

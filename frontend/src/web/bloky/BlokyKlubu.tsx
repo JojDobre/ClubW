@@ -31,6 +31,7 @@ interface TimBloku {
   typ?: string | null;
   vekova_kategoria?: string | null;
   poradie?: number | null;
+  rezim_tabulky?: 'plna' | 'len_body';
 }
 
 interface LigaBloku {
@@ -40,6 +41,7 @@ interface LigaBloku {
   format?: string | null;
   status?: string | null;
   poradie?: number | null;
+  rezim_tabulky?: 'plna' | 'len_body';
 }
 
 const jeSeniorska = (k?: string | null) => ['seniori', 'muzi'].includes((k || 'seniori').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase());
@@ -88,6 +90,8 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
   const riadky = tabulka.data ?? [];
   if (!liga || riadky.length === 0) return null;
   const kompaktna = data.kompaktna === true;
+  // Režim „len poradie a body": zápasy ani skóre sa nezadávajú
+  const lenBody = liga.rezim_tabulky === 'len_body';
   return (
     <>
       <HlavickaBloku
@@ -102,8 +106,8 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
             <tr>
               <th scope="col">#</th>
               <th scope="col">Tím</th>
-              <th scope="col">Z</th>
-              {!kompaktna && (
+              {!lenBody && <th scope="col">Z</th>}
+              {!kompaktna && !lenBody && (
                 <>
                   <th scope="col">V</th>
                   <th scope="col">R</th>
@@ -122,8 +126,8 @@ const TabulkaLigy: KomponentBloku = ({ blok: { data } }) => {
                   {r.tim_logo && <Obr src={r.tim_logo} className="blok__tabulka-logo" />}
                   <span>{r.custom_tim_nazov || r.tim_nazov}</span>
                 </td>
-                <td data-stlpec="Z">{r.zapasy}</td>
-                {!kompaktna && (
+                {!lenBody && <td data-stlpec="Z">{r.zapasy}</td>}
+                {!kompaktna && !lenBody && (
                   <>
                     <td data-stlpec="V">{r.vitazstva}</td>
                     <td data-stlpec="R">{r.remizy}</td>

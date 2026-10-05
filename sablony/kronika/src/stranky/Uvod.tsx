@@ -325,8 +325,8 @@ const PrehladZapasov: React.FC<{
                 <tr>
                   <th>#</th>
                   <th className="kr-u-tabulka__tim">Tím</th>
-                  <th>Z</th>
-                  <th>Skóre</th>
+                  {tabulka.liga.rezim_tabulky !== 'len_body' && <th>Z</th>}
+                  {tabulka.liga.rezim_tabulky !== 'len_body' && <th>Skóre</th>}
                   <th>B</th>
                 </tr>
               </thead>
@@ -340,10 +340,12 @@ const PrehladZapasov: React.FC<{
                         <span>{r.tim_nazov || r.custom_tim_nazov}</span>
                       </span>
                     </td>
-                    <td>{r.zapasy}</td>
-                    <td>
-                      {r.goly_za}:{r.goly_proti}
-                    </td>
+                    {tabulka.liga.rezim_tabulky !== 'len_body' && <td>{r.zapasy}</td>}
+                    {tabulka.liga.rezim_tabulky !== 'len_body' && (
+                      <td>
+                        {r.goly_za}:{r.goly_proti}
+                      </td>
+                    )}
                     <td>
                       <b>{r.body}</b>
                     </td>
