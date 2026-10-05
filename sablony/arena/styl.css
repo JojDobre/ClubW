@@ -3654,3 +3654,17 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
   .ar-bloky .blok__dane-udaje strong { min-width: 0; font-size: 16px; overflow-wrap: anywhere; }
   .ar-bloky .blok__kopirovat { flex-shrink: 0; }
 }
+
+/* Detail zápasu: odpočet bez pásu na celú šírku - iba samotné dlaždice */
+.ar-hlava--zapas .ar-odpocet { background: none; border: 0; padding: 0; }
+
+/* Hover všade farebným písmom, nikde podčiarknutie */
+.ar a, .ar a:hover { text-decoration: none; }
+.ar-hero h1 a { background: none; transition: color 0.25s ease; }
+.ar-hero h1 a:hover { color: var(--ar-neon); }
+.ar-pas__polozka:hover span { text-decoration: none; color: var(--ar-akcent); }
+.ar-pas__polozka span { transition: color 0.2s ease; }
+.ar-text a, .ar-bloky .blok__text a { font-weight: 700; text-decoration: none; transition: color 0.2s ease; }
+.ar-text a:hover, .ar-bloky .blok__text a:hover { color: var(--ar-svetla); }
+.ar-bloky .blok--pozadie-tmave .blok__text a:hover { color: #ffffff; }
+.ar-bloky .blok__udalosti > li > a:hover strong { color: var(--ar-akcent); text-decoration: none; }
