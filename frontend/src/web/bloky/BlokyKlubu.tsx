@@ -324,10 +324,12 @@ const KartyUdajov: React.FC<{ nadpis: string; polozky: KartaUdaj[]; viac?: { to:
     <div className={`blok__mriezka blok__mriezka--${polozky.length === 4 || polozky.length > 6 ? 4 : 3} blok__karty--klasicke ${trieda}`}>
       {polozky.map((p) => (
         <OdkazBloku key={p.kluc} to={p.odkaz} className="blok__polozka blok__karta">
-          {obrazokBloku(p.obrazok) && (
+          {obrazokBloku(p.obrazok) ? (
             <div className="blok__karta-obrazok">
               <Obr src={p.obrazok} alt={p.nadpis} />
             </div>
+          ) : (
+            <div className="blok__karta-obrazok blok__karta-obrazok--prazdne" aria-hidden="true" />
           )}
           <div className="blok__obsah">
             {p.nad && <small>{p.nad}</small>}

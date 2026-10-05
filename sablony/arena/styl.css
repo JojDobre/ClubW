@@ -3567,3 +3567,104 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
   .ar-platba-box__udaje div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   .ar-platba-box__udaje dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 }
+
+/* ===================================================================
+   Opravy - hlavička článku, videá, dokumenty, výber tímu, logá, bloky
+   =================================================================== */
+
+/* Panel v tmavých plochách (chýbajúca premenná - karty a čísla boli bez pozadia) */
+.ar { --ar-tmava-panel: color-mix(in srgb, var(--ar-tmava) 86%, #ffffff); }
+
+/* Hlavička podstránky: odkaz späť na vlastnom riadku, štítok pod ním */
+.ar-hlava .ar-spat { display: flex; width: fit-content; }
+
+/* Videá: hlavné video v pomere 16:9 - vyššie než predtým */
+.ar-tv__hlavne .ar-hlavne-video { aspect-ratio: 16 / 9; }
+
+/* Dokumenty: bez červeného rámčeka okolo poľa hľadania */
+.ar .ar-hladat input:focus, .ar .ar-hladat input:focus-visible { outline: none; box-shadow: none; }
+.ar-hladat:focus-within { border-color: var(--ar-neon); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ar-neon) 25%, transparent); }
+/* Súbory ako samostatné karty - bez dvojitého rámčeka zoznamu */
+.ar-dokumenty { display: flex; flex-direction: column; gap: 10px; border: 0; border-radius: 0; overflow: visible; }
+.ar-dokumenty li + li { border-top: 0; }
+.ar-dokument { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.ar-dokument:hover { background: #ffffff; border-color: var(--ar-svetla); box-shadow: 0 16px 34px -28px rgba(16, 24, 40, 0.5); }
+
+/* Výber tímu v zápasoch a súpiske: jeden biely ovál s rámčekom */
+.ar-vyber { padding: 0 4px 0 14px; border: 1px solid var(--ar-linka); border-radius: 14px; background: #ffffff; }
+.ar-vyber select { height: 40px; padding: 0 32px 0 8px; border-radius: 10px; background-color: transparent; }
+.ar-vyber select:focus-visible { outline: 2px solid var(--ar-svetla); outline-offset: 1px; }
+.ar-vyber:hover { border-color: var(--ar-tmava-25, rgba(16, 24, 40, 0.25)); }
+
+/* Logá tímov nikde v kruhu - iba iniciály bez loga majú farebný krúžok */
+.ar-erb--logo { border-radius: 0; background: transparent; }
+.blok__tabulka-logo { border-radius: 0 !important; background: transparent !important; }
+
+/* Bloky: Text a Text v stĺpcoch */
+.ar-bloky .blok__text :where(h2) { font-size: clamp(24px, 2.4vw, 30px); letter-spacing: -0.02em; }
+.ar-bloky .blok__text :where(h3) { font-size: clamp(19px, 1.8vw, 22px); }
+.ar-bloky .blok__text :where(ul, ol) { padding-left: 1.3em; }
+.ar-bloky .blok__text li + li { margin-top: 0.3em; }
+/* Tmavé pozadie: celý text svetlý (nadpisy a zoznamy boli čierne) */
+.ar-bloky .blok--pozadie-tmave .blok__text { color: rgba(255, 255, 255, 0.78); }
+.ar-bloky .blok--pozadie-tmave .blok__text :is(h1, h2, h3, h4, h5, h6, strong, b, li) { color: inherit; }
+.ar-bloky .blok--pozadie-tmave .blok__text :is(h1, h2, h3, h4, h5, h6, strong, b) { color: #ffffff; }
+.ar-bloky .blok--pozadie-tmave .blok__text a { color: var(--ar-neon); }
+
+/* Karty vodorovné / články v zozname: roztiahnutá posledná karta nemá obrovský obrázok */
+.ar-bloky .blok__karty--vodorovne .blok__karta-obrazok { flex: 0 0 min(42%, 300px); }
+
+/* Káder: hráč bez fotky - číslo na tmavej ploche, bez podčiarknutia */
+.ar-bloky a.blok__osoba { color: inherit; text-decoration: none; }
+.ar-bloky a.blok__osoba:hover h3 { color: var(--ar-akcent); }
+.ar-bloky .blok__iniciely { text-decoration: none; }
+
+/* Strelci a ďalšie tabuľky: mená bez podčiarknutia */
+.ar-bloky .blok__tabulka a { color: inherit; font-weight: 700; text-decoration: none; }
+.ar-bloky .blok__tabulka a:hover { color: var(--ar-akcent); }
+
+/* Karty médií bez obrázka (napr. galéria bez titulnej fotky) */
+.ar-bloky .blok__karta-obrazok--prazdne { aspect-ratio: 16 / 10; background: linear-gradient(160deg, var(--ar-tmava-panel), var(--ar-tmava)); }
+
+/* Časová os: obrázok udalosti nie je cez celú šírku */
+.ar-bloky .blok__os img { max-width: min(100%, 420px); }
+
+@media (max-width: 1024px) {
+  /* Fotka článku pod hlavičkou, nie cez ňu */
+  .ar-clanok-detail__fotka { margin-top: 0; }
+}
+
+/* Tablet: karty v blokoch sa zmestia do jedného radu (3 alebo 4),
+   posledná karta sa tak neroztiahne na obrovský obrázok cez celú šírku */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .ar-bloky .blok__mriezka { --ar-min: 190px; --ar-medzera: 16px; }
+  .ar-bloky .blok__mriezka--4 { --ar-min: 150px; }
+  .ar-bloky .blok__mriezka[class*='blok__osoby'] { --ar-min: 150px; }
+  .ar-bloky .blok__mriezka--2 { --ar-min: 280px; }
+  /* Zápasy v bloku: dve karty vedľa seba, nech sa nekrátia názvy tímov */
+  .ar-bloky .ar-mriezka-zapasov { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Obrázok s textom pod sebou: nižší obrázok */
+  .ar-bloky .blok__dvojica-obrazok img { aspect-ratio: 16 / 9; }
+}
+@media (max-width: 640px) {
+  .ar-bloky .ar-mriezka-zapasov { grid-template-columns: minmax(0, 1fr); }
+  /* 2 % z dane: hodnota a tlačidlo Kopírovať pod názvom položky, nič nepreteká */
+  .ar-bloky .blok__dane-udaje div { flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px; }
+  .ar-bloky .blok__dane-udaje dd { justify-content: space-between; }
+  .ar-bloky .blok__dane-udaje strong { min-width: 0; font-size: 16px; overflow-wrap: anywhere; }
+  .ar-bloky .blok__kopirovat { flex-shrink: 0; }
+}
+
+/* Detail zápasu: odpočet bez pásu na celú šírku - iba samotné dlaždice */
+.ar-hlava--zapas .ar-odpocet { background: none; border: 0; padding: 0; }
+
+/* Hover všade farebným písmom, nikde podčiarknutie */
+.ar a, .ar a:hover { text-decoration: none; }
+.ar-hero h1 a { background: none; transition: color 0.25s ease; }
+.ar-hero h1 a:hover { color: var(--ar-neon); }
+.ar-pas__polozka:hover span { text-decoration: none; color: var(--ar-akcent); }
+.ar-pas__polozka span { transition: color 0.2s ease; }
+.ar-text a, .ar-bloky .blok__text a { font-weight: 700; text-decoration: none; transition: color 0.2s ease; }
+.ar-text a:hover, .ar-bloky .blok__text a:hover { color: var(--ar-svetla); }
+.ar-bloky .blok--pozadie-tmave .blok__text a:hover { color: #ffffff; }
+.ar-bloky .blok__udalosti > li > a:hover strong { color: var(--ar-akcent); text-decoration: none; }

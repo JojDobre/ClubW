@@ -245,6 +245,8 @@
 /* ===== Automatické bloky klubu - štruktúra pre všetky šablóny =====
    (aj s vypnutým predvoleným vzhľadom: logo tímu v tabuľke nesmie
    prerásť riadok, tlačidlo „Zobraziť všetko" pod blokom) */
+/* Karta bez obrázka (napr. galéria bez titulnej fotky) - jemná plocha namiesto diery */
+.blok__karta-obrazok--prazdne { background: linear-gradient(135deg, rgba(127, 127, 127, 0.2), rgba(127, 127, 127, 0.06)); }
 .blok__tabulka-tim { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .blok__tabulka-tim > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .blok__tabulka-logo { flex-shrink: 0; width: 22px !important; height: 22px !important; max-width: none; object-fit: contain; display: block; }
@@ -267,7 +269,7 @@
 .blok__udalosti { display: flex; flex-direction: column; margin: 0; border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
 .blok__udalosti > li { margin: 0; padding: 0; border: 0; background: none; }
 .blok__udalosti > li > a { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) auto; align-items: center; gap: 6px 20px; padding: 16px 4px; border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent); color: inherit; text-decoration: none; }
-.blok__udalosti > li > a:hover strong { text-decoration: underline; }
+.blok__udalosti > li > a:hover strong { color: var(--blok-akcent, inherit); }
 .blok__udalosti small { font-size: 0.85em; opacity: 0.65; }
 .blok__udalosti strong { font-size: 1.05em; }
 @media (max-width: 640px) {

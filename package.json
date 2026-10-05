@@ -1,6 +1,6 @@
 {
   "name": "clubw",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Škálovateľná webová platforma pre športové kluby",
   "private": true,
   "workspaces": [
