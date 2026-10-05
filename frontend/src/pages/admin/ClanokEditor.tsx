@@ -199,6 +199,14 @@ export const ClanokEditor: React.FC = () => {
       varovanie(tr('Zadajte názov článku'));
       return;
     }
+    if (formular.nazov.trim().length < 5) {
+      varovanie(tr('Názov článku musí mať aspoň 5 znakov'));
+      return;
+    }
+    if ((formular.obrazok ?? '').trim().length > 255) {
+      varovanie(tr('Adresa obrázka je príliš dlhá - nahrajte obrázok alebo ho vyberte z knižnice'));
+      return;
+    }
     // Editor vracia HTML — pri kontrole dĺžky značky odstránime
     if (formular.obsah.replace(/<[^>]*>/g, '').trim().length < 10) {
       varovanie(tr('Obsah článku musí mať aspoň 10 znakov'));
@@ -247,7 +255,9 @@ export const ClanokEditor: React.FC = () => {
       }
     } catch (e: unknown) {
       if (e instanceof ApiChyba) {
-        hlasChybu(e.message);
+        // Pri chybných údajoch ukážeme rovno prvý konkrétny dôvod, nie len
+        // všeobecné „Chybné vstupné údaje"
+        hlasChybu(e.chybyPoli?.length ? e.chybyPoli[0] : e.message);
         if (e.chybyPoli) setChybyPoli(e.chybyPoli);
       } else {
         hlasChybu(tr('Článok sa nepodarilo uložiť'));
@@ -371,6 +381,7 @@ export const ClanokEditor: React.FC = () => {
               onChange={(e) => zmenNazov(e.target.value)}
               placeholder={tr('Názov článku…')}
               aria-label={tr('Názov článku')}
+              maxLength={200}
             />
 
             <div className="cw-ced__url">
@@ -545,6 +556,7 @@ export const ClanokEditor: React.FC = () => {
               onChange={(e) => zmen('obrazok', e.target.value)}
               placeholder="/uploads/media/…"
               aria-label={tr('Adresa hlavného obrázka')}
+              maxLength={255}
               napoveda={tr('Nahraj súbor alebo vlož adresu už nahratého obrázka')}
             />
           </div>

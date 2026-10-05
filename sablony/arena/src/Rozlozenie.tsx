@@ -569,7 +569,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
                             Prejsť na sekciu
                           </OdkazMenu>
                         )}
-                        {deti.map((d) =>
+                        {deti.filter((d) => !(!d.deti?.length && d.obrazok && d.odkaz)).map((d) =>
                           d.deti?.length ? (
                             <div key={d.id} className="ar-mmenu__skupina">
                               <OdkazMenu polozka={{ ...d, deti: [] }} onClick={zavriet} className="ar-mmenu__kategoria" />
@@ -580,6 +580,21 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
                           ) : (
                             <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className={`ar-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}`} />
                           )
+                        )}
+                        {/* Odkazy s fotkou ako karty - rovnako ako v rozbaľovacom menu na počítači */}
+                        {deti.some((d) => !d.deti?.length && d.obrazok && d.odkaz) && (
+                          <div className="ar-mmenu__karty">
+                            {deti
+                              .filter((d) => !d.deti?.length && d.obrazok && d.odkaz)
+                              .map((d) => (
+                                <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className="ar-mmenu__karta">
+                                  <span className="ar-mmenu__karta-obrazok">
+                                    <img src={obrazokUrl(d.obrazok) ?? ''} alt="" loading="lazy" />
+                                  </span>
+                                  <span className="ar-mmenu__karta-nazov">{d.nazov}</span>
+                                </OdkazMenu>
+                              ))}
+                          </div>
                         )}
                         {clankove.length > 0 && (
                           <div className="ar-mmenu__clanky">

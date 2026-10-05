@@ -2399,5 +2399,7 @@
  "Pridať sekciu": "Ajouter une section",
  "Vyberte typ sekcie": "Choisissez le type de section",
  "Odkaz „Zobraziť všetky“ vedľa nadpisu": "Lien « Tout voir » à côté du titre",
- "Text odkazu": "Texte du lien"
+ "Text odkazu": "Texte du lien",
+ "Názov článku musí mať aspoň 5 znakov": "Le titre de l'article doit comporter au moins 5 caractères",
+ "Adresa obrázka je príliš dlhá - nahrajte obrázok alebo ho vyberte z knižnice": "L'adresse de l'image est trop longue - téléversez l'image ou choisissez-la dans la bibliothèque"
 }
