@@ -93,6 +93,20 @@ na ktoré sa `styl.css` odkazuje relatívne (`url(fonts/nazov.woff2)`).
 - `skupina` - nepovinný názov záložky v okne Prispôsobiť (napr. „Úvod - zápasy").
   Pri viacerých skupinách má okno záložky a vyhľadávanie; poradie skupín je podľa
   prvého výskytu v zozname. Šablóna môže mať najviac 200 nastavení.
+- `preklady` - nepovinné preklady textov administrácie (popis šablóny, menovky,
+  skupiny, nápovedy, popisy možností a miest) do `en`, `cs`, `pl`, `de`, `es`, `fr`.
+  Kľúčom je slovenský text z manifestu, chýbajúci preklad ostane po slovensky:
+
+  ```json
+  "preklady": {
+    "en": { "Farba klubu": "Club colour", "Úvod - zápasy": "Home - matches" },
+    "cs": { "Farba klubu": "Barva klubu" }
+  }
+  ```
+
+  Vstavané šablóny majú preklady v spoločnom slovníku administrácie
+  (`frontend/src/i18n/sablony/`); `npm run preklady -- --kontrola` vo `frontend/`
+  overí, že tam nič nechýba.
 - Dobrá šablóna nemá natvrdo zapísané texty, ktoré by klub chcel zmeniť: nadpisy
   sekcií, texty tlačidiel a zapínanie sekcií patria do nastavení (predvolená
   hodnota = pôvodný text).

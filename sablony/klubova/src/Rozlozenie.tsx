@@ -20,6 +20,7 @@ import {
   useHladanie,
   useNastaveniaSablony,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import { Ikona, Odkaz, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
@@ -73,6 +74,13 @@ const KosikHlavicky: React.FC = () => {
       {pocet > 0 && <span className="kl-hlavicka__pocet">{pocet > 99 ? '99+' : pocet}</span>}
     </Link>
   );
+};
+
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="kl-hlavicka__kosik kl-hlavicka__ucet" onClick={onClick} />;
 };
 
 /** Lupa v hlavičke - otvorí vyhľadávací panel pod hlavičkou. */
@@ -606,6 +614,7 @@ export const Hlavicka: React.FC = () => {
             }}
           />
           <KosikHlavicky />
+          <UcetHlavicky />
           {jePrihlaseny() && u.zapnute('ukazat_admin') && (
             <a href="/admin" className="kl-hlavicka__admin" title="Administrácia">
               Admin

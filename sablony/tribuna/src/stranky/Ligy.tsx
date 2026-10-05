@@ -21,7 +21,7 @@ const KartaLigy: React.FC<{ liga: Liga }> = ({ liga }) => {
           <h2>{liga.nazov}</h2>
         </div>
         <Link to={`/leagues/${liga.id}`} className="tb-tlacidlo-obrys tb-tlacidlo-obrys--male">
-          {u.text('text_detail', 'Detail')}
+          {u.text('text_detail_sutaze', 'Detail súťaže')}
           <Ikona nazov="sipka" velkost={12} />
         </Link>
       </div>

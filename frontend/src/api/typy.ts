@@ -838,7 +838,28 @@ export interface Fanusik {
   adresa: string | null;
   /** Správa klubu z registračného formulára */
   sprava: string | null;
+  /** Fanúšik si nastavil heslo a môže sa prihlásiť do Môj klub */
+  ma_ucet?: boolean;
+  posledne_prihlasenie?: string | null;
   vytvoreny: string;
+}
+
+/** Výhoda pre členov (zľava u partnera, prednostný predaj...) */
+export interface VyhodaFanusika {
+  id: number;
+  nazov: string;
+  popis: string | null;
+  obrazok: string | null;
+  /** Prázdne = pre všetky typy členstva */
+  typy_clenstva: TypClenstva[];
+  sponzor_id: number | null;
+  sponzor?: { id: number; nazov: string; logo: string | null } | null;
+  kod: string | null;
+  odkaz: string | null;
+  platne_od: string | null;
+  platne_do: string | null;
+  poradie: number;
+  aktivity: boolean;
 }
 
 export type StavFanusika = 'aktivny' | 'ziadost' | 'zamietnuty';

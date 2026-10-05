@@ -325,7 +325,7 @@ const TabulkaDlazdice: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: nu
           <tr>
             <th>#</th>
             <th className="tb-zd__ttim">Tím</th>
-            <th>Z</th>
+            {liga.rezim_tabulky !== 'len_body' && <th>Z</th>}
             <th>B</th>
           </tr>
         </thead>
@@ -339,7 +339,7 @@ const TabulkaDlazdice: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: nu
                   <span>{r.tim_nazov || r.custom_tim_nazov}</span>
                 </span>
               </td>
-              <td>{r.zapasy}</td>
+              {liga.rezim_tabulky !== 'len_body' && <td>{r.zapasy}</td>}
               <td>
                 <b>{r.body}</b>
               </td>

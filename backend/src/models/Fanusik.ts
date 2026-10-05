@@ -6,6 +6,8 @@
 // oznamov evidujeme priamo tu (pole suhlas_oznamy) a dá sa kedykoľvek odvolať.
 
 import { DataTypes, Model, Optional } from 'sequelize';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import sequelize from '../config/database';
 
 export type TypClenstva = 'fanusik' | 'clen' | 'vip' | 'cestny';
@@ -33,6 +35,13 @@ interface FanusikAttributes {
   adresa: string | null;
   /** Správa od žiadateľa pri registrácii z webu */
   sprava: string | null;
+  /** Účet na webe (Môj klub) - bcrypt odtlačok hesla, null = bez účtu */
+  heslo_hash: string | null;
+  /** Náhodný kód členskej karty v QR kóde - overenie pri vstupe */
+  overovaci_kod: string | null;
+  posledne_prihlasenie: Date | null;
+  /** Zvýšením sa zneplatnia všetky vydané prihlásenia (zmena hesla) */
+  verzia_tokenu: number;
   aktivity: boolean;
   vytvoreny: Date;
   aktualizovany: Date;
@@ -43,6 +52,7 @@ interface FanusikCreationAttributes
     FanusikAttributes,
     'id' | 'telefon' | 'typ_clenstva' | 'cislo_karty' | 'clenstvo_od' | 'clenstvo_do'
     | 'suhlas_oznamy' | 'poznamka' | 'aktivity' | 'vytvoreny' | 'aktualizovany'
+    | 'heslo_hash' | 'overovaci_kod' | 'posledne_prihlasenie' | 'verzia_tokenu'
     | 'stav' | 'zdroj' | 'datum_narodenia' | 'adresa' | 'sprava'
   > {}
 
@@ -63,9 +73,40 @@ class Fanusik extends Model<FanusikAttributes, FanusikCreationAttributes> implem
   public datum_narodenia!: string | null;
   public adresa!: string | null;
   public sprava!: string | null;
+  public heslo_hash!: string | null;
+  public overovaci_kod!: string | null;
+  public posledne_prihlasenie!: Date | null;
+  public verzia_tokenu!: number;
   public aktivity!: boolean;
   public readonly vytvoreny!: Date;
   public readonly aktualizovany!: Date;
+
+  /** Nastaví nové heslo účtu a odhlási všetky zariadenia. */
+  public async nastavHeslo(heslo: string): Promise<void> {
+    this.heslo_hash = await bcrypt.hash(heslo, 12);
+    this.verzia_tokenu = (this.verzia_tokenu ?? 0) + 1;
+  }
+
+  /** Sedí heslo? Účet bez hesla neprihlási nikoho. */
+  public async overHeslo(heslo: string): Promise<boolean> {
+    if (!this.heslo_hash || typeof heslo !== 'string') return false;
+    return bcrypt.compare(heslo, this.heslo_hash);
+  }
+
+  /** Náhodný kód do QR kódu členskej karty (nedá sa uhádnuť ani odvodiť). */
+  public static novyOverovaciKod(): string {
+    return crypto.randomBytes(15).toString('base64url');
+  }
+
+  /** Heslo ani kód karty sa do administrácie neposielajú. */
+  public toJSON() {
+    const hodnoty = { ...this.get() } as Record<string, unknown>;
+    hodnoty.ma_ucet = Boolean(hodnoty.heslo_hash);
+    delete hodnoty.heslo_hash;
+    delete hodnoty.overovaci_kod;
+    delete hodnoty.verzia_tokenu;
+    return hodnoty;
+  }
 
   /** Je členstvo práve platné? */
   public jePlatne(): boolean {
@@ -107,6 +148,10 @@ Fanusik.init(
     datum_narodenia: { type: DataTypes.DATEONLY, allowNull: true },
     adresa: { type: DataTypes.STRING(255), allowNull: true },
     sprava: { type: DataTypes.TEXT, allowNull: true },
+    heslo_hash: { type: DataTypes.STRING(100), allowNull: true },
+    overovaci_kod: { type: DataTypes.STRING(40), allowNull: true, unique: true },
+    posledne_prihlasenie: { type: DataTypes.DATE, allowNull: true },
+    verzia_tokenu: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     aktivity: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     vytvoreny: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     aktualizovany: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
@@ -118,6 +163,19 @@ Fanusik.init(
     timestamps: true,
     createdAt: 'vytvoreny',
     updatedAt: 'aktualizovany',
+    hooks: {
+      // Schválený člen dostane kód karty (QR) a číslo karty, ak ho klub nezadal
+      beforeSave: (f: Fanusik) => {
+        if (f.stav === 'aktivny' && !f.overovaci_kod) f.overovaci_kod = Fanusik.novyOverovaciKod();
+      },
+      afterSave: async (f: Fanusik, moznosti) => {
+        if (f.stav === 'aktivny' && !f.cislo_karty) {
+          const cislo = `${new Date().getFullYear()}-${String(f.id).padStart(5, '0')}`;
+          await Fanusik.update({ cislo_karty: cislo }, { where: { id: f.id }, hooks: false, transaction: moznosti.transaction });
+          f.setDataValue('cislo_karty', cislo);
+        }
+      },
+    },
     indexes: [
       { fields: ['email'], unique: true, name: 'fanusikovia_email' },
       { fields: ['typ_clenstva'], name: 'fanusikovia_typ' },

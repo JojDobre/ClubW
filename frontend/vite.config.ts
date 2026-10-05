@@ -5,6 +5,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+// Kam presmerovať /api, /uploads a /sablony (testy v prehliadači bežia proti inému portu)
+const BACKEND = process.env.API_PROXY || 'http://localhost:3000';
+
 export default defineConfig({
   // React plugin - zabezpečuje JSX transformáciu a Fast Refresh (hot reload)
   plugins: [react()],
@@ -31,16 +34,16 @@ export default defineConfig({
     // Požiadavky na /api a /uploads sa presmerujú na backend server
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: BACKEND,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: BACKEND,
         changeOrigin: true,
       },
       // Súbory šablón (štýl, skript, náhľad) servuje backend
       '/sablony': {
-        target: 'http://localhost:3000',
+        target: BACKEND,
         changeOrigin: true,
       },
     },

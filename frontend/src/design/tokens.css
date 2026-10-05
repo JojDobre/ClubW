@@ -81,6 +81,14 @@
   --z-modal: 80;
   --z-toast: 90;
 
+  /* ===== Aliasy pre staršie obrazovky =====
+     Niektoré štýly (galéria, knižnica médií, výber z knižnice) používajú
+     --surface / --surface-2 / --primary so svetlou záložnou farbou.
+     Bez týchto aliasov ostávali v tmavom režime biele. */
+  --surface: var(--card);
+  --surface-2: var(--card2);
+  --primary: var(--pri);
+
   /* ===== Prechody ===== */
   --t-fast: 0.12s ease;
   --t-base: 0.2s ease;

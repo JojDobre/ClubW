@@ -164,6 +164,18 @@ export const Editor: React.FC<EditorProps> = ({
         onInput={(e) => onZmena((e.target as HTMLDivElement).innerHTML)}
         // Vloženie z Wordu prináša skryté formátovanie, ktoré rozbíja web.
         // Vkladáme preto len čistý text.
+        // Pustený súbor (napr. fotka z počítača) by prehliadač vložil ako
+        // obrovský base64 reťazec alebo by stránku s neuloženým článkom
+        // opustil. Obrázky sa vkladajú tlačidlom 🖼 cez knižnicu médií.
+        onDrop={(e) => {
+          if (e.dataTransfer?.files?.length) {
+            e.preventDefault();
+            if (onObrazok) {
+              zapamatajKurzor();
+              onObrazok(vlozObrazok);
+            }
+          }
+        }}
         onPaste={(e) => {
           e.preventDefault();
           const text = e.clipboardData.getData('text/plain');

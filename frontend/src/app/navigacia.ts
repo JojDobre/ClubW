@@ -74,6 +74,16 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       { modul: 'formulare', cesta: '/admin/formulare', popis: tr('Formuláre'), ikona: 'formular', odznak: 'formulare' },
       { cesta: '/admin/ankety', popis: tr('Ankety'), ikona: 'komentare', role: ['admin', 'redaktor'] },
       { cesta: '/admin/fanusikovia', popis: tr('Fanúšikovia'), ikona: 'pouzivatelia', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/vyhody-clenov', popis: tr('Výhody pre členov'), ikona: 'licencia', role: ['admin', 'redaktor'] },
+    ],
+  },
+  {
+    nazov: tr('E-MAILY'),
+    polozky: [
+      { cesta: '/admin/emaily/hromadne', popis: tr('Hromadné e-maily'), ikona: 'email', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/emaily/sablony', popis: tr('Šablóny e-mailov'), ikona: 'sablony_emailov', role: ['admin'] },
+      { cesta: '/admin/emaily/odoslane', popis: tr('Odoslané e-maily'), ikona: 'odoslat', role: ['admin'] },
+      { cesta: '/admin/emaily/nastavenia', popis: tr('Nastavenia e-mailov'), ikona: 'nastavenia', role: ['admin'] },
     ],
   },
   {

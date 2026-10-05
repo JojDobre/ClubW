@@ -23,6 +23,7 @@ import {
   useMenuWebu,
   useNastavenia,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import {
   Erb,
@@ -60,7 +61,8 @@ const jeAktivnaPolozka = (p: PolozkaMenu, pathname: string): boolean =>
 const useTlacidloHlavicky = () => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
-  const text = u.text('tlacidlo_text', 'Vstupenky');
+  // Predvolený text dopĺňa server; vymazaný text (null) tlačidlo skryje.
+  const text = u.text('tlacidlo_text', '');
   const odkaz = String(u.s.tlacidlo_odkaz || '').trim() || (nastavenia.kontakt?.email ? `mailto:${nastavenia.kontakt.email}` : '');
   return text && odkaz ? { text, odkaz } : null;
 };
@@ -445,6 +447,13 @@ const KosikHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   );
 };
 
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="el-ikona-tl" onClick={onClick} />;
+};
+
 export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
@@ -589,6 +598,7 @@ export const Hlavicka: React.FC = () => {
               </button>
             )}
             <KosikHlavicky />
+            <UcetHlavicky />
             {tlacidlo && (
               <Odkaz to={tlacidlo.odkaz} className="el-tlacidlo el-tlacidlo--akcent el-hlavicka__cta">
                 {tlacidlo.text}

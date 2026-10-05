@@ -12,7 +12,7 @@ import Formular from '../models/Formular';
 import FormularOdpoved from '../models/FormularOdpoved';
 import { sanitizePlainText } from '../utils/sanitize';
 import { zostavStrankovanie, odpovedzNaChybuModelu } from '../utils/odpoved';
-import { posliEmail } from '../utils/email';
+import { posliSablonu, adresaWebu } from '../services/email/odosielanie';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -499,11 +499,11 @@ export const odosliFormular = async (req: Request, res: Response): Promise<void>
           const h = udaje[p.kod];
           return `${p.nazov}: ${Array.isArray(h) ? h.join(', ') : h === true ? 'áno' : h}`;
         });
-      posliEmail({
-        prijemca: formular.email_pre_notifikacie,
-        predmet: `Nový vyplnený formulár: ${formular.nazov}`,
-        text: `Prišla nová odpoveď na formulár „${formular.nazov}".\n\n${riadky.join('\n')}`,
-      }).catch((e) => console.error('Upozornenie na formulár sa nepodarilo odoslať:', e));
+      void posliSablonu('formular_odpoved', formular.email_pre_notifikacie, {
+        formular: formular.nazov,
+        odpovede: riadky.join('\n'),
+        odkaz_admin: `${adresaWebu()}/admin/formulare/${formular.id}/odpovede`,
+      });
     }
 
     res.status(201).json({

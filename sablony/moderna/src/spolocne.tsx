@@ -706,7 +706,7 @@ export const TabulkaSutaze: React.FC<{
           <tr>
             <th className="md-tabulka__poz">#</th>
             <th className="md-tabulka__tim">Tím</th>
-            <th title="Zápasy">Z</th>
+            {!lenBody && <th title="Zápasy">Z</th>}
             {!kompaktna && !lenBody && (
               <>
                 <th title="Výhry" className="md-tabulka__volitelne">V</th>
@@ -734,7 +734,7 @@ export const TabulkaSutaze: React.FC<{
                   <span className="md-tabulka__nazov">{nazov(r)}</span>
                 </span>
               </td>
-              <td>{r.zapasy}</td>
+              {!lenBody && <td>{r.zapasy}</td>}
               {!kompaktna && !lenBody && (
                 <>
                   <td className="md-tabulka__volitelne">{r.vitazstva}</td>

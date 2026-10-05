@@ -7,7 +7,7 @@ import {
   ConfirmDialog, useToast, type Stlpec, type AkciaRiadku, type Chip, type TonStitka,
 } from '../../ui';
 import { useNacitanie } from '../../app/useNacitanie';
-import { fanusikoviaApi } from '../../api/klub';
+import { fanusikoviaApi, pozviFanusika, schvalFanusika } from '../../api/klub';
 import { formatujDatum } from '../../utils/datum';
 import type { Fanusik, StavFanusika, TypClenstva } from '../../api/typy';
 import { tr } from '../../i18n';
@@ -54,6 +54,9 @@ export const Fanusikovia: React.FC = () => {
   const [uklada, setUklada] = useState(false);
   const [maze, setMaze] = useState(false);
   const [meniStav, setMeniStav] = useState<number | null>(null);
+  const [pozyva, setPozyva] = useState<number | null>(null);
+  /** Odkaz na nastavenie hesla na skopírovanie (keď e-mail neodišiel alebo ho chce klub poslať inak) */
+  const [odkazHesla, setOdkazHesla] = useState<{ fanusik: Fanusik; odkaz: string; emailOdoslany: boolean } | null>(null);
 
   const fanusikovia = useNacitanie((signal) => fanusikoviaApi.vypis(signal));
   const zoznam = fanusikovia.data ?? [];
@@ -82,21 +85,47 @@ export const Fanusikovia: React.FC = () => {
     [zoznam, filterTypu]
   );
 
-  // Schválenie alebo zamietnutie registrácie z webu
+  // Schválenie (pridelí kartu a pošle e-mail) alebo zamietnutie registrácie z webu
   const zmenStav = async (f: Fanusik, stav: StavFanusika) => {
     setMeniStav(f.id);
     try {
-      await fanusikoviaApi.uprav(f.id, {
-        stav,
-        ...(stav === 'aktivny' && !f.clenstvo_od ? { clenstvo_od: new Date().toISOString().slice(0, 10) } : {}),
-      });
-      uspech(stav === 'aktivny' ? tr('Žiadosť bola schválená') : tr('Žiadosť bola zamietnutá'));
+      if (stav === 'aktivny') {
+        const vysledok = await schvalFanusika(f.id);
+        uspech(vysledok.email_odoslany ? tr('Žiadosť bola schválená a fanúšik dostal e-mail') : tr('Žiadosť bola schválená'));
+        if (vysledok.odkaz && !vysledok.email_odoslany) setOdkazHesla({ fanusik: f, odkaz: vysledok.odkaz, emailOdoslany: false });
+      } else {
+        await fanusikoviaApi.uprav(f.id, { stav });
+        uspech(tr('Žiadosť bola zamietnutá'));
+      }
       setUpravovany((d) => (d?.id === f.id ? null : d));
       fanusikovia.obnov();
     } catch (e: any) {
       hlasChybu(e?.message || tr('Záznam sa nepodarilo uložiť'));
     } finally {
       setMeniStav(null);
+    }
+  };
+
+  // Pozvánka do Môj klub (bez účtu) alebo odkaz na nové heslo (s účtom)
+  const pozvi = async (f: Fanusik) => {
+    setPozyva(f.id);
+    try {
+      const vysledok = await pozviFanusika(f.id);
+      setOdkazHesla({ fanusik: f, odkaz: vysledok.odkaz, emailOdoslany: vysledok.email_odoslany });
+    } catch (e: any) {
+      hlasChybu(e?.message || tr('Pozvánku sa nepodarilo vytvoriť'));
+    } finally {
+      setPozyva(null);
+    }
+  };
+
+  const kopirujOdkaz = async () => {
+    if (!odkazHesla) return;
+    try {
+      await navigator.clipboard.writeText(odkazHesla.odkaz);
+      uspech(tr('Odkaz bol skopírovaný'));
+    } catch {
+      varovanie(tr('Odkaz sa nepodarilo skopírovať - označte ho a skopírujte ručne'));
     }
   };
 
@@ -209,6 +238,19 @@ export const Fanusikovia: React.FC = () => {
       sirka: '230px',
     },
     {
+      kluc: 'ucet',
+      popis: tr('Môj klub'),
+      obsah: (f) =>
+        f.ma_ucet ? (
+          <Badge ton="success">{tr('Má účet')}</Badge>
+        ) : (
+          <span style={{ color: 'var(--muted)' }}>{tr('bez účtu')}</span>
+        ),
+      hodnotaNaZoradenie: (f) => (f.ma_ucet ? 1 : 0),
+      sirka: '120px',
+      skryTNaMobile: true,
+    },
+    {
       kluc: 'karta',
       popis: tr('Číslo karty'),
       obsah: (f) =>
@@ -254,6 +296,8 @@ export const Fanusikovia: React.FC = () => {
   const akcieRiadku: AkciaRiadku<Fanusik>[] = [
     { popis: tr('Upraviť'), ikona: 'upravit', onKlik: (f) => setUpravovany({ ...f }) },
     { popis: tr('Schváliť'), ikona: 'gdpr', onKlik: (f) => zmenStav(f, 'aktivny'), zobrazit: (f) => f.stav !== 'aktivny' },
+    { popis: tr('Pozvať do Môj klub'), ikona: 'odkaz', onKlik: pozvi, zobrazit: (f) => f.stav === 'aktivny' && f.aktivity && !f.ma_ucet },
+    { popis: tr('Poslať odkaz na nové heslo'), ikona: 'odkaz', onKlik: pozvi, zobrazit: (f) => f.stav === 'aktivny' && f.aktivity && Boolean(f.ma_ucet) },
     { popis: tr('Odstrániť'), ikona: 'zmazat', nebezpecna: true, onKlik: (f) => setNaZmazanie(f) },
   ];
 
@@ -335,6 +379,23 @@ export const Fanusikovia: React.FC = () => {
               <div className="cw-fanusik__ziadost">
                 <strong>{tr('Správa z registrácie')}</strong>
                 <blockquote>{upravovany.sprava}</blockquote>
+              </div>
+            )}
+            {!jeNovy && upravovany.stav === 'aktivny' && (
+              <div className="cw-fanusik__ucet">
+                <div>
+                  <strong>{upravovany.ma_ucet ? tr('Účet v Môj klub je aktívny') : tr('Fanúšik zatiaľ nemá účet v Môj klub')}</strong>
+                  <span>
+                    {upravovany.ma_ucet
+                      ? upravovany.posledne_prihlasenie
+                        ? tr('Naposledy prihlásený {datum}', { datum: formatujDatum(upravovany.posledne_prihlasenie) })
+                        : tr('Zatiaľ sa neprihlásil')
+                      : tr('Pošlite mu pozvánku - nastaví si heslo a uvidí členskú kartu a výhody.')}
+                  </span>
+                </div>
+                <Button velkost="sm" variant="secondary" onClick={() => pozvi(upravovany as Fanusik)} nacitava={pozyva === upravovany.id}>
+                  {upravovany.ma_ucet ? tr('Odkaz na nové heslo') : tr('Poslať pozvánku')}
+                </Button>
               </div>
             )}
             <div className="cw-hraci__row">
@@ -435,6 +496,36 @@ export const Fanusikovia: React.FC = () => {
               popis={tr('Bez súhlasu nesmiete posielať klubové novinky — súhlas sa dá kedykoľvek odvolať')}
             />
           </>
+        )}
+      </Modal>
+
+      <Modal
+        otvorene={odkazHesla !== null}
+        onZavri={() => setOdkazHesla(null)}
+        nadpis={odkazHesla?.fanusik.ma_ucet ? tr('Odkaz na nové heslo') : tr('Pozvánka do Môj klub')}
+        pata={
+          <>
+            <Button variant="secondary" onClick={() => setOdkazHesla(null)}>
+              {tr('Zavrieť')}
+            </Button>
+            <Button ikona={<Icon nazov="kopirovat" velkost={16} />} onClick={kopirujOdkaz}>
+              {tr('Kopírovať odkaz')}
+            </Button>
+          </>
+        }
+      >
+        {odkazHesla && (
+          <div className="cw-fanusik__pozvanka">
+            <p>
+              {odkazHesla.emailOdoslany
+                ? tr('Odkaz sme poslali na {email}. Môžete ho poslať aj inak, napríklad cez SMS alebo správu.', { email: odkazHesla.fanusik.email })
+                : tr('E-mail sa nepodarilo odoslať (skontrolujte nastavenie e-mailov). Skopírujte odkaz a pošlite ho fanúšikovi sami.')}
+            </p>
+            <Input menovka={tr('Odkaz na nastavenie hesla')} value={odkazHesla.odkaz} readOnly onFocus={(e) => e.target.select()} />
+            <p className="cw-fanusik__pozvanka-pozn">
+              {odkazHesla.fanusik.ma_ucet ? tr('Odkaz platí 2 hodiny a dá sa použiť iba raz.') : tr('Odkaz platí 7 dní a dá sa použiť iba raz.')}
+            </p>
+          </div>
         )}
       </Modal>
 

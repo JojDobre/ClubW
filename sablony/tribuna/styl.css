@@ -3187,3 +3187,12 @@ a.tb-dlazdica:hover { transform: translateY(-3px); box-shadow: 0 1px 0 rgba(0, 0
 @media (max-width: 560px) {
   .tb-bloky .tb-mriezka-3:not(.tb-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.tb-tabulka .tb-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.tb-tabulka__tim > span { min-width: 0; }
+.tb-tabulka__tim > span > .tb-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-zd__tabulka .tb-zd__ttim { width: 100%; max-width: 0; }
+.tb-zd__ttim > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-zd__ttim > span > span:last-child { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

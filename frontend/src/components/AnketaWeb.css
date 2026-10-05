@@ -12,3 +12,5 @@
 .aw__pruh { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
 .aw__pruh span { display: block; height: 100%; background: #22c55e; border-radius: 4px; }
 .aw__spolu { font-size: 13px; color: #64748b; }
+/* Nadpisy a texty preberajú farbu ankety (aj v tmavej administrácii) */
+.aw :is(h2, h3, h4, label, p, span) { color: inherit; }

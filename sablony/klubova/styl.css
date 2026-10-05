@@ -3099,3 +3099,9 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 @media (max-width: 560px) {
   .kl-bloky .kl-mriezka-3:not(.kl-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.kl-tabulka .kl-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.kl-tabulka__tim > span { min-width: 0; }
+.kl-tabulka__tim > span > .kl-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

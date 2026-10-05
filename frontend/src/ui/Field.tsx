@@ -59,14 +59,16 @@ interface InputProps
   ikona?: React.ReactNode;
 }
 
-export const Input: React.FC<InputProps> = ({
+// forwardRef: rodič sa dostane k poľu (napr. vloženie značky na miesto kurzora)
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
   menovka, chyba, napoveda, povinne, ikona, className = '', ...zvysok
-}) => (
+}, ref) => (
   <Obal menovka={menovka} chyba={chyba} napoveda={napoveda} povinne={povinne}>
     {(id, jeChyba) => (
       <div className={`cw-input-wrap ${ikona ? 'cw-input-wrap--icon' : ''}`}>
         {ikona && <span className="cw-input__icon">{ikona}</span>}
         <input
+          ref={ref}
           id={id}
           className={`cw-input ${jeChyba ? 'cw-input--error' : ''} ${className}`}
           aria-invalid={jeChyba}
@@ -75,7 +77,8 @@ export const Input: React.FC<InputProps> = ({
       </div>
     )}
   </Obal>
-);
+));
+Input.displayName = 'Input';
 
 // ===== Výberový zoznam =====
 
@@ -120,12 +123,13 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   povinne?: boolean;
 }
 
-export const Textarea: React.FC<TextareaProps> = ({
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({
   menovka, chyba, napoveda, povinne, rows = 4, className = '', ...zvysok
-}) => (
+}, ref) => (
   <Obal menovka={menovka} chyba={chyba} napoveda={napoveda} povinne={povinne}>
     {(id, jeChyba) => (
       <textarea
+        ref={ref}
         id={id}
         rows={rows}
         className={`cw-textarea ${jeChyba ? 'cw-input--error' : ''} ${className}`}
@@ -134,7 +138,8 @@ export const Textarea: React.FC<TextareaProps> = ({
       />
     )}
   </Obal>
-);
+));
+Textarea.displayName = 'Textarea';
 
 // ===== Prepínač =====
 

@@ -24,13 +24,17 @@ export const validateArticle = [
     .withMessage('Názov musí mať 5-200 znakov')
     .trim(),
   body('obsah')
-    .isLength({ min: 10, max: 50000 })
-    .withMessage('Obsah musí mať 10-50000 znakov'),
+    .isLength({ min: 10, max: 500000 })
+    .withMessage('Obsah musí mať aspoň 10 a najviac 500 000 znakov'),
   body('excerpt')
     .optional({ nullable: true })
     .isLength({ max: 500 })
     .withMessage('Excerpt môže mať maximálne 500 znakov')
     .trim(),
+  body('obrazok')
+    .optional({ nullable: true })
+    .isLength({ max: 255 })
+    .withMessage('Adresa obrázka môže mať najviac 255 znakov'),
   body('kategoria_id')
     .isInt({ min: 1 })
     .withMessage('Kategória je povinná'),
@@ -82,13 +86,17 @@ export const validateArticleUpdate = [
     .trim(),
   body('obsah')
     .optional()
-    .isLength({ min: 10, max: 50000 })
-    .withMessage('Obsah musí mať 10-50000 znakov'),
+    .isLength({ min: 10, max: 500000 })
+    .withMessage('Obsah musí mať aspoň 10 a najviac 500 000 znakov'),
   body('excerpt')
     .optional({ nullable: true })
     .isLength({ max: 500 })
     .withMessage('Excerpt môže mať maximálne 500 znakov')
     .trim(),
+  body('obrazok')
+    .optional({ nullable: true })
+    .isLength({ max: 255 })
+    .withMessage('Adresa obrázka môže mať najviac 255 znakov'),
   body('kategoria_id')
     .optional()
     .isInt({ min: 1 })
@@ -468,23 +476,17 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     const generatedSlug = slug && slug.trim() ? slug.trim() : Article.generateSlug(nazov.trim());
     console.log('Vygenerovaný slug pred vytvorením:', generatedSlug);
 
-    // Kontrola duplicitného slug
-    const existingArticle = await Article.findOne({
-      where: { slug: generatedSlug },
-    });
-
-    if (existingArticle) {
-      res.status(400).json({
-        success: false,
-        message: 'Článok s týmto slug už existuje',
-      });
-      return;
+    // Rovnaký názov ako existujúci článok (alebo opakovaný pokus po chybe)
+    // nesmie zablokovať uloženie - adresu doplníme číslom: nazov-2, nazov-3…
+    let volnySlug = generatedSlug;
+    for (let poradie = 2; await Article.findOne({ where: { slug: volnySlug }, paranoid: false }); poradie++) {
+      volnySlug = `${generatedSlug}-${poradie}`;
     }
 
     // Vytvorenie článku s explicitne nastaveným slug
     const newArticle = await Article.create({
       nazov: nazov.trim(),
-      slug: generatedSlug, // EXPLICITNE nastavujeme slug
+      slug: volnySlug, // EXPLICITNE nastavujeme slug (voľnú adresu)
       // Obsah prechádza sanitizáciou - odstráni <script>, on* handlery a javascript: odkazy
       obsah: sanitizeContent(obsah),
       excerpt: excerpt ? sanitizePlainText(excerpt) : null,

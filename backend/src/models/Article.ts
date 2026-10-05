@@ -209,7 +209,7 @@ Article.init(
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [10, 50000], // Min 10 znakov, max 50k
+        len: [10, 500000], // Min 10 znakov, max 500k (formátovaný text s obrázkami)
       },
     },
     excerpt: {

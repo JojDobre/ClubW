@@ -10,6 +10,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import sharp from 'sharp';
 import { zostavStrankovanie } from '../utils/odpoved';
+import { zmazSuboryFotiek } from '../services/suboryGalerie';
 
 // ===== MULTER CONFIGURATION =====
 
@@ -434,9 +435,10 @@ export const deleteGalleryImage = async (req: Request, res: Response) => {
       });
     }
 
-    // Soft delete obrázka
+    // Fotka sa maže natrvalo (samostatne zmazané fotky sa nedajú obnoviť
+    // ani pri obnove galérie z archívu), súbory z disku až na konci
     const bolTitulny = obrazok.je_nahladovy;
-    await obrazok.update({ aktivity: false, je_nahladovy: false });
+    await obrazok.destroy();
 
     // Aktualizácia počtu obrázkov v galérii
     const newCount = await GaleriaObrazok.count({
@@ -467,10 +469,8 @@ export const deleteGalleryImage = async (req: Request, res: Response) => {
       await galeria.update(zmeny);
     }
 
-    // TODO: V produkcii by sme mohli skutočne vymazať súbory z disku
-    // const uploadsDir = path.join(process.cwd(), 'uploads');
-    // const fullPath = path.join(uploadsDir, obrazok.cesta_suboru);
-    // await fs.unlink(fullPath);
+    // Súbory fotky z disku - len ak ich už nič iné nepoužíva
+    await zmazSuboryFotiek([obrazok]);
 
     res.json({
       success: true,

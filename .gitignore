@@ -172,3 +172,9 @@ zalohy/
 .aktualizacia.json
 .aktualizacia-subory.json
 aktualizacia.log
+
+# Testy v prehliadači (frontend/e2e)
+frontend/e2e/.prihlasenie.json
+frontend/e2e/.stav-admina.json
+frontend/e2e-report/
+frontend/e2e-vysledky/

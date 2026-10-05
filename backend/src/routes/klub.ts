@@ -18,7 +18,8 @@ import Fanusik from '../models/Fanusik';
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin, smieVModule, modulZCesty } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
-import { posliEmail } from '../utils/email';
+import { posliSablonu, adresaWebu } from '../services/email/odosielanie';
+import { overSiluHesla } from '../utils/heslo';
 import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
 const router = Router();
@@ -415,10 +416,20 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
       return;
     }
 
+    // Voliteľné heslo - registrovaný si hneď založí účet na webe (Môj klub)
+    const heslo = typeof b.heslo === 'string' && b.heslo ? b.heslo : null;
+    if (heslo) {
+      const chyby = overSiluHesla(heslo, { meno: `${meno} ${priezvisko}`, email });
+      if (chyby.length) {
+        res.status(400).json({ success: false, message: chyby[0], errors: chyby });
+        return;
+      }
+    }
+
     // Už evidovaný e-mail neprezrádzame - odpoveď je rovnaká ako pri novej registrácii
     const existujuci = await Fanusik.findOne({ where: { email } });
     if (!existujuci) {
-      await Fanusik.create({
+      const novy = Fanusik.build({
         meno,
         priezvisko,
         email,
@@ -431,23 +442,26 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
         stav: 'ziadost',
         zdroj: 'web',
       });
+      if (heslo) await novy.nastavHeslo(heslo);
+      await novy.save();
 
       const klub = await NastaveniaKlubu.nacitaj();
       if (klub?.email) {
-        posliEmail({
-          prijemca: klub.email,
-          predmet: `Nová registrácia ${typ === 'clen' ? 'člena' : 'fanúšika'}: ${meno} ${priezvisko}`,
-          text:
-            `Na webe sa zaregistroval ${typ === 'clen' ? 'nový člen' : 'nový fanúšik'}.\n\n` +
-            `Meno: ${meno} ${priezvisko}\nE-mail: ${email}\nTelefón: ${text(b.telefon, 40) || '-'}\n` +
-            `${text(b.sprava, 2000) ? `Správa: ${text(b.sprava, 2000)}\n` : ''}` +
-            `\nŽiadosť schválite v administrácii: Fanúšikovia → Nové žiadosti.`,
-        }).catch((e) => console.error('Upozornenie na registráciu sa nepodarilo odoslať:', e));
+        void posliSablonu('fanusik_registracia_klub', klub.email, {
+          meno,
+          priezvisko,
+          email,
+          telefon: text(b.telefon, 40),
+          typ: typ === 'clen' ? 'člen klubu' : 'fanúšik',
+          text_spravy: text(b.sprava, 2000),
+          odkaz_admin: `${adresaWebu()}/admin/fanusikovia`,
+        });
       }
     }
 
     res.status(201).json({
       success: true,
+      data: { ucet: Boolean(heslo) },
       message: typ === 'clen'
         ? 'Ďakujeme, žiadosť o členstvo sme prijali. Klub sa vám ozve.'
         : 'Ďakujeme za registráciu. Vitajte medzi fanúšikmi!',

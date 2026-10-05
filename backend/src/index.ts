@@ -32,6 +32,9 @@ import sezonyRoutes from './routes/sezony';
 import gdprRoutes from './routes/gdpr';
 // Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
 import klubRoutes from './routes/klub';
+import { fanusikRouter, adminFanusikRouter } from './routes/fanusik';
+import { adminEmailRouter, verejnyEmailRouter } from './routes/emaily';
+import { spustiPlanovacEmailov } from './services/email/odosielanie';
 // Komentáre, videá a turnaje
 import obsahDoplnkyRoutes from './routes/obsah-doplnky';
 import authRoutes from './routes/auth';
@@ -175,7 +178,8 @@ const limiter = rateLimit({
   // Jedna obrazovka administrácie spraví 8-15 požiadaviek a viac ľudí
   // v klubovni býva za jednou IP adresou - 500 sa vyčerpalo bežnou prácou.
   // Prihlásenie, komentáre a formuláre majú vlastné prísne limity.
-  max: 3000, // max 3000 requestov na IP za 15 minút
+  // API_LIMIT_ZA_15_MIN zvýši limit pre testy v prehliadači (CI), kde všetko ide z jednej adresy
+  max: Number(process.env.API_LIMIT_ZA_15_MIN) || 3000, // predvolene 3000 requestov na IP za 15 minút
   message: {
     success: false,
     message: 'Príliš veľa requestov, skúste neskôr.'
@@ -312,6 +316,11 @@ app.use('/api', gdprRoutes);
 
 // Sekcia KLUB — čítanie je verejné (sponzori a dokumenty na webe)
 app.use('/api', klubRoutes);
+// Účty fanúšikov na webe (Môj klub) a výhody členov
+app.use('/api/fan', fanusikRouter);
+app.use('/api/admin', adminFanusikRouter);
+app.use('/api/admin/email', adminEmailRouter);
+app.use('/api/email', verejnyEmailRouter);
 app.use('/api', obsahDoplnkyRoutes);
 
 app.use('/api/auth', authRoutes);
@@ -612,6 +621,9 @@ async function startServer() {
     // Prepínanie stavu zápasov na odohratý - logika existovala, ale
     // nikto ju nevolal, takže sa stav menil len ručne
     spustiPlanovacZapasov();
+
+    // Fronta e-mailov - opakované pokusy a postupné hromadné e-maily
+    spustiPlanovacEmailov();
 
     // Spustenie servera
     app.listen(PORT, () => {

@@ -1,7 +1,7 @@
 {
   "slug": "arena",
   "nazov": "Aréna",
-  "verzia": "1.0.1",
+  "verzia": "1.0.8",
   "autor": "ClubW",
   "popis": "Moderná šablóna s plávajúcou navigáciou - zaoblený sklenený „ostrov“ s odstupom od vrchu, ktorý sa pri posúvaní zúži, rozbaľovacie menu ako plávajúca karta a menu cez celú obrazovku na mobile. Úvod: pohlcujúci hero v zaoblenom ráme s obrovským obrysovým nápisom a kartou zápasu s odpočtom, naklonený neónový pás výsledkov, karusel noviniek, zápasy s prilepeným nadpisom, sezóna v číslach na farebnom paneli, karusel kádra, médiá a výzva na členstvo. Podstránky s tmavou zaoblenou hlavičkou, pätička ako veľký panel s obrovským názvom klubu. Písma Unbounded a Manrope.",
   "api": 1,
@@ -120,6 +120,14 @@
       "skupina": "Plávajúca navigácia",
       "predvolene": true,
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý."
+    },
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Plávajúca navigácia",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
     {
       "kluc": "ukazat_admin",
@@ -634,6 +642,22 @@
       "predvolene": "Registrácia"
     },
     {
+      "kluc": "stranka_moj_klub_stitok",
+      "typ": "text",
+      "menovka": "Môj klub: štítok",
+      "skupina": "Podstránky",
+      "predvolene": "",
+      "napoveda": "Prázdne = názov klubu."
+    },
+    {
+      "kluc": "stranka_moj_klub_nadpis",
+      "typ": "text",
+      "menovka": "Môj klub: nadpis",
+      "skupina": "Podstránky",
+      "predvolene": "Môj klub",
+      "napoveda": "Prihláseným sa zobrazí pozdrav s menom."
+    },
+    {
       "kluc": "stranka_partneri_popis",
       "typ": "dlhy_text",
       "menovka": "Partneri: popis",
@@ -696,6 +720,13 @@
       "menovka": "„Detail zápasu“",
       "skupina": "Texty tlačidiel",
       "predvolene": "Detail zápasu"
+    },
+    {
+      "kluc": "text_detail_sutaze",
+      "typ": "text",
+      "menovka": "„Detail súťaže“",
+      "skupina": "Texty tlačidiel",
+      "predvolene": "Detail súťaže"
     },
     {
       "kluc": "text_objavit",

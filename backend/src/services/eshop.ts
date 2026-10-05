@@ -29,7 +29,7 @@ import {
   type VlastnostProduktu,
   type ZvolenaVlastnost,
 } from '../models/Eshop';
-import { posliEmail } from '../utils/email';
+import { posliSablonu } from './email/odosielanie';
 import { sanitizePlainText } from '../utils/sanitize';
 
 /** Chyba, ktorú treba ukázať zákazníkovi alebo správcovi (HTTP 400/409). */
@@ -580,45 +580,35 @@ const suhrnObjednavky = (o: EshopObjednavka) =>
     `Spolu: ${cenaText(o.spolu, o.mena)}`,
   ].join('\n');
 
-/** Potvrdenie zákazníkovi a oznámenie klubu o novej objednávke. */
+/** Potvrdenie zákazníkovi a oznámenie klubu o novej objednávke (šablóny v E-maily → Šablóny). */
 export const posliEmailyObjednavky = async (o: EshopObjednavka) => {
   const klub = await NastaveniaKlubu.nacitaj();
   const nastavenia = await nastaveniaEshopu();
   const platba = o.platba_id ? await EshopPlatba.findByPk(o.platba_id) : null;
   const pokyny = platba?.pokyny ? nahradZnacky(platba.pokyny, await znackyObjednavky(o)) : null;
-  const odkaz = `${adresaWebu()}/objednavka/${o.token}`;
+  const spolu = cenaText(o.spolu, o.mena);
 
-  await posliEmail({
-    prijemca: o.email,
-    predmet: `Objednávka ${o.cislo} - ${klub.nazov}`,
-    text: [
-      `Dobrý deň ${o.meno},`,
-      '',
-      `ďakujeme za objednávku č. ${o.cislo}.`,
-      '',
-      suhrnObjednavky(o),
-      ...(pokyny ? ['', pokyny] : []),
-      '',
-      `Stav objednávky: ${odkaz}`,
-      '',
-      klub.nazov,
-    ].join('\n'),
+  await posliSablonu('objednavka_zakaznik', o.email, {
+    meno: o.meno,
+    cislo: o.cislo,
+    suhrn: suhrnObjednavky(o),
+    spolu,
+    pokyny,
+    odkaz: `${adresaWebu()}/objednavka/${o.token}`,
   });
 
   const spravca = nastavenia.email_objednavok || klub.email;
   if (spravca) {
-    await posliEmail({
-      prijemca: spravca,
-      predmet: `Nová objednávka ${o.cislo} (${cenaText(o.spolu, o.mena)})`,
-      text: [
-        `Nová objednávka č. ${o.cislo} od ${o.meno} <${o.email}>${o.telefon ? `, ${o.telefon}` : ''}.`,
-        '',
-        suhrnObjednavky(o),
-        ...(o.ulica ? ['', `Adresa: ${o.ulica}, ${o.psc} ${o.mesto}, ${o.krajina ?? ''}`] : []),
-        ...(o.poznamka ? ['', `Poznámka: ${o.poznamka}`] : []),
-        '',
-        `Administrácia: ${adresaWebu()}/admin/eshop/objednavky/${o.id}`,
-      ].join('\n'),
+    await posliSablonu('objednavka_klub', spravca, {
+      cislo: o.cislo,
+      meno: o.meno,
+      email: o.email,
+      telefon: o.telefon,
+      suhrn: suhrnObjednavky(o),
+      spolu,
+      adresa: o.ulica ? `${o.ulica}, ${o.psc} ${o.mesto}${o.krajina ? `, ${o.krajina}` : ''}` : '',
+      poznamka: o.poznamka,
+      odkaz_admin: `${adresaWebu()}/admin/eshop/objednavky/${o.id}`,
     });
   }
 };
@@ -634,20 +624,12 @@ export const NAZVY_STAVOV: Record<string, string> = {
 
 /** Zákazníkovi dá vedieť o zmene stavu objednávky (ak to správca zvolí). */
 export const posliZmenuStavu = async (o: EshopObjednavka) => {
-  const klub = await NastaveniaKlubu.nacitaj();
-  await posliEmail({
-    prijemca: o.email,
-    predmet: `Objednávka ${o.cislo} je ${NAZVY_STAVOV[o.stav] ?? o.stav}`,
-    text: [
-      `Dobrý deň ${o.meno},`,
-      '',
-      `vaša objednávka č. ${o.cislo} je teraz ${NAZVY_STAVOV[o.stav] ?? o.stav}.`,
-      ...(o.stav_platby === 'uhradena' ? ['Platbu sme prijali, ďakujeme.'] : []),
-      '',
-      `Stav objednávky: ${adresaWebu()}/objednavka/${o.token}`,
-      '',
-      klub.nazov,
-    ].join('\n'),
+  await posliSablonu('objednavka_stav', o.email, {
+    meno: o.meno,
+    cislo: o.cislo,
+    stav: NAZVY_STAVOV[o.stav] ?? o.stav,
+    platba: o.stav_platby === 'uhradena' ? 'Platbu sme prijali, ďakujeme.' : '',
+    odkaz: `${adresaWebu()}/objednavka/${o.token}`,
   });
 };
 

@@ -45,6 +45,20 @@ describe('skupiny a odkazy v nastaveniach', () => {
       expect(overHodnotu(n, zle).chyba).toBeTruthy();
     }
   });
+  it('prevezme preklady administrácie a vynechá neplatné', () => {
+    const m = overManifest({
+      ...zakladny,
+      preklady: {
+        en: { 'Farba klubu': 'Club colour', 'Zlé': 42 },
+        cs: { 'Farba klubu': '<b>Barva</b> klubu' },
+        xx: { 'Farba klubu': 'Neznámy jazyk' },
+      },
+    });
+    expect(m.preklady.en).toEqual({ 'Farba klubu': 'Club colour' });
+    expect(m.preklady.cs['Farba klubu']).not.toContain('<b>');
+    expect(m.preklady.xx).toBeUndefined();
+    expect(overManifest({ ...zakladny, preklady: 'nie' }).preklady).toEqual({});
+  });
   it('dovolí až 200 nastavení', () => {
     const nastavenia = Array.from({ length: 200 }, (_, i) => ({ kluc: `pole_${i}`, typ: 'text', menovka: `Pole ${i}` }));
     expect(overManifest({ ...zakladny, nastavenia }).nastavenia).toHaveLength(200);

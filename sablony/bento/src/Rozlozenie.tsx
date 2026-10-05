@@ -24,6 +24,7 @@ import {
   useNastavenia,
   useNastaveniaSablony,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import { Ikona, Odkaz, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
@@ -38,7 +39,8 @@ const jeAktivny = (odkaz: string | null, pathname: string) => {
 const useTlacidloHlavicky = () => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
-  const text = u.text('tlacidlo_text', 'Vstupenky');
+  // Predvolený text dopĺňa server; vymazaný text (null) tlačidlo skryje.
+  const text = u.text('tlacidlo_text', '');
   const odkaz = String(u.s.tlacidlo_odkaz || '').trim() || (nastavenia.kontakt?.email ? `mailto:${nastavenia.kontakt.email}` : '');
   return text && odkaz ? { text, odkaz } : null;
 };
@@ -301,6 +303,13 @@ const KosikHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   );
 };
 
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="db-ikona-tl" onClick={onClick} />;
+};
+
 export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
@@ -429,6 +438,7 @@ export const Hlavicka: React.FC = () => {
               </button>
             )}
             <KosikHlavicky />
+            <UcetHlavicky />
             {jePrihlaseny() && u.zapnute('ukazat_admin') && (
               <a href="/admin" className="db-ikona-tl db-ikona-tl--text" title="Administrácia">
                 Admin
@@ -494,6 +504,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
         </div>
         <div className="db-dlazdica db-mmenu__akcie">
           <KosikHlavicky onClick={zavriet} />
+          <UcetHlavicky onClick={zavriet} />
           <button type="button" className="db-ikona-tl db-ikona-tl--volt" onClick={zavriet} aria-label="Zavrieť menu">
             <Ikona nazov="zavriet" velkost={20} />
           </button>

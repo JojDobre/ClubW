@@ -22,12 +22,12 @@ import {
   useMenuWebu,
   useNastavenia,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import {
   Ikona,
   Odkaz,
   cas,
-  datum,
   datumKratky,
   denVTyzdni,
   dnes,
@@ -56,7 +56,8 @@ const jeAktivnaPolozka = (p: PolozkaMenu, pathname: string): boolean =>
 const useTlacidloHlavicky = () => {
   const { nastavenia } = useNastavenia();
   const u = useUpravy();
-  const text = u.text('tlacidlo_text', 'Vstupenky');
+  // Predvolený text dopĺňa server; vymazaný text (null) tlačidlo skryje.
+  const text = u.text('tlacidlo_text', '');
   const odkaz = String(u.s.tlacidlo_odkaz || '').trim() || (nastavenia.kontakt?.email ? `mailto:${nastavenia.kontakt.email}` : '');
   return text && odkaz ? { text, odkaz } : null;
 };
@@ -201,7 +202,6 @@ const ClankyMenu: React.FC<{ polozka: PolozkaMenu; zavriet: () => void; trieda?:
       {(clanky.data ?? []).map((c) => (
         <Link key={c.id} to={`/clanek/${c.slug}`} className={trieda} onClick={zavriet}>
           <span className="ar-panel__obrazok">{c.obrazok ? <img src={obrazokUrl(c.obrazok) ?? ''} alt="" loading="lazy" /> : null}</span>
-          <span className="ar-panel__datum">{datum(c.publikovany_datum || c.vytvoreny)}</span>
           <span className="ar-panel__titulok">{c.nazov}</span>
         </Link>
       ))}
@@ -348,6 +348,13 @@ const KosikHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   );
 };
 
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="ar-ikona-tl" onClick={onClick} />;
+};
+
 export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
@@ -465,6 +472,7 @@ export const Hlavicka: React.FC = () => {
               </button>
             )}
             <KosikHlavicky />
+            <UcetHlavicky />
             {jePrihlaseny() && u.zapnute('ukazat_admin') && (
               <a href="/admin" className="ar-ostrov__admin">
                 Admin
@@ -569,7 +577,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
                             Prejsť na sekciu
                           </OdkazMenu>
                         )}
-                        {deti.map((d) =>
+                        {deti.filter((d) => !(!d.deti?.length && d.obrazok && d.odkaz)).map((d) =>
                           d.deti?.length ? (
                             <div key={d.id} className="ar-mmenu__skupina">
                               <OdkazMenu polozka={{ ...d, deti: [] }} onClick={zavriet} className="ar-mmenu__kategoria" />
@@ -580,6 +588,21 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
                           ) : (
                             <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className={`ar-mmenu__pododkaz${jeAktivny(d.odkaz, pathname) ? ' is-aktivny' : ''}`} />
                           )
+                        )}
+                        {/* Odkazy s fotkou ako karty - rovnako ako v rozbaľovacom menu na počítači */}
+                        {deti.some((d) => !d.deti?.length && d.obrazok && d.odkaz) && (
+                          <div className="ar-mmenu__karty">
+                            {deti
+                              .filter((d) => !d.deti?.length && d.obrazok && d.odkaz)
+                              .map((d) => (
+                                <OdkazMenu key={d.id} polozka={d} onClick={zavriet} className="ar-mmenu__karta">
+                                  <span className="ar-mmenu__karta-obrazok">
+                                    <img src={obrazokUrl(d.obrazok) ?? ''} alt="" loading="lazy" />
+                                  </span>
+                                  <span className="ar-mmenu__karta-nazov">{d.nazov}</span>
+                                </OdkazMenu>
+                              ))}
+                          </div>
                         )}
                         {clankove.length > 0 && (
                           <div className="ar-mmenu__clanky">

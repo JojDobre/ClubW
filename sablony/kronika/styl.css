@@ -2790,3 +2790,9 @@ td.kr-tabulka__body { font-family: var(--kr-serif); font-size: 16px; }
 @media (max-width: 560px) {
   .kr-bloky .kr-mriezka-3:not(.kr-mriezka-zapasov) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Tabuľky: stĺpec tímu zaberie zvyšok šírky a dlhý názov sa skráti,
+   takže body ostanú viditeľné aj na mobile */
+.kr-tabulka .kr-tabulka__tim { width: 100%; max-width: 0; min-width: 96px; }
+.kr-tabulka__tim > span { min-width: 0; }
+.kr-tabulka__tim > span > .kr-tabulka__nazov { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

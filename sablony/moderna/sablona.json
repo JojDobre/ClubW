@@ -1,7 +1,7 @@
 {
   "slug": "moderna",
   "nazov": "Moderná",
-  "verzia": "1.1.1",
+  "verzia": "1.1.4",
   "autor": "ClubW",
   "popis": "Prémiový redakčný vzhľad: veľké fotky, zaoblené karty, jemné tiene a Match Centre ako hlavný prvok úvodnej stránky. Na mobile sa správa ako športová aplikácia so spodnou navigáciou. Nahrádza všetky stránky webu a farby berie z Nastavení klubu.",
   "api": 1,
@@ -9,6 +9,14 @@
   "styl": "styl.css",
   "skript": "sablona.js",
   "nastavenia": [
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Hlavička",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
+    },
     {
       "kluc": "uvodna_fotka",
       "typ": "obrazok",

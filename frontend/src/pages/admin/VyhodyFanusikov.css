@@ -1,0 +1,18 @@
+/* Umiestnenie: frontend/src/pages/admin/VyhodyFanusikov.css */
+
+.cw-vyhody__nahlad {
+  width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; overflow: hidden; display: grid; place-items: center;
+  background: var(--surface-2, var(--card)); border: 1px solid var(--border); color: var(--muted);
+}
+.cw-vyhody__nahlad img { width: 100%; height: 100%; object-fit: contain; }
+.cw-vyhody__typy { display: flex; flex-wrap: wrap; gap: 4px; }
+.cw-vyhody__pre { margin: 0 0 16px; padding: 0; border: 0; min-width: 0; }
+.cw-vyhody__pre legend { padding: 0; margin-bottom: 8px; font-size: var(--fs-sm, 14px); font-weight: 600; }
+.cw-vyhody__pre small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+.cw-vyhody__volby { display: flex; flex-wrap: wrap; gap: 8px; }
+.cw-vyhody__volby label {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card); font-size: 14px;
+}
+.cw-vyhody__volby label:has(input:checked) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--card)); }
+.cw-vyhody__volby input { accent-color: var(--primary); margin: 0; }

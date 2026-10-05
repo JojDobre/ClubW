@@ -322,8 +322,8 @@ const TabulkaPanelu: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: numb
         <tr>
           <th>#</th>
           <th className="dr-mtabulka__tim">Tím</th>
-          <th>Z</th>
-          <th>S</th>
+          {liga.rezim_tabulky !== 'len_body' && <th>Z</th>}
+          {liga.rezim_tabulky !== 'len_body' && <th>S</th>}
           <th>B</th>
         </tr>
       </thead>
@@ -337,10 +337,12 @@ const TabulkaPanelu: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: numb
                 <span>{r.tim_nazov || r.custom_tim_nazov}</span>
               </span>
             </td>
-            <td>{r.zapasy}</td>
-            <td>
-              {r.goly_za}:{r.goly_proti}
-            </td>
+            {liga.rezim_tabulky !== 'len_body' && <td>{r.zapasy}</td>}
+            {liga.rezim_tabulky !== 'len_body' && (
+              <td>
+                {r.goly_za}:{r.goly_proti}
+              </td>
+            )}
             <td>
               <b>{r.body}</b>
             </td>

@@ -314,7 +314,7 @@ const TabulkaKarty: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: numbe
           <tr>
             <th>#</th>
             <th className="el-mc__ttim">Tím</th>
-            <th>Z</th>
+            {liga.rezim_tabulky !== 'len_body' && <th>Z</th>}
             <th>B</th>
           </tr>
         </thead>
@@ -328,7 +328,7 @@ const TabulkaKarty: React.FC<{ liga: Liga; riadky: RiadokTabulky[]; timId: numbe
                   <span>{r.tim_nazov || r.custom_tim_nazov}</span>
                 </span>
               </td>
-              <td>{r.zapasy}</td>
+              {liga.rezim_tabulky !== 'len_body' && <td>{r.zapasy}</td>}
               <td>
                 <b>{r.body}</b>
               </td>
