@@ -12,8 +12,9 @@ import sequelize from '../../src/config/database';
 import models from '../../src/models';
 import { Op } from 'sequelize';
 import { createArticle, validateArticle } from '../../src/controllers/articleController';
+import { testovaciaRubrika, testovaciSpravca } from '../pomocnik';
 
-const { Article, Category, User } = models as any;
+const { Article } = models as any;
 const P = `Clanok test ${Date.now()}`;
 let kategoriaId: number;
 let autorId: number;
@@ -35,8 +36,8 @@ const clanok = (udaje: Record<string, unknown> = {}) => ({
 
 beforeAll(async () => {
   await sequelize.authenticate();
-  kategoriaId = (await Category.findOne()).id;
-  autorId = (await User.findOne()).id;
+  kategoriaId = (await testovaciaRubrika()).id;
+  autorId = (await testovaciSpravca()).id;
 });
 
 afterAll(async () => {

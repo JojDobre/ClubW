@@ -178,7 +178,8 @@ const limiter = rateLimit({
   // Jedna obrazovka administrácie spraví 8-15 požiadaviek a viac ľudí
   // v klubovni býva za jednou IP adresou - 500 sa vyčerpalo bežnou prácou.
   // Prihlásenie, komentáre a formuláre majú vlastné prísne limity.
-  max: 3000, // max 3000 requestov na IP za 15 minút
+  // API_LIMIT_ZA_15_MIN zvýši limit pre testy v prehliadači (CI), kde všetko ide z jednej adresy
+  max: Number(process.env.API_LIMIT_ZA_15_MIN) || 3000, // predvolene 3000 requestov na IP za 15 minút
   message: {
     success: false,
     message: 'Príliš veľa requestov, skúste neskôr.'

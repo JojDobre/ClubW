@@ -27,8 +27,8 @@ cd backend
 DB_NAME=clubw_e2e npx sequelize-cli db:migrate
 DB_NAME=clubw_e2e npx tsx scripts/vytvor-spravcu.ts --email e2e@test.sk --meno "E2E Správca" --heslo "modra lavica pri tichom rybniku"
 
-# 2. Backend na porte 3100
-DB_NAME=clubw_e2e PORT=3100 LICENSE_CHECK_DISABLED=true npx tsx src/index.ts
+# 2. Backend na porte 3100 (vyšší limit požiadaviek - testy idú z jednej adresy)
+DB_NAME=clubw_e2e PORT=3100 LICENSE_CHECK_DISABLED=true API_LIMIT_ZA_15_MIN=100000 npx tsx src/index.ts
 
 # 3. Produkčný build webu napojený na tento backend
 cd frontend

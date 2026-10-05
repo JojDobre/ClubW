@@ -17,8 +17,9 @@ import { adminEmailRouter, verejnyEmailRouter } from '../../src/routes/emaily';
 import { nastavPrenosPreTesty, posliSablonu, spracujFrontu } from '../../src/services/email/odosielanie';
 import { vyrobEmail } from '../../src/services/email/vzhlad';
 import { odkazOdhlasenia } from '../../src/services/email/kampane';
+import { testovaciSpravca } from '../pomocnik';
 
-const { User, Fanusik, EmailNastavenia, EmailSablona, EmailFronta, EmailKampan } = models as any;
+const { Fanusik, EmailNastavenia, EmailSablona, EmailFronta, EmailKampan } = models as any;
 
 process.env.JWT_SECRET ||= 'test_tajomstvo';
 const P = `em${Date.now()}`;
@@ -53,7 +54,7 @@ const put = (u: string, b: object) => request(app).put(u).set('Authorization', `
 
 beforeAll(async () => {
   await sequelize.authenticate();
-  const u = await User.findOne({ where: { rola: 'admin', aktivity: true } });
+  const u = await testovaciSpravca();
   token = jwt.sign({ userId: u.id, email: u.email, rola: u.rola }, process.env.JWT_SECRET!, { expiresIn: '1h' });
   const n = await EmailNastavenia.nacitaj();
   povodne = { ...n.get() };

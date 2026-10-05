@@ -164,7 +164,7 @@ jobs:
       - name: Spustenie backendu
         working-directory: backend
         run: |
-          PORT=3100 nohup npx tsx src/index.ts > ../backend-e2e.log 2>&1 &
+          PORT=3100 API_LIMIT_ZA_15_MIN=100000 nohup npx tsx src/index.ts > ../backend-e2e.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3100/health && exit 0; sleep 1; done
           cat ../backend-e2e.log; exit 1
 

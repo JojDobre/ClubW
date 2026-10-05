@@ -15,8 +15,9 @@ import models from '../../src/models';
 import klubRoutes from '../../src/routes/klub';
 import { fanusikRouter, adminFanusikRouter } from '../../src/routes/fanusik';
 import { authenticateToken } from '../../src/middleware/auth';
+import { testovaciSpravca } from '../pomocnik';
 
-const { Fanusik, FanusikToken, VyhodaFanusika, User } = models as any;
+const { Fanusik, FanusikToken, VyhodaFanusika } = models as any;
 
 process.env.JWT_SECRET ||= 'test_tajomstvo';
 const P = `fu${Date.now()}`;
@@ -35,7 +36,7 @@ const vyhody: any[] = [];
 
 beforeAll(async () => {
   await sequelize.authenticate();
-  const admin = await User.findOne({ where: { rola: 'admin', aktivity: true } });
+  const admin = await testovaciSpravca();
   adminToken = jwt.sign({ userId: admin.id, email: admin.email, rola: admin.rola }, process.env.JWT_SECRET!, { expiresIn: '1h' });
   vyhody.push(await VyhodaFanusika.create({ nazov: `${P} pre všetkých`, kod: 'VSETCI10' }));
   vyhody.push(await VyhodaFanusika.create({ nazov: `${P} len VIP`, typy_clenstva: ['vip'], kod: 'VIP20' }));

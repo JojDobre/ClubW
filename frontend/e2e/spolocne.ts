@@ -47,6 +47,8 @@ export const sledujChyby = (page: Page): string[] => {
     if (m.type() !== 'error') return;
     const text = m.text();
     if (/Failed to load resource|ERR_|net::/i.test(text)) return;
+    // Náhľad e-mailu je zámerne v izolovanom rámci bez skriptov - hlásenie prehliadača, nie chyba
+    if (/Blocked script execution in 'about:srcdoc'/.test(text)) return;
     chyby.push(`konzola: ${text.slice(0, 300)}`);
   });
   return chyby;
