@@ -2531,7 +2531,6 @@
  "Meno odosielateľa": "Nom de l’expéditeur",
  "Prázdne = názov klubu.": "Vide = nom du club.",
  "E-mail odosielateľa": "E-mail de l’expéditeur",
- "Musí patriť k schránke alebo k overenej doméne.": "Doit appartenir à la boîte ou à un domaine vérifié.",
  "Odpovede posielať na": "Envoyer les réponses à",
  "Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.": "Où arrive la réponse quand quelqu’un répond à l’e-mail. Vide = e-mail du club dans les Paramètres.",
  "Pätička e-mailov": "Pied de page des e-mails",
@@ -2659,5 +2658,7 @@
  "Návod na nastavenie e-mailov": "Guide de configuration des e-mails",
  "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Étape par étape : création d’une boîte chez l’hébergeur, choix d’un service e-mail, enregistrements DNS anti-spam, modèles et dépannage. (Le guide est en slovaque.)",
  "Zobraziť návod": "Voir le guide",
- "Stiahnuť návod": "Télécharger le guide"
+ "Stiahnuť návod": "Télécharger le guide",
+ "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Vide = la boîte de connexion. Le domaine peut être quelconque, mais l'adresse doit appartenir à la boîte à laquelle vous vous connectez ou à un domaine vérifié dans le service e-mail.",
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Diffère de la boîte de connexion {email}. Une boîte d'hébergement ou Gmail n'enverront généralement pas un tel e-mail - si ce n'est pas un alias de cette boîte, laissez le champ vide."
 }

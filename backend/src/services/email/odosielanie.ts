@@ -38,6 +38,8 @@ export interface KonfiguraciaSmtp {
   pouzivatel: string | null;
   heslo: string | null;
   odosielatel: string;
+  /** Holá adresa odosielateľa (bez mena) - pre hlášky o chybe */
+  odosielatelEmail: string;
   odpovedatNa: string | null;
 }
 
@@ -53,12 +55,16 @@ export interface UdajeSmtp {
 }
 
 const odosielatel = (meno: string | null | undefined, email: string) => (meno ? `"${meno.replace(/"/g, "'")}" <${email}>` : email);
+const jeAdresa = (s: string | null | undefined): s is string => !!s && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(s);
 
 /** Konfigurácia z údajov formulára alebo databázy. */
 export const konfiguraciaZUdajov = (u: UdajeSmtp, nazovKlubu: string, emailKlubu: string | null): KonfiguraciaSmtp | null => {
   const host = u.smtp_host?.trim();
   if (!host) return null;
-  const email = u.odosielatel_email?.trim() || u.smtp_pouzivatel?.trim() || emailKlubu;
+  // Prázdny odosielateľ = prihlasovacia schránka. Služby ako Brevo či
+  // Mailgun majú prihlasovacie meno, ktoré nie je adresa - vtedy e-mail klubu.
+  const prihlasenie = u.smtp_pouzivatel?.trim();
+  const email = u.odosielatel_email?.trim() || (jeAdresa(prihlasenie) ? prihlasenie : null) || emailKlubu;
   if (!email) return null;
   return {
     zdroj: 'administracia',
@@ -68,6 +74,7 @@ export const konfiguraciaZUdajov = (u: UdajeSmtp, nazovKlubu: string, emailKlubu
     pouzivatel: u.smtp_pouzivatel?.trim() || null,
     heslo: u.heslo ?? null,
     odosielatel: odosielatel(u.odosielatel_meno?.trim() || nazovKlubu, email),
+    odosielatelEmail: email,
     odpovedatNa: u.odpovedat_na?.trim() || emailKlubu,
   };
 };
@@ -79,6 +86,7 @@ export const nacitajKonfiguraciu = async (): Promise<KonfiguraciaSmtp | null> =>
   if (zDb) return zDb;
   const e = process.env;
   if (!e.SMTP_HOST) return null;
+  const odosielatelEnv = e.SMTP_FROM || e.SMTP_USER || klub?.email || '';
   return {
     zdroj: 'env',
     host: e.SMTP_HOST,
@@ -86,7 +94,8 @@ export const nacitajKonfiguraciu = async (): Promise<KonfiguraciaSmtp | null> =>
     zabezpecenie: 'auto',
     pouzivatel: e.SMTP_USER || null,
     heslo: e.SMTP_PASSWORD || null,
-    odosielatel: e.SMTP_FROM || e.SMTP_USER || klub?.email || '',
+    odosielatel: odosielatelEnv,
+    odosielatelEmail: odosielatelEnv.match(/<([^>]+)>/)?.[1] ?? odosielatelEnv,
     odpovedatNa: n.odpovedat_na || klub?.email || null,
   };
 };
@@ -122,8 +131,13 @@ export const overSpojenie = async (k: KonfiguraciaSmtp) => {
 
 /** Zrozumiteľná hláška pre správcu namiesto technickej chyby SMTP. */
 export const popisChybySmtp = (chyba: unknown, k?: KonfiguraciaSmtp | null): string => {
-  const e = chyba as { code?: string; responseCode?: number; message?: string };
+  const e = chyba as { code?: string; command?: string; responseCode?: number; response?: string; message?: string };
   const sprava = String(e?.message || chyba || '');
+  // Doslovná odpoveď servera - z nej správca (alebo podpora hostingu) zistí presný dôvod
+  const odpoved = String(e?.response || sprava)
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 300);
   if (e?.code === 'EAUTH' || e?.responseCode === 535) return 'Prihlásenie na SMTP server zlyhalo - skontrolujte používateľské meno a heslo';
   if (/wrong version number|ssl3_get_record|unknown protocol/i.test(sprava)) {
     return 'Nesprávne zabezpečenie spojenia - pri porte 465 zvoľte SSL, pri porte 587 STARTTLS';
@@ -133,10 +147,19 @@ export const popisChybySmtp = (chyba: unknown, k?: KonfiguraciaSmtp | null): str
       ? `Nepodarilo sa spojiť so serverom ${k.host}:${k.port} - skontrolujte adresu, port a či spojenie nebráni firewall`
       : 'Nepodarilo sa spojiť so SMTP serverom';
   }
-  if (e?.responseCode === 550 || e?.responseCode === 553 || /sender|from address/i.test(sprava)) {
-    return 'Server odmietol odosielateľa - adresa odosielateľa musí patriť k prihlásenej schránke alebo overenej doméne';
+  const prikaz = (e?.command || '').toUpperCase();
+  const oOdosielatelovi = /sender|from address|not owned|mismatch|spoof|odesílatel|odosielateľ/i.test(odpoved);
+  if (prikaz === 'MAIL FROM' || (oOdosielatelovi && (prikaz === 'RCPT TO' || prikaz === 'DATA' || !prikaz))) {
+    const adresa = k?.odosielatelEmail || '?';
+    const prihlasenie = k?.pouzivatel;
+    if (jeAdresa(prihlasenie) && prihlasenie.toLowerCase() !== adresa.toLowerCase()) {
+      return `Server odmietol odosielateľa ${adresa} - pri schránke na hostingu musí byť e-mail odosielateľa rovnaký ako prihlasovacie meno ${prihlasenie} (alebo pole nechajte prázdne). Odpoveď servera: ${odpoved}`;
+    }
+    return `Server odmietol odosielateľa ${adresa} - adresa musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe. Odpoveď servera: ${odpoved}`;
   }
-  return sprava.slice(0, 500) || 'Neznáma chyba pri odosielaní';
+  if (prikaz === 'RCPT TO') return `Server odmietol adresu príjemcu. Odpoveď servera: ${odpoved}`;
+  if (prikaz === 'DATA') return `Server odmietol e-mail. Odpoveď servera: ${odpoved}`;
+  return odpoved || 'Neznáma chyba pri odosielaní';
 };
 
 // ===== Fronta =====

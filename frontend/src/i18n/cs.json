@@ -2531,7 +2531,6 @@
  "Meno odosielateľa": "Jméno odesílatele",
  "Prázdne = názov klubu.": "Prázdné = název klubu.",
  "E-mail odosielateľa": "E-mail odesílatele",
- "Musí patriť k schránke alebo k overenej doméne.": "Musí patřit ke schránce nebo k ověřené doméně.",
  "Odpovede posielať na": "Odpovědi posílat na",
  "Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.": "Kam přijde odpověď, když člověk na e-mail odpoví. Prázdné = e-mail klubu z Nastavení.",
  "Pätička e-mailov": "Patička e-mailů",
@@ -2659,5 +2658,7 @@
  "Návod na nastavenie e-mailov": "Návod na nastavení e-mailů",
  "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Krok za krokem: vytvoření schránky na hostingu, výběr e-mailové služby, DNS záznamy proti spamu, šablony a řešení problémů. (Návod je ve slovenštině.)",
  "Zobraziť návod": "Zobrazit návod",
- "Stiahnuť návod": "Stáhnout návod"
+ "Stiahnuť návod": "Stáhnout návod",
+ "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Prázdné = přihlašovací schránka. Doména může být jakákoli, adresa však musí patřit ke schránce, do které se přihlašujete, nebo k doméně ověřené v e-mailové službě.",
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Liší se od přihlašovací schránky {email}. Schránka na hostingu ani Gmail takový e-mail většinou neodešlou - pokud to není alias této schránky, pole nechte prázdné."
 }

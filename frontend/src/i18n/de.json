@@ -2531,7 +2531,6 @@
  "Meno odosielateľa": "Absendername",
  "Prázdne = názov klubu.": "Leer = Vereinsname.",
  "E-mail odosielateľa": "Absender-E-Mail",
- "Musí patriť k schránke alebo k overenej doméne.": "Muss zum Postfach oder zu einer verifizierten Domain gehören.",
  "Odpovede posielať na": "Antworten senden an",
  "Kam príde odpoveď, keď človek na e-mail odpovie. Prázdne = e-mail klubu z Nastavení.": "Wohin eine Antwort geht, wenn jemand auf die E-Mail antwortet. Leer = Vereins-E-Mail aus den Einstellungen.",
  "Pätička e-mailov": "E-Mail-Fußzeile",
@@ -2659,5 +2658,7 @@
  "Návod na nastavenie e-mailov": "Anleitung zur E-Mail-Einrichtung",
  "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Schritt für Schritt: Postfach beim Hosting anlegen, E-Mail-Dienst wählen, DNS-Einträge gegen Spam, Vorlagen und Fehlerbehebung. (Die Anleitung ist auf Slowakisch.)",
  "Zobraziť návod": "Anleitung anzeigen",
- "Stiahnuť návod": "Anleitung herunterladen"
+ "Stiahnuť návod": "Anleitung herunterladen",
+ "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Leer = das Anmelde-Postfach. Die Domain kann beliebig sein, die Adresse muss aber zu dem Postfach gehören, mit dem Sie sich anmelden, oder zu einer im E-Mail-Dienst verifizierten Domain.",
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Weicht vom Anmelde-Postfach {email} ab. Ein Hosting-Postfach oder Gmail versendet eine solche E-Mail meist nicht - wenn es kein Alias dieses Postfachs ist, lassen Sie das Feld leer."
 }
