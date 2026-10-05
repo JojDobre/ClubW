@@ -4,11 +4,14 @@ Testy otvoria skutočný web v Chromiu a overia:
 
 - **každú vstavanú šablónu** na počítači aj na mobile: hlavné stránky
   (úvod, články, súťaže, detail súťaže, zápasy, tímy, kalendár, galérie,
-  videá, partneri, hľadanie, registrácia, neexistujúca stránka) sa načítajú
+  videá, partneri, hľadanie, registrácia, Môj klub, neexistujúca stránka) sa načítajú
   bez chyby a s obsahom, nepretekajú do strán a tabuľky súťaží ukazujú
   body aj pri veľmi dlhom názve tímu;
 - **administráciu**: obrazovky sa otvoria s nadpisom a bez chyby,
-  okno Prispôsobiť šablónu je preložené do angličtiny.
+  okno Prispôsobiť šablónu je preložené do angličtiny;
+- **účet fanúšika** (Môj klub): pozvánka od klubu, nastavenie hesla,
+  členská karta s QR kódom, výhody podľa typu členstva, odhlásenie,
+  prihlásenie formulárom a overenie karty usporiadateľom.
 
 V CI bežia automaticky (úloha „Testy v prehliadači"). Pri chybe sa uloží
 správa so snímkami a záznamom (artefakt `e2e-vysledky`).

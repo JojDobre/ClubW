@@ -31,6 +31,7 @@ import Sponzori from './stranky/Sponzori';
 import Formular from './stranky/Formular';
 import Statistiky from './stranky/Statistiky';
 import Nenajdena from './stranky/Nenajdena';
+import { MojKlub, OverenieKarty } from './stranky/MojKlub';
 
 registrujSablonu({
   casti: {
@@ -59,6 +60,8 @@ registrujSablonu({
     Sponzori,
     Formular,
     Statistiky,
+    MojKlub,
+    OverenieKarty,
     Nenajdena,
   },
 });

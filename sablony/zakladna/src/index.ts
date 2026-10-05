@@ -10,6 +10,7 @@ import { lazy } from 'react';
 
 const obchod = () => import('./stranky/Obchod');
 const ligy = () => import('./stranky/Ligy');
+const mojKlub = () => import('./stranky/MojKlub');
 import type { CastiSablony } from '@clubw/jadro';
 import { Rozlozenie, Hlavicka, Paticka, Nacitavanie } from './Rozlozenie';
 
@@ -46,6 +47,8 @@ export const casti: CastiSablony = {
   Objednavka: lazy(() => obchod().then((m) => ({ default: m.Objednavka }))),
   Registracia: lazy(() => import('./stranky/Registracia')),
   Hladanie: lazy(() => import('./stranky/Hladanie')),
+  MojKlub: lazy(() => mojKlub().then((m) => ({ default: m.MojKlub }))),
+  OverenieKarty: lazy(() => mojKlub().then((m) => ({ default: m.OverenieKarty }))),
   Nenajdena: lazy(() => import('./stranky/Nenajdena')),
 };
 

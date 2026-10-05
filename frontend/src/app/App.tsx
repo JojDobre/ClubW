@@ -50,6 +50,7 @@ import EshopNastavenia from '../pages/admin/eshop/NastaveniaObchodu';
 import Dokumenty from '../pages/admin/Dokumenty';
 import Ankety from '../pages/admin/Ankety';
 import Fanusikovia from '../pages/admin/Fanusikovia';
+import VyhodyFanusikov from '../pages/admin/VyhodyFanusikov';
 // Doplnky sekcie OBSAH a ŠPORT
 import Komentare from '../pages/admin/Komentare';
 import Videa from '../pages/admin/Videa';
@@ -154,6 +155,7 @@ export const App: React.FC = () => (
                 />
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
+                <Route path="vyhody-clenov" element={<VyhodyFanusikov />} />
                 <Route path="profil" element={<Profil />} />
 
                 {/* Cesty len pre administrátora */}

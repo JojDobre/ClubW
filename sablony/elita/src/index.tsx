@@ -30,6 +30,7 @@ import Formular from './stranky/Formular';
 import Statistiky from './stranky/Statistiky';
 import Nenajdena from './stranky/Nenajdena';
 import Registracia from './stranky/Registracia';
+import { MojKlub, OverenieKarty } from './stranky/MojKlub';
 import Hladanie from './stranky/Hladanie';
 import { Obchod, Produkt, Kosik, Pokladna, Objednavka } from './stranky/Obchod';
 
@@ -66,6 +67,8 @@ registrujSablonu({
     Pokladna,
     Objednavka,
     Registracia,
+    MojKlub,
+    OverenieKarty,
     Hladanie,
     Nenajdena,
   },

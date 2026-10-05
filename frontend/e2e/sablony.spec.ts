@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test';
 import { skontrolujRozlozenie, sledujChyby, vstavaneSablony, zavolajApi } from './spolocne';
 
-const STRANKY = ['/', '/clanky', '/leagues', '/leagues/1', '/matches', '/teams', '/calendar', '/galleries', '/videa', '/sponzori', '/hladat?q=dolina', '/registracia', '/neexistujuca-stranka-e2e'];
+const STRANKY = ['/', '/clanky', '/leagues', '/leagues/1', '/matches', '/teams', '/calendar', '/galleries', '/videa', '/sponzori', '/hladat?q=dolina', '/registracia', '/moj-klub', '/neexistujuca-stranka-e2e'];
 const ZARIADENIA = [
   { nazov: 'počítač', viewport: { width: 1440, height: 900 }, isMobile: false },
   { nazov: 'mobil', viewport: { width: 390, height: 844 }, isMobile: true },

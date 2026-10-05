@@ -65,6 +65,11 @@ export { SekcieUvodu, useSekcieUvodu } from './SekcieUvodu';
 export { FormularRegistracie, registrujFanusika } from './FormularRegistracie';
 export type { UdajeRegistracie, TypRegistracie } from './FormularRegistracie';
 
+// Účet fanúšika: stránka Môj klub, členská karta, výhody, overenie karty
+export { MojKlubObsah, OverenieKartyObsah, OdkazUctu, KartaClena, VyhodyClena } from './MojKlub';
+export { useFanusik, apiFanusika, prihlasFanusika, odhlasFanusika, NAZVY_CLENSTVA } from './fanusik';
+export type { ProfilFanusika, VyhodaClena, OverenieKarty, TypClenstvaFanusika } from './fanusik';
+
 // Vyhľadávanie na webe (stránka /hladat)
 export { useHladanie, SKUPINY_HLADANIA } from './hladanie';
 export type { VysledokHladania, TypVysledku } from './hladanie';

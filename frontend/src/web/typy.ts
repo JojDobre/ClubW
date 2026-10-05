@@ -49,6 +49,10 @@ export interface CastiSablony {
   Objednavka: ComponentType;
   /** Registrácia fanúšika alebo člena (/registracia) */
   Registracia: ComponentType;
+  /** Účet fanúšika: prihlásenie, členská karta, výhody (/moj-klub, /moj-klub/heslo) */
+  MojKlub: ComponentType;
+  /** Overenie členskej karty z QR kódu (/overenie/:kod) */
+  OverenieKarty: ComponentType;
   /** Vyhľadávanie na webe (/hladat?q=…) */
   Hladanie: ComponentType;
   /** Adresa neexistuje (po neúspešnom pokuse o presmerovanie) */

@@ -1,7 +1,7 @@
 {
   "slug": "derby",
   "nazov": "Derby",
-  "verzia": "1.0.3",
+  "verzia": "1.0.4",
   "autor": "ClubW",
   "popis": "Klasický klubový web s bento mriežkami v štýle tradičných anglických klubov: lišta s posledným výsledkom a najbližším zápasom, bordová hlavička s menu a erbom na bielej visačke, titulka ako mozaika správ s najbližším zápasom a odpočtom, pás zápasov a výsledkov, novinky s bočným panelom (tabuľka, bilancia, program), pás kádra s pozíciami, mozaika médií a komunity (Klub TV, fotogaléria, fanshop, členstvo, siete, úspechy) a partneri ako pyramída nad pätičkou. Písmo Barlow, bordová a nebesky modrá.",
   "api": 1,
@@ -199,6 +199,14 @@
       "skupina": "Hlavička",
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
       "predvolene": true
+    },
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Hlavička",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
     {
       "kluc": "ukazat_admin",
@@ -716,6 +724,22 @@
       "menovka": "Registrácia: nadpis",
       "skupina": "Podstránky",
       "predvolene": "Registrácia"
+    },
+    {
+      "kluc": "stranka_moj_klub_stitok",
+      "typ": "text",
+      "menovka": "Môj klub: štítok",
+      "skupina": "Podstránky",
+      "predvolene": "",
+      "napoveda": "Prázdne = názov klubu."
+    },
+    {
+      "kluc": "stranka_moj_klub_nadpis",
+      "typ": "text",
+      "menovka": "Môj klub: nadpis",
+      "skupina": "Podstránky",
+      "predvolene": "Môj klub",
+      "napoveda": "Prihláseným sa zobrazí pozdrav s menom."
     },
     {
       "kluc": "stranka_partneri_popis",

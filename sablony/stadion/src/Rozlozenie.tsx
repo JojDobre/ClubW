@@ -66,6 +66,11 @@ export const Hlavicka: React.FC = () => {
               )}
             </div>
           ))}
+          <div className="st-menu__polozka">
+            <Link to="/moj-klub" className={`st-menu__odkaz${pathname.startsWith('/moj-klub') ? ' is-aktivny' : ''}`}>
+              Môj klub
+            </Link>
+          </div>
           {jePrihlaseny() && (
             <Link to="/admin" className="st-menu__admin">
               Administrácia

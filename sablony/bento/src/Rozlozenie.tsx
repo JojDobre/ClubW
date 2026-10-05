@@ -24,6 +24,7 @@ import {
   useNastavenia,
   useNastaveniaSablony,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import { Ikona, Odkaz, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
@@ -302,6 +303,13 @@ const KosikHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   );
 };
 
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="db-ikona-tl" onClick={onClick} />;
+};
+
 export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
@@ -430,6 +438,7 @@ export const Hlavicka: React.FC = () => {
               </button>
             )}
             <KosikHlavicky />
+            <UcetHlavicky />
             {jePrihlaseny() && u.zapnute('ukazat_admin') && (
               <a href="/admin" className="db-ikona-tl db-ikona-tl--text" title="Administrácia">
                 Admin
@@ -495,6 +504,7 @@ const MobilneMenu: React.FC<{ zavriet: () => void }> = ({ zavriet }) => {
         </div>
         <div className="db-dlazdica db-mmenu__akcie">
           <KosikHlavicky onClick={zavriet} />
+          <UcetHlavicky onClick={zavriet} />
           <button type="button" className="db-ikona-tl db-ikona-tl--volt" onClick={zavriet} aria-label="Zavrieť menu">
             <Ikona nazov="zavriet" velkost={20} />
           </button>

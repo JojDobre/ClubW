@@ -1,7 +1,7 @@
 {
   "slug": "klubova",
   "nazov": "Klubová",
-  "verzia": "1.9.3",
+  "verzia": "1.9.4",
   "autor": "ClubW",
   "popis": "Výrazná klubová šablóna pre celý web: celostránkový slider článkov, zápasy a výsledky podľa tímov, novinky, videá s prehrávačom, fotogaléria, súpiska a profily hráčov so štatistikami sezóny, súťaže, kalendár, turnaje a partneri. Na mobile sa správa ako klubová aplikácia so spodnou navigáciou.",
   "api": 1,
@@ -77,6 +77,14 @@
       "skupina": "Hlavička",
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý. Vypnutím košík z hlavičky skryjete.",
       "predvolene": true
+    },
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Hlavička",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
     {
       "kluc": "ukazat_hladanie",
@@ -1041,6 +1049,22 @@
       "menovka": "Registrácia: nadpis",
       "skupina": "Nadpisy podstránok",
       "predvolene": "Staňte sa súčasťou klubu"
+    },
+    {
+      "kluc": "stranka_moj_klub_stitok",
+      "typ": "text",
+      "menovka": "Môj klub: štítok",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "",
+      "napoveda": "Prázdne = názov klubu."
+    },
+    {
+      "kluc": "stranka_moj_klub_nadpis",
+      "typ": "text",
+      "menovka": "Môj klub: nadpis",
+      "skupina": "Nadpisy podstránok",
+      "predvolene": "Môj klub",
+      "napoveda": "Prihláseným sa zobrazí pozdrav s menom."
     },
     {
       "kluc": "registracia_vyhody_nadpis",

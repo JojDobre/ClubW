@@ -21,6 +21,7 @@ import {
   useMenuWebu,
   useNastavenia,
   type PolozkaMenu,
+  OdkazUctu,
 } from '@clubw/jadro';
 import { Ikona, Odkaz, denVTyzdni, datum, obrazokUrl, useApi, useUpravy, type Clanok } from './spolocne';
 import { PartneriStranky } from './casti';
@@ -267,6 +268,13 @@ const KosikHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   );
 };
 
+/** Účet fanúšika (Môj klub) - prihlásenému ukáže iniciály. */
+const UcetHlavicky: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  const u = useUpravy();
+  if (!u.zapnute('ukazat_ucet')) return null;
+  return <OdkazUctu className="kr-ikona-tl" onClick={onClick} />;
+};
+
 export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const { nastavenia } = useNastavenia();
@@ -385,6 +393,7 @@ export const Hlavicka: React.FC = () => {
           </Link>
           <div className="kr-titulka__vpravo">
             <KosikHlavicky />
+            <UcetHlavicky />
             {tlacidlo && (
               <Odkaz to={tlacidlo.odkaz} className="kr-tlacidlo kr-tlacidlo--akcent kr-titulka__cta">
                 {tlacidlo.text}

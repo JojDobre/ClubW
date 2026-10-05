@@ -1,7 +1,7 @@
 {
   "slug": "stadion",
   "nazov": "Štadión",
-  "verzia": "1.0.3",
+  "verzia": "1.0.4",
   "autor": "ClubW",
   "popis": "Tmavý športový vzhľad s veľkou úvodnou fotkou, odpočtom do najbližšieho zápasu a pásom partnerov. Nahrádza hlavičku, pätičku a úvodnú stránku, ostatné stránky preberá zo základnej šablóny.",
   "api": 1,

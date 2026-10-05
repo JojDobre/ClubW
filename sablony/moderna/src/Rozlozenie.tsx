@@ -10,12 +10,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Cast,
   OdkazMenu,
+  OdkazUctu,
   apiUrl,
   jePrihlaseny,
   otvorNastaveniaCookies,
   souborUrl,
   useMenuWebu,
   useNastavenia,
+  useNastaveniaSablony,
   type PolozkaMenu,
 } from '@clubw/jadro';
 import { Erb, Ikona, datumKratky, pozicia, type Clanok, type Hrac, type Tim, type Zapas } from './spolocne';
@@ -87,6 +89,8 @@ export const Hlavicka: React.FC = () => {
   const [posunute, setPosunute] = useState(false);
   const [hladanie, setHladanie] = useState(false);
   const jeUvod = pathname === '/';
+  // Ikona účtu fanúšika - predvolene zapnutá
+  const ucet = useNastaveniaSablony<{ ukazat_ucet?: boolean }>().ukazat_ucet !== false;
 
   useEffect(() => {
     const zmena = () => setPosunute(window.scrollY > 24);
@@ -137,6 +141,7 @@ export const Hlavicka: React.FC = () => {
             <button type="button" className="md-ikona-tlacidlo" onClick={() => setHladanie(true)} aria-label="Hľadať (Ctrl+K)">
               <Ikona nazov="hladat" velkost={20} />
             </button>
+            {ucet && <OdkazUctu className="md-ikona-tlacidlo" />}
             {jePrihlaseny() && (
               <a href="/admin" className="md-hlavicka__admin">
                 Administrácia

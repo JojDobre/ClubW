@@ -232,6 +232,7 @@
 .registracia__suhlas { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; }
 .registracia__suhlas input { margin-top: 3px; }
 .registracia__chyba { color: #b91c1c; font-weight: 600; }
+.registracia__napoveda { margin: 0; align-self: end; font-size: 0.85rem; color: #64748b; line-height: 1.45; }
 .registracia__tlacidlo { align-self: flex-start; padding: 13px 26px; border: 0; border-radius: 10px; background: var(--club-primary, #1b5e20); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .registracia__tlacidlo:disabled { opacity: 0.6; cursor: wait; }
 .registracia--hotovo { padding: 24px; border-radius: 14px; background: #f0fdf4; color: #14532d; }

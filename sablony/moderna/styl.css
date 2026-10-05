@@ -1367,3 +1367,7 @@ a.md-partner:hover .md-partner__web { opacity: 1; }
 .md-tabulka .md-tabulka__tim { max-width: 0; min-width: 96px; }
 .md-tabulka__tim > span { min-width: 0; }
 .md-tabulka__tim > span > .md-tabulka__nazov { min-width: 0; max-width: none; white-space: nowrap; }
+
+/* Môj klub a overenie karty (obsah dodá jadro) */
+.md-moj-klub__telo { padding-top: 8px; padding-bottom: 72px; }
+.md-overenie .md-moj-klub__telo { padding-top: 48px; }

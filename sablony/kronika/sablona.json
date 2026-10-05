@@ -1,7 +1,7 @@
 {
   "slug": "kronika",
   "nazov": "Kronika",
-  "verzia": "1.0.4",
+  "verzia": "1.0.5",
   "autor": "ClubW",
   "popis": "Elegantná editoriálna šablóna v štýle športového magazínu: teplý papierový podklad, serifové titulky, tenké linky a jedna farba klubu. Hlavička ako titulka novín, výsledková lišta, titulný článok s bočným stĺpcom najnovších správ, prehľad zápasov s tabuľkou, káder, tmavá sekcia videí, fanshop a partneri. Všetky podstránky vrátane obchodu, článkov s iniciálou a detailu zápasu.",
   "api": 1,
@@ -99,6 +99,14 @@
       "skupina": "Hlavička",
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
       "predvolene": true
+    },
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Hlavička",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
     {
       "kluc": "ukazat_admin",
@@ -584,6 +592,22 @@
       "menovka": "Registrácia: nadpis",
       "skupina": "Podstránky",
       "predvolene": "Registrácia"
+    },
+    {
+      "kluc": "stranka_moj_klub_stitok",
+      "typ": "text",
+      "menovka": "Môj klub: štítok",
+      "skupina": "Podstránky",
+      "predvolene": "",
+      "napoveda": "Prázdne = názov klubu."
+    },
+    {
+      "kluc": "stranka_moj_klub_nadpis",
+      "typ": "text",
+      "menovka": "Môj klub: nadpis",
+      "skupina": "Podstránky",
+      "predvolene": "Môj klub",
+      "napoveda": "Prihláseným sa zobrazí pozdrav s menom."
     },
     {
       "kluc": "stranka_partneri_popis",

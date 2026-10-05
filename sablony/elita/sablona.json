@@ -1,7 +1,7 @@
 {
   "slug": "elita",
   "nazov": "Elita",
-  "verzia": "1.0.4",
+  "verzia": "1.0.5",
   "autor": "ClubW",
   "popis": "Šablóna v štýle webov veľkých profesionálnych klubov: pás zápasov nad hlavičkou, erb v strede s menu rozdeleným naľavo a napravo, celoobrazovkový slider článkov so záložkami, zápasová karta s odpočtom a tabuľkou, novinky s rubrikami, káder ako posúvateľný pás kariet, sezóna v číslach, Klub TV, fanshop, pás členstva a partneri v pätičke. Široké písmo Archivo a dve farby klubu.",
   "api": 1,
@@ -149,6 +149,14 @@
       "skupina": "Hlavička",
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý.",
       "predvolene": true
+    },
+    {
+      "kluc": "ukazat_ucet",
+      "typ": "prepinac",
+      "menovka": "Účet fanúšika (Môj klub)",
+      "skupina": "Hlavička",
+      "predvolene": true,
+      "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
     {
       "kluc": "ukazat_admin",
@@ -685,6 +693,22 @@
       "menovka": "Registrácia: nadpis",
       "skupina": "Podstránky",
       "predvolene": "Registrácia"
+    },
+    {
+      "kluc": "stranka_moj_klub_stitok",
+      "typ": "text",
+      "menovka": "Môj klub: štítok",
+      "skupina": "Podstránky",
+      "predvolene": "",
+      "napoveda": "Prázdne = názov klubu."
+    },
+    {
+      "kluc": "stranka_moj_klub_nadpis",
+      "typ": "text",
+      "menovka": "Môj klub: nadpis",
+      "skupina": "Podstránky",
+      "predvolene": "Môj klub",
+      "napoveda": "Prihláseným sa zobrazí pozdrav s menom."
     },
     {
       "kluc": "stranka_partneri_popis",

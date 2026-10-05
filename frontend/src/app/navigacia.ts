@@ -74,6 +74,7 @@ export const SEKCIE_MENU: SekciaMenu[] = [
       { modul: 'formulare', cesta: '/admin/formulare', popis: tr('Formuláre'), ikona: 'formular', odznak: 'formulare' },
       { cesta: '/admin/ankety', popis: tr('Ankety'), ikona: 'komentare', role: ['admin', 'redaktor'] },
       { cesta: '/admin/fanusikovia', popis: tr('Fanúšikovia'), ikona: 'pouzivatelia', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/vyhody-clenov', popis: tr('Výhody pre členov'), ikona: 'licencia', role: ['admin', 'redaktor'] },
     ],
   },
   {
