@@ -2655,5 +2655,9 @@
  "je odkaz; ak je sám na riadku, zobrazí sa ako tlačidlo vo farbe klubu.": "ist ein Link; allein in einer Zeile wird er als Schaltfläche in Vereinsfarbe angezeigt.",
  "vloží obrázok (adresu skopírujete v Knižnici médií).": "fügt ein Bild ein (Adresse in der Mediathek kopieren).",
  "vytvorí odrážku.": "erstellt einen Aufzählungspunkt.",
- "Logo, farby klubu a pätičku pridá systém sám.": "Logo, Vereinsfarben und Fußzeile fügt das System selbst hinzu."
+ "Logo, farby klubu a pätičku pridá systém sám.": "Logo, Vereinsfarben und Fußzeile fügt das System selbst hinzu.",
+ "Návod na nastavenie e-mailov": "Anleitung zur E-Mail-Einrichtung",
+ "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Schritt für Schritt: Postfach beim Hosting anlegen, E-Mail-Dienst wählen, DNS-Einträge gegen Spam, Vorlagen und Fehlerbehebung. (Die Anleitung ist auf Slowakisch.)",
+ "Zobraziť návod": "Anleitung anzeigen",
+ "Stiahnuť návod": "Anleitung herunterladen"
 }

@@ -224,6 +224,11 @@ Hore na stránke uvidíte stav: či e-maily odchádzajú, koľko ich odišlo za
 
 ### 7.2 Premenné na serveri (`backend/.env`)
 
+> Túto časť nastavuje ten, kto web prevádzkuje (dodávateľ alebo správca
+> servera). Klub si vystačí s administráciou (kapitola 7.1) - ak by odkazy
+> v e-mailoch viedli na `localhost`, dajte vedieť dodávateľovi, aby
+> nastavil `WEB_URL`.
+
 | Premenná | Načo |
 |---|---|
 | `WEB_URL` | **adresa webu**, napr. `https://www.vasklub.sk` - z nej sa skladajú odkazy v e-mailoch (heslo, objednávka, logo). Bez nej budú odkazy viesť na `localhost`. |
@@ -304,7 +309,7 @@ vyžaduje GDPR aj pravidlá Gmailu a Yahoo.
 | *Nepodarilo sa spojiť so serverom* | zlá adresa servera alebo blokovaný port | skontrolujte server; niektorí poskytovatelia VPS blokujú odchádzajúce SMTP - skúste 587 aj 465, prípadne požiadajte o odblokovanie |
 | *Server odmietol odosielateľa* | e-mail odosielateľa nepatrí k schránke | nastavte e-mail odosielateľa rovnaký ako prihlasovacia schránka, alebo overte doménu v službe |
 | E-maily chodia do spamu | chýba SPF/DKIM/DMARC | kapitola 6, test na mail-tester.com |
-| Odkazy v e-mailoch vedú na `localhost` | chýba `WEB_URL` | nastavte `WEB_URL` v `backend/.env` a reštartujte backend |
+| Odkazy v e-mailoch vedú na `localhost` | na serveri chýba `WEB_URL` | požiadajte dodávateľa webu, aby nastavil `WEB_URL` v `backend/.env` |
 | Logo sa v e-maile neukazuje | logo nie je dostupné z internetu | skontrolujte `WEB_URL` a logo v Nastaveniach klubu |
 | E-maily „čakajú" | SMTP nefunguje alebo nie je nastavené | **E-maily → Odoslané** ukáže dôvod; po oprave **Poslať čakajúce teraz** |
 | „Len v konzole" | vývojová inštalácia bez SMTP | v produkcii nastavte SMTP |

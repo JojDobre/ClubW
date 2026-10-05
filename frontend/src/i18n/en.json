@@ -2655,5 +2655,9 @@
  "je odkaz; ak je sám na riadku, zobrazí sa ako tlačidlo vo farbe klubu.": "is a link; alone on a line it is shown as a button in the club colour.",
  "vloží obrázok (adresu skopírujete v Knižnici médií).": "inserts an image (copy the address in the Media library).",
  "vytvorí odrážku.": "creates a bullet point.",
- "Logo, farby klubu a pätičku pridá systém sám.": "The system adds the logo, club colours and footer itself."
+ "Logo, farby klubu a pätičku pridá systém sám.": "The system adds the logo, club colours and footer itself.",
+ "Návod na nastavenie e-mailov": "E-mail setup guide",
+ "Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.": "Step by step: creating a hosting mailbox, choosing an e-mail service, DNS records against spam, templates and troubleshooting. (The guide is in Slovak.)",
+ "Zobraziť návod": "View guide",
+ "Stiahnuť návod": "Download guide"
 }

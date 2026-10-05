@@ -4,12 +4,13 @@
 // dá skúšať, kým to nefunguje.
 
 import React, { useEffect, useState } from 'react';
-import { PageHeader, Button, Card, Input, Select, Textarea, Skeleton, ErrorState, Icon, useToast } from '../../../ui';
+import { PageHeader, Button, Card, Input, Select, Textarea, Skeleton, ErrorState, Icon, Modal, useToast } from '../../../ui';
 import { useNacitanie } from '../../../app/useNacitanie';
 import { useAuth } from '../../../app/AuthContext';
 import { emailyApi, type NastaveniaEmailov as Nastavenia, type ZabezpecenieSmtp } from '../../../api/emaily';
 import { tr } from '../../../i18n';
 import { PasStavu } from './spolocne';
+import { NAVOD_HTML, stiahniNavod } from './navod';
 import './Emaily.css';
 
 /** Bežní poskytovatelia - vyplnia server, port a zabezpečenie. */
@@ -37,6 +38,7 @@ export const NastaveniaEmailov: React.FC = () => {
   const [prijemca, setPrijemca] = useState(pouzivatel?.email ?? '');
   const [testuje, setTestuje] = useState(false);
   const [vysledok, setVysledok] = useState<{ ok: boolean; text: string } | null>(null);
+  const [navod, setNavod] = useState(false);
 
   useEffect(() => {
     const n = nastavenia.data;
@@ -128,6 +130,22 @@ export const NastaveniaEmailov: React.FC = () => {
         }
       />
       <PasStavu stav={stav.data} naNastaveniach />
+
+      <div className="cw-em-navod-pas">
+        <Icon nazov="stranky" velkost={20} />
+        <div>
+          <strong>{tr('Návod na nastavenie e-mailov')}</strong>
+          <span>{tr('Krok za krokom: vytvorenie schránky na hostingu, výber e-mailovej služby, DNS záznamy proti spamu, šablóny a riešenie problémov.')}</span>
+        </div>
+        <div className="cw-em-akcie">
+          <Button variant="secondary" velkost="sm" ikona={<Icon nazov="oko" velkost={15} />} onClick={() => setNavod(true)}>
+            {tr('Zobraziť návod')}
+          </Button>
+          <Button variant="secondary" velkost="sm" ikona={<Icon nazov="stiahnut" velkost={15} />} onClick={stiahniNavod}>
+            {tr('Stiahnuť návod')}
+          </Button>
+        </div>
+      </div>
 
       <div className="cw-em-dva">
         <Card nadpis={tr('SMTP server')} podnadpis={tr('Údaje nájdete u poskytovateľa e-mailu (webhosting, Brevo, Mailgun…).')}>
@@ -256,6 +274,23 @@ export const NastaveniaEmailov: React.FC = () => {
           </div>
         )}
       </Card>
+
+      <Modal
+        otvorene={navod}
+        onZavri={() => setNavod(false)}
+        nadpis={tr('Návod na nastavenie e-mailov')}
+        sirka="lg"
+        pata={
+          <>
+            <Button variant="secondary" ikona={<Icon nazov="stiahnut" velkost={16} />} onClick={stiahniNavod}>
+              {tr('Stiahnuť návod')}
+            </Button>
+            <Button onClick={() => setNavod(false)}>{tr('Zavrieť')}</Button>
+          </>
+        }
+      >
+        <div className="cw-em-navod" dangerouslySetInnerHTML={{ __html: NAVOD_HTML }} />
+      </Modal>
     </div>
   );
 };
