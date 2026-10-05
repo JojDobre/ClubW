@@ -8,8 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import Fanusik from '../models/Fanusik';
 import FanusikToken, { type UcelTokenu } from '../models/FanusikToken';
-import NastaveniaKlubu from '../models/NastaveniaKlubu';
-import { posliEmail } from '../utils/email';
+import { posliSablonu } from './email/odosielanie';
 import { adresaWebu } from './eshop';
 
 const PLATNOST_PRIHLASENIA = '30d';
@@ -98,18 +97,7 @@ export const odkazNaHeslo = (token: string): string => `${adresaWebu()}/moj-klub
 export const posliOdkazNaHeslo = async (f: Fanusik, ucel: UcelTokenu): Promise<{ odkaz: string; odoslany: boolean }> => {
   const token = await FanusikToken.vystav(f.id, ucel);
   const odkaz = odkazNaHeslo(token);
-  const klub = (await NastaveniaKlubu.nacitaj())?.nazov || 'Klub';
-  const text =
-    ucel === 'pozvanka'
-      ? `Dobrý deň ${f.meno},\n\n${klub} vám pripravil účet na webe. V účte nájdete svoju členskú kartu a výhody pre členov.\n\n` +
-        `Heslo si nastavíte tu (odkaz platí 7 dní):\n${odkaz}\n\nPrihlasovací e-mail: ${f.email}\n`
-      : `Dobrý deň ${f.meno},\n\ndostali sme žiadosť o nové heslo k vášmu účtu na webe ${klub}.\n\n` +
-        `Nové heslo si nastavíte tu (odkaz platí 2 hodiny):\n${odkaz}\n\nAk ste o zmenu nežiadali, správu ignorujte - heslo ostane bez zmeny.\n`;
-  const odoslany = await posliEmail({
-    prijemca: f.email,
-    predmet: ucel === 'pozvanka' ? `${klub}: váš účet na webe` : `${klub}: nastavenie hesla`,
-    text,
-  }).catch(() => false);
+  const odoslany = await posliSablonu(ucel === 'pozvanka' ? 'fanusik_pozvanka' : 'fanusik_heslo', f.email, { meno: f.meno, email: f.email, odkaz });
   return { odkaz, odoslany };
 };
 
@@ -119,13 +107,6 @@ export const oznamSchvalenie = async (f: Fanusik): Promise<{ odkaz: string | nul
     const { odkaz, odoslany } = await posliOdkazNaHeslo(f, 'pozvanka');
     return { odkaz, odoslany };
   }
-  const klub = (await NastaveniaKlubu.nacitaj())?.nazov || 'Klub';
-  const odoslany = await posliEmail({
-    prijemca: f.email,
-    predmet: `${klub}: registrácia bola schválená`,
-    text:
-      `Dobrý deň ${f.meno},\n\nvaša registrácia v klube ${klub} bola schválená. Vitajte!\n\n` +
-      `Po prihlásení nájdete svoju členskú kartu a výhody pre členov:\n${adresaWebu()}/moj-klub\n`,
-  }).catch(() => false);
+  const odoslany = await posliSablonu('fanusik_schvalenie', f.email, { meno: f.meno, cislo_karty: f.cislo_karty, odkaz: `${adresaWebu()}/moj-klub` });
   return { odkaz: null, odoslany };
 };

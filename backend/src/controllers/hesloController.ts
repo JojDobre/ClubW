@@ -12,7 +12,7 @@ import User from '../models/user';
 import RefreshToken from '../models/RefreshToken';
 import ResetHeslaToken from '../models/ResetHeslaToken';
 import { overSiluHesla } from '../utils/heslo';
-import { posliEmail } from '../utils/email';
+import { adresaWebu, posliSablonu } from '../services/email/odosielanie';
 
 // Ako dlho platí obnovovací token
 const PLATNOST_REFRESH_DNI = 30;
@@ -268,19 +268,9 @@ export const zabudnuteHeslo = async (req: Request, res: Response): Promise<void>
       ip_adresa: req.ip || null,
     });
 
-    const adresaWebu = process.env.FRONTEND_URL || 'http://localhost:3002';
-    const odkaz = `${adresaWebu}/obnova-hesla?token=${encodeURIComponent(token)}`;
+    const odkaz = `${adresaWebu()}/obnova-hesla?token=${encodeURIComponent(token)}`;
 
-    await posliEmail({
-      prijemca: user.email,
-      predmet: 'Obnova hesla — ClubW',
-      text:
-        `Dobrý deň, ${user.meno},\n\n` +
-        `pre nastavenie nového hesla otvorte tento odkaz:\n${odkaz}\n\n` +
-        `Odkaz platí ${PLATNOST_RESETU_MINUT} minút a dá sa použiť len raz.\n\n` +
-        `Ak ste o obnovu hesla nežiadali, túto správu ignorujte — ` +
-        `vaše heslo zostáva nezmenené.`,
-    });
+    await posliSablonu('heslo_admin', user.email, { meno: user.meno, odkaz, platnost_minut: PLATNOST_RESETU_MINUT });
 
     res.json(vseobecnaOdpoved);
   } catch (error) {

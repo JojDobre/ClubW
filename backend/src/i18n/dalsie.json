@@ -4,5 +4,8 @@
   "Dokument bol vytvorený", "Dokument bol zmazaný", "Dokument sa nenašiel",
   "Kategória dokumentov bola vytvorená", "Kategória dokumentov bola zmazaná", "Kategória dokumentov sa nenašla",
   "Anketa bola vytvorená", "Anketa bola zmazaná", "Anketa sa nenašla",
-  "Fanúšik bol vytvorený", "Fanúšik bol zmazaný", "Fanúšik sa nenašiel"
+  "Fanúšik bol vytvorený", "Fanúšik bol zmazaný", "Fanúšik sa nenašiel",
+  "Prihlásenie na SMTP server zlyhalo - skontrolujte používateľské meno a heslo", "Nesprávne zabezpečenie spojenia - pri porte 465 zvoľte SSL, pri porte 587 STARTTLS",
+  "Nepodarilo sa spojiť so serverom {0}:{1} - skontrolujte adresu, port a či spojenie nebráni firewall", "Nepodarilo sa spojiť so SMTP serverom", "Server odmietol odosielateľa - adresa odosielateľa musí patriť k prihlásenej schránke alebo overenej doméne",
+  "Odosielanie e-mailov nie je nastavené (E-maily → Nastavenia)", "Neznáma chyba pri odosielaní"
 ]

@@ -78,6 +78,15 @@ export const SEKCIE_MENU: SekciaMenu[] = [
     ],
   },
   {
+    nazov: tr('E-MAILY'),
+    polozky: [
+      { cesta: '/admin/emaily/hromadne', popis: tr('Hromadné e-maily'), ikona: 'email', role: ['admin', 'redaktor'] },
+      { cesta: '/admin/emaily/sablony', popis: tr('Šablóny e-mailov'), ikona: 'sablony_emailov', role: ['admin'] },
+      { cesta: '/admin/emaily/odoslane', popis: tr('Odoslané e-maily'), ikona: 'odoslat', role: ['admin'] },
+      { cesta: '/admin/emaily/nastavenia', popis: tr('Nastavenia e-mailov'), ikona: 'nastavenia', role: ['admin'] },
+    ],
+  },
+  {
     nazov: tr('E-SHOP'),
     polozky: [
       { modul: 'eshop', cesta: '/admin/eshop/objednavky', popis: tr('Objednávky'), ikona: 'kosik' },

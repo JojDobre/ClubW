@@ -8,7 +8,8 @@ import { SUBOR_STAVU_ADMINA, sledujChyby, zavolajApi } from './spolocne';
 const OBRAZOVKY = [
   '', 'clanky', 'clanky/novy', 'kategorie', 'stranky', 'galerie', 'komentare', 'videa', 'timy', 'hraci', 'realizacny-tim',
   'ligy', 'turnaje', 'zapasy', 'kalendar', 'sezony', 'stadiony', 'sponzori', 'eshop/objednavky', 'eshop/produkty',
-  'eshop/doprava-platba', 'dokumenty', 'formulare', 'media', 'menu', 'sablony', 'ankety', 'fanusikovia', 'vyhody-clenov', 'pouzivatelia',
+  'eshop/doprava-platba', 'dokumenty', 'formulare', 'media', 'menu', 'sablony', 'ankety', 'fanusikovia', 'vyhody-clenov', 'emaily/hromadne', 'emaily/hromadne/novy', 'emaily/sablony',
+  'emaily/sablony/objednavka_zakaznik', 'emaily/odoslane', 'emaily/nastavenia', 'pouzivatelia',
   'nastavenia', 'ochrana-udajov', 'archiv', 'logy', 'profil',
 ];
 

@@ -51,6 +51,10 @@ import Dokumenty from '../pages/admin/Dokumenty';
 import Ankety from '../pages/admin/Ankety';
 import Fanusikovia from '../pages/admin/Fanusikovia';
 import VyhodyFanusikov from '../pages/admin/VyhodyFanusikov';
+import NastaveniaEmailov from '../pages/admin/emaily/NastaveniaEmailov';
+import { SablonyEmailov, SablonaEmailuEditor } from '../pages/admin/emaily/SablonyEmailov';
+import OdoslaneEmaily from '../pages/admin/emaily/OdoslaneEmaily';
+import { HromadneEmaily, HromadnyEmailEditor } from '../pages/admin/emaily/HromadneEmaily';
 // Doplnky sekcie OBSAH a ŠPORT
 import Komentare from '../pages/admin/Komentare';
 import Videa from '../pages/admin/Videa';
@@ -156,6 +160,41 @@ export const App: React.FC = () => (
                 <Route path="ankety" element={<Ankety />} />
                 <Route path="fanusikovia" element={<Fanusikovia />} />
                 <Route path="vyhody-clenov" element={<VyhodyFanusikov />} />
+                <Route path="emaily" element={<Navigate to="/admin/emaily/hromadne" replace />} />
+                <Route path="emaily/hromadne" element={<HromadneEmaily />} />
+                <Route path="emaily/hromadne/:id" element={<HromadnyEmailEditor />} />
+                <Route
+                  path="emaily/sablony"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <SablonyEmailov />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="emaily/sablony/:kluc"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <SablonaEmailuEditor />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="emaily/odoslane"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <OdoslaneEmaily />
+                    </ChranenaCesta>
+                  }
+                />
+                <Route
+                  path="emaily/nastavenia"
+                  element={
+                    <ChranenaCesta role={['admin']}>
+                      <NastaveniaEmailov />
+                    </ChranenaCesta>
+                  }
+                />
                 <Route path="profil" element={<Profil />} />
 
                 {/* Cesty len pre administrátora */}

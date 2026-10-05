@@ -25,6 +25,7 @@ import AuditLog, { TypAkcie } from '../models/AuditLog';
  * Kľúč je prvý zmysluplný úsek cesty za /api (prípadne za /api/admin).
  */
 const ENTITY: Record<string, string> = {
+  email: 'E-maily',
   articles: 'Článok',
   categories: 'Rubrika',
   pages: 'Stránka',
@@ -67,6 +68,9 @@ const PRESKOCIT = [
   // Verejné pridanie komentáru rieši moderácia
   '/api/comments',
 ];
+
+/** Náhľad e-mailu a počet adresátov nič nemenia - píšu sa pri každom písaní textu */
+const PRESKOCIT_VZOR = /^\/api\/admin\/email\/(.+\/)?(nahlad|pocet)$/;
 
 /** Odvodí typ akcie z HTTP metódy a cesty. */
 const zistiAkciu = (metoda: string, cesta: string): TypAkcie => {
@@ -123,7 +127,7 @@ export const zaznamenajZmeny = (req: Request, res: Response, next: NextFunction)
 
   const cesta = req.originalUrl.split('?')[0];
 
-  if (PRESKOCIT.some((p) => cesta === p || cesta.startsWith(`${p}/`))) {
+  if (PRESKOCIT.some((p) => cesta === p || cesta.startsWith(`${p}/`)) || PRESKOCIT_VZOR.test(cesta)) {
     next();
     return;
   }

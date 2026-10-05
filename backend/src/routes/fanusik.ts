@@ -28,7 +28,7 @@ import NastaveniaKlubu from '../models/NastaveniaKlubu';
 import { authenticateToken, requireEditor, requireAdmin } from '../middleware/auth';
 import { overSiluHesla } from '../utils/heslo';
 import { sanitizePlainText } from '../utils/sanitize';
-import { posliEmail } from '../utils/email';
+import { posliSablonu } from '../services/email/odosielanie';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import {
   oznamSchvalenie,
@@ -172,11 +172,7 @@ fanusikRouter.delete('/ja', vyzadujFanusika, async (req: RequestFanusika, res) =
     await f.destroy();
     const klub = await NastaveniaKlubu.nacitaj();
     if (klub?.email) {
-      posliEmail({
-        prijemca: klub.email,
-        predmet: `Zrušený účet fanúšika: ${meno} ${priezvisko}`,
-        text: `${meno} ${priezvisko} (${email}${cislo_karty ? `, karta ${cislo_karty}` : ''}) zrušil(a) svoj účet na webe. Údaje boli zmazané.`,
-      }).catch(() => undefined);
+      void posliSablonu('fanusik_zruseny_klub', klub.email, { meno, priezvisko, email, cislo_karty });
     }
     res.json({ success: true, message: 'Účet bol zrušený a údaje zmazané' });
   } catch (chyba) {

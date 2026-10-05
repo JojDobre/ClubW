@@ -33,6 +33,8 @@ import gdprRoutes from './routes/gdpr';
 // Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
 import klubRoutes from './routes/klub';
 import { fanusikRouter, adminFanusikRouter } from './routes/fanusik';
+import { adminEmailRouter, verejnyEmailRouter } from './routes/emaily';
+import { spustiPlanovacEmailov } from './services/email/odosielanie';
 // Komentáre, videá a turnaje
 import obsahDoplnkyRoutes from './routes/obsah-doplnky';
 import authRoutes from './routes/auth';
@@ -316,6 +318,8 @@ app.use('/api', klubRoutes);
 // Účty fanúšikov na webe (Môj klub) a výhody členov
 app.use('/api/fan', fanusikRouter);
 app.use('/api/admin', adminFanusikRouter);
+app.use('/api/admin/email', adminEmailRouter);
+app.use('/api/email', verejnyEmailRouter);
 app.use('/api', obsahDoplnkyRoutes);
 
 app.use('/api/auth', authRoutes);
@@ -616,6 +620,9 @@ async function startServer() {
     // Prepínanie stavu zápasov na odohratý - logika existovala, ale
     // nikto ju nevolal, takže sa stav menil len ručne
     spustiPlanovacZapasov();
+
+    // Fronta e-mailov - opakované pokusy a postupné hromadné e-maily
+    spustiPlanovacEmailov();
 
     // Spustenie servera
     app.listen(PORT, () => {

@@ -18,7 +18,7 @@ import Fanusik from '../models/Fanusik';
 import { authenticateToken, optionalAuth, requireEditor, requireAdmin, smieVModule, modulZCesty } from '../middleware/auth';
 import { sanitizePlainText } from '../utils/sanitize';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
-import { posliEmail } from '../utils/email';
+import { posliSablonu, adresaWebu } from '../services/email/odosielanie';
 import { overSiluHesla } from '../utils/heslo';
 import NastaveniaKlubu from '../models/NastaveniaKlubu';
 
@@ -447,15 +447,15 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
 
       const klub = await NastaveniaKlubu.nacitaj();
       if (klub?.email) {
-        posliEmail({
-          prijemca: klub.email,
-          predmet: `Nová registrácia ${typ === 'clen' ? 'člena' : 'fanúšika'}: ${meno} ${priezvisko}`,
-          text:
-            `Na webe sa zaregistroval ${typ === 'clen' ? 'nový člen' : 'nový fanúšik'}.\n\n` +
-            `Meno: ${meno} ${priezvisko}\nE-mail: ${email}\nTelefón: ${text(b.telefon, 40) || '-'}\n` +
-            `${text(b.sprava, 2000) ? `Správa: ${text(b.sprava, 2000)}\n` : ''}` +
-            `\nŽiadosť schválite v administrácii: Fanúšikovia → Nové žiadosti.`,
-        }).catch((e) => console.error('Upozornenie na registráciu sa nepodarilo odoslať:', e));
+        void posliSablonu('fanusik_registracia_klub', klub.email, {
+          meno,
+          priezvisko,
+          email,
+          telefon: text(b.telefon, 40),
+          typ: typ === 'clen' ? 'člen klubu' : 'fanúšik',
+          text_spravy: text(b.sprava, 2000),
+          odkaz_admin: `${adresaWebu()}/admin/fanusikovia`,
+        });
       }
     }
 

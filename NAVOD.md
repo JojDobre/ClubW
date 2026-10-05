@@ -414,17 +414,15 @@ TRUST_PROXY=1
 
 ### 9.2 Odosielanie e-mailov
 
-Bez toho nefunguje obnova zabudnutého hesla:
+SMTP server sa nastavuje v administrácii v **E-maily → Nastavenia** (vrátane skúšobného e-mailu). Celý postup od vytvorenia schránky na hostingu cez výber e-mailovej služby a DNS záznamy (SPF, DKIM, DMARC) až po šablóny a hromadné e-maily je v samostatnom návode **[NAVOD-EMAILY.md](NAVOD-EMAILY.md)**.
+
+Na serveri nezabudnite nastaviť adresu webu - z nej sa skladajú odkazy v e-mailoch:
 
 ```env
-SMTP_HOST=smtp.vasposkytovatel.sk
-SMTP_PORT=587
-SMTP_USER=noreply@vasklub.sk
-SMTP_PASSWORD=...
-SMTP_FROM=ClubW <noreply@vasklub.sk>
+WEB_URL=https://www.vasklub.sk
 ```
 
-Potrebný je aj balík: `npm install nodemailer --workspace=backend`
+Staršie premenné `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` a `SMTP_FROM` fungujú ďalej - použijú sa, kým je server v administrácii prázdny.
 
 ### 9.3 Postup
 
