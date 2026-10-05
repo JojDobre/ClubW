@@ -41,6 +41,8 @@ import DokumentKategoria from './DokumentKategoria';
 import UrovenSponzora from './UrovenSponzora';
 import Anketa from './Anketa';
 import Fanusik from './Fanusik';
+import FanusikToken from './FanusikToken';
+import VyhodaFanusika from './VyhodaFanusika';
 // Komentáre a videá
 import Komentar from './Komentar';
 import Video from './Video';
@@ -138,6 +140,10 @@ Media.belongsTo(User, {
   as: 'autor',
   constraints: false,
 });
+
+// Výhoda fanúšikov -> partner, ktorý ju poskytuje
+VyhodaFanusika.belongsTo(Sponzor, { foreignKey: 'sponzor_id', as: 'sponzor', constraints: false });
+FanusikToken.belongsTo(Fanusik, { foreignKey: 'fanusik_id', as: 'fanusik', constraints: false });
 
 // Sponzor -> UrovenSponzora (N:1)
 Sponzor.belongsTo(UrovenSponzora, { foreignKey: 'uroven_id', as: 'uroven_obj', constraints: false });
@@ -564,6 +570,8 @@ export default {
   UrovenSponzora,
   Anketa,
   Fanusik,
+  FanusikToken,
+  VyhodaFanusika,
   Komentar,
   Video,
   Category,

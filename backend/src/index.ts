@@ -32,6 +32,7 @@ import sezonyRoutes from './routes/sezony';
 import gdprRoutes from './routes/gdpr';
 // Sekcia KLUB — sponzori, dokumenty, ankety, fanúšikovia
 import klubRoutes from './routes/klub';
+import { fanusikRouter, adminFanusikRouter } from './routes/fanusik';
 // Komentáre, videá a turnaje
 import obsahDoplnkyRoutes from './routes/obsah-doplnky';
 import authRoutes from './routes/auth';
@@ -312,6 +313,9 @@ app.use('/api', gdprRoutes);
 
 // Sekcia KLUB — čítanie je verejné (sponzori a dokumenty na webe)
 app.use('/api', klubRoutes);
+// Účty fanúšikov na webe (Môj klub) a výhody členov
+app.use('/api/fan', fanusikRouter);
+app.use('/api/admin', adminFanusikRouter);
 app.use('/api', obsahDoplnkyRoutes);
 
 app.use('/api/auth', authRoutes);
