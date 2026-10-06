@@ -3,7 +3,7 @@
 // kroky, výhody, cenník, oddeľovač, kontakt, štadión, registrácia
 // a 2 % dane. Zapájajú sa do PREDVOLENE_BLOKY v BlokyStranky.tsx.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNastavenia } from '../../context/NastaveniaContext';
 import { useData } from '../pomocky';
 import { FormularRegistracie } from '../FormularRegistracie';
@@ -58,10 +58,104 @@ const Tlacidla: KomponentBloku = ({ blok: { data, polozky = [] } }) => {
 
 // ===== Podmenu stránky =====
 
+/** Voľné miesto nad sekciou, na ktorú sa z podmenu posúva. */
+const MEDZERA = 24;
+
+/**
+ * Spodný okraj hlavičky šablóny, ktorá je prilepená hore (fixed/sticky).
+ * Šablóny majú hlavičky rôzne - plávajúce, zmenšujúce sa pri posune,
+ * skrývané - preto ju nehľadáme podľa triedy, ale podľa toho, čo je
+ * práve pri hornom okraji okna.
+ */
+const spodokHlavicky = (vynechat: Element): number => {
+  if (typeof document.elementsFromPoint !== 'function') return 0;
+  let spodok = 0;
+  const preverene = new Set<Element>();
+  for (const x of [0.2, 0.5, 0.8].map((k) => window.innerWidth * k)) {
+    for (const y of [2, 18, 34]) {
+      for (const prvok of document.elementsFromPoint(x, y)) {
+        if (vynechat.contains(prvok)) continue;
+        for (let e: Element | null = prvok; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+          if (preverene.has(e)) break;
+          preverene.add(e);
+          const poloha = getComputedStyle(e).position;
+          if (poloha !== 'fixed' && poloha !== 'sticky') continue;
+          const r = e.getBoundingClientRect();
+          // Výsuvné menu a podobné panely cez celú výšku nie sú hlavička
+          if (r.top <= y && r.height > 0 && r.height < window.innerHeight * 0.4) spodok = Math.max(spodok, r.bottom);
+          break;
+        }
+      }
+    }
+  }
+  return Math.round(spodok);
+};
+
+/**
+ * Prilepené podmenu sa drží pod hlavičkou šablóny a sekcie po kliknutí
+ * zastanú pod ním (scroll-margin-top všetkých blokov), nie schované za ním.
+ */
+const usePolohaPodmenu = (nav: React.RefObject<HTMLElement>, prilepene: boolean) => {
+  useEffect(() => {
+    const prvok = nav.current;
+    const sekcia = prvok?.closest('.blok') as HTMLElement | null;
+    if (!prvok || !sekcia) return;
+    const koren = document.documentElement;
+    let snimka = 0;
+    const prepocitaj = () => {
+      snimka = 0;
+      const hlavicka = spodokHlavicky(sekcia);
+      // Šablóna si k tomu môže pridať medzeru (plávajúce podmenu): top: calc(var(--podmenu-hore) + 12px)
+      sekcia.style.setProperty('--podmenu-hore', `${hlavicka}px`);
+      const odsadenie = prilepene ? (parseFloat(getComputedStyle(sekcia).top) || 0) + sekcia.getBoundingClientRect().height : hlavicka;
+      koren.style.setProperty('--clubw-odsadenie-kotvy', `${Math.round(odsadenie + MEDZERA)}px`);
+    };
+    const naplanuj = () => {
+      if (!snimka) snimka = requestAnimationFrame(prepocitaj);
+    };
+    prepocitaj();
+    window.addEventListener('scroll', naplanuj, { passive: true });
+    window.addEventListener('resize', naplanuj);
+    // Písma a obrázky v hlavičke sa dočítajú neskôr
+    const neskor = window.setTimeout(prepocitaj, 600);
+    return () => {
+      window.removeEventListener('scroll', naplanuj);
+      window.removeEventListener('resize', naplanuj);
+      window.clearTimeout(neskor);
+      if (snimka) cancelAnimationFrame(snimka);
+      koren.style.removeProperty('--clubw-odsadenie-kotvy');
+    };
+  }, [nav, prilepene]);
+};
+
+/**
+ * Posun na sekciu. Hlavička šablóny sa pri posune môže zmeniť (prilepí sa,
+ * zmenší, skryje), preto sa po dobehnutí posunu poloha ešte raz overí
+ * a prípadne doladí - nadpis sekcie nesmie ostať schovaný pod menu.
+ */
+const posunNaSekciu = (ciel: HTMLElement) => {
+  ciel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  let hotovo = false;
+  const dolad = () => {
+    if (hotovo) return;
+    hotovo = true;
+    window.removeEventListener('scrollend', dolad);
+    requestAnimationFrame(() => {
+      const odsadenie = parseFloat(getComputedStyle(ciel).scrollMarginTop) || 0;
+      const rozdiel = ciel.getBoundingClientRect().top - odsadenie;
+      if (Math.abs(rozdiel) > 4) window.scrollBy({ top: rozdiel, behavior: 'smooth' });
+    });
+  };
+  window.addEventListener('scrollend', dolad);
+  window.setTimeout(dolad, 900);
+};
+
 /** Kotvy na bloky s nadpisom (automaticky) alebo vlastné odkazy. */
 const Podmenu: KomponentBloku = ({ blok, bloky }) => {
   const { data, polozky = [] } = blok;
   const [aktivna, setAktivna] = useState<string | null>(null);
+  const nav = useRef<HTMLElement>(null);
+  usePolohaPodmenu(nav, !!data.prilepene);
   const odkazy =
     data.rezim === 'vlastne'
       ? polozky.filter((p) => p.text && p.odkaz).map((p) => ({ text: p.text as string, odkaz: p.odkaz as string }))
@@ -85,9 +179,18 @@ const Podmenu: KomponentBloku = ({ blok, bloky }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [odkazy.map((o) => o.odkaz).join('|')]);
 
+  // Na mobile je podmenu posuvné do strany - aktívna položka nech je vidno
+  useEffect(() => {
+    const zoznam = nav.current;
+    const odkaz = zoznam?.querySelector<HTMLElement>('.is-aktivny');
+    if (!zoznam || !odkaz || zoznam.scrollWidth <= zoznam.clientWidth) return;
+    const vlavo = odkaz.offsetLeft - (zoznam.clientWidth - odkaz.offsetWidth) / 2;
+    zoznam.scrollTo({ left: Math.max(0, vlavo), behavior: 'smooth' });
+  }, [aktivna]);
+
   if (odkazy.length === 0) return null;
   return (
-    <nav className="blok__podmenu" aria-label="Obsah stránky">
+    <nav ref={nav} className="blok__podmenu" aria-label="Obsah stránky">
       {odkazy.map((o) =>
         o.odkaz.startsWith('#') ? (
           <a
@@ -98,7 +201,9 @@ const Podmenu: KomponentBloku = ({ blok, bloky }) => {
               const ciel = document.getElementById(o.odkaz.slice(1));
               if (!ciel) return;
               e.preventDefault();
-              ciel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // Odsadenie pod hlavičkou a podmenu rieši scroll-margin-top bloku
+              posunNaSekciu(ciel);
+              setAktivna(o.odkaz);
               history.replaceState(null, '', o.odkaz);
             }}
           >

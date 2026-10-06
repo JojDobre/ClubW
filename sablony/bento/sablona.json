@@ -1,7 +1,7 @@
 {
   "slug": "bento",
   "nazov": "Dynamic Football Bento",
-  "verzia": "1.0.4",
+  "verzia": "1.0.5",
   "autor": "ClubW",
   "popis": "Športová šablóna v štýle bento: obsah je poskladaný zo zaoblených dlaždíc na jednotnom podklade. Veľká hero karta s článkami, dlaždice najbližšieho zápasu, výsledku a tabuľky, novinky, zápasové centrum, hráči, videá, fanshop, komunita a partneri. Na mobile plávajúca lišta so záložkami.",
   "api": 1,

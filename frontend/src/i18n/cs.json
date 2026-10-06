@@ -2660,5 +2660,18 @@
  "Zobraziť návod": "Zobrazit návod",
  "Stiahnuť návod": "Stáhnout návod",
  "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Prázdné = přihlašovací schránka. Doména může být jakákoli, adresa však musí patřit ke schránce, do které se přihlašujete, nebo k doméně ověřené v e-mailové službě.",
- "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Liší se od přihlašovací schránky {email}. Schránka na hostingu ani Gmail takový e-mail většinou neodešlou - pokud to není alias této schránky, pole nechte prázdné."
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Liší se od přihlašovací schránky {email}. Schránka na hostingu ani Gmail takový e-mail většinou neodešlou - pokud to není alias této schránky, pole nechte prázdné.",
+ "Jedna fotka s popisom - v šírke textu alebo cez celú stránku": "Jedna fotka s popisem - v šířce textu nebo přes celou stránku",
+ "Popis pod obrázkom": "Popis pod obrázkem",
+ "Alternatívny text": "Alternativní text",
+ "Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.": "Co je na obrázku - pro nevidomé a vyhledávače. Prázdné = popis pod obrázkem.",
+ "Šírka": "Šířka",
+ "Šírka obsahu": "Šířka obsahu",
+ "Úzka (ako text)": "Úzká (jako text)",
+ "Cez celú šírku stránky": "Přes celou šířku stránky",
+ "Orezanie": "Oříznutí",
+ "Bez orezania": "Bez oříznutí",
+ "Štvorec": "Čtverec",
+ "Panoráma 21 : 9": "Panoráma 21 : 9",
+ "Odkaz po kliknutí": "Odkaz po kliknutí"
 }

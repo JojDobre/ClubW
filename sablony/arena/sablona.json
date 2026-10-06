@@ -1,7 +1,7 @@
 {
   "slug": "arena",
   "nazov": "Aréna",
-  "verzia": "1.0.8",
+  "verzia": "1.0.9",
   "autor": "ClubW",
   "popis": "Moderná šablóna s plávajúcou navigáciou - zaoblený sklenený „ostrov“ s odstupom od vrchu, ktorý sa pri posúvaní zúži, rozbaľovacie menu ako plávajúca karta a menu cez celú obrazovku na mobile. Úvod: pohlcujúci hero v zaoblenom ráme s obrovským obrysovým nápisom a kartou zápasu s odpočtom, naklonený neónový pás výsledkov, karusel noviniek, zápasy s prilepeným nadpisom, sezóna v číslach na farebnom paneli, karusel kádra, médiá a výzva na členstvo. Podstránky s tmavou zaoblenou hlavičkou, pätička ako veľký panel s obrovským názvom klubu. Písma Unbounded a Manrope.",
   "api": 1,

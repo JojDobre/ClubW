@@ -151,6 +151,26 @@ const ObrazokText: KomponentBloku = ({ blok: { data } }) => (
   </div>
 );
 
+/** Jeden obrázok - v šírke obsahu, užší alebo cez celú šírku stránky. */
+const Obrazok: KomponentBloku = ({ blok: { data } }) => {
+  if (!obrazokBloku(data.obrazok)) return null;
+  const sirka = data.sirka === 'uzka' || data.sirka === 'plna' ? data.sirka : 'obsah';
+  const pomer = ['16-9', '4-3', '1-1', '21-9'].includes(data.pomer) ? data.pomer : 'povodny';
+  const obrazok = <Obr src={data.obrazok} alt={data.alt || data.popis || ''} />;
+  return (
+    <figure className={`blok__snimka blok__snimka--${sirka} blok__snimka--${pomer}`}>
+      {data.odkaz ? (
+        <OdkazBloku to={data.odkaz} noveOkno={data.nove_okno} className="blok__snimka-odkaz">
+          {obrazok}
+        </OdkazBloku>
+      ) : (
+        obrazok
+      )}
+      {data.popis && <figcaption className="blok__snimka-popis">{data.popis}</figcaption>}
+    </figure>
+  );
+};
+
 const Galeria: KomponentBloku = ({ blok: { data, polozky = [] } }) => {
   const [otvorena, setOtvorena] = useState<number | null>(null);
   const obrazky = polozky.filter((p) => obrazokBloku(p.obrazok));
@@ -435,6 +455,7 @@ export const PREDVOLENE_BLOKY: Record<string, KomponentBloku> = {
   karty: Karty,
   cisla: Cisla,
   obrazok_text: ObrazokText,
+  obrazok: Obrazok,
   galeria: Galeria,
   citat: Citat,
   vyzva: Vyzva,
@@ -473,7 +494,9 @@ export const BlokyStranky: React.FC<{
           <section
             key={b.id}
             id={kotvaBloku(b)}
-            className={`blok blok--${b.typ.replace(/_/g, '-')} blok--pozadie-${b.pozadie || 'biele'}${b.typ === 'podmenu' && b.data?.prilepene ? ' blok--prilepene' : ''}`}
+            className={`blok blok--${b.typ.replace(/_/g, '-')} blok--pozadie-${b.pozadie || 'biele'}${b.typ === 'podmenu' && b.data?.prilepene ? ' blok--prilepene' : ''}${
+              b.typ === 'obrazok' && b.data?.sirka === 'plna' ? ' blok--na-sirku' : ''
+            }`}
           >
             <div className="blok__vnutro">
               <Komponent blok={b} bloky={viditelne} />

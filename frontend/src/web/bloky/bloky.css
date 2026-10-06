@@ -11,6 +11,9 @@
   --blok-povrch: #f8fafc;
   color: var(--blok-text);
 }
+/* Pre všetky šablóny: sekcia po kliknutí v podmenu zastane pod hlavičkou
+   a podmenu (hodnotu nastavuje podmenu podľa skutočnej výšky hlavičky). */
+.bloky .blok { scroll-margin-top: var(--clubw-odsadenie-kotvy, 0px); }
 .bloky--zakladne .blok { padding: 40px 20px; }
 .bloky--zakladne .blok__vnutro { max-width: 1100px; margin: 0 auto; }
 .bloky--zakladne .blok--pozadie-sive { background: var(--blok-povrch); }
@@ -61,6 +64,24 @@
 .bloky--zakladne .blok__dvojica { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
 .bloky--zakladne .blok__dvojica--vpravo .blok__dvojica-obrazok { order: 2; }
 .bloky--zakladne .blok__dvojica-obrazok img { width: 100%; border-radius: 14px; }
+
+/* Blok Obrázok: šírka obsahu, úzky alebo cez celú stránku; voliteľné orezanie */
+.bloky--zakladne .blok__snimka { margin: 0 auto; }
+.bloky--zakladne .blok__snimka--uzka { max-width: 760px; }
+.bloky--zakladne .blok__snimka img { display: block; width: 100%; height: auto; border-radius: 14px; }
+.bloky--zakladne .blok__snimka--16-9 img { aspect-ratio: 16 / 9; object-fit: cover; }
+.bloky--zakladne .blok__snimka--4-3 img { aspect-ratio: 4 / 3; object-fit: cover; }
+.bloky--zakladne .blok__snimka--1-1 img { aspect-ratio: 1; object-fit: cover; }
+.bloky--zakladne .blok__snimka--21-9 img { aspect-ratio: 21 / 9; object-fit: cover; }
+.bloky--zakladne .blok__snimka-odkaz { display: block; border-radius: 14px; overflow: hidden; }
+.bloky--zakladne .blok__snimka-odkaz img { transition: transform 0.5s ease; }
+.bloky--zakladne .blok__snimka-odkaz:hover img { transform: scale(1.02); }
+.bloky--zakladne .blok__snimka-popis { margin-top: 12px; color: var(--blok-tlmeny); font-size: 14px; line-height: 1.5; }
+.bloky--zakladne .blok--pozadie-tmave .blok__snimka-popis { color: rgba(255, 255, 255, 0.65); }
+.bloky--zakladne .blok--na-sirku { padding-left: 0; padding-right: 0; }
+.bloky--zakladne .blok--na-sirku .blok__vnutro { max-width: none; }
+.bloky--zakladne .blok--na-sirku .blok__snimka img, .bloky--zakladne .blok--na-sirku .blok__snimka-odkaz { border-radius: 0; }
+.bloky--zakladne .blok--na-sirku .blok__snimka-popis { max-width: calc(1100px + 2 * 20px); margin-left: auto; margin-right: auto; padding: 0 20px; }
 .bloky--zakladne .blok__tlacidlo { display: inline-block; margin-top: 12px; padding: 10px 20px; border-radius: 8px; background: var(--blok-akcent); color: #fff; font-weight: 600; text-decoration: none; }
 
 /* Galéria */
@@ -131,7 +152,7 @@
 }
 
 /* ===== Rozšírené bloky (predvolený vzhľad) ===== */
-.bloky--zakladne .blok--prilepene { position: sticky; top: 0; z-index: 20; padding-top: 12px; padding-bottom: 12px; background: #ffffffee; backdrop-filter: blur(6px); }
+.bloky--zakladne .blok--prilepene { position: sticky; top: var(--podmenu-hore, 0px); z-index: 20; padding-top: 12px; padding-bottom: 12px; background: #ffffffee; backdrop-filter: blur(6px); }
 .bloky--zakladne .blok__podmenu { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
 .bloky--zakladne .blok__podmenu a { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--blok-ciara); color: inherit; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
 .bloky--zakladne .blok__podmenu a.is-aktivny, .bloky--zakladne .blok__podmenu a:hover { background: var(--blok-akcent); border-color: var(--blok-akcent); color: #fff; }
