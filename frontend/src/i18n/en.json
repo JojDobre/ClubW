@@ -2660,5 +2660,18 @@
  "Zobraziť návod": "View guide",
  "Stiahnuť návod": "Download guide",
  "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Empty = the login mailbox. The domain can be anything, but the address must belong to the mailbox you sign in to, or to a domain verified in the e-mail service.",
- "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Differs from the login mailbox {email}. A hosting mailbox or Gmail usually won't send such an e-mail - if it is not an alias of this mailbox, leave the field empty."
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Differs from the login mailbox {email}. A hosting mailbox or Gmail usually won't send such an e-mail - if it is not an alias of this mailbox, leave the field empty.",
+ "Jedna fotka s popisom - v šírke textu alebo cez celú stránku": "A single photo with a caption - text width or across the whole page",
+ "Popis pod obrázkom": "Caption below the image",
+ "Alternatívny text": "Alternative text",
+ "Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.": "What the image shows - for blind users and search engines. Empty = the caption.",
+ "Šírka": "Width",
+ "Šírka obsahu": "Content width",
+ "Úzka (ako text)": "Narrow (like text)",
+ "Cez celú šírku stránky": "Full page width",
+ "Orezanie": "Cropping",
+ "Bez orezania": "No cropping",
+ "Štvorec": "Square",
+ "Panoráma 21 : 9": "Panorama 21 : 9",
+ "Odkaz po kliknutí": "Link on click"
 }

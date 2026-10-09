@@ -35,6 +35,15 @@ describe('ocistiBloky', () => {
     expect(clanky.data.pocet).toBe(12);
   });
 
+  it('obrázok: šírka a orezanie z povolených hodnôt, zlý obrázok sa odmietne', () => {
+    const [b] = ocistiBloky([
+      { typ: 'obrazok', data: { obrazok: '/uploads/media/a.jpg', popis: 'Tím', sirka: 'obrovska', pomer: '16-9', nove_okno: 'ano', navyse: 1 } },
+    ]);
+    expect(b.data).toMatchObject({ obrazok: '/uploads/media/a.jpg', popis: 'Tím', sirka: 'obsah', pomer: '16-9' });
+    expect(b.data.navyse).toBeUndefined();
+    expect(() => ocistiBloky([{ typ: 'obrazok', data: { obrazok: 'javascript:alert(1)' } }])).toThrow(/obrázka/);
+  });
+
   it('HTML sa vyčistí proti XSS', () => {
     const [b] = ocistiBloky([{ typ: 'text', data: { html: '<p>Ahoj<script>alert(1)</script></p><a href="javascript:x">x</a>' } }]);
     expect(b.data.html).not.toContain('<script');

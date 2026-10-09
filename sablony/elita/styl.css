@@ -1931,6 +1931,24 @@ a.el-partner-karta:hover { border-color: var(--el-akcent); transform: translateY
 .el-bloky .blok__dvojica { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(32px, 5vw, 80px); align-items: center; }
 .el-bloky .blok__dvojica--vpravo .blok__dvojica-obrazok { order: 2; }
 .el-bloky .blok__dvojica-obrazok img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--el-r); }
+
+/* Blok Obrázok: šírka obsahu, úzky alebo cez celú stránku; voliteľné orezanie */
+.el-bloky .blok__snimka { margin: 0 auto; }
+.el-bloky .blok__snimka--uzka { max-width: 760px; }
+.el-bloky .blok__snimka img { display: block; width: 100%; height: auto; border-radius: var(--el-r); }
+.el-bloky .blok__snimka--16-9 img { aspect-ratio: 16 / 9; object-fit: cover; }
+.el-bloky .blok__snimka--4-3 img { aspect-ratio: 4 / 3; object-fit: cover; }
+.el-bloky .blok__snimka--1-1 img { aspect-ratio: 1; object-fit: cover; }
+.el-bloky .blok__snimka--21-9 img { aspect-ratio: 21 / 9; object-fit: cover; }
+.el-bloky .blok__snimka-odkaz { display: block; border-radius: var(--el-r); overflow: hidden; }
+.el-bloky .blok__snimka-odkaz img { transition: transform 0.5s ease; }
+.el-bloky .blok__snimka-odkaz:hover img { transform: scale(1.02); }
+.el-bloky .blok__snimka-popis { margin-top: 12px; color: var(--el-tmava-55); font-size: 14px; line-height: 1.5; }
+.el-bloky .blok--pozadie-tmave .blok__snimka-popis { color: rgba(255, 255, 255, 0.65); }
+.el-bloky .blok--na-sirku { padding-left: 0; padding-right: 0; }
+.el-bloky .blok--na-sirku .blok__vnutro { max-width: none; }
+.el-bloky .blok--na-sirku .blok__snimka img, .el-bloky .blok--na-sirku .blok__snimka-odkaz { border-radius: 0; }
+.el-bloky .blok--na-sirku .blok__snimka-popis { max-width: calc(var(--el-sirka-obsahu) + 2 * var(--el-okraj)); margin-left: auto; margin-right: auto; padding: 0 var(--el-okraj); }
 .el-bloky .blok__tlacidlo {
   display: inline-flex; align-items: center; justify-content: center; margin-top: 24px; padding: 14px 28px; border-radius: var(--el-r);
   background: var(--el-akcent); color: #ffffff; font-family: var(--el-nadpisy); font-weight: 700; font-size: 15px; text-decoration: none;
@@ -2064,7 +2082,7 @@ a.el-partner-karta:hover { border-color: var(--el-akcent); transform: translateY
 
 /* Podmenu stránky (kotvy na sekcie alebo vlastné odkazy) */
 .el-bloky .blok--podmenu { padding-top: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--el-tmava-8); }
-.el-bloky .blok--prilepene { position: sticky; top: var(--el-vyska-hlavicky); z-index: 30; background: color-mix(in srgb, var(--el-pozadie) 92%, transparent); backdrop-filter: blur(8px); }
+.el-bloky .blok--prilepene { position: sticky; top: var(--podmenu-hore, var(--el-vyska-hlavicky)); z-index: 30; background: color-mix(in srgb, var(--el-pozadie) 92%, transparent); backdrop-filter: blur(8px); }
 .el-bloky .blok__podmenu { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
 .el-bloky .blok__podmenu::-webkit-scrollbar { display: none; }
 .el-bloky .blok__podmenu a {
@@ -2329,7 +2347,7 @@ a.el-partner-karta:hover { border-color: var(--el-akcent); transform: translateY
   .el-hladanie__zoznam { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
-  .el-bloky .blok--prilepene { top: var(--el-vyska-hlavicky); }
+  .el-bloky .blok--prilepene { top: var(--podmenu-hore, var(--el-vyska-hlavicky)); }
   .el-bloky .blok__karty--vodorovne .blok__karta { flex-direction: column; }
   .el-bloky .blok__karty--vodorovne .blok__karta-obrazok { flex-basis: auto; aspect-ratio: 16 / 10; min-height: 0; }
   .el-bloky .blok__dlazdica { min-height: 130px; padding: 20px; border-radius: var(--el-r); }

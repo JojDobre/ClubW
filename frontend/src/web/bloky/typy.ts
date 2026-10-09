@@ -10,6 +10,7 @@ export type TypBloku =
   | 'karty'
   | 'cisla'
   | 'obrazok_text'
+  | 'obrazok'
   | 'galeria'
   | 'citat'
   | 'vyzva'

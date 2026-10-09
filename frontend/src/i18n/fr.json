@@ -2660,5 +2660,18 @@
  "Zobraziť návod": "Voir le guide",
  "Stiahnuť návod": "Télécharger le guide",
  "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Vide = la boîte de connexion. Le domaine peut être quelconque, mais l'adresse doit appartenir à la boîte à laquelle vous vous connectez ou à un domaine vérifié dans le service e-mail.",
- "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Diffère de la boîte de connexion {email}. Une boîte d'hébergement ou Gmail n'enverront généralement pas un tel e-mail - si ce n'est pas un alias de cette boîte, laissez le champ vide."
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Diffère de la boîte de connexion {email}. Une boîte d'hébergement ou Gmail n'enverront généralement pas un tel e-mail - si ce n'est pas un alias de cette boîte, laissez le champ vide.",
+ "Jedna fotka s popisom - v šírke textu alebo cez celú stránku": "Une seule photo avec légende - largeur du texte ou toute la page",
+ "Popis pod obrázkom": "Légende sous l'image",
+ "Alternatívny text": "Texte alternatif",
+ "Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.": "Ce que montre l'image - pour les personnes aveugles et les moteurs de recherche. Vide = la légende.",
+ "Šírka": "Largeur",
+ "Šírka obsahu": "Largeur du contenu",
+ "Úzka (ako text)": "Étroite (comme le texte)",
+ "Cez celú šírku stránky": "Toute la largeur de la page",
+ "Orezanie": "Recadrage",
+ "Bez orezania": "Sans recadrage",
+ "Štvorec": "Carré",
+ "Panoráma 21 : 9": "Panorama 21 : 9",
+ "Odkaz po kliknutí": "Lien au clic"
 }

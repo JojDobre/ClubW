@@ -331,6 +331,49 @@ export const DEFINICIE_BLOKOV: DefBloku[] = [
     ],
   },
   {
+    typ: 'obrazok',
+    skupina: 'media',
+    nazov: tr('Obrázok'),
+    popis: tr('Jedna fotka s popisom - v šírke textu alebo cez celú stránku'),
+    ikona: 'media',
+    data: { sirka: 'obsah', pomer: 'povodny' },
+    polia: [
+      { kluc: 'obrazok', menovka: tr('Obrázok'), druh: 'obrazok' },
+      { kluc: 'popis', menovka: tr('Popis pod obrázkom'), druh: 'text', max: 300 },
+      {
+        kluc: 'alt',
+        menovka: tr('Alternatívny text'),
+        druh: 'text',
+        max: 200,
+        napoveda: tr('Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.'),
+      },
+      {
+        kluc: 'sirka',
+        menovka: tr('Šírka'),
+        druh: 'vyber',
+        moznosti: [
+          { hodnota: 'obsah', popis: tr('Šírka obsahu') },
+          { hodnota: 'uzka', popis: tr('Úzka (ako text)') },
+          { hodnota: 'plna', popis: tr('Cez celú šírku stránky') },
+        ],
+      },
+      {
+        kluc: 'pomer',
+        menovka: tr('Orezanie'),
+        druh: 'vyber',
+        moznosti: [
+          { hodnota: 'povodny', popis: tr('Bez orezania') },
+          { hodnota: '16-9', popis: '16 : 9' },
+          { hodnota: '4-3', popis: '4 : 3' },
+          { hodnota: '1-1', popis: tr('Štvorec') },
+          { hodnota: '21-9', popis: tr('Panoráma 21 : 9') },
+        ],
+      },
+      { ...ODKAZ, menovka: tr('Odkaz po kliknutí'), napoveda: tr('Nepovinné') },
+      { kluc: 'nove_okno', menovka: tr('Otvoriť v novom okne'), druh: 'prepinac', ak: (d) => Boolean(d.odkaz) },
+    ],
+  },
+  {
     typ: 'galeria',
     skupina: 'media',
     nazov: tr('Galéria obrázkov'),
@@ -1007,7 +1050,7 @@ const noveId = () => `b${Date.now().toString(36)}${Math.random().toString(36).sl
 const zhrnutie = (b: BlokStranky): string => {
   const d = b.data ?? {};
   const html = typeof d.html === 'string' ? d.html : typeof d.html1 === 'string' ? d.html1 : '';
-  const text = d.nadpis || d.autor || d.adresa || d.slug || d.prijimatel || html.replace(/<[^>]*>/g, ' ');
+  const text = d.nadpis || d.popis || d.autor || d.adresa || d.slug || d.prijimatel || html.replace(/<[^>]*>/g, ' ');
   const pocet = b.polozky?.length ? ` · ${b.polozky.length}×` : '';
   return `${String(text).replace(/\s+/g, ' ').trim().slice(0, 80)}${pocet}`;
 };

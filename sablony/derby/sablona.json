@@ -1,7 +1,7 @@
 {
   "slug": "derby",
   "nazov": "Derby",
-  "verzia": "1.0.4",
+  "verzia": "1.0.5",
   "autor": "ClubW",
   "popis": "Klasický klubový web s bento mriežkami v štýle tradičných anglických klubov: lišta s posledným výsledkom a najbližším zápasom, bordová hlavička s menu a erbom na bielej visačke, titulka ako mozaika správ s najbližším zápasom a odpočtom, pás zápasov a výsledkov, novinky s bočným panelom (tabuľka, bilancia, program), pás kádra s pozíciami, mozaika médií a komunity (Klub TV, fotogaléria, fanshop, členstvo, siete, úspechy) a partneri ako pyramída nad pätičkou. Písmo Barlow, bordová a nebesky modrá.",
   "api": 1,

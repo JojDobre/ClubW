@@ -67,6 +67,14 @@ export const SCHEMA_BLOKOV: Record<string, SchemaBloku> = {
       strana: { typ: 'vyber', moznosti: ['vlavo', 'vpravo'] }, tlacidlo: T(40), odkaz: { typ: 'odkaz' },
     },
   },
+  obrazok: {
+    polia: {
+      obrazok: { typ: 'obrazok' }, alt: T(200), popis: T(300),
+      sirka: { typ: 'vyber', moznosti: ['obsah', 'uzka', 'plna'] },
+      pomer: { typ: 'vyber', moznosti: ['povodny', '16-9', '4-3', '1-1', '21-9'] },
+      odkaz: { typ: 'odkaz' }, nove_okno: { typ: 'prepinac' },
+    },
+  },
   galeria: {
     polia: { nadpis: NADPIS, stlpce: STLPCE },
     polozky: { max: 60, polia: { obrazok: { typ: 'obrazok' }, popis: T(150) } },

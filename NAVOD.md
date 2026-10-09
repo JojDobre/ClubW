@@ -138,6 +138,24 @@ npm run dev
 
 Overenie: otvorte `http://localhost:3000/health` — má vrátiť `{"status":"ok"}`.
 
+### 4.5 Testovací obsah (voliteľné)
+
+Na vyskúšanie šablón a administrácie naplní web kompletným ukážkovým obsahom:
+6 tímov s hráčmi a realizačným tímom, súťaže s tabuľkami, odohrané zápasy
+(góly, karty, striedania, zostavy, priebeh) aj zápasy v programe, články,
+fotogalérie, videá, udalosti v kalendári, turnaj s pavúkom, partnerov,
+dokumenty, anketu, fanshop, stránky O klube a Kontakt a stránku `/vsetky-bloky`.
+Obrázky si skript nakreslí sám, nič nesťahuje.
+
+```bash
+cd backend
+ADMIN_EMAIL=admin@vasklub.sk ADMIN_HESLO="vaše heslo" npm run testovaci-obsah
+```
+
+V PowerShelli: `$env:ADMIN_EMAIL="..."; $env:ADMIN_HESLO="..."; npm run testovaci-obsah`.
+Backend musí bežať. Opakované spustenie nič nezdvojí. Menu vytvorí len vtedy,
+keď je prázdne. Nepúšťajte ho na ostrom webe — názvy klubov sú vymyslené.
+
 ---
 
 ## 5. Nastavenie frontendu

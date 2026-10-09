@@ -2660,5 +2660,18 @@
  "Zobraziť návod": "Ver la guía",
  "Stiahnuť návod": "Descargar la guía",
  "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Vacío = el buzón de inicio de sesión. El dominio puede ser cualquiera, pero la dirección debe pertenecer al buzón con el que inicia sesión o a un dominio verificado en el servicio de correo.",
- "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Difiere del buzón de inicio de sesión {email}. Un buzón de hosting o Gmail normalmente no enviarán ese correo; si no es un alias de este buzón, deje el campo vacío."
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Difiere del buzón de inicio de sesión {email}. Un buzón de hosting o Gmail normalmente no enviarán ese correo; si no es un alias de este buzón, deje el campo vacío.",
+ "Jedna fotka s popisom - v šírke textu alebo cez celú stránku": "Una sola foto con pie de foto: al ancho del texto o de toda la página",
+ "Popis pod obrázkom": "Pie de foto",
+ "Alternatívny text": "Texto alternativo",
+ "Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.": "Qué muestra la imagen: para personas ciegas y buscadores. Vacío = el pie de foto.",
+ "Šírka": "Ancho",
+ "Šírka obsahu": "Ancho del contenido",
+ "Úzka (ako text)": "Estrecha (como el texto)",
+ "Cez celú šírku stránky": "Todo el ancho de la página",
+ "Orezanie": "Recorte",
+ "Bez orezania": "Sin recorte",
+ "Štvorec": "Cuadrado",
+ "Panoráma 21 : 9": "Panorámica 21 : 9",
+ "Odkaz po kliknutí": "Enlace al hacer clic"
 }

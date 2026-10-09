@@ -13,16 +13,21 @@
 const API = (process.env.API_URL || 'http://localhost:3000').replace(/\/$/, '');
 const email = process.env.ADMIN_EMAIL;
 const heslo = process.env.ADMIN_HESLO;
-if (!email || !heslo) {
-  console.error('Nastavte ADMIN_EMAIL a ADMIN_HESLO (účet administrátora).');
-  process.exit(1);
+// ADMIN_TOKEN posiela skript testovaci-obsah.mjs - prihlásení je len 5 za 15 minút
+let token = process.env.ADMIN_TOKEN;
+if (!token) {
+  if (!email || !heslo) {
+    console.error('Nastavte ADMIN_EMAIL a ADMIN_HESLO (účet administrátora).');
+    process.exit(1);
+  }
+  const lg = await (await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, heslo }) })).json();
+  if (!lg.success) {
+    console.error('Prihlásenie zlyhalo:', lg.message);
+    process.exit(1);
+  }
+  token = lg.data.token;
 }
-const lg = await (await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, heslo }) })).json();
-if (!lg.success) {
-  console.error('Prihlásenie zlyhalo:', lg.message);
-  process.exit(1);
-}
-const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${lg.data.token}` };
+const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 const j = async (m, u, b) => { const r = await fetch(API + u, { method: m, headers: H, body: b ? JSON.stringify(b) : undefined }); return r.json(); };
 const prvy = async (u) => ((await j('GET', u)).data ?? [])[0]?.id ?? 0;
 
@@ -55,6 +60,9 @@ const bloky = [
   b('stlpce', { pocet: '3', html1: '<h3>Text v stĺpcoch – 3 stĺpce</h3><p>' + L + '</p>', html2: '<h3>Druhý</h3><p>' + L + '</p>', html3: '<h3>Tretí</h3><p>' + L + '</p>' }),
   b('obrazok_text', { obrazok: IMG[0], stitok: 'Obrázok vľavo', nadpis: 'Obrázok s textom – vľavo', html: '<p>' + L + '</p>', strana: 'vlavo', tlacidlo: 'Zistiť viac', odkaz: '/o-klube' }),
   b('obrazok_text', { obrazok: IMG[1], stitok: 'Obrázok vpravo', nadpis: 'Obrázok s textom – vpravo', html: '<p>' + L + '</p>', strana: 'vpravo', tlacidlo: 'Zistiť viac', odkaz: '/o-klube' }, { pozadie: 'sive' }),
+  b('obrazok', { obrazok: IMG[2], popis: 'Obrázok – šírka obsahu, orezanie 21 : 9, s odkazom', pomer: '21-9', sirka: 'obsah', odkaz: '/o-klube' }),
+  b('obrazok', { obrazok: IMG[3], popis: 'Obrázok – úzky (ako text), bez orezania', sirka: 'uzka' }, { pozadie: 'sive' }),
+  b('obrazok', { obrazok: IMG[4], popis: 'Obrázok – cez celú šírku stránky, orezanie 21 : 9', sirka: 'plna', pomer: '21-9' }),
   b('karty', { nadpis: 'Karty – klasické', uvod: 'Obrázok nad textom.', stlpce: '3', vzhlad: 'klasicke' }, { polozky: karty() }),
   b('karty', { nadpis: 'Karty – text cez obrázok', stlpce: '3', vzhlad: 'prekryv' }, { polozky: karty() }),
   b('karty', { nadpis: 'Karty – vodorovné', stlpce: '2', vzhlad: 'vodorovne' }, { polozky: karty(2) }),

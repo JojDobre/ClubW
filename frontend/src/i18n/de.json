@@ -2660,5 +2660,18 @@
  "Zobraziť návod": "Anleitung anzeigen",
  "Stiahnuť návod": "Anleitung herunterladen",
  "Prázdne = prihlasovacia schránka. Doména môže byť akákoľvek, adresa však musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe.": "Leer = das Anmelde-Postfach. Die Domain kann beliebig sein, die Adresse muss aber zu dem Postfach gehören, mit dem Sie sich anmelden, oder zu einer im E-Mail-Dienst verifizierten Domain.",
- "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Weicht vom Anmelde-Postfach {email} ab. Ein Hosting-Postfach oder Gmail versendet eine solche E-Mail meist nicht - wenn es kein Alias dieses Postfachs ist, lassen Sie das Feld leer."
+ "Líši sa od prihlasovacej schránky {email}. Schránka na hostingu ani Gmail taký e-mail väčšinou neodošlú - ak to nie je alias tejto schránky, pole nechajte prázdne.": "Weicht vom Anmelde-Postfach {email} ab. Ein Hosting-Postfach oder Gmail versendet eine solche E-Mail meist nicht - wenn es kein Alias dieses Postfachs ist, lassen Sie das Feld leer.",
+ "Jedna fotka s popisom - v šírke textu alebo cez celú stránku": "Ein einzelnes Foto mit Bildunterschrift - in Textbreite oder über die ganze Seite",
+ "Popis pod obrázkom": "Bildunterschrift",
+ "Alternatívny text": "Alternativtext",
+ "Čo je na obrázku - pre nevidiacich a vyhľadávače. Prázdne = popis pod obrázkom.": "Was auf dem Bild zu sehen ist - für blinde Menschen und Suchmaschinen. Leer = Bildunterschrift.",
+ "Šírka": "Breite",
+ "Šírka obsahu": "Inhaltsbreite",
+ "Úzka (ako text)": "Schmal (wie Text)",
+ "Cez celú šírku stránky": "Über die ganze Seitenbreite",
+ "Orezanie": "Zuschnitt",
+ "Bez orezania": "Kein Zuschnitt",
+ "Štvorec": "Quadrat",
+ "Panoráma 21 : 9": "Panorama 21 : 9",
+ "Odkaz po kliknutí": "Link beim Klicken"
 }
