@@ -13,16 +13,21 @@
 const API = (process.env.API_URL || 'http://localhost:3000').replace(/\/$/, '');
 const email = process.env.ADMIN_EMAIL;
 const heslo = process.env.ADMIN_HESLO;
-if (!email || !heslo) {
-  console.error('Nastavte ADMIN_EMAIL a ADMIN_HESLO (účet administrátora).');
-  process.exit(1);
+// ADMIN_TOKEN posiela skript testovaci-obsah.mjs - prihlásení je len 5 za 15 minút
+let token = process.env.ADMIN_TOKEN;
+if (!token) {
+  if (!email || !heslo) {
+    console.error('Nastavte ADMIN_EMAIL a ADMIN_HESLO (účet administrátora).');
+    process.exit(1);
+  }
+  const lg = await (await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, heslo }) })).json();
+  if (!lg.success) {
+    console.error('Prihlásenie zlyhalo:', lg.message);
+    process.exit(1);
+  }
+  token = lg.data.token;
 }
-const lg = await (await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, heslo }) })).json();
-if (!lg.success) {
-  console.error('Prihlásenie zlyhalo:', lg.message);
-  process.exit(1);
-}
-const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${lg.data.token}` };
+const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 const j = async (m, u, b) => { const r = await fetch(API + u, { method: m, headers: H, body: b ? JSON.stringify(b) : undefined }); return r.json(); };
 const prvy = async (u) => ((await j('GET', u)).data ?? [])[0]?.id ?? 0;
 
