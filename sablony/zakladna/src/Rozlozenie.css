@@ -38,6 +38,8 @@
   -webkit-font-smoothing: antialiased;
 }
 .zk-obsah { flex: 1; min-height: 50vh; }
+/* Prilepená hlavička nesmie zakryť cieľ odkazu na kotvu */
+html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 /* Globálny štýl odsekov webu (globals.css) by prebil písmo a farbu šablóny */
 .zk p { font: inherit; color: inherit; letter-spacing: inherit; }
 .zk-obsah h1, .zk-obsah h2, .zk-obsah h3 { font-family: var(--zk-nadpisy); letter-spacing: .005em; line-height: 1.12; }
@@ -245,7 +247,8 @@
   .zk-menu__odkaz:hover, .zk-menu__odkaz.is-aktivny { background: transparent; }
   .zk-menu__polozka.ma-podmenu > .zk-menu__odkaz::after { display: none; }
   .zk-menu__podmenu {
-    position: static; opacity: 1; visibility: visible; transform: none; min-width: 0;
+    /* visibility dedí od menu - zatvorené menu nesmie mať klikateľné podmenu */
+    position: static; opacity: 1; visibility: inherit; transform: none; min-width: 0;
     padding: 0 0 10px 10px; border: 0; box-shadow: none; background: transparent;
   }
   .zk-menu__podmenu::before { display: none; }
