@@ -500,6 +500,8 @@ location ~ ^/(api|uploads|sablony)/ { proxy_pass http://127.0.0.1:3000; proxy_se
 location / { root /cesta/k/frontend/build; try_files $uri /index.html; }
 ```
 
+Vydanie novej verzie a aktualizáciu webov klubov cez licenčný server popisuje [deploy/VYDANIE.md](deploy/VYDANIE.md).
+
 ### 9.4 Čo nezabudnúť
 
 - **HTTPS je nutnosť** — prihlasovacie cookies sa v produkcii posielajú len cez zabezpečené spojenie
