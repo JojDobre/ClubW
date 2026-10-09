@@ -68,3 +68,17 @@
 .cw-sab__upload p { margin: 0; }
 .cw-sab__upload strong { color: var(--text); }
 .cw-sab__upozornenie { margin: 14px 0 0; color: var(--muted); font-size: var(--fs-xs); }
+
+/* Obmedzenia licencie nad zoznamom šablón */
+.cw-sab__licencia {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  margin-bottom: var(--sp-4); padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md); border: 1px solid var(--border);
+  background: var(--pri-softer); color: var(--text);
+  font-size: var(--fs-sm); line-height: 1.55;
+}
+.cw-sab__licencia svg { flex-shrink: 0; margin-top: 1px; }
+.cw-sab__licencia.is-warning {
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+}

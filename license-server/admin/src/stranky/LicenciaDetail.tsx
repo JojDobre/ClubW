@@ -180,7 +180,7 @@ const LicenciaDetail: React.FC = () => {
               </div>
               <div>
                 <dt>Funkcie</dt>
-                <dd>{l.funkcie.length ? l.funkcie.map((f) => <Stitok key={f}>{f}</Stitok>) : <span className="tlmene">bez obmedzenia</span>}</dd>
+                <dd>{l.funkcie.length ? l.funkcie.map((f) => <Stitok key={f}>{f}</Stitok>) : <span className="tlmene">žiadne (zo šablón len Základná)</span>}</dd>
               </div>
               <div>
                 <dt>Aktualizácie</dt>
