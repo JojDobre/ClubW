@@ -342,6 +342,21 @@ LICENSE_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 # a odstráňte LICENSE_CHECK_DISABLED
 ```
 
+#### Šablóny podľa licencie
+
+Ktoré šablóny klub smie používať, určujú **funkcie** plánu (Produkt → Plány → Funkcie) alebo priamo licencie, oddelené čiarkou:
+
+| Funkcia | Čo povolí |
+| --- | --- |
+| `sablony:vsetky` | všetky šablóny dodané so systémom |
+| `sablona:pulz`, `sablona:arena`, … | jednu šablónu (slug z priečinka `sablony/`) |
+
+- Bez týchto funkcií má klub zo šablón dodaných so systémom len **Základnú**. Vlastné šablóny, ktoré si klub sám nahrá, licencia neobmedzuje.
+- Administrácia klubu ukazuje len povolené šablóny. Aktiváciu, náhľad aj úpravu nastavení nepovolenej šablóny server odmietne.
+- Keď licencia aktívnu šablónu prestane povoľovať, web použije Základnú. Nastavenia pôvodnej šablóny ostanú uložené a po obnovení licencie sa web vráti k nej.
+- Pri `LICENSE_CHECK_DISABLED=true` sú povolené všetky šablóny.
+- Zoznam všetkých funkcií je v administrácii licenčného servera dole na stránke produktu (karta **Funkcie licencie**).
+
 ### 6.5 Aktualizácie z licenčného servera
 
 Web klubu pri overení licencie pošle svoju verziu (z `package.json` v koreni projektu). Licenčný server mu ponúkne aktuálnu verziu produktu alebo pošle príkaz na aktualizáciu. Inštaláciu vykoná skript `scripts/aktualizuj.mjs`:

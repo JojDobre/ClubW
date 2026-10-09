@@ -29,7 +29,7 @@ import { souborUrl } from '../../config/api';
 import { PoleObrazka } from '../../components/admin/PoleObrazka';
 import { EditorBlokov } from '../../components/admin/EditorBlokov';
 import { sablonyApi, type HodnotaNastaveniaSablony, type NastavenieSablony, type SablonaWebu } from '../../api/sablony';
-import { tr } from '../../i18n';
+import { tr, trn } from '../../i18n';
 import './Sablony.css';
 
 /** Jedno pole nastavenia podľa typu z sablona.json. */
@@ -228,6 +228,8 @@ export const Sablony: React.FC = () => {
   const { uspech, chyba: hlasChybu, varovanie } = useToast();
   const { pouzivatel, smie } = useAuth();
   const sablony = useNacitanie((signal) => sablonyApi.vypis(signal));
+  // Obmedzenia licencie sú doplnková informácia - keď zlyhajú, stránka funguje ďalej
+  const licencia = useNacitanie((signal) => sablonyApi.licencia(signal));
   const smieUpravovat = smie('sablony', 'pisat');
   // Kód šablóny beží na webe - nahrávať a mazať smie len správca
   const jeSpravca = pouzivatel?.rola === 'admin';
@@ -253,6 +255,7 @@ export const Sablony: React.FC = () => {
       await sablonyApi.aktivuj(s.slug);
       uspech(tr('Web má teraz vzhľad {nazov}', { nazov: s.nazov }));
       sablony.obnov();
+      licencia.obnov();
     } catch (e: any) {
       hlasChybu(e?.message || tr('Šablónu sa nepodarilo aktivovať'));
     } finally {
@@ -348,6 +351,30 @@ export const Sablony: React.FC = () => {
           )
         }
       />
+
+      {licencia.data?.nahradena && (
+        <div className="cw-sab__licencia is-warning">
+          <Icon nazov="licencia" velkost={16} />
+          <span>
+            {tr('Šablóna {nazov} už nie je súčasťou licencie klubu, preto web používa šablónu Základná. Jej nastavenia ostali uložené - po obnovení licencie sa web vráti k nej.', {
+              nazov: licencia.data.nahradena.nazov,
+            })}
+          </span>
+        </div>
+      )}
+      {(licencia.data?.skryte ?? 0) > 0 && (
+        <div className="cw-sab__licencia">
+          <Icon nazov="licencia" velkost={16} />
+          <span>
+            {trn(
+              licencia.data!.skryte,
+              'Ďalšia {n} šablóna je dostupná vo vyššom pláne licencie. Spojte sa s dodávateľom.',
+              'Ďalšie {n} šablóny sú dostupné vo vyššom pláne licencie. Spojte sa s dodávateľom.',
+              'Ďalších {n} šablón je dostupných vo vyššom pláne licencie. Spojte sa s dodávateľom.'
+            )}
+          </span>
+        </div>
+      )}
 
       {sablony.chyba ? (
         <ErrorState sprava={tr('Šablóny sa nepodarilo načítať')} detail={sablony.chyba} onSkusZnova={sablony.obnov} />

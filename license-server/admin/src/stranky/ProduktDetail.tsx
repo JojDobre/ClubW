@@ -1,12 +1,13 @@
 // Umiestnenie: license-server/admin/src/stranky/ProduktDetail.tsx
 // Detail produktu: verzie z GitHubu (aktuálna verzia, balíky, hromadná
-// aktualizácia), nastavenia produktu a plány.
+// aktualizácia), nastavenia produktu, plány a prehľad funkcií licencie.
 
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, type Plan, type Produkt, type Verzia } from '../api';
-import { ChybaStav, HlavickaStranky, Ikona, Karta, Nacitava, Oblast, Okno, Pole, Prazdne, Prepinac, Stitok, Tlacidlo, useInterval, useNacitaj, useOznamenia, usePotvrdenie } from '../komponenty';
+import { ChybaStav, HlavickaStranky, Ikona, Karta, Kopirovat, Nacitava, Oblast, Okno, Pole, Prazdne, Prepinac, Stitok, Tlacidlo, useInterval, useNacitaj, useOznamenia, usePotvrdenie } from '../komponenty';
 import { STAVY_BALIKU, datum, sklon, velkost } from '../formaty';
+import { FUNKCIE_LICENCIE } from '../funkcie';
 
 const ProduktDetail: React.FC = () => {
   const { id } = useParams();
@@ -193,6 +194,8 @@ const ProduktDetail: React.FC = () => {
         <PlanyProduktu produkt={p} onUlozene={produkt.obnov} />
       </div>
 
+      <FunkcieLicencie />
+
       {rucna && (
         <RucnaVerzia
           produktId={p.id}
@@ -298,7 +301,7 @@ const PlanyProduktu: React.FC<{ produkt: Produkt; onUlozene: () => void }> = ({ 
             <Pole menovka="Kód" value={p.kod} onChange={(e) => zmen(i, { kod: e.target.value.toLowerCase() })} placeholder="pro" />
             <Pole menovka="Názov" value={p.nazov} onChange={(e) => zmen(i, { nazov: e.target.value })} placeholder="Pro" />
             <Pole menovka="Mesiacov" type="number" min={1} max={120} value={p.mesiacov} onChange={(e) => zmen(i, { mesiacov: Number(e.target.value) })} />
-            <Pole menovka="Funkcie" value={p.funkcieText} onChange={(e) => zmen(i, { funkcieText: e.target.value })} placeholder="live, export" />
+            <Pole menovka="Funkcie" value={p.funkcieText} onChange={(e) => zmen(i, { funkcieText: e.target.value })} placeholder="sablony:vsetky" />
             <button type="button" className="ikona-tlacidlo" onClick={() => setPlany((s) => s.filter((_, j) => j !== i))} aria-label={`Odstrániť plán ${p.nazov || p.kod}`}>
               <Ikona nazov="zavriet" />
             </button>
@@ -311,6 +314,49 @@ const PlanyProduktu: React.FC<{ produkt: Produkt; onUlozene: () => void }> = ({ 
     </Karta>
   );
 };
+
+/** Prehľad všetkých funkcií, ktoré web klubu rozpozná - pomoc pri plánoch a licenciách. */
+const FunkcieLicencie: React.FC = () => (
+  <Karta nadpis="Funkcie licencie">
+    <p className="tlmene">
+      Funkcie napíšte do poľa „Funkcie“ plánu (alebo priamo licencie), oddelené čiarkou, napríklad <code>sablona:pulz, sablona:arena</code>. Web klienta ich dostane pri
+      najbližšom overení licencie.
+    </p>
+    {FUNKCIE_LICENCIE.map((skupina) => (
+      <section key={skupina.nazov} className="funkcie">
+        <h3 className="funkcie__nadpis">{skupina.nazov}</h3>
+        <p className="tlmene">{skupina.popis}</p>
+        <div className="tabulka-obal">
+          <table className="tabulka">
+            <thead>
+              <tr>
+                <th>Funkcia</th>
+                <th>Čo povolí</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {skupina.funkcie.map((f) => (
+                <tr key={f.kod}>
+                  <td>
+                    <code className="mono">{f.kod}</code>
+                  </td>
+                  <td>
+                    <strong>{f.nazov}</strong>
+                    <div className="tlmene">{f.popis}</div>
+                  </td>
+                  <td className="funkcie__akcia">
+                    <Kopirovat text={f.kod} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ))}
+  </Karta>
+);
 
 const RucnaVerzia: React.FC<{ produktId: number; onZavriet: () => void; onHotovo: () => void }> = ({ produktId, onZavriet, onHotovo }) => {
   const { uspech, chyba } = useOznamenia();

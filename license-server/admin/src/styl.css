@@ -310,3 +310,9 @@ small { display: block; color: var(--tlmeny); font-size: 12.5px; }
   .tabulka--karty td:first-child { padding-bottom: 6px; }
   .tabulka--karty td > small { display: inline; margin-left: 6px; }
 }
+
+/* Prehľad funkcií licencie na stránke produktu */
+.funkcie + .funkcie { margin-top: 20px; }
+.funkcie__nadpis { margin: 16px 0 4px; font-size: 15px; }
+.funkcie .tabulka-obal { margin-top: 12px; }
+.funkcie__akcia { text-align: right; white-space: nowrap; width: 1%; }

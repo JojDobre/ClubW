@@ -80,8 +80,17 @@ export const prelozSablony = async (sablony: SablonaWebu[]): Promise<SablonaWebu
   });
 };
 
+/** Čo licencia klubu obmedzuje pri šablónach. */
+export interface LicenciaSablon {
+  /** Koľko šablón dodaných so systémom licencia nepovoľuje (sú skryté) */
+  skryte: number;
+  /** Aktívna šablóna, ktorú licencia už nepovoľuje - web používa Základnú */
+  nahradena: { slug: string; nazov: string } | null;
+}
+
 export const sablonyApi = {
   vypis: async (signal?: AbortSignal) => prelozSablony(await api.ziskaj<SablonaWebu[]>('/admin/sablony', { signal })),
+  licencia: (signal?: AbortSignal) => api.ziskaj<LicenciaSablon>('/admin/sablony/licencia', { signal }),
   aktivuj: (slug: string) => api.uprav<{ slug: string }>('/admin/sablony/aktivna', { slug }),
   ulozNastavenia: (slug: string, hodnoty: Record<string, HodnotaNastaveniaSablony>) =>
     api.uprav<Record<string, HodnotaNastaveniaSablony>>(`/admin/sablony/${encodeURIComponent(slug)}/nastavenia`, { hodnoty }),

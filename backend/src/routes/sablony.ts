@@ -2,13 +2,19 @@
 // Šablóny verejného webu - výber aktívnej, nahranie nových, nastavenia.
 //
 //   GET    /api/sablony/aktivna               verejné - čo má web načítať
-//   GET    /api/admin/sablony                 zoznam pre administráciu
+//   GET    /api/admin/sablony                 zoznam pre administráciu (len povolené licenciou)
+//   GET    /api/admin/sablony/licencia        čo licencia skryla a či web nahradil aktívnu
 //   POST   /api/admin/sablony                 nahranie balíka ZIP (len správca)
 //   PUT    /api/admin/sablony/aktivna         aktivácia
 //   PUT    /api/admin/sablony/:slug/nastavenia  hodnoty nastavení šablóny
 //   DELETE /api/admin/sablony/:slug           zmazanie (len správca)
 //
 // Súbory šablón servuje index.ts na adrese /sablony/:slug/*.
+//
+// Šablóny dodané so systémom povoľuje licencia (services/licenciaSablon.ts).
+// Keď licencia aktívnu šablónu prestane povoľovať, web použije Základnú.
+// V databáze ostane pôvodná aktívna šablóna aj jej nastavenia - po obnovení
+// licencie sa web sám vráti k nej.
 
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
@@ -27,6 +33,7 @@ import {
   zmazSablonu,
   zoznamSablon,
 } from '../services/sablony';
+import { jeSablonaPovolena } from '../services/licenciaSablon';
 
 export const verejneSablonyRouter = Router();
 export const adminSablonyRouter = Router();
@@ -79,11 +86,22 @@ const odpovedzChybou = (res: Response, chyba: unknown, kontext: string) => {
   res.status(500).json({ success: false, message: 'Chyba servera' });
 };
 
-/** Aktívna šablóna; ak zmizla alebo je poškodená, web prejde na predvolenú, inak na základnú. */
-const aktivnaSablona = async (nastavenia: NastaveniaKlubu): Promise<Sablona | null> =>
-  (await najdiSablonu(nastavenia.aktivna_sablona)) ??
-  (await najdiSablonu(PREDVOLENA_SABLONA)) ??
-  (await najdiSablonu(ZAKLADNA_SABLONA));
+/** Šablóna, ak existuje a licencia ju povoľuje. */
+const povolenaSablona = async (slug: string): Promise<Sablona | null> => {
+  const sablona = await najdiSablonu(slug);
+  return sablona && jeSablonaPovolena(sablona) ? sablona : null;
+};
+
+/**
+ * Šablóna, ktorú web naozaj používa.
+ * - Aktívnu už licencia nepovoľuje: Základná.
+ * - Aktívna zmizla alebo je poškodená: predvolená (ak ju licencia povoľuje), inak Základná.
+ */
+const aktivnaSablona = async (nastavenia: NastaveniaKlubu): Promise<Sablona | null> => {
+  const ulozena = await najdiSablonu(nastavenia.aktivna_sablona);
+  if (ulozena) return jeSablonaPovolena(ulozena) ? ulozena : najdiSablonu(ZAKLADNA_SABLONA);
+  return (await povolenaSablona(PREDVOLENA_SABLONA)) ?? (await najdiSablonu(ZAKLADNA_SABLONA));
+};
 
 /**
  * GET /api/sablony/aktivna
@@ -98,7 +116,7 @@ verejneSablonyRouter.get('/sablony/aktivna', optionalAuth, async (req: Request, 
 
     const ziadany = typeof req.query.nahlad === 'string' ? req.query.nahlad : '';
     if (ziadany && (await smieVModule(req, 'sablony', 'citat'))) {
-      sablona = await najdiSablonu(ziadany);
+      sablona = await povolenaSablona(ziadany);
       nahlad = Boolean(sablona);
     }
     if (!sablona) sablona = await aktivnaSablona(nastavenia);
@@ -136,7 +154,8 @@ adminSablonyRouter.get('/', authenticateToken, requirePermission('sablony', 'cit
   try {
     const nastavenia = await NastaveniaKlubu.nacitaj();
     const aktivna = (await aktivnaSablona(nastavenia))?.slug ?? ZAKLADNA_SABLONA;
-    const zoznam = await zoznamSablon();
+    // Šablóny, ktoré licencia nepovoľuje, správca klubu vôbec nevidí
+    const zoznam = (await zoznamSablon()).filter((s) => jeSablonaPovolena(s));
 
     res.json({
       success: true,
@@ -159,6 +178,23 @@ adminSablonyRouter.get('/', authenticateToken, requirePermission('sablony', 'cit
     });
   } catch (chyba) {
     odpovedzChybou(res, chyba, 'načítaní šablón');
+  }
+});
+
+/**
+ * GET /api/admin/sablony/licencia
+ * Koľko šablón licencia skryla a či web namiesto aktívnej šablóny
+ * používa Základnú (administrácia to vysvetlí správcovi).
+ */
+adminSablonyRouter.get('/licencia', authenticateToken, requirePermission('sablony', 'citat'), async (_req: Request, res: Response) => {
+  try {
+    const nastavenia = await NastaveniaKlubu.nacitaj();
+    const skryte = (await zoznamSablon()).filter((s) => !jeSablonaPovolena(s)).length;
+    const ulozena = await najdiSablonu(nastavenia.aktivna_sablona);
+    const nahradena = ulozena && !jeSablonaPovolena(ulozena) ? { slug: ulozena.slug, nazov: ulozena.nazov } : null;
+    res.json({ success: true, data: { skryte, nahradena } });
+  } catch (chyba) {
+    odpovedzChybou(res, chyba, 'načítaní licencie šablón');
   }
 });
 
@@ -199,6 +235,10 @@ adminSablonyRouter.put('/aktivna', authenticateToken, requirePermission('sablony
       res.status(400).json({ success: false, message: 'Šablóna neexistuje alebo je poškodená' });
       return;
     }
+    if (!jeSablonaPovolena(sablona)) {
+      res.status(403).json({ success: false, message: 'Šablóna nie je súčasťou licencie klubu' });
+      return;
+    }
     const nastavenia = await NastaveniaKlubu.nacitaj();
     await nastavenia.update({ aktivna_sablona: sablona.slug });
     res.json({ success: true, data: { slug: sablona.slug }, message: `Aktívna šablóna: ${sablona.nazov}` });
@@ -217,6 +257,10 @@ adminSablonyRouter.put(
       const sablona = await najdiSablonu(req.params.slug);
       if (!sablona) {
         res.status(404).json({ success: false, message: 'Šablóna sa nenašla' });
+        return;
+      }
+      if (!jeSablonaPovolena(sablona)) {
+        res.status(403).json({ success: false, message: 'Šablóna nie je súčasťou licencie klubu' });
         return;
       }
       const vstup = req.body?.hodnoty;

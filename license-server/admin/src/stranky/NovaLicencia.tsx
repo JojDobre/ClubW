@@ -150,8 +150,8 @@ const FormularLicencie: React.FC<{
           menovka="Funkcie"
           value={h.funkcie}
           onChange={(e) => nastav('funkcie', e.target.value)}
-          placeholder={plan?.funkcie.length ? plan.funkcie.join(', ') : 'napr. live, export, api'}
-          napoveda={licencia ? 'Kódy funkcií oddelené čiarkou.' : 'Prázdne = funkcie zvoleného plánu.'}
+          placeholder={plan?.funkcie.length ? plan.funkcie.join(', ') : 'napr. sablona:pulz, sablona:arena'}
+          napoveda={`${licencia ? 'Kódy funkcií oddelené čiarkou.' : 'Prázdne = funkcie zvoleného plánu.'} Zoznam všetkých funkcií je dole na stránke produktu.`}
         />
         <div className="formular__riadok">
           <Vyber
