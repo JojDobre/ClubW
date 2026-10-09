@@ -246,6 +246,8 @@ cd /opt/clubw/deploy/licencny-server
 
 Skript zálohuje databázu, stiahne nový kód (`git pull`) a znova zostaví a spustí kontajnery. Migrácie databázy prebehnú automaticky pri štarte.
 
+Celý postup vydania novej verzie CMS (aktualizácia servera, funkcie licencií, tag, testovací web, hromadná aktualizácia) je v [../VYDANIE.md](../VYDANIE.md).
+
 ## 13. Riešenie problémov
 
 | Problém | Riešenie |
