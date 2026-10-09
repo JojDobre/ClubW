@@ -1,7 +1,7 @@
 {
   "slug": "pulz",
   "nazov": "Pulz",
-  "verzia": "1.0.0",
+  "verzia": "1.0.1",
   "autor": "ClubW",
   "popis": "Nočná sestra Arény - celé tmavé rozhranie s neónovým svetlom a žiarou vo farbe klubu. Navigácia z troch plávajúcich ostrovov (erb, menu, akcie), ktoré sa pri posúvaní priblížia k sebe; na mobile menu cez celú obrazovku. Úvod otvára výsledková tabuľa najbližšieho zápasu s veľkým odpočtom a pásom najnovších správ, nasleduje neónový pás výsledkov, karusel noviniek, zápasy, sezóna v číslach, káder, médiá a výzva na členstvo. Písma Sora a Inter.",
   "api": 1,

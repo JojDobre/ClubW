@@ -1720,6 +1720,7 @@ a.tb-partner-karta:hover { border-color: var(--tb-akcent); transform: translateY
 .tb-odznak { padding: 6px 12px; border-radius: var(--tb-r); font-family: var(--tb-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--tb-akcent-12); color: var(--tb-akcent); }
 .tb-odznak--uhradena { background: color-mix(in srgb, var(--tb-uspech) 12%, transparent); color: var(--tb-uspech); }
 .tb-odznak--vratena { background: var(--tb-tmava-6); color: var(--tb-tmava-65); }
+.tb-odznak--dobierka { background: color-mix(in srgb, var(--tb-uspech) 8%, var(--tb-tmava-6)); color: var(--tb-tmava-65); }
 .tb-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

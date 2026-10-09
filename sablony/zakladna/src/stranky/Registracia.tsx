@@ -2,10 +2,11 @@
 // Registrácia fanúšika alebo člena - predvolená stránka /registracia.
 
 import React, { useEffect } from 'react';
-import { FormularRegistracie, useNastavenia } from '@clubw/jadro';
+import { FormularRegistracie, useNastavenia, useRegistracia } from '@clubw/jadro';
 
 const Registracia: React.FC = () => {
   const { nastavenia } = useNastavenia();
+  const reg = useRegistracia();
   useEffect(() => {
     document.title = `Registrácia | ${nastavenia.nazov}`;
   }, [nastavenia.nazov]);
@@ -15,8 +16,8 @@ const Registracia: React.FC = () => {
         <div className="blok__vnutro" style={{ maxWidth: 760 }}>
           <header className="blok__hlavicka">
             <span className="blok__stitok">{nastavenia.nazov}</span>
-            <h1 className="blok__nadpis blok__nadpis--velky">Staňte sa súčasťou klubu</h1>
-            <p className="blok__uvod">Zaregistrujte sa ako fanúšik alebo požiadajte o členstvo. Žiadosť posúdime a ozveme sa vám.</p>
+            <h1 className="blok__nadpis blok__nadpis--velky">{reg.texty.nadpis || 'Staňte sa súčasťou klubu'}</h1>
+            <p className="blok__uvod">{reg.texty.uvod || 'Zaregistrujte sa ako fanúšik alebo požiadajte o členstvo. Žiadosť posúdime a ozveme sa vám.'}</p>
           </header>
           <FormularRegistracie />
         </div>

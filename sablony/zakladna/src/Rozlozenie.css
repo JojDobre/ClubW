@@ -1,92 +1,319 @@
 /* Umiestnenie: sablony/zakladna/src/Rozlozenie.css
    Rozloženie základnej šablóny. Farby berie z nastavení klubu
-   (--club-primary...), takže sa prefarbí bez zásahu do kódu. */
+   (--club-primary...), takže sa prefarbí bez zásahu do kódu.
 
+   Identita: farba klubu v hornej lište, tlačidlách a pätičke, nadpisy
+   písmom Barlow Condensed (športové, úzke), text písmom Manrope,
+   zaoblené biele karty na svetlosivej ploche. */
+
+@font-face { font-family: 'ZK Manrope'; font-style: normal; font-weight: 400 800; font-display: swap; src: url(./pisma/manrope-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'ZK Manrope'; font-style: normal; font-weight: 400 800; font-display: swap; src: url(./pisma/manrope-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'ZK Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(./pisma/barlow-condensed-700-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'ZK Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(./pisma/barlow-condensed-700-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --zk-farba: var(--club-primary, #1b5e20);
+  --zk-kontrast: var(--club-primary-contrast, #ffffff);
+  --zk-akcent: var(--club-accent, #f9a825);
+  --zk-akcent-kontrast: var(--club-accent-contrast, #1a1a1a);
+  --zk-text: #0f172a;
+  --zk-tlmeny: #5b6475;
+  --zk-plocha: #f3f5f8;
+  --zk-karta: #ffffff;
+  --zk-ciara: #e4e8ee;
+  --zk-tmava: color-mix(in srgb, var(--zk-farba) 24%, #0b1220);
+  --zk-jemna: color-mix(in srgb, var(--zk-farba) 9%, #ffffff);
+  --zk-font: 'ZK Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --zk-nadpisy: 'ZK Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --zk-r: 16px;
+  --zk-tien: 0 1px 2px rgba(15, 23, 42, .05), 0 10px 30px -18px rgba(15, 23, 42, .28);
+  --zk-sirka: 1200px;
+}
+/* Tokeny sú na :root, lebo stránky Základnej používajú aj iné šablóny
+   (bez obalu .zk) - stránka tak má farby aj tam. */
 .zk {
-  min-height: 100vh; display: flex; flex-direction: column; background: #f7fafc; color: #1e293b;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: var(--zk-plocha); color: var(--zk-text);
+  font-family: var(--zk-font); line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 .zk-obsah { flex: 1; min-height: 50vh; }
+/* Prilepená hlavička nesmie zakryť cieľ odkazu na kotvu */
+html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
+/* Globálny štýl odsekov webu (globals.css) by prebil písmo a farbu šablóny */
+.zk p { font: inherit; color: inherit; letter-spacing: inherit; }
+.zk-obsah h1, .zk-obsah h2, .zk-obsah h3 { font-family: var(--zk-nadpisy); letter-spacing: .005em; line-height: 1.12; }
+.zk-obsah h1 { text-transform: uppercase; }
 .zk-skryte { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.zk-preskocit { position: absolute; left: 12px; top: -60px; z-index: 1200; padding: 10px 16px; border-radius: 10px; background: var(--zk-farba); color: var(--zk-kontrast); font-weight: 700; }
+.zk-preskocit:focus { top: 12px; }
+.zk :focus-visible { outline: 3px solid color-mix(in srgb, var(--zk-farba) 55%, transparent); outline-offset: 2px; }
+.zk-ikona { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Erb (logo alebo skratka) */
+.zk-erb { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
+.zk-erb--znak {
+  display: inline-grid; place-items: center; border-radius: 50%;
+  background: var(--zk-farba); color: var(--zk-kontrast);
+  font-family: var(--zk-nadpisy); font-size: 17px; letter-spacing: .04em;
+}
+
+/* Tlačidlá */
+.zk-tlacidlo {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 20px; border: 2px solid var(--zk-farba); border-radius: 999px;
+  background: var(--zk-farba); color: var(--zk-kontrast);
+  font: inherit; font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer;
+  transition: transform .15s, filter .15s, background .15s;
+}
+.zk-tlacidlo:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.zk-tlacidlo--obrys { background: transparent; color: var(--zk-farba); }
+.zk-tlacidlo--svetle { background: #ffffff; border-color: #ffffff; color: var(--zk-text); }
+.zk-tlacidlo--priehladne { background: transparent; border-color: rgba(255, 255, 255, .55); color: #ffffff; }
+.zk-tlacidlo--akcent { background: var(--zk-akcent); border-color: var(--zk-akcent); color: var(--zk-akcent-kontrast); }
+
+/* ===== Spoločné prvky zápasov (úvod, zoznam, detail) ===== */
+.zk-live {
+  display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px;
+  background: #e5303b; color: #ffffff; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+}
+.zk-live i { width: 7px; height: 7px; border-radius: 50%; background: #ffffff; animation: zk-pulz 1.4s ease-in-out infinite; }
+@keyframes zk-pulz { 50% { opacity: .25; } }
+
+/* Erby tímov */
+.zk-erb-timu { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.zk-erb-timu--velky { width: 68px; height: 68px; }
+.zk-erb-timu--znak {
+  display: inline-grid; place-items: center; border-radius: 50%; background: var(--zk-jemna); color: var(--zk-farba);
+  font-family: var(--zk-nadpisy); font-size: 11px; letter-spacing: .02em;
+}
+.zk-erb-timu--velky.zk-erb-timu--znak { font-size: 22px; }
+
+/* Odpočet */
+.zk-odpocet { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
+.zk-odpocet span { display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 8px 6px; border-radius: 12px; background: var(--zk-plocha); }
+.zk-odpocet strong { font-family: var(--zk-nadpisy); font-size: 1.7rem; line-height: 1; color: var(--zk-farba); font-variant-numeric: tabular-nums; }
+.zk-odpocet small { margin-top: 3px; font-size: 11px; font-weight: 700; color: var(--zk-tlmeny); text-transform: uppercase; letter-spacing: .08em; }
+
+@media (prefers-reduced-motion: reduce) { .zk-live i { animation: none; } }
+
+/* ===== Podstránky (spoločný základ) ===== */
+.zk-stranka { max-width: var(--zk-sirka); margin: 0 auto; padding: 44px 20px 0; box-sizing: border-box; font-family: var(--zk-font); color: var(--zk-text); }
+.zk-stranka__hlava { margin-bottom: 28px; }
+.zk-stranka__stitok, .zk-stitok {
+  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  color: var(--zk-farba); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+}
+.zk-stranka__stitok::before, .zk-stitok::before { content: ''; width: 18px; height: 3px; border-radius: 2px; background: var(--zk-akcent); }
+.zk-stranka__hlava h1 { margin: 0; font-family: var(--zk-nadpisy); font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1; text-transform: uppercase; color: var(--zk-text); }
+.zk-stranka__hlava p { margin: 10px 0 0; max-width: 640px; color: var(--zk-tlmeny); font-size: 1.05rem; }
+.zk-spat { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; color: var(--zk-tlmeny); font-weight: 700; font-size: 14px; text-decoration: none; }
+.zk-spat .zk-ikona { width: 16px; height: 16px; transform: rotate(180deg); }
+.zk-spat:hover { color: var(--zk-farba); }
+.zk-karta-obsah { background: var(--zk-karta); border-radius: var(--zk-r); box-shadow: var(--zk-tien); padding: 22px 24px; }
+.zk-prazdne { padding: 40px 20px; border-radius: var(--zk-r); background: var(--zk-karta); box-shadow: var(--zk-tien); text-align: center; color: var(--zk-tlmeny); }
+
+/* Stránka nenájdená */
+.zk-nenajdena { text-align: center; padding-top: 72px; max-width: 640px; }
+.zk-nenajdena__kod { display: block; font-family: var(--zk-nadpisy); font-size: clamp(6rem, 18vw, 10rem); line-height: .9; color: var(--zk-farba); opacity: .18; }
+.zk-nenajdena h1 { margin: -12px 0 12px; font-family: var(--zk-nadpisy); font-size: clamp(2rem, 5vw, 2.8rem); text-transform: uppercase; }
+.zk-nenajdena p { color: var(--zk-tlmeny); }
+.zk-nenajdena__tlacidla { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+
+/* Prepínače (čipy) a polia filtrov */
+.zk-cipy { display: flex; flex-wrap: wrap; gap: 8px; }
+.zk-cip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px;
+  border: 1.5px solid var(--zk-ciara); background: var(--zk-karta); color: var(--zk-text);
+  font: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+}
+.zk-cip span { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--zk-plocha); color: var(--zk-tlmeny); font-size: 12px; text-align: center; box-sizing: border-box; }
+.zk-cip:hover { border-color: var(--zk-farba); }
+.zk-cip.is-aktivny { background: var(--zk-farba); border-color: var(--zk-farba); color: var(--zk-kontrast); }
+.zk-cip.is-aktivny span { background: rgba(255, 255, 255, .22); color: inherit; }
+.zk-pole {
+  min-height: 42px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--zk-ciara); background: var(--zk-karta);
+  color: var(--zk-text); font: inherit; font-size: 14px; box-sizing: border-box;
+}
+.zk-pole:focus-within, .zk-pole:focus { border-color: var(--zk-farba); outline: none; }
+.zk-pole--hladat { display: inline-flex; align-items: center; gap: 8px; }
+.zk-pole--hladat .zk-ikona { width: 17px; height: 17px; color: var(--zk-tlmeny); }
+.zk-pole--hladat input { border: 0; outline: 0; background: transparent; font: inherit; color: inherit; min-width: 0; width: 100%; padding: 0; }
+
+/* Stav zápasu */
+.zk-stav { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--zk-plocha); color: var(--zk-tlmeny); }
+.zk-stav--naplanovany { background: var(--zk-jemna); color: var(--zk-farba); }
+.zk-stav--ukonceny { background: #e9edf2; color: #334155; }
+.zk-stav--odlozeny { background: #fff4db; color: #8a5a00; }
+.zk-stav--zruseny { background: #fde8e8; color: #9b1c1c; }
+
+/* ===== Horná lišta ===== */
+.zk-lista { background: var(--zk-tmava); color: rgba(255, 255, 255, .82); font-size: 13px; }
+.zk-lista__vnutro {
+  max-width: var(--zk-sirka); margin: 0 auto; padding: 0 20px; min-height: 38px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.zk-lista__kontakt, .zk-lista__siete { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.zk-lista a { display: inline-flex; align-items: center; gap: 7px; color: inherit; text-decoration: none; }
+.zk-lista a:hover { color: #ffffff; }
+.zk-lista .zk-ikona { width: 16px; height: 16px; }
+.zk-lista__siete { gap: 12px; margin-left: auto; }
 
 /* ===== Hlavička ===== */
-.zk-hlavicka { position: sticky; top: 0; z-index: 1000; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, .1); }
+.zk-hlavicka {
+  position: sticky; top: 0; z-index: 1000; background: rgba(255, 255, 255, .96);
+  border-bottom: 1px solid var(--zk-ciara); transition: box-shadow .2s;
+  backdrop-filter: saturate(1.4) blur(10px);
+}
+.zk-hlavicka::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: var(--zk-farba); }
+.zk-hlavicka.is-posunuta { box-shadow: 0 10px 30px -20px rgba(15, 23, 42, .45); }
 .zk-hlavicka__vnutro {
-  max-width: 1200px; margin: 0 auto; padding: 0 20px; min-height: 70px;
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  max-width: var(--zk-sirka); margin: 0 auto; padding: 0 20px; min-height: 76px;
+  display: flex; align-items: center; gap: 24px;
 }
-.zk-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #1e293b; font-weight: 700; font-size: 1.35rem; min-width: 0; }
-.zk-logo__obrazok { width: 44px; height: 44px; object-fit: contain; }
-.zk-logo__znak {
-  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-  display: grid; place-items: center; font-size: 15px; letter-spacing: .5px;
-  background: var(--club-primary, #1b5e20); color: var(--club-primary-contrast, #fff);
+.zk-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--zk-text); min-width: 0; flex-shrink: 1; }
+.zk-logo__erb { width: 48px; height: 48px; }
+.zk-logo__text { display: flex; flex-direction: column; min-width: 0; }
+.zk-logo__nazov {
+  font-family: var(--zk-nadpisy); font-size: 1.55rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.zk-logo__nazov { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zk-logo__slogan { font-size: 12px; color: var(--zk-tlmeny); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
 
-.zk-menu { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; justify-content: flex-end; }
+.zk-menu { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .zk-menu__polozka { position: relative; display: flex; align-items: center; }
-.zk-menu__odkaz { text-decoration: none; color: #4a5568; font-weight: 500; padding: 8px 0; border-bottom: 2px solid transparent; }
-.zk-menu__odkaz:hover, .zk-menu__odkaz.is-aktivny { color: #1a202c; border-bottom-color: var(--club-primary, #1b5e20); }
+.zk-menu__odkaz {
+  display: inline-flex; align-items: center; gap: 4px; padding: 9px 12px; border-radius: 10px;
+  text-decoration: none; color: #334155; font-weight: 600; font-size: 15px; white-space: nowrap;
+}
+.zk-menu__polozka.ma-podmenu > .zk-menu__odkaz::after {
+  content: ''; width: 6px; height: 6px; margin-left: 3px; border: solid currentColor; border-width: 0 1.6px 1.6px 0;
+  transform: translateY(-2px) rotate(45deg); opacity: .55;
+}
+.zk-menu__odkaz:hover { background: var(--zk-plocha); color: var(--zk-text); }
+.zk-menu__odkaz.is-aktivny { color: var(--zk-farba); background: var(--zk-jemna); }
 .zk-menu__podmenu {
-  position: absolute; top: 100%; left: -12px; min-width: 200px; padding: 8px 0;
-  background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, .15);
-  display: none; flex-direction: column; z-index: 1100;
+  position: absolute; top: calc(100% + 8px); left: 0; min-width: 230px; padding: 8px;
+  background: #ffffff; border: 1px solid var(--zk-ciara); border-radius: 14px; box-shadow: 0 24px 48px -24px rgba(15, 23, 42, .35);
+  display: flex; flex-direction: column; z-index: 1100;
+  opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity .15s, transform .15s, visibility .15s;
 }
+.zk-menu__podmenu::before { content: ''; position: absolute; left: 0; right: 0; top: -10px; height: 10px; }
 .zk-menu__polozka:hover .zk-menu__podmenu,
-.zk-menu__polozka:focus-within .zk-menu__podmenu { display: flex; }
-.zk-menu__pododkaz { padding: 8px 16px; color: #4a5568; text-decoration: none; font-size: 15px; white-space: nowrap; }
-.zk-menu__pododkaz:hover { background: #f7fafc; color: #1a202c; }
-.zk-menu__kategoria { padding: 10px 16px 2px; color: #718096; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
-.zk-menu__admin {
-  text-decoration: none; color: var(--club-primary, #1b5e20); font-weight: 600; font-size: 14px;
-  padding: 7px 14px; border: 1px solid currentColor; border-radius: 8px;
-}
-.zk-menu__kosik { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: #1a202c; font-weight: 600; }
-.zk-menu__pocet {
-  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; font-size: 12px;
-  display: inline-grid; place-items: center; box-sizing: border-box;
-  background: var(--club-primary, #1b5e20); color: var(--club-primary-contrast, #fff);
-}
-.zk-menu-tlacidlo { display: none; background: none; border: 0; font-size: 1.5rem; cursor: pointer; padding: 8px; color: inherit; }
+.zk-menu__polozka:focus-within .zk-menu__podmenu { opacity: 1; visibility: visible; transform: none; }
+.zk-menu__pododkaz { padding: 9px 12px; border-radius: 9px; color: #334155; text-decoration: none; font-size: 15px; font-weight: 500; white-space: nowrap; }
+.zk-menu__pododkaz:hover { background: var(--zk-jemna); color: var(--zk-farba); }
+.zk-menu__kategoria { padding: 10px 12px 4px; color: var(--zk-tlmeny); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.zk-menu__mobil { display: none; }
 
-@media (max-width: 860px) {
-  .zk-menu-tlacidlo { display: block; }
+.zk-akcie { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.zk-menu + .zk-akcie { padding-left: 12px; border-left: 1px solid var(--zk-ciara); }
+.zk-akcia {
+  position: relative; display: inline-grid; place-items: center; min-width: 42px; height: 42px; padding: 0 10px; border-radius: 999px;
+  border: 0; background: transparent; color: #334155; text-decoration: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 14px;
+}
+.zk-akcia:hover, .zk-akcia.is-aktivny { background: var(--zk-jemna); color: var(--zk-farba); }
+.zk-akcia--admin { border: 1.5px solid var(--zk-ciara); height: 36px; }
+.zk-akcia__pocet {
+  position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; box-sizing: border-box;
+  display: grid; place-items: center; font-size: 11px; font-weight: 800;
+  background: var(--zk-farba); color: var(--zk-kontrast);
+}
+.zk-akcie__tlacidlo { min-height: 40px; margin-left: 6px; }
+.zk-menu-tlacidlo { display: none; }
+
+@media (max-width: 1080px) {
+  .zk-logo__slogan { display: none; }
+  .zk-menu__odkaz { padding: 9px 9px; font-size: 14.5px; }
+}
+
+@media (max-width: 960px) {
+  .zk-hlavicka__vnutro { min-height: 66px; gap: 12px; }
+  .zk-logo__erb { width: 42px; height: 42px; }
+  .zk-logo__nazov { font-size: 1.35rem; }
+  .zk-menu-tlacidlo { display: inline-grid; }
+  .zk-akcia--ucet, .zk-akcia--admin { display: none; }
+  .zk-akcie { margin-left: auto; }
+  .zk-menu + .zk-akcie { padding-left: 0; border-left: 0; }
   .zk-menu {
-    display: none; position: absolute; left: 0; right: 0; top: 100%;
-    flex-direction: column; align-items: stretch; gap: 0; padding: 8px 20px 16px;
-    background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 8px 16px rgba(15, 23, 42, .08);
+    position: absolute; left: 0; right: 0; top: 100%; height: calc(100dvh - 66px); z-index: 1050;
+    flex-direction: column; align-items: stretch; gap: 0; margin: 0; padding: 12px 20px 28px; overflow-y: auto;
+    background: #ffffff; border-top: 1px solid var(--zk-ciara);
+    opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity .18s, transform .18s, visibility .18s;
   }
-  .zk-menu.is-otvorene { display: flex; }
-  .zk-menu__polozka { flex-direction: column; align-items: stretch; }
-  .zk-menu__odkaz { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-  .zk-menu__podmenu { position: static; display: flex; box-shadow: none; padding: 0 0 0 16px; min-width: 0; }
-  .zk-menu__kosik { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-  .zk-menu__admin { margin-top: 12px; text-align: center; }
+  .zk-menu.is-otvorene { opacity: 1; visibility: visible; transform: none; }
+  .zk-menu__polozka { flex-direction: column; align-items: stretch; border-bottom: 1px solid var(--zk-ciara); }
+  .zk-menu__odkaz { padding: 14px 4px; font-size: 17px; border-radius: 0; }
+  .zk-menu__odkaz:hover, .zk-menu__odkaz.is-aktivny { background: transparent; }
+  .zk-menu__polozka.ma-podmenu > .zk-menu__odkaz::after { display: none; }
+  .zk-menu__podmenu {
+    /* visibility dedí od menu - zatvorené menu nesmie mať klikateľné podmenu */
+    position: static; opacity: 1; visibility: inherit; transform: none; min-width: 0;
+    padding: 0 0 10px 10px; border: 0; box-shadow: none; background: transparent;
+  }
+  .zk-menu__podmenu::before { display: none; }
+  .zk-menu__mobil { display: grid; gap: 10px; margin-top: 20px; }
+}
+
+@media (max-width: 560px) {
+  .zk-lista__kontakt a:nth-child(2) { display: none; }
+  .zk-lista__kontakt a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zk-logo__nazov { font-size: 1.2rem; }
+  .zk-akcia { min-width: 38px; height: 38px; padding: 0 8px; }
+  .zk-akcie__tlacidlo { display: none; }
 }
 
 /* ===== Pätička ===== */
-.zk-paticka { background: #2d3748; color: #fff; padding: 40px 20px 20px; margin-top: 60px; }
-.zk-paticka__stlpce {
-  max-width: 1200px; margin: 0 auto 30px; display: grid; gap: 30px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); text-align: center;
+.zk-paticka { margin-top: 72px; background: var(--zk-tmava); color: rgba(255, 255, 255, .72); font-size: 14.5px; position: relative; }
+.zk-paticka::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--zk-farba) 0 70%, var(--zk-akcent) 70% 100%); }
+.zk-paticka__vnutro {
+  max-width: var(--zk-sirka); margin: 0 auto; padding: 56px 20px 36px;
+  display: grid; gap: 36px; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
 }
-.zk-paticka h3, .zk-paticka h4 { color: #e2e8f0; margin: 0 0 15px; }
-.zk-paticka p { color: #a0aec0; font-size: 14px; margin: 0 0 8px; }
-.zk-paticka a { color: #cbd5e0; }
-.zk-paticka__siete { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 12px; font-size: 14px; }
-.zk-paticka__odkazy { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
-.zk-paticka__odkazy a { color: #a0aec0; text-decoration: none; }
-.zk-paticka__odkazy a:hover { color: #fff; }
-.zk-paticka__spodok { max-width: 1200px; margin: 0 auto; border-top: 1px solid #4a5568; padding-top: 20px; text-align: center; }
-.zk-paticka__cookies { background: none; border: 0; color: #a0aec0; text-decoration: underline; cursor: pointer; font: inherit; font-size: 14px; padding: 0; }
+.zk-paticka a { color: rgba(255, 255, 255, .78); text-decoration: none; }
+.zk-paticka a:hover { color: #ffffff; }
+.zk-paticka p { margin: 0 0 8px; color: rgba(255, 255, 255, .66); }
+.zk-paticka__logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 14px; color: #ffffff !important; }
+.zk-paticka__logo strong { font-family: var(--zk-nadpisy); font-size: 1.6rem; text-transform: uppercase; letter-spacing: .01em; }
+.zk-paticka__rok { font-size: 13px; color: rgba(255, 255, 255, .55); }
+.zk-paticka__siete { display: flex; gap: 8px; margin-top: 16px; }
+.zk-paticka__siete a {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255, 255, 255, .08); transition: background .15s;
+}
+.zk-paticka__siete a:hover { background: var(--zk-farba); }
+.zk-paticka__siete .zk-ikona { width: 18px; height: 18px; }
+.zk-paticka__nadpis { margin: 4px 0 16px; color: #ffffff; font-family: var(--zk-nadpisy); font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; }
+.zk-paticka__odkazy { display: flex; flex-direction: column; gap: 9px; }
+.zk-paticka__kontakt { display: flex; flex-direction: column; gap: 10px; }
+.zk-paticka__kontakt > * { display: inline-flex; align-items: flex-start; gap: 9px; }
+.zk-paticka__kontakt .zk-ikona { width: 17px; height: 17px; margin-top: 2px; color: var(--zk-akcent); }
+.zk-paticka__udaje { margin-top: 14px !important; font-size: 13px; color: rgba(255, 255, 255, .55); }
+.zk-paticka__spodok {
+  max-width: var(--zk-sirka); margin: 0 auto; padding: 18px 20px 26px; border-top: 1px solid rgba(255, 255, 255, .1);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; font-size: 13px; color: rgba(255, 255, 255, .55);
+}
+.zk-paticka__spodok p { margin: 0; }
+.zk-paticka__pravne { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; }
+.zk-paticka__cookies { background: none; border: 0; color: rgba(255, 255, 255, .78); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+
+@media (max-width: 900px) {
+  .zk-paticka__vnutro { grid-template-columns: 1fr 1fr; }
+  .zk-paticka__klub { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .zk-paticka__vnutro { grid-template-columns: 1fr; gap: 28px; padding-top: 44px; }
+}
 
 /* ===== Načítavanie ===== */
-.zk-nacitavanie { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 80px 20px; color: #64748b; }
+.zk-nacitavanie { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 80px 20px; color: var(--zk-tlmeny, #64748b); }
 .zk-nacitavanie__kruh {
   width: 22px; height: 22px; border-radius: 50%;
   border: 3px solid #e2e8f0; border-top-color: var(--club-primary, #1b5e20);
   animation: zk-tocenie .8s linear infinite;
 }
 @keyframes zk-tocenie { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .zk-nacitavanie__kruh { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .zk-nacitavanie__kruh { animation: none; }
+  .zk-tlacidlo, .zk-menu, .zk-menu__podmenu { transition: none; }
+}

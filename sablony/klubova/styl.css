@@ -2192,6 +2192,7 @@ a.kl-partner-karta:hover { border-color: var(--kl-akcent); transform: translateY
 .kl-odznak { padding: 6px 12px; border-radius: 999px; font-family: var(--kl-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--kl-akcent-12); color: var(--kl-akcent); }
 .kl-odznak--uhradena { background: color-mix(in srgb, var(--kl-uspech) 12%, transparent); color: var(--kl-uspech); }
 .kl-odznak--vratena { background: var(--kl-tmava-6); color: var(--kl-tmava-65); }
+.kl-odznak--dobierka { background: color-mix(in srgb, var(--kl-uspech) 8%, var(--kl-tmava-6)); color: var(--kl-tmava-65); }
 .kl-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

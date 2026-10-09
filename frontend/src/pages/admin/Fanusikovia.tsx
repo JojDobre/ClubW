@@ -13,6 +13,7 @@ import type { Fanusik, StavFanusika, TypClenstva } from '../../api/typy';
 import { tr } from '../../i18n';
 import './Hraci.css';
 import './Fanusikovia.css';
+import { NastaveniaRegistracieOkno } from './NastaveniaRegistracie';
 
 const TYPY: Array<{ hodnota: TypClenstva; popis: string; ton: TonStitka }> = [
   { hodnota: 'fanusik', popis: tr('Fanúšik'), ton: 'neutral' },
@@ -49,6 +50,7 @@ export const Fanusikovia: React.FC = () => {
   const { uspech, chyba: hlasChybu, varovanie } = useToast();
 
   const [upravovany, setUpravovany] = useState<Partial<Fanusik> | null>(null);
+  const [nastaveniaRegistracie, setNastaveniaRegistracie] = useState(false);
   const [naZmazanie, setNaZmazanie] = useState<Fanusik | null>(null);
   const [filterTypu, setFilterTypu] = useState('');
   const [uklada, setUklada] = useState(false);
@@ -314,9 +316,14 @@ export const Fanusikovia: React.FC = () => {
             : tr('Registrovaní priaznivci klubu · {soSuhlasom} so súhlasom na zasielanie oznamov.', { soSuhlasom })
         }
         akcie={
-          <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
-            {tr('Pridať fanúšika')}
-          </Button>
+          <>
+            <Button variant="secondary" ikona={<Icon nazov="nastavenia" velkost={17} />} onClick={() => setNastaveniaRegistracie(true)}>
+              {tr('Nastavenia registrácie')}
+            </Button>
+            <Button ikona={<Icon nazov="plus" velkost={17} />} onClick={() => setUpravovany({ ...PRAZDNY })}>
+              {tr('Pridať fanúšika')}
+            </Button>
+          </>
         }
       />
 
@@ -539,6 +546,8 @@ export const Fanusikovia: React.FC = () => {
         onPotvrd={zmaz}
         onZrus={() => setNaZmazanie(null)}
       />
+
+      <NastaveniaRegistracieOkno otvorene={nastaveniaRegistracie} onZavri={() => setNastaveniaRegistracie(false)} />
     </div>
   );
 };

@@ -10,7 +10,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
-  NAZVY_STAVOV_OBJEDNAVKY,
   PlatobnaBrana,
   cenaSVolbami,
   cenaText,
@@ -19,6 +18,9 @@ import {
   useKosik,
   useObchod,
   useObjednavka,
+  krokyObjednavky,
+  infoPlatby,
+  kartaStavuObjednavky,
   usePokladna,
   type KategoriaObchodu,
   type ObjednavkaZakaznika,
@@ -590,18 +592,15 @@ export const Pokladna: React.FC = () => {
 
 // ===== /objednavka/:token =====
 
-const PORADIE_STAVOV: Record<string, number> = { nova: 0, potvrdena: 1, pripravena: 2, odoslana: 2, vybavena: 3 };
-
 const PriebehObjednavky: React.FC<{ o: ObjednavkaZakaznika }> = ({ o }) => {
-  if (o.stav === 'zrusena') return null;
-  const kroky = ['nova', 'potvrdena', o.ulica ? 'odoslana' : 'pripravena', 'vybavena'];
-  const aktualny = PORADIE_STAVOV[o.stav] ?? 0;
+  const kroky = krokyObjednavky(o);
+  if (!kroky.length) return null;
   return (
     <ol className="pz-postup-objednavky">
       {kroky.map((k, i) => (
-        <li key={k} className={i < aktualny ? 'is-hotovy' : i === aktualny ? 'is-aktualny' : ''}>
+        <li key={k.kluc} className={k.stav === 'hotovy' ? 'is-hotovy' : k.stav === 'aktualny' ? 'is-aktualny' : ''}>
           <span aria-hidden="true">{i + 1}</span>
-          {k === 'pripravena' ? 'Pripravená' : NAZVY_STAVOV_OBJEDNAVKY[k]}
+          {k.nazov}
         </li>
       ))}
     </ol>
@@ -625,6 +624,8 @@ export const Objednavka: React.FC = () => {
 
   const zrusena = o.stav === 'zrusena';
   const uhradena = o.stav_platby === 'uhradena';
+  const platba = infoPlatby(o);
+  const stavKarta = kartaStavuObjednavky(o);
 
   return (
     <div className="pz-stranka pz-objednavka-stranka">
@@ -639,13 +640,14 @@ export const Objednavka: React.FC = () => {
               <div className={`pz-platba-box${uhradena ? ' is-uhradena' : ''}`}>
                 <div className="pz-platba-box__hlava">
                   <Ikona nazov="platba" velkost={20} />
-                  <strong>{uhradena ? 'Objednávka je uhradená' : o.stav_platby === 'vratena' ? 'Platba bola vrátená' : o.platba_nazov}</strong>
-                  <span className={`pz-odznak pz-odznak--${o.stav_platby}`}>{uhradena ? 'Zaplatené' : o.stav_platby === 'vratena' ? 'Vrátené' : 'Čaká na platbu'}</span>
+                  <strong>{platba.nadpis}</strong>
+                  <span className={`pz-odznak pz-odznak--${platba.ton}`}>{platba.odznak}</span>
                 </div>
+                {platba.text && <p className="pz-platba-box__text">{platba.text}</p>}
                 {overuje && !uhradena && <p className="pz-platba-box__text">Overujeme platbu…</p>}
                 {o.pokyny && <p className="pz-platba-box__text pz-platba-box__pokyny">{o.pokyny}</p>}
                 {o.brana_html && <PlatobnaBrana html={o.brana_html} className="pz-platba-box__brana" />}
-                {!uhradena && (
+                {platba.udajeNaPlatbu && (
                   <dl className="pz-platba-box__udaje">
                     <div>
                       <dt>Suma</dt>
@@ -657,6 +659,16 @@ export const Objednavka: React.FC = () => {
                     </div>
                   </dl>
                 )}
+              </div>
+            )}
+            {!zrusena && stavKarta && (
+              <div className="pz-platba-box is-uhradena pz-platba-box--stav">
+                <div className="pz-platba-box__hlava">
+                  <Ikona nazov="doprava" velkost={20} />
+                  <strong>{stavKarta.nadpis}</strong>
+                  <span className="pz-odznak pz-odznak--uhradena">{stavKarta.odznak}</span>
+                </div>
+                <p className="pz-platba-box__text">{stavKarta.text}</p>
               </div>
             )}
 

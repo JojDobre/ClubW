@@ -1,7 +1,7 @@
 {
   "slug": "tribuna",
   "nazov": "Tribúna",
-  "verzia": "1.0.6",
+  "verzia": "1.0.7",
   "autor": "ClubW",
   "popis": "Klasický klubový web striedaný s bento mriežkami, inšpirovaný webmi tradičných klubov: horná lišta s najbližším zápasom, biela hlavička s erbom, názvom a sloganom a menu v páse farby klubu, hlavné správy s fotkou cez celú šírku, mozaika dlaždíc zápasového dňa (odpočet, výsledok, tabuľka), klasické novinky, hráč v popredí so sezónou v číslach, pás Klub TV, dlaždice fanshopu, sietí, úspechov a členstva a partneri ako pyramída nad pätičkou. Písmo Oswald, zelená a zlatá.",
   "api": 1,

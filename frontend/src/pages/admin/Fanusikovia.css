@@ -17,3 +17,23 @@
 .cw-fanusik__pozvanka { display: flex; flex-direction: column; gap: 12px; }
 .cw-fanusik__pozvanka p { margin: 0; line-height: 1.5; }
 .cw-fanusik__pozvanka-pozn { color: var(--muted); font-size: 13px; }
+
+/* ===== Nastavenia registrácie ===== */
+.cw-reg { display: flex; flex-direction: column; gap: 22px; }
+.cw-reg__sekcia h3 { margin: 0 0 8px; font-size: var(--fs-md); color: var(--text); }
+.cw-reg__info { margin: 0 0 12px; color: var(--muted); font-size: var(--fs-sm); line-height: 1.5; }
+.cw-reg__prepinace { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cw-reg__polia { display: flex; flex-direction: column; gap: 8px; }
+.cw-reg__pole {
+  display: grid; grid-template-columns: minmax(0, 1fr) 180px auto; align-items: center; gap: 14px;
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--card2);
+}
+.cw-reg__pole strong { font-size: var(--fs-sm); color: var(--text); }
+.cw-reg__pole .cw-field { margin: 0; }
+.cw-reg__texty { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; }
+.cw-reg__vyhoda { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto; align-items: end; gap: 10px; margin-bottom: 8px; }
+@media (max-width: 720px) {
+  .cw-reg__prepinace, .cw-reg__texty { grid-template-columns: minmax(0, 1fr); }
+  .cw-reg__pole { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .cw-reg__vyhoda { grid-template-columns: minmax(0, 1fr); }
+}

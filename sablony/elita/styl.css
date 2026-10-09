@@ -1745,6 +1745,7 @@ a.el-partner-karta:hover { border-color: var(--el-akcent); transform: translateY
 .el-odznak { padding: 6px 12px; border-radius: var(--el-r); font-family: var(--el-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--el-akcent-12); color: var(--el-akcent); }
 .el-odznak--uhradena { background: color-mix(in srgb, var(--el-uspech) 12%, transparent); color: var(--el-uspech); }
 .el-odznak--vratena { background: var(--el-tmava-6); color: var(--el-tmava-65); }
+.el-odznak--dobierka { background: color-mix(in srgb, var(--el-uspech) 8%, var(--el-tmava-6)); color: var(--el-tmava-65); }
 .el-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useNastavenia } from '@clubw/jadro';
+import { ZivyPrenos, useNastavenia, useZivaObnova } from '@clubw/jadro';
 import { NenajdenyObsah } from './Nenajdena';
 import { ChybaStranky, Nacitava } from '../casti';
 import {
@@ -125,16 +125,21 @@ const Strana: React.FC<{ z: TypZapasu; strana: 'domaci' | 'hostia'; logoKlubu: s
 const Zapas: React.FC = () => {
   const { id = '' } = useParams();
   const { nastavenia } = useNastavenia();
-  const zapas = useApi<TypZapasu & { clanok?: { nazov: string; slug: string } | null }>(`/matches/${encodeURIComponent(id)}`);
+  // Počas živého zápasu sa skóre, fáza a udalosti samy obnovujú
+  const [zivy, setZivy] = useState(false);
+  const tik = useZivaObnova(zivy);
+  const obnova = tik ? `?t=${tik}` : '';
+  const zapas = useApi<TypZapasu & { clanok?: { nazov: string; slug: string } | null }>(`/matches/${encodeURIComponent(id)}${obnova}`);
   const z = zapas.data;
-  const statistiky = useApi<{ vsetky: Udalost[] }>(z ? `/matches/${z.id}/statistics` : null);
-  const komentar = useApi<Komentar[]>(z ? `/matches/${z.id}/events` : null);
+  useEffect(() => setZivy(z?.status === 'prebieha'), [z?.status]);
+  const statistiky = useApi<{ vsetky: Udalost[] }>(z ? `/matches/${z.id}/statistics${obnova}` : null);
+  const komentar = useApi<Komentar[]>(z ? `/matches/${z.id}/events${obnova}` : null);
   const zostava = useApi<{ vsetky: Zostava[] }>(z ? `/matches/${z.id}/lineup` : null);
   const videa = useApi<Array<{ id: number }>>(z ? `/videos?zapas_id=${z.id}` : null);
 
   useTitulok(z ? `${nazovDomacich(z)} – ${nazovHosti(z)}${maVysledok(z) ? ` ${z.goly_domaci}:${z.goly_hostia}` : ''}` : null);
 
-  if (zapas.nacitava) return <Nacitava text="Načítavam zápas…" />;
+  if (zapas.nacitava && !z) return <Nacitava text="Načítavam zápas…" />;
   if (zapas.stav === 404) return <NenajdenyObsah nadpis="Tento zápas sme nenašli" spat={{ odkaz: '/matches', text: 'Všetky zápasy' }} />;
   if (zapas.chyba || !z) return <ChybaStranky text={zapas.chyba || 'Zápas sa nepodarilo načítať.'} />;
 
@@ -217,6 +222,9 @@ const Zapas: React.FC = () => {
           {!odohrany && stav === 'naplanovany' && <Odpocet kedy={z.datum_cas} />}
         </div>
       </header>
+      <div className="kr-kontajner">
+        <ZivyPrenos zapas={z} className="kr-zivy-prenos" />
+      </div>
 
       <div className="kr-sekcia kr-sekcia--hore">
         <div className="kr-kontajner kr-zapas-detail__mriezka">

@@ -1643,6 +1643,7 @@ a.db-partner-karta:hover { border-color: var(--db-druha); transform: translateY(
 .db-odznak { padding: 6px 12px; border-radius: 999px; font-family: var(--db-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--db-druha-12); color: var(--db-druha); }
 .db-odznak--uhradena { background: color-mix(in srgb, var(--db-uspech) 12%, transparent); color: var(--db-uspech); }
 .db-odznak--vratena { background: var(--db-tmava-6); color: var(--db-tmava-65); }
+.db-odznak--dobierka { background: color-mix(in srgb, var(--db-uspech) 8%, var(--db-tmava-6)); color: var(--db-tmava-65); }
 .db-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

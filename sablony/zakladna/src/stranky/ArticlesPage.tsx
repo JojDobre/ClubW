@@ -153,7 +153,7 @@ const ArticlesPage: React.FC = () => {
           color: '#1e293b',
           marginBottom: '10px'
         }}>
-          📰 Všetky články
+          Všetky články
         </h1>
         <p style={{ 
           fontSize: '1.1rem', 

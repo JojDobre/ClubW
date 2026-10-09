@@ -1709,6 +1709,7 @@ a.pz-partner-karta:hover { border-color: var(--pz-akcent); transform: translateY
 .pz-odznak { padding: 6px 12px; border-radius: var(--pz-r); font-family: var(--pz-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--pz-akcent-12); color: var(--pz-akcent); }
 .pz-odznak--uhradena { background: color-mix(in srgb, var(--pz-uspech) 12%, transparent); color: var(--pz-uspech); }
 .pz-odznak--vratena { background: var(--pz-tmava-6); color: var(--pz-tmava-65); }
+.pz-odznak--dobierka { background: color-mix(in srgb, var(--pz-uspech) 8%, var(--pz-tmava-6)); color: var(--pz-tmava-65); }
 .pz-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {
@@ -3140,13 +3141,13 @@ td.pz-tabulka__body { font-weight: 700; font-size: 15px; }
 }
 .pz-rriadok:hover { border-color: transparent; box-shadow: 0 20px 44px -28px rgba(16, 24, 40, 0.45); transform: translateY(-2px); }
 .pz-rriadok__den { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 68px; border-radius: 16px; background: var(--pz-plocha); }
-.pz-rriadok__den strong { font-family: var(--pz-nadpisy); font-weight: 700; font-size: 26px; line-height: 1; letter-spacing: -0.04em; }
-.pz-rriadok__den small { margin-top: 5px; color: var(--pz-tmava-55); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.pz-rriadok__den strong { display: block; width: 100%; text-align: center; font-family: var(--pz-nadpisy); font-weight: 700; font-size: 26px; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.pz-rriadok__den small { display: block; width: 100%; text-align: center; margin-top: 5px; color: var(--pz-tmava-55); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .pz-rriadok:not(.is-odohrany) .pz-rriadok__den { background: var(--pz-primarna); color: #ffffff; }
 .pz-rriadok:not(.is-odohrany) .pz-rriadok__den small { color: var(--pz-neon); }
-.pz-rriadok__info { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; min-width: 0; }
+.pz-rriadok__info { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; min-width: 0; }
 .pz-rriadok__info small { max-width: 100%; color: var(--pz-tmava-55); font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pz-rriadok__miesto { padding: 4px 10px; border-radius: 999px; background: var(--pz-plocha); color: var(--pz-tmava-65); font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.pz-rriadok__miesto { padding: 3px 9px; border-radius: 999px; line-height: 1.5; background: var(--pz-plocha); color: var(--pz-tmava-65); font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .pz-rriadok__miesto.is-doma { background: var(--pz-neon); color: var(--pz-primarna); }
 .pz-rriadok__duel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; min-width: 0; }
 .pz-rriadok__tim { display: flex; align-items: center; gap: 12px; min-width: 0; }

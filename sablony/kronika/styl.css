@@ -1591,6 +1591,7 @@ a.kr-partner-karta:hover { border-color: var(--kr-akcent); transform: translateY
 .kr-odznak { padding: 6px 12px; border-radius: var(--kr-r); font-family: var(--kr-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--kr-akcent-12); color: var(--kr-akcent); }
 .kr-odznak--uhradena { background: color-mix(in srgb, var(--kr-uspech) 12%, transparent); color: var(--kr-uspech); }
 .kr-odznak--vratena { background: var(--kr-tmava-6); color: var(--kr-tmava-65); }
+.kr-odznak--dobierka { background: color-mix(in srgb, var(--kr-uspech) 8%, var(--kr-tmava-6)); color: var(--kr-tmava-65); }
 .kr-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

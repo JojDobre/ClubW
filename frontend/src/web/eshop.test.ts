@@ -3,7 +3,7 @@
 // povinné voľby pred pridaním do košíka.
 
 import { describe, it, expect } from 'vitest';
-import { cenaSVolbami, cenaText, hodnotaVypredana, type ProduktObchodu } from './eshop';
+import { cenaSVolbami, cenaText, hodnotaVypredana, infoPlatby, kartaStavuObjednavky, krokyObjednavky, type ObjednavkaZakaznika, type ProduktObchodu } from './eshop';
 
 const dres = {
   id: 1,
@@ -43,5 +43,35 @@ describe('ceny obchodu', () => {
     expect(hodnotaVypredana({ sklad: 0 } as never)).toBe(true);
     expect(hodnotaVypredana({ sklad: 2 } as never)).toBe(false);
     expect(hodnotaVypredana({ sklad: null } as never)).toBe(false);
+  });
+});
+
+// ===== Stránka objednávky pre zákazníka =====
+
+const objednavka = (zmeny: Partial<ObjednavkaZakaznika>) =>
+  ({ stav: 'potvrdena', stav_platby: 'neuhradena', platba_typ: 'prevod', platba_nazov: 'Prevod', dorucenie_nazov: 'Osobný odber', spolu: 20, mena: 'EUR', ulica: null, mesto: null, psc: null, ...zmeny }) as ObjednavkaZakaznika;
+
+describe('stránka objednávky', () => {
+  it('pripravená objednávka ukazuje krok Pripravená aj pri adrese', () => {
+    const kroky = krokyObjednavky(objednavka({ stav: 'pripravena', ulica: 'Hlavná 1' }));
+    expect(kroky[2]).toMatchObject({ nazov: 'Pripravená', stav: 'aktualny' });
+    expect(kroky[1].stav).toBe('hotovy');
+  });
+
+  it('dobierka nie je „neuhradená“, ale dobierka bez variabilného symbolu', () => {
+    const p = infoPlatby(objednavka({ platba_typ: 'dobierka' }));
+    expect(p).toMatchObject({ odznak: 'Dobierka', ton: 'dobierka', udajeNaPlatbu: false });
+    expect(p.text).toContain('20,00 €');
+  });
+
+  it('prevod čaká na platbu so sumou a symbolom, uhradená objednávka nie', () => {
+    expect(infoPlatby(objednavka({})).udajeNaPlatbu).toBe(true);
+    expect(infoPlatby(objednavka({ stav_platby: 'uhradena' }))).toMatchObject({ nadpis: 'Objednávka je uhradená', udajeNaPlatbu: false });
+  });
+
+  it('odoslaná a pripravená objednávka má vlastnú kartu stavu', () => {
+    expect(kartaStavuObjednavky(objednavka({ stav: 'odoslana', ulica: 'Hlavná 1', psc: '010 01', mesto: 'Žilina' }))?.text).toContain('Hlavná 1, 010 01 Žilina');
+    expect(kartaStavuObjednavky(objednavka({ stav: 'pripravena' }))?.nadpis).toBe('Objednávka je pripravená na vyzdvihnutie');
+    expect(kartaStavuObjednavky(objednavka({ stav: 'potvrdena' }))).toBeNull();
   });
 });

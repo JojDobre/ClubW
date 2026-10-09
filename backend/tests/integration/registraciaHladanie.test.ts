@@ -3,6 +3,7 @@
 //
 // Vyžadujú bežiacu databázu (npm run db:migrate na testovacej DB).
 
+import NastaveniaKlubu from '../../src/models/NastaveniaKlubu';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -34,7 +35,7 @@ afterAll(async () => {
 });
 
 const registruj = (udaje: Record<string, unknown>, ip = '10.0.0.1') =>
-  request(app).post('/api/fans/registracia').set('X-Forwarded-For', ip).send({ meno: 'Ján', priezvisko: 'Fanúšik', suhlas_gdpr: true, ...udaje });
+  request(app).post('/api/fans/registracia').set('X-Forwarded-For', ip).send({ meno: 'Ján', priezvisko: 'Fanúšik', suhlas_gdpr: true, heslo: 'modra lavica pri tichom rybniku', ...udaje });
 
 describe('registrácia z webu', () => {
   it('vytvorí žiadosť o členstvo', async () => {
@@ -50,6 +51,20 @@ describe('registrácia z webu', () => {
     const znova = await registruj({ email: `${P.toLowerCase()}a@example.com` }, '10.0.0.2');
     expect(znova.status).toBe(201);
     expect(await Fanusik.count({ where: { email: `${P.toLowerCase()}a@example.com` } })).toBe(1);
+  });
+
+  it('heslo je povinné, vypnutý typ a povinné pole sa skontrolujú', async () => {
+    expect((await registruj({ email: `${P.toLowerCase()}d@example.com`, heslo: '' }, '10.0.0.4')).status).toBe(400);
+    const klub = await NastaveniaKlubu.nacitaj();
+    const povodne = klub.nastavenia_registracie;
+    await klub.update({ nastavenia_registracie: { typy: { fanusik: true, clen: false }, polia: { telefon: { rezim: 'povinne', len_clen: false } } } });
+    try {
+      expect((await registruj({ email: `${P.toLowerCase()}d@example.com`, typ: 'clen', telefon: '0900 1' }, '10.0.0.4')).status).toBe(400);
+      expect((await registruj({ email: `${P.toLowerCase()}d@example.com` }, '10.0.0.4')).status).toBe(400);
+      expect((await registruj({ email: `${P.toLowerCase()}d@example.com`, telefon: '0900 111 333' }, '10.0.0.4')).status).toBe(201);
+    } finally {
+      await klub.update({ nastavenia_registracie: povodne });
+    }
   });
 
   it('robot s vyplneným skrytým poľom nič nevytvorí', async () => {

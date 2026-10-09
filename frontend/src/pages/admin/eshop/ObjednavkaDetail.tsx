@@ -10,7 +10,7 @@ import { useNacitanie } from '../../../app/useNacitanie';
 import { cenaText, eshopObjednavkyApi, type StavObjednavky, type StavPlatby } from '../../../api/eshop';
 import { formatujDatumCas } from '../../../utils/datum';
 import { tr } from '../../../i18n';
-import { STAVY_OBJEDNAVKY, STAVY_PLATBY, stavObjednavky, stavPlatby, typPlatby } from './spolocne';
+import { STAVY_OBJEDNAVKY, STAVY_PLATBY, stavObjednavky, stavPlatby, stavPlatbyObjednavky, typPlatby } from './spolocne';
 import './Eshop.css';
 
 export const ObjednavkaDetail: React.FC = () => {
@@ -90,7 +90,7 @@ export const ObjednavkaDetail: React.FC = () => {
         akcie={
           <div className="cw-es__stavy">
             <Badge ton={stavObjednavky(o.stav).ton}>{stavObjednavky(o.stav).popis}</Badge>
-            <Badge ton={stavPlatby(o.stav_platby).ton}>{stavPlatby(o.stav_platby).popis}</Badge>
+            <Badge ton={stavPlatbyObjednavky(o).ton}>{stavPlatbyObjednavky(o).popis}</Badge>
           </div>
         }
       />
