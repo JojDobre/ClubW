@@ -61,9 +61,14 @@ export { BLOKY_KLUBU, useTimBloku, useLigaBloku } from './bloky/BlokyKlubu';
 // Vlastné sekcie úvodnej stránky (nastavenie šablóny typu „sekcie")
 export { SekcieUvodu, useSekcieUvodu } from './SekcieUvodu';
 
+// Živý prenos zápasu (fáza, bežiaca minúta, video, automatická obnova)
+export { ZivyPrenos, zivaMinuta, vlozenieStreamu, useZivaObnova, useTeraz, NAZVY_FAZ } from './zivyPrenos';
+export type { ZapasPrenosu } from './zivyPrenos';
+
 // Registrácia fanúšikov a členov (stránka /registracia, blok Registrácia)
-export { FormularRegistracie, registrujFanusika } from './FormularRegistracie';
+export { FormularRegistracie, registrujFanusika, useRegistracia, PREDVOLENA_REGISTRACIA } from './FormularRegistracie';
 export type { UdajeRegistracie, TypRegistracie } from './FormularRegistracie';
+export type { NastaveniaRegistracie } from '../context/NastaveniaContext';
 
 // Účet fanúšika: stránka Môj klub, členská karta, výhody, overenie karty
 export { MojKlubObsah, OverenieKartyObsah, OdkazUctu, KartaClena, VyhodyClena } from './MojKlub';
@@ -86,6 +91,9 @@ export {
   useObjednavka,
   PlatobnaBrana,
   NAZVY_STAVOV_OBJEDNAVKY,
+  krokyObjednavky,
+  infoPlatby,
+  kartaStavuObjednavky,
 } from './eshop';
 export type {
   ProduktObchodu,
@@ -99,6 +107,8 @@ export type {
   ObjednavkaZakaznika,
   UdajeObjednavky,
   UdajeZakaznika,
+  KrokObjednavky,
+  InfoPlatby,
 } from './eshop';
 
 /** Verzia rozhrania šablón (zhodná s API_SABLON na serveri). */

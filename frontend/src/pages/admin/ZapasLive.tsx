@@ -22,10 +22,20 @@ import type {
   Zapas, Hrac, UdalostZapasu, TypUdalosti, UdalostNaUlozenie,
 } from '../../api/typy';
 import { tr } from '../../i18n';
+import { zivaMinuta, zivaMinutaCislo } from '../../web/zivaMinuta';
 import './ZapasLive.css';
 
 /** Interval automatickej obnovy údajov. */
 const INTERVAL_OBNOVY_MS = 10_000;
+
+/** Fázy zápasu v poradí, v akom idú po sebe. */
+const FAZY: Array<{ kod: string; nazov: () => string; tlacidlo: () => string }> = [
+  { kod: 'prvy_polcas', nazov: () => tr('1. polčas'), tlacidlo: () => tr('Začať 1. polčas') },
+  { kod: 'polcas', nazov: () => tr('Polčas'), tlacidlo: () => tr('Ukončiť polčas') },
+  { kod: 'druhy_polcas', nazov: () => tr('2. polčas'), tlacidlo: () => tr('Začať 2. polčas') },
+  { kod: 'predlzenie', nazov: () => tr('Predĺženie'), tlacidlo: () => tr('Predĺženie') },
+  { kod: 'penalty', nazov: () => tr('Penalty'), tlacidlo: () => tr('Penalty') },
+];
 
 export const ZapasLive: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +56,11 @@ export const ZapasLive: React.FC = () => {
   const [hracId, setHracId] = useState('');
   const [typ, setTyp] = useState<TypUdalosti>('gol');
   const [minuta, setMinuta] = useState('');
+
+  // Priebeh a prenos
+  const [streamUrl, setStreamUrl] = useState('');
+  const [dlzkaPolcasu, setDlzkaPolcasu] = useState('');
+  const [teraz, setTeraz] = useState(() => Date.now());
 
   // Zabraňuje zápisu do odpojeného komponentu
   const zivyRef = useRef(true);
@@ -80,6 +95,21 @@ export const ZapasLive: React.FC = () => {
     },
     [idCislo]
   );
+
+  // Polia prenosu predvyplníme raz - obnova ich nesmie prepísať počas písania
+  const predvyplnene = useRef(false);
+  useEffect(() => {
+    if (!zapas || predvyplnene.current) return;
+    predvyplnene.current = true;
+    setStreamUrl(zapas.stream_url ?? '');
+    setDlzkaPolcasu(zapas.dlzka_polcasu ? String(zapas.dlzka_polcasu) : '');
+  }, [zapas]);
+
+  // Bežiaca minúta sa prekresľuje každých 15 sekúnd
+  useEffect(() => {
+    const t = setInterval(() => setTeraz(Date.now()), 15_000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     zivyRef.current = true;
@@ -124,15 +154,22 @@ export const ZapasLive: React.FC = () => {
     };
   }, [nacitaj]);
 
-  /** Odhad aktuálnej minúty podľa času výkopu — predvyplní pole. */
+  /**
+   * Aktuálna minúta — podľa spustenej fázy, inak odhad podľa času výkopu.
+   * Predvyplní pole minúty.
+   */
   const odhadniMinutu = useCallback((): string => {
-    if (!zapas?.datum_cas) return '';
+    if (!zapas) return '';
+    const podlaFazy = zivaMinutaCislo(zapas);
+    if (podlaFazy !== null) return String(podlaFazy);
+    if (zapas.live_faza === 'polcas') return String(zapas.dlzka_polcasu || 45);
+    if (!zapas.datum_cas) return '';
     const uplynuloMinut = Math.floor(
       (Date.now() - new Date(zapas.datum_cas).getTime()) / 60_000
     );
     if (uplynuloMinut < 0 || uplynuloMinut > 130) return '';
     return String(Math.max(1, uplynuloMinut));
-  }, [zapas?.datum_cas]);
+  }, [zapas]);
 
   /**
    * Uloží zmenený zoznam udalostí.
@@ -211,6 +248,38 @@ export const ZapasLive: React.FC = () => {
     }
   };
 
+  /** Spustí fázu zápasu - web od nej počíta minútu. */
+  const nastavFazu = async (faza: string) => {
+    try {
+      await zapasyApi.uprav(idCislo, { live_faza: faza });
+      await nacitaj(true);
+      setTeraz(Date.now());
+    } catch (e: any) {
+      hlasChybu(e?.message || tr('Fázu zápasu sa nepodarilo zmeniť'));
+    }
+  };
+
+  /** Uloží odkaz na prenos a dĺžku polčasu. */
+  const ulozPrenos = async () => {
+    const url = streamUrl.trim();
+    if (url && !/^https:\/\/\S+$/.test(url)) {
+      varovanie(tr('Odkaz na prenos musí začínať https://'));
+      return;
+    }
+    const dlzka = dlzkaPolcasu ? Number(dlzkaPolcasu) : null;
+    if (dlzka !== null && (dlzka < 5 || dlzka > 60)) {
+      varovanie(tr('Dĺžka polčasu musí byť 5 až 60 minút'));
+      return;
+    }
+    try {
+      await zapasyApi.uprav(idCislo, { stream_url: url || null, dlzka_polcasu: dlzka });
+      await nacitaj(true);
+      uspech(tr('Prenos bol uložený'));
+    } catch (e: any) {
+      hlasChybu(e?.message || tr('Prenos sa nepodarilo uložiť'));
+    }
+  };
+
   /** Ukončí zápas — tabuľka sa prepočíta na serveri. */
   const ukonci = async () => {
     if (!zapas) return;
@@ -253,6 +322,11 @@ export const ZapasLive: React.FC = () => {
 
   const domaci = zapas.domaci_tim_display_name || zapas.domaci_tim_nazov || '—';
   const hostia = zapas.hostujuci_tim_display_name || zapas.hostujuci_tim_nazov || '—';
+
+  const bezi = zapas.status === 'prebieha';
+  const aktualnaFaza = bezi ? FAZY.find((f) => f.kod === zapas.live_faza) : undefined;
+  const minutaTeraz = bezi ? zivaMinuta(zapas, teraz) : null;
+  const indexFazy = aktualnaFaza ? FAZY.indexOf(aktualnaFaza) : -1;
 
   // Udalosti od najnovšej — počas zápasu je zaujímavé, čo sa práve stalo
   const zoradene = [...udalosti].sort((a, b) => (b.minuta ?? 0) - (a.minuta ?? 0));
@@ -313,6 +387,8 @@ export const ZapasLive: React.FC = () => {
                 {zapas.status === 'naplanovany' ? tr('Pred zápasom') : zapas.status}
               </Badge>
             )}
+            {minutaTeraz && <span className="cw-live__min">{minutaTeraz}</span>}
+            {aktualnaFaza && <span className="cw-live__faza">{aktualnaFaza.nazov()}</span>}
             {zapas.liga_nazov && <span className="cw-live__liga">{zapas.liga_nazov}</span>}
           </div>
 
@@ -328,6 +404,49 @@ export const ZapasLive: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      </Card>
+
+      {/* ===== Priebeh zápasu ===== */}
+      <Card
+        nadpis={tr('Priebeh zápasu')}
+        podnadpis={tr('Web podľa fázy zobrazuje bežiacu minútu a návštevníkom sa sám obnovuje.')}
+      >
+        <div className="cw-live__fazy">
+          {FAZY.map((f, i) => (
+            <Button
+              key={f.kod}
+              variant={aktualnaFaza?.kod === f.kod ? 'primary' : i === indexFazy + 1 ? 'secondary' : 'ghost'}
+              velkost="sm"
+              onClick={() => void nastavFazu(f.kod)}
+              aria-pressed={aktualnaFaza?.kod === f.kod}
+            >
+              {aktualnaFaza?.kod === f.kod ? f.nazov() : f.tlacidlo()}
+            </Button>
+          ))}
+        </div>
+
+        <div className="cw-live__prenos">
+          <Input
+            menovka={tr('Odkaz na živý prenos')}
+            type="url"
+            value={streamUrl}
+            onChange={(e) => setStreamUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=…"
+            napoveda={tr('YouTube a Facebook sa prehrajú priamo na webe, iné siete sa otvoria odkazom.')}
+          />
+          <Input
+            menovka={tr('Dĺžka polčasu (min)')}
+            type="number"
+            min={5}
+            max={60}
+            value={dlzkaPolcasu}
+            onChange={(e) => setDlzkaPolcasu(e.target.value)}
+            placeholder="45"
+          />
+          <Button variant="secondary" onClick={ulozPrenos}>
+            {tr('Uložiť')}
+          </Button>
         </div>
       </Card>
 

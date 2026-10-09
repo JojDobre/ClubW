@@ -121,7 +121,7 @@ const Stats: React.FC = () => {
       {/* Hlavička */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '32px' }}>
-          📊 Štatistiky klubu
+          Štatistiky klubu
         </h1>
         <p style={{ color: '#666', margin: '0 0 10px 0', fontSize: '16px' }}>
           Prehľad všetkých dát a aktivít v systéme

@@ -71,7 +71,7 @@ const Teams: React.FC = () => {
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '24px' }}>
-        🏆 Naše tímy
+        Naše tímy
       </h1>
       
       <div style={{ marginBottom: '16px' }}>

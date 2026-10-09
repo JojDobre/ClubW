@@ -234,3 +234,46 @@
   font-size: 18px;
   color: var(--text);
 }
+
+/* ===== Priebeh zápasu a prenos ===== */
+.cw-live__min {
+  font-family: var(--font-head);
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cw-live__faza {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.cw-live__fazy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.cw-live__prenos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+/* Tlačidlo na úrovni polí - pod menovkou */
+.cw-live__prenos > .cw-btn {
+  margin-top: 22px;
+}
+
+@media (max-width: 640px) {
+  .cw-live__prenos {
+    grid-template-columns: 1fr;
+  }
+
+  .cw-live__prenos > .cw-btn {
+    margin-top: 0;
+  }
+}

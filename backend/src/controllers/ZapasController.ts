@@ -4,7 +4,7 @@
 import { Request, Response } from 'express';
 import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { Op } from 'sequelize';
-import Zapas from '../models/Zapas';
+import Zapas, { FAZY_ZAPASU } from '../models/Zapas';
 import ZapasStatistika from '../models/ZapasStatistika';
 import Liga from '../models/Liga';
 import LigaTabulka from '../models/LigaTabulka';
@@ -449,6 +449,31 @@ const prevezmiVolitelnePolia = (telo: any, ciel: any, lenPoslane: boolean): stri
     ciel.stadion_id = telo.stadion_id || null;
   }
 
+  // ===== Živý prenos =====
+  if (poslane('live_faza')) {
+    const faza = telo.live_faza || null;
+    if (faza !== null && !(FAZY_ZAPASU as readonly string[]).includes(faza)) {
+      return `Fáza zápasu musí byť jedna z: ${FAZY_ZAPASU.join(', ')}`;
+    }
+    ciel.live_faza = faza;
+    // Začiatok fázy určí server - minúta na webe sa počíta od neho
+    ciel.live_faza_od = faza ? new Date() : null;
+  }
+  if (poslane('dlzka_polcasu')) {
+    const dlzka = telo.dlzka_polcasu === null || telo.dlzka_polcasu === '' ? null : Number(telo.dlzka_polcasu);
+    if (dlzka !== null && (!Number.isInteger(dlzka) || dlzka < 5 || dlzka > 60)) {
+      return 'Dĺžka polčasu musí byť 5 až 60 minút';
+    }
+    ciel.dlzka_polcasu = dlzka;
+  }
+  if (poslane('stream_url')) {
+    const odkaz = telo.stream_url ? String(telo.stream_url).trim() : null;
+    if (odkaz && !/^https:\/\/\S+$/i.test(odkaz)) {
+      return 'Odkaz na prenos musí začínať https://';
+    }
+    ciel.stream_url = odkaz ? odkaz.slice(0, 500) : null;
+  }
+
   return null;
 };
 
@@ -828,6 +853,16 @@ export const updateMatch = async (req: Request, res: Response): Promise<void> =>
     if (chybaPoli) {
       res.status(400).json({ success: false, message: chybaPoli });
       return;
+    }
+    // Ukončený zápas už nemá bežiacu fázu - minúta na webe sa zastaví
+    if (updateData.status && updateData.status !== 'prebieha' && req.body.live_faza === undefined) {
+      updateData.live_faza = null;
+      updateData.live_faza_od = null;
+    }
+    // Začiatok 1. polčasu znamená, že sa hrá
+    if (updateData.live_faza && req.body.status === undefined && zapas.status !== 'prebieha') {
+      updateData.status = 'prebieha';
+      updateData.stav_rucne = true;
     }
 
     if (updateData.stadion_id) {

@@ -10,5 +10,7 @@
   "Server odmietol odosielateľa {0} - pri schránke na hostingu musí byť e-mail odosielateľa rovnaký ako prihlasovacie meno {1} (alebo pole nechajte prázdne). Odpoveď servera: {2}",
   "Server odmietol odosielateľa {0} - adresa musí patriť k schránke, do ktorej sa prihlasujete, alebo k doméne overenej v e-mailovej službe. Odpoveď servera: {1}",
   "Server odmietol adresu príjemcu. Odpoveď servera: {0}", "Server odmietol e-mail. Odpoveď servera: {0}",
-  "Odosielanie e-mailov nie je nastavené (E-maily → Nastavenia)", "Neznáma chyba pri odosielaní"
+  "Odosielanie e-mailov nie je nastavené (E-maily → Nastavenia)", "Neznáma chyba pri odosielaní",
+  "Zadajte telefón", "Zadajte dátum narodenia", "Zadajte adresu", "Napíšte správu pre klub",
+  "Fáza zápasu musí byť jedna z: {0}", "Dĺžka polčasu musí byť 5 až 60 minút", "Odkaz na prenos musí začínať https://", "Typ zápasu musí byť jeden z: {0}"
 ]

@@ -280,6 +280,14 @@ export interface Zapas {
   pocet_divakov: number | null;
   poznamky: string | null;
   video_url: string | null;
+  /** Fáza živého zápasu (prvy_polcas, polcas, druhy_polcas, predlzenie, penalty) */
+  live_faza?: string | null;
+  /** Kedy sa aktuálna fáza začala - z toho web počíta minútu */
+  live_faza_od?: string | null;
+  /** Dĺžka polčasu v minútach (predvolene 45) */
+  dlzka_polcasu?: number | null;
+  /** Odkaz na živý prenos (YouTube, Facebook...) */
+  stream_url?: string | null;
   /** Kde sa hrá - pri „doma" sa miesto doplní zo štadióna tímu */
   typ_zapasu?: TypZapasu;
   stadion_id?: number | null;
@@ -319,6 +327,9 @@ export interface ZapasNaUlozenie {
   supier_logo?: string | null;
   fotogaleria_id?: number | null;
   stav_rucne?: boolean;
+  live_faza?: string | null;
+  dlzka_polcasu?: number | null;
+  stream_url?: string | null;
 }
 
 // ===== Štatistika zápasu =====
@@ -492,7 +503,12 @@ export interface NastaveniaAdmin {
   nastavenia_komentarov: NastaveniaKomentarov;
   nastavenia_gdpr: NastaveniaGdpr;
   nastavenia_seo: NastaveniaSeo;
+  /** Registrácia fanúšikov a členov - povolené typy, polia, texty */
+  nastavenia_registracie?: NastaveniaRegistracie;
 }
+
+export type { NastaveniaRegistracie } from '../context/NastaveniaContext';
+import type { NastaveniaRegistracie } from '../context/NastaveniaContext';
 
 export interface NastaveniaKomentarov {
   povolene: boolean;

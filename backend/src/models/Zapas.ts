@@ -40,6 +40,13 @@ interface ZapasAttributes {
   pocet_divakov?: number | null;
   poznamky?: string | null;
   video_url?: string | null;
+  /** Živý prenos: aktuálna fáza zápasu (FAZY_ZAPASU) a kedy začala */
+  live_faza?: string | null;
+  live_faza_od?: Date | null;
+  /** Dĺžka polčasu v minútach (predvolene 45) */
+  dlzka_polcasu?: number | null;
+  /** Odkaz na video prenos (YouTube, Facebook...) */
+  stream_url?: string | null;
   clanok_id?: number | null;
   fotogaleria_id?: number | null;
   aktivity: boolean;
@@ -52,8 +59,12 @@ interface ZapasCreationAttributes extends Optional<ZapasAttributes,
   'id' | 'liga_id' | 'liga_nazov' | 'kolo' | 'miesto' |
   'typ_zapasu' | 'stadion_id' | 'rozhodca' | 'supier_logo' | 
   'domaci_tim_id' | 'domaci_tim_nazov' | 'hostujuci_tim_id' | 'hostujuci_tim_nazov' | 
-  'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' | 
+  'goly_domaci' | 'goly_hostia' | 'pocet_divakov' | 'poznamky' | 'video_url' |
+  'live_faza' | 'live_faza_od' | 'dlzka_polcasu' | 'stream_url' |
   'clanok_id' | 'fotogaleria_id' | 'stav_rucne' | 'aktivity' | 'vytvoreny' | 'aktualizovany'> {}
+
+/** Fázy živého prenosu - z fázy a času jej začiatku web počíta minútu. */
+export const FAZY_ZAPASU = ['prvy_polcas', 'polcas', 'druhy_polcas', 'predlzenie', 'penalty'] as const;
 
 // Trieda pre model Zapas
 class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements ZapasAttributes {
@@ -85,6 +96,10 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
   public pocet_divakov!: number | null;
   public poznamky!: string | null;
   public video_url!: string | null;
+  public live_faza!: string | null;
+  public live_faza_od!: Date | null;
+  public dlzka_polcasu!: number | null;
+  public stream_url!: string | null;
   public clanok_id!: number | null;
   public fotogaleria_id!: number | null;
   public aktivity!: boolean;
@@ -246,6 +261,10 @@ class Zapas extends Model<ZapasAttributes, ZapasCreationAttributes> implements Z
       pocet_divakov: this.pocet_divakov,
       poznamky: this.poznamky,
       video_url: this.video_url,
+      live_faza: this.live_faza,
+      live_faza_od: this.live_faza_od,
+      dlzka_polcasu: this.dlzka_polcasu,
+      stream_url: this.stream_url,
       clanok_id: this.clanok_id,
       fotogaleria_id: this.fotogaleria_id,
       aktivity: this.aktivity,
@@ -442,6 +461,10 @@ Zapas.init(
         isUrl: true,
       },
     },
+    live_faza: { type: DataTypes.STRING(20), allowNull: true },
+    live_faza_od: { type: DataTypes.DATE, allowNull: true },
+    dlzka_polcasu: { type: DataTypes.INTEGER, allowNull: true, validate: { min: 5, max: 60 } },
+    stream_url: { type: DataTypes.STRING(500), allowNull: true },
     clanok_id: {
       type: DataTypes.INTEGER,
       allowNull: true,

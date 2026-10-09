@@ -30,6 +30,17 @@ export const TYPY_PLATBY: Array<{ hodnota: TypPlatby; popis: string; napoveda: s
 
 export const stavObjednavky = (stav: string) => STAVY_OBJEDNAVKY.find((s) => s.hodnota === stav) ?? STAVY_OBJEDNAVKY[0];
 export const stavPlatby = (stav: string) => STAVY_PLATBY.find((s) => s.hodnota === stav) ?? STAVY_PLATBY[0];
+
+/**
+ * Stav platby objednávky na zobrazenie. Pri dobierke a hotovosti sa
+ * neuhradená objednávka neoznačuje ako dlžná - zákazník platí pri prevzatí.
+ */
+export const stavPlatbyObjednavky = (o: { stav_platby: string; platba_typ: string }) =>
+  o.stav_platby === 'neuhradena' && o.platba_typ === 'dobierka'
+    ? { hodnota: 'dobierka', popis: tr('Dobierka'), ton: 'info' as TonStitka }
+    : o.stav_platby === 'neuhradena' && o.platba_typ === 'hotovost'
+      ? { hodnota: 'hotovost', popis: tr('Hotovosť'), ton: 'info' as TonStitka }
+      : stavPlatby(o.stav_platby);
 export const typPlatby = (typ: string) => TYPY_PLATBY.find((t) => t.hodnota === typ) ?? TYPY_PLATBY[4];
 
 /** Suma zo vstupu (čiarka aj bodka) - prázdne = null. */

@@ -1727,6 +1727,7 @@ a.dr-partner-karta:hover { border-color: var(--dr-akcent); transform: translateY
 .dr-odznak { padding: 6px 12px; border-radius: var(--dr-r); font-family: var(--dr-nadpisy); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; text-transform: uppercase; background: var(--dr-akcent-12); color: var(--dr-akcent); }
 .dr-odznak--uhradena { background: color-mix(in srgb, var(--dr-uspech) 12%, transparent); color: var(--dr-uspech); }
 .dr-odznak--vratena { background: var(--dr-tmava-6); color: var(--dr-tmava-65); }
+.dr-odznak--dobierka { background: color-mix(in srgb, var(--dr-uspech) 8%, var(--dr-tmava-6)); color: var(--dr-tmava-65); }
 .dr-suhrn__polozky--bez-foto li > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 @media (max-width: 1180px) {

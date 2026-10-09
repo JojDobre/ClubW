@@ -65,6 +65,23 @@ export interface NastaveniaKlubu {
     mena: string;
   };
   meta_popis: string | null;
+  /** Registrácia fanúšikov a členov - povolené typy, polia, texty */
+  registracia?: NastaveniaRegistracie;
+}
+
+export type RezimPolaRegistracie = 'vypnute' | 'volitelne' | 'povinne';
+export type PoleRegistracie = 'telefon' | 'datum_narodenia' | 'adresa' | 'sprava';
+export type TextRegistracie =
+  | 'nadpis' | 'uvod' | 'fanusik_nazov' | 'fanusik_popis' | 'clen_nazov' | 'clen_popis'
+  | 'tlacidlo_fanusik' | 'tlacidlo_clen' | 'hotovo_fanusik' | 'hotovo_clen' | 'suhlas_oznamy' | 'vyhody_nadpis';
+
+export interface NastaveniaRegistracie {
+  typy: { fanusik: boolean; clen: boolean };
+  polia: Record<PoleRegistracie, { rezim: RezimPolaRegistracie; len_clen: boolean }>;
+  /** Prázdny text = predvolený text šablóny */
+  texty: Record<TextRegistracie, string>;
+  /** Výhody vedľa formulára; prázdne = výhody zo šablóny */
+  vyhody: Array<{ nadpis: string; text: string }>;
 }
 
 // Predvolené hodnoty sa použijú, kým sa načítajú skutočné nastavenia,

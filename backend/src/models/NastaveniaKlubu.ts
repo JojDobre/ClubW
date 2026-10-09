@@ -12,6 +12,7 @@
 // preklep v názve kľúča by sa prejavil až na produkcii.
 
 import { DataTypes, Model, Optional } from 'sequelize';
+import { nastaveniaRegistracie } from '../services/registracia';
 import sequelize from '../config/database';
 
 // Kontrola šesťmiestneho zápisu farby (#1B5E20)
@@ -71,6 +72,8 @@ interface NastaveniaKlubuAttributes {
   nastavenia_gdpr: Record<string, unknown>;
   /** SEO nad rámec meta_popis */
   nastavenia_seo: Record<string, unknown>;
+  /** Registrácia fanúšikov a členov - typy, polia, texty (services/registracia.ts) */
+  nastavenia_registracie: Record<string, unknown>;
   /** E-shop - zapnutý, mena, e-mail pre objednávky, podmienky */
   nastavenia_eshopu: Record<string, unknown>;
 
@@ -96,7 +99,7 @@ interface NastaveniaKlubuCreationAttributes
     | 'facebook_url' | 'instagram_url' | 'youtube_url' | 'x_url' | 'tiktok_url'
     | 'meta_popis' | 'google_analytics_id'
     | 'dodatkove_farby' | 'nastavenia_komentarov'
-    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'nastavenia_eshopu' | 'aktivna_sablona' | 'nastavenia_sablon' | 'jazyk_administracie'
+    | 'nastavenia_gdpr' | 'nastavenia_seo' | 'nastavenia_registracie' | 'nastavenia_eshopu' | 'aktivna_sablona' | 'nastavenia_sablon' | 'jazyk_administracie'
     | 'vytvoreny' | 'aktualizovany'
   > {}
 
@@ -135,6 +138,7 @@ class NastaveniaKlubu
   public nastavenia_komentarov!: Record<string, unknown>;
   public nastavenia_gdpr!: Record<string, unknown>;
   public nastavenia_seo!: Record<string, unknown>;
+  public nastavenia_registracie!: Record<string, unknown>;
   public nastavenia_eshopu!: Record<string, unknown>;
   public aktivna_sablona!: string;
   public nastavenia_sablon!: Record<string, Record<string, unknown>>;
@@ -204,6 +208,8 @@ class NastaveniaKlubu
       komentare: this.nastavenia_komentarov,
       gdpr: this.nastavenia_gdpr,
       seo: this.nastavenia_seo,
+      // Registrácia fanúšikov a členov - čo formulár ponúka a aké texty ukáže
+      registracia: nastaveniaRegistracie(this.nastavenia_registracie),
       // Obchod - web podľa neho ukáže košík a stránky obchodu
       eshop: {
         zapnuty: this.nastavenia_eshopu?.zapnuty === true,
@@ -351,6 +357,11 @@ NastaveniaKlubu.init(
         kontakt_zodpovednej_osoby: null,
         retencia_mesiacov: 36,
       },
+    },
+    nastavenia_registracie: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
     },
     nastavenia_seo: {
       type: DataTypes.JSONB,

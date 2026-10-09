@@ -9,6 +9,7 @@ import { sanitizeHtml } from '@clubw/jadro';
 import { apiUrl } from '@clubw/jadro';
 import { BlokyStranky, ObsahSFormularmi, type BlokStranky } from '@clubw/jadro';
 import { skusPresmerovat } from '@clubw/jadro';
+import NenajdenaStranka from './Nenajdena';
 
 interface Page {
   id: number;
@@ -129,61 +130,18 @@ const PageView: React.FC = () => {
   }
 
   // Error state
+  if (error === 'Stránka nebola nájdená') return <NenajdenaStranka />;
   if (error) {
     return (
-      <div style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        maxWidth: '600px',
-        margin: '0 auto'
-      }}>
-        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>❌</div>
-        <h2 style={{ 
-          color: '#e53e3e', 
-          marginBottom: '20px',
-          fontSize: '1.8rem' 
-        }}>
-          {error}
-        </h2>
-        <p style={{ 
-          color: '#718096', 
-          marginBottom: '30px',
-          fontSize: '1.1rem'
-        }}>
-          {error === 'Stránka nebola nájdená' 
-            ? `Stránka s adresou "/${slug}" neexistuje alebo nie je publikovaná.`
-            : 'Nastala chyba pri načítavaní obsahu stránky.'
-          }
-        </p>
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              padding: '12px 24px',
-              background: '#3182ce',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              textDecoration: 'none'
-            }}
-          >
-            ← Späť
+      <div className="zk-stranka zk-nenajdena">
+        <h1>Stránku sa nepodarilo zobraziť</h1>
+        <p>{error}</p>
+        <div className="zk-nenajdena__tlacidla">
+          <button type="button" className="zk-tlacidlo zk-tlacidlo--obrys" onClick={() => navigate(-1)}>
+            Späť
           </button>
-          <a
-            href="/"
-            style={{
-              display: 'inline-block',
-              padding: '12px 24px',
-              background: '#38a169',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '6px',
-              fontSize: '16px'
-            }}
-          >
-            🏠 Domov
+          <a href="/" className="zk-tlacidlo">
+            Na úvod
           </a>
         </div>
       </div>

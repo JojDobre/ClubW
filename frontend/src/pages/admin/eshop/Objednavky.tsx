@@ -9,7 +9,7 @@ import { useNacitanie } from '../../../app/useNacitanie';
 import { cenaText, eshopObjednavkyApi } from '../../../api/eshop';
 import { formatujDatumCas } from '../../../utils/datum';
 import { tr } from '../../../i18n';
-import { STAVY_OBJEDNAVKY, stavObjednavky, stavPlatby } from './spolocne';
+import { STAVY_OBJEDNAVKY, stavObjednavky, stavPlatbyObjednavky } from './spolocne';
 import './Eshop.css';
 
 const NA_STRANU = 25;
@@ -120,7 +120,7 @@ export const Objednavky: React.FC = () => {
                 </span>
                 <span role="cell" className="cw-es__stavy">
                   <Badge ton={stavObjednavky(o.stav).ton}>{stavObjednavky(o.stav).popis}</Badge>
-                  <Badge ton={stavPlatby(o.stav_platby).ton}>{stavPlatby(o.stav_platby).popis}</Badge>
+                  <Badge ton={stavPlatbyObjednavky(o).ton}>{stavPlatbyObjednavky(o).popis}</Badge>
                 </span>
               </button>
             ))}

@@ -156,6 +156,79 @@ export const NAZVY_STAVOV_OBJEDNAVKY: Record<string, string> = {
   zrusena: 'Zrušená',
 };
 
+// ===== Stránka objednávky pre zákazníka =====
+
+export interface KrokObjednavky {
+  kluc: string;
+  nazov: string;
+  stav: 'hotovy' | 'aktualny' | 'caka';
+}
+
+/**
+ * Kroky priebehu objednávky: Prijatá → Potvrdená → Odoslaná / Pripravená → Vybavená.
+ * Tretí krok sa riadi skutočným stavom (objednávka pripravená na vyzdvihnutie
+ * je „Pripravená“, aj keď má adresu), inak spôsobom doručenia.
+ */
+export const krokyObjednavky = (o: ObjednavkaZakaznika): KrokObjednavky[] => {
+  if (o.stav === 'zrusena') return [];
+  const treti = o.stav === 'pripravena' || o.stav === 'odoslana' ? o.stav : o.ulica ? 'odoslana' : 'pripravena';
+  const kroky: Array<[string, string]> = [
+    ['nova', 'Prijatá'],
+    ['potvrdena', 'Potvrdená'],
+    [treti, treti === 'pripravena' ? 'Pripravená' : 'Odoslaná'],
+    ['vybavena', 'Vybavená'],
+  ];
+  const poradie: Record<string, number> = { nova: 0, potvrdena: 1, pripravena: 2, odoslana: 2, vybavena: 3 };
+  const aktualny = poradie[o.stav] ?? 0;
+  return kroky.map(([kluc, nazov], i) => ({ kluc, nazov, stav: i < aktualny ? 'hotovy' : i === aktualny ? 'aktualny' : 'caka' }));
+};
+
+export interface InfoPlatby {
+  /** Nadpis karty platby */
+  nadpis: string;
+  /** Text odznaku, napríklad „Zaplatené“ alebo „Dobierka“ */
+  odznak: string;
+  /** Tón odznaku - šablóna podľa neho volí farbu */
+  ton: 'uhradena' | 'neuhradena' | 'vratena' | 'dobierka';
+  /** Vysvetlenie pre zákazníka */
+  text: string | null;
+  /** Ukázať sumu a variabilný symbol (platí sa prevodom alebo bránou) */
+  udajeNaPlatbu: boolean;
+}
+
+/**
+ * Čo ukázať v karte platby. Dobierka a hotovosť sa platia pri prevzatí -
+ * nie sú „neuhradené“ ani nečakajú na platbu ako prevod alebo brána.
+ */
+export const infoPlatby = (o: ObjednavkaZakaznika): InfoPlatby => {
+  if (o.stav_platby === 'uhradena') return { nadpis: 'Objednávka je uhradená', odznak: 'Zaplatené', ton: 'uhradena', text: null, udajeNaPlatbu: false };
+  if (o.stav_platby === 'vratena') return { nadpis: 'Platba bola vrátená', odznak: 'Vrátené', ton: 'vratena', text: null, udajeNaPlatbu: false };
+  const suma = cenaText(o.spolu, o.mena);
+  if (o.platba_typ === 'dobierka') {
+    return { nadpis: o.platba_nazov, odznak: 'Dobierka', ton: 'dobierka', text: `Sumu ${suma} zaplatíte kuriérovi pri prevzatí zásielky.`, udajeNaPlatbu: false };
+  }
+  if (o.platba_typ === 'hotovost') {
+    return { nadpis: o.platba_nazov, odznak: 'Pri prevzatí', ton: 'dobierka', text: `Sumu ${suma} zaplatíte pri prevzatí objednávky.`, udajeNaPlatbu: false };
+  }
+  return { nadpis: o.platba_nazov, odznak: 'Čaká na platbu', ton: 'neuhradena', text: null, udajeNaPlatbu: true };
+};
+
+/**
+ * Karta s aktuálnym stavom vybavenia (po karte platby): odoslaná,
+ * pripravená na vyzdvihnutie alebo vybavená. Pri ostatných stavoch null.
+ */
+export const kartaStavuObjednavky = (o: ObjednavkaZakaznika): { nadpis: string; text: string; odznak: string } | null => {
+  if (o.stav === 'odoslana') {
+    const adresa = [o.ulica, [o.psc, o.mesto].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    return { nadpis: 'Objednávka je odoslaná', odznak: 'Na ceste', text: adresa ? `Zásielka je na ceste na adresu ${adresa}.` : 'Zásielka je na ceste.' };
+  }
+  if (o.stav === 'pripravena') {
+    return { nadpis: 'Objednávka je pripravená na vyzdvihnutie', odznak: 'Pripravená', text: `Vyzdvihnúť si ju môžete: ${o.dorucenie_nazov}.` };
+  }
+  if (o.stav === 'vybavena') return { nadpis: 'Objednávka je vybavená', odznak: 'Vybavená', text: 'Ďakujeme za nákup a podporu klubu!' };
+  return null;
+};
+
 // ===== Nastavenia obchodu =====
 
 let pamatNastaveni: Promise<NastaveniaObchodu | null> | null = null;

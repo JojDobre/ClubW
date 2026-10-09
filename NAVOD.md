@@ -248,13 +248,31 @@ Technicky: backend servuje farby cez `/api/settings.css`, ktorý je odkazovaný 
 
 ### Živé sledovanie zápasu
 
-Určené na zapisovanie udalostí priamo počas zápasu na štadióne:
+Určené na zapisovanie udalostí priamo počas zápasu na štadióne (Zápasy → zápas → Živý záznam):
 
 - Veľké tlačidlá +/- na skóre (44 px, ovládateľné prstom)
-- Pole minúty sa predvyplní odhadom podľa času výkopu
-- Údaje sa obnovujú každých 10 sekúnd; **obnovovanie sa zastaví, keď je karta v pozadí** (šetrí batériu telefónu)
-- Prvý zapísaný gól prepne zápas na „prebieha" automaticky
-- „Ukončiť zápas" spustí prepočet ligovej tabuľky na serveri
+- **Priebeh zápasu**: tlačidlá Začať 1. polčas → Ukončiť polčas → Začať 2. polčas → Predĺženie → Penalty. Server si zapíše čas začiatku fázy a web z neho návštevníkom sám počíta bežiacu minútu (napr. 23', 45+2'). Spustenie fázy prepne zápas na „prebieha".
+- **Dĺžka polčasu** (predvolene 45 minút) - pre mládež napr. 35 alebo 40
+- **Odkaz na živý prenos** (musí začínať `https://`). YouTube a Facebook sa prehrajú priamo na stránke zápasu, ostatné siete (Twitch, vlastný server...) sa otvoria odkazom. Pred zápasom web ukáže „Prenos začne so začiatkom zápasu".
+- Pole minúty sa predvyplní podľa bežiacej fázy (inak odhadom podľa času výkopu)
+- Administrácia sa obnovuje každých 10 sekúnd, web návštevníkom každých 20 sekúnd; **obnovovanie sa zastaví, keď je karta v pozadí** (šetrí batériu telefónu)
+- „Ukončiť zápas" spustí prepočet ligovej tabuľky na serveri a fázu vymaže
+
+Na webe sa živý pás (Live, minúta, fáza, tlačidlo „Sledovať naživo") zobrazí na stránke zápasu vo všetkých šablónach; šablóna ho vloží komponentom `<ZivyPrenos zapas={z} />` z jadra.
+
+### Registrácia fanúšikov a členov
+
+Fanúšikovia → **Nastavenia registrácie**:
+
+- **Povolené typy** - fanúšik, člen klubu (napr. vypnúť členstvo, ak klub prijíma len fanúšikov)
+- **Polia formulára** - telefón, dátum narodenia, adresa a správa pre klub: vypnuté / voliteľné / povinné, prípadne len pri žiadosti o členstvo. Meno, e-mail a **heslo do účtu Môj klub sú vždy povinné**.
+- **Texty stránky** - nadpis, úvod, názvy a popisy typov, text tlačidiel, poďakovanie po odoslaní a výhody v bočnom paneli. Prázdne pole ponechá text šablóny.
+
+### Objednávky v obchode
+
+- Objednávka s platbou **prevodom, dobierkou alebo v hotovosti** sa po odoslaní rovno **potvrdí** (objaví sa v „Na vybavenie"). Stav „nová" zostáva len pri platbe kartou cez platobnú bránu, kým platba neprejde.
+- Pri dobierke a hotovosti stránka objednávky ukazuje platbu „Dobierka" / „Pri prevzatí" namiesto uhradená/neuhradená, bez údajov na prevod.
+- Priebeh na stránke objednávky má tretí krok podľa skutočného stavu - „Pripravená" (objednávka čaká na vyzdvihnutie), inak „Odoslaná". Pod platbou je karta s aktuálnym stavom (odoslaná, pripravená na vyzdvihnutie, vybavená).
 
 ### Tmavý režim
 
@@ -264,7 +282,9 @@ Prepína sa v hornej lište. Voľba sa uloží; ak si používateľ nič nezvoli
 
 Vzhľad verejného webu určuje **šablóna** (ako téma vo WordPresse). V `/admin/sablony` správca vyberie aktívnu šablónu, pozrie si náhľad inej (vidí ho len on), upraví jej nastavenia (farba, fotka na úvode...) a nahrá novú šablónu ako balík `.zip`.
 
-Šablóny sú v samostatnom priečinku `sablony/` (dodané so systémom: **Základná** a **Štadión**), nahraté šablóny v `backend/sablony/`. Ako šablónu vytvoriť, zostaviť a zabaliť, popisuje `sablony/README.md`.
+Šablóny sú v samostatnom priečinku `sablony/` (dodané so systémom: **Základná** a ďalšie - Klubová, Moderná, Aréna, Pulz...), nahraté šablóny v `backend/sablony/`. Ako šablónu vytvoriť, zostaviť a zabaliť, popisuje `sablony/README.md`.
+
+**Základná** je vždy povolená (aj bez licencie) a ostatné šablóny z nej preberajú stránky, ktoré samy nemajú. Má vlastnú identitu vo farbách klubu: horná lišta s kontaktom a sieťami, hlavička s hľadaním, košíkom a Môj klub, úvod s erbom a najbližším alebo práve hraným zápasom (odpočet, živé skóre), aktuality, program a výsledky, anketa, produkty z obchodu a výzva na registráciu. V nastaveniach šablóny sa dá vypnúť horná lišta, pridať tlačidlo do hlavičky (napr. Vstupenky), fotka do úvodného pásu a vlastné sekcie na troch miestach úvodu.
 
 ### Štruktúra kódu
 

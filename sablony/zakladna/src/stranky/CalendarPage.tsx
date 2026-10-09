@@ -169,7 +169,7 @@ const Calendar: React.FC = () => {
       {/* Hlavička */}
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ margin: '0 0 10px 0', color: '#333' }}>
-          📅 Kalendár zápasov
+          Kalendár zápasov
         </h1>
         <p style={{ color: '#666', margin: 0 }}>
           Prehľad všetkých zápasov a termínov

@@ -8,6 +8,8 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   NAZVY_STAVOV_OBJEDNAVKY,
+  infoPlatby,
+  kartaStavuObjednavky,
   PlatobnaBrana,
   cenaSVolbami,
   cenaText,
@@ -453,8 +455,10 @@ export const Objednavka: React.FC = () => {
       <h1>Objednávka {o.cislo}</h1>
       <p className="ob__stavy">
         <span className={`ob__odznak ob__odznak--${o.stav}`}>{NAZVY_STAVOV_OBJEDNAVKY[o.stav] ?? o.stav}</span>
-        <span className={`ob__odznak ob__odznak--${o.stav_platby}`}>{o.stav_platby === 'uhradena' ? 'Uhradená' : o.stav_platby === 'vratena' ? 'Platba vrátená' : 'Čaká na platbu'}</span>
+        <span className={`ob__odznak ob__odznak--${infoPlatby(o).ton}`}>{infoPlatby(o).odznak}</span>
       </p>
+      {infoPlatby(o).text && <p className="ob__tlmene">{infoPlatby(o).text}</p>}
+      {kartaStavuObjednavky(o) && <p className="ob__ok">{kartaStavuObjednavky(o)!.nadpis}. {kartaStavuObjednavky(o)!.text}</p>}
       {o.stav !== 'zrusena' && <p className="ob__ok">{o.text_potvrdenia || `Ďakujeme za objednávku. Potvrdenie sme poslali na ${o.email}.`}</p>}
       {overuje && <p className="ob__tlmene">Overujeme platbu...</p>}
       {o.pokyny && <div className="ob__pokyny">{o.pokyny}</div>}

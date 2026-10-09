@@ -439,6 +439,9 @@ export const vytvorObjednavku = async (vstup: VstupObjednavky): Promise<EshopObj
         platba_nazov: platba.nazov,
         platba_typ: platba.typ,
         platba_poplatok: poplatok,
+        // Bez platobnej brány sa na nič nečaká (prevod, dobierka, hotovosť) -
+        // objednávka je rovno potvrdená. S bránou ju potvrdí až zaplatenie.
+        stav: platba.typ === 'brana' ? 'nova' : 'potvrdena',
         medzisucet,
         spolu,
         mena: nastavenia.mena,

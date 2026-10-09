@@ -1,0 +1,55 @@
+/* Umiestnenie: sablony/zakladna/src/stranky/Matches.css - zoznam zápasov */
+.zk-zapasy-filtre { display: flex; justify-content: space-between; align-items: center; gap: 12px 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.zk-zapasy-filtre__polia { display: flex; gap: 10px; flex-wrap: wrap; }
+.zk-zapasy-filtre__polia .zk-pole--hladat { width: 260px; }
+
+.zk-zapasy-mesiac + .zk-zapasy-mesiac { margin-top: 32px; }
+.zk-zapasy-mesiac h2 { margin: 0 0 12px; font-family: var(--zk-nadpisy); font-size: 1.3rem; text-transform: uppercase; letter-spacing: .06em; color: var(--zk-tlmeny); }
+.zk-zapasy-zoznam { display: flex; flex-direction: column; gap: 10px; }
+
+.zk-zapas-riadok {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr) 24px; align-items: center; gap: 18px;
+  padding: 14px 18px 14px 14px; border-radius: var(--zk-r); background: var(--zk-karta); box-shadow: var(--zk-tien);
+  text-decoration: none; color: var(--zk-text); border: 1.5px solid transparent; transition: border-color .15s, transform .15s;
+}
+.zk-zapas-riadok:hover { border-color: color-mix(in srgb, var(--zk-farba) 35%, transparent); transform: translateY(-1px); }
+.zk-zapas-riadok.is-prebieha { border-color: #e5303b; }
+.zk-zapas-riadok__datum {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: 76px; border-radius: 12px;
+  background: var(--zk-jemna); line-height: 1.1; text-align: center;
+}
+.zk-zapas-riadok__datum small { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--zk-farba); letter-spacing: .05em; }
+.zk-zapas-riadok__datum strong { font-family: var(--zk-nadpisy); font-size: 1.35rem; }
+.zk-zapas-riadok__info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.zk-zapas-riadok__meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--zk-tlmeny); }
+.zk-zapas-riadok__timy { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; }
+.zk-zapas-riadok__tim { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; font-weight: 700; font-size: 16px; text-align: right; }
+.zk-zapas-riadok__tim > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zk-zapas-riadok__tim--hostia { justify-content: flex-start; text-align: left; }
+.zk-zapas-riadok__tim .zk-erb-timu { width: 32px; height: 32px; }
+.zk-zapas-riadok__stred {
+  min-width: 64px; padding: 4px 10px; border-radius: 10px; text-align: center; white-space: nowrap;
+  font-family: var(--zk-nadpisy); font-size: 1.1rem; text-transform: uppercase; color: var(--zk-tlmeny); background: var(--zk-plocha);
+}
+.zk-zapas-riadok__stred.ma-skore { background: var(--zk-tmava); color: #ffffff; font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.zk-zapas-riadok__stred i { font-style: normal; margin: 0 4px; opacity: .6; }
+.zk-zapas-riadok.is-prebieha .zk-zapas-riadok__stred.ma-skore { background: #e5303b; }
+.zk-zapas-riadok__miesto { display: inline-flex; align-items: center; gap: 6px; justify-content: center; font-size: 12.5px; color: var(--zk-tlmeny); }
+.zk-zapas-riadok__miesto .zk-ikona { width: 14px; height: 14px; }
+.zk-zapas-riadok__sipka { width: 20px; height: 20px; color: var(--zk-tlmeny); transition: transform .15s, color .15s; }
+.zk-zapas-riadok:hover .zk-zapas-riadok__sipka { transform: translateX(3px); color: var(--zk-farba); }
+
+@media (max-width: 760px) {
+  .zk-zapasy-filtre__polia, .zk-zapasy-filtre__polia .zk-pole--hladat { width: 100%; }
+  .zk-zapasy-filtre__polia select { flex: 1; }
+  .zk-zapas-riadok { grid-template-columns: 56px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .zk-zapas-riadok__datum { height: 64px; }
+  .zk-zapas-riadok__datum strong { font-size: 1.1rem; }
+  .zk-zapas-riadok__sipka { display: none; }
+  .zk-zapas-riadok__timy { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .zk-zapas-riadok__tim, .zk-zapas-riadok__tim--hostia { grid-column: 1; justify-content: flex-end; text-align: left; flex-direction: row-reverse; font-size: 15px; }
+  .zk-zapas-riadok__tim--hostia { flex-direction: row; justify-content: flex-start; grid-row: 2; }
+  .zk-zapas-riadok__stred { grid-column: 2; grid-row: 1 / span 2; }
+  .zk-zapas-riadok__tim .zk-erb-timu { width: 24px; height: 24px; }
+  .zk-zapas-riadok__miesto { justify-content: flex-start; }
+}

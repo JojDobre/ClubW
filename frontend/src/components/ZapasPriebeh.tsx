@@ -74,7 +74,11 @@ const hlavicka: React.CSSProperties = {
   margin: 0,
 };
 
-const ZapasPriebeh: React.FC<{ zapasId: number; domaci: string; hostia: string }> = ({ zapasId, domaci, hostia }) => {
+/**
+ * @param obnova - počítadlo živej obnovy (useZivaObnova); pri zmene sa
+ *   udalosti, poznámky aj zostava načítajú znova
+ */
+const ZapasPriebeh: React.FC<{ zapasId: number; domaci: string; hostia: string; obnova?: number }> = ({ zapasId, domaci, hostia, obnova = 0 }) => {
   const [udalosti, setUdalosti] = useState<Udalost[]>([]);
   const [texty, setTexty] = useState<TextovaUdalost[]>([]);
   const [zostava, setZostava] = useState<Zostava[]>([]);
@@ -89,10 +93,11 @@ const ZapasPriebeh: React.FC<{ zapasId: number; domaci: string; hostia: string }
         return null;
       }
     };
-    void nacitaj(`/matches/${zapasId}/statistics`).then((d) => setUdalosti(d?.vsetky ?? []));
-    void nacitaj(`/matches/${zapasId}/events`).then((d) => setTexty(Array.isArray(d) ? d : []));
-    void nacitaj(`/matches/${zapasId}/lineup`).then((d) => setZostava(d?.vsetky ?? []));
-  }, [zapasId]);
+    const t = obnova ? `?t=${obnova}` : '';
+    void nacitaj(`/matches/${zapasId}/statistics${t}`).then((d) => setUdalosti(d?.vsetky ?? []));
+    void nacitaj(`/matches/${zapasId}/events${t}`).then((d) => setTexty(Array.isArray(d) ? d : []));
+    void nacitaj(`/matches/${zapasId}/lineup${t}`).then((d) => setZostava(d?.vsetky ?? []));
+  }, [zapasId, obnova]);
 
   // Mená hráčov podľa ID - striedaný hráč prichádza zo servera len ako ID
   const hraciPodlaId = new Map<number, Hrac>();

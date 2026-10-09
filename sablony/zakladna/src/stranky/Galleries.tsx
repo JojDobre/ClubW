@@ -191,7 +191,7 @@ const Galleries: React.FC = () => {
       {/* Hlavička */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ margin: '0 0 10px 0', color: '#333' }}>
-          📷 Fotogalérie
+          Fotogalérie
         </h1>
         <p style={{ color: '#666', margin: 0 }}>
           Prehľad všetkých fotogalérií klubu

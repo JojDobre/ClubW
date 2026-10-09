@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import NastaveniaKlubu from '../models/NastaveniaKlubu';
 import { sanitizePlainText } from '../utils/sanitize';
 import { JAZYKY } from './authController';
+import { nastaveniaRegistracie, ocistiNastaveniaRegistracie } from '../services/registracia';
 
 // Polia, ktoré smie správca meniť. Zoznam je zámerne úplný a explicitný -
 // bez neho by sa cez req.body dalo prepísať id alebo časové značky.
@@ -19,11 +20,13 @@ const UPRAVITELNE_POLIA = [
   // nastavenia komentárov, GDPR a širšie SEO. Doteraz z nich bol
   // v nastaveniach len meta_popis.
   'dodatkove_farby', 'nastavenia_komentarov', 'nastavenia_gdpr', 'nastavenia_seo',
+  // Registrácia fanúšikov a členov (typy, polia, texty)
+  'nastavenia_registracie',
 ] as const;
 
 /** Polia, ktoré sú JSON objektom a nesmú prejsť cez odstránenie HTML. */
 const JSONOVE_POLIA = [
-  'dodatkove_farby', 'nastavenia_komentarov', 'nastavenia_gdpr', 'nastavenia_seo',
+  'dodatkove_farby', 'nastavenia_komentarov', 'nastavenia_gdpr', 'nastavenia_seo', 'nastavenia_registracie',
 ];
 
 // Textové polia, ktoré prechádzajú odstránením HTML.
@@ -41,6 +44,7 @@ const text = (v: unknown, max: number): string | null => {
  * správnym typom. Predtým sa uložil akýkoľvek objekt tak, ako prišiel.
  */
 const OCISTI_JSON: Record<string, (v: any) => { data?: Record<string, unknown>; chyba?: string }> = {
+  nastavenia_registracie: (v) => ocistiNastaveniaRegistracie(v) as { data?: Record<string, unknown>; chyba?: string },
   nastavenia_komentarov: (v) => ({
     data: {
       povolene: v.povolene !== false,
@@ -188,7 +192,8 @@ ${Object.entries(n.dodatkove_farby || {})
 export const getNastaveniaAdmin = async (_req: Request, res: Response): Promise<void> => {
   try {
     const nastavenia = await NastaveniaKlubu.nacitaj();
-    res.json({ success: true, data: nastavenia });
+    // Registrácia s doplnenými predvolenými hodnotami - administrácia vidí úplný tvar
+    res.json({ success: true, data: { ...nastavenia.toJSON(), nastavenia_registracie: nastaveniaRegistracie(nastavenia.nastavenia_registracie) } });
   } catch (error) {
     console.error('Chyba pri načítaní nastavení klubu:', error);
     res.status(500).json({ success: false, message: 'Chyba servera pri načítaní nastavení' });
@@ -318,7 +323,7 @@ export const updateNastavenia = async (req: Request, res: Response): Promise<voi
 
     res.json({
       success: true,
-      data: nastavenia,
+      data: { ...nastavenia.toJSON(), nastavenia_registracie: nastaveniaRegistracie(nastavenia.nastavenia_registracie) },
       message: 'Nastavenia klubu boli uložené',
     });
   } catch (error) {

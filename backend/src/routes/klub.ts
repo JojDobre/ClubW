@@ -21,6 +21,7 @@ import { odpovedzNaChybuModelu } from '../utils/odpoved';
 import { posliSablonu, adresaWebu } from '../services/email/odosielanie';
 import { overSiluHesla } from '../utils/heslo';
 import NastaveniaKlubu from '../models/NastaveniaKlubu';
+import { POLIA_REGISTRACIE, nastaveniaRegistracie, poleJeAktivne } from '../services/registracia';
 
 const router = Router();
 
@@ -398,6 +399,12 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
     const priezvisko = text(b.priezvisko, 80);
     const email = text(b.email, 150).toLowerCase();
     const typ = b.typ === 'clen' ? 'clen' : 'fanusik';
+    const klubNastavenia = await NastaveniaKlubu.nacitaj();
+    const reg = nastaveniaRegistracie(klubNastavenia?.nastavenia_registracie);
+    if (!reg.typy[typ]) {
+      res.status(400).json({ success: false, message: typ === 'clen' ? 'Registrácia členov klubu nie je povolená' : 'Registrácia fanúšikov nie je povolená' });
+      return;
+    }
     if (!meno || !priezvisko) {
       res.status(400).json({ success: false, message: 'Vyplňte meno a priezvisko' });
       return;
@@ -410,20 +417,38 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
       res.status(400).json({ success: false, message: 'Na registráciu je potrebný súhlas so spracovaním osobných údajov' });
       return;
     }
-    const datum = typeof b.datum_narodenia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.datum_narodenia) ? b.datum_narodenia : null;
+    // Povinné polia podľa nastavení registrácie
+    const povinne: Record<string, [unknown, string]> = {
+      telefon: [text(b.telefon, 40), 'Zadajte telefón'],
+      datum_narodenia: [b.datum_narodenia, 'Zadajte dátum narodenia'],
+      adresa: [text(b.adresa, 255), 'Zadajte adresu'],
+      sprava: [text(b.sprava, 2000), 'Napíšte správu pre klub'],
+    };
+    for (const pole of POLIA_REGISTRACIE) {
+      if (poleJeAktivne(reg, pole, typ) && reg.polia[pole].rezim === 'povinne' && !povinne[pole][0]) {
+        res.status(400).json({ success: false, message: povinne[pole][1] });
+        return;
+      }
+    }
+    // Vypnuté pole sa neuloží, ani keby ho niekto poslal
+    const pouzi = (pole: (typeof POLIA_REGISTRACIE)[number]) => poleJeAktivne(reg, pole, typ);
+
+    const datum = pouzi('datum_narodenia') && typeof b.datum_narodenia === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.datum_narodenia) ? b.datum_narodenia : null;
     if (datum && (new Date(datum).getTime() > Date.now() || new Date(datum).getFullYear() < 1900)) {
       res.status(400).json({ success: false, message: 'Dátum narodenia nie je platný' });
       return;
     }
 
-    // Voliteľné heslo - registrovaný si hneď založí účet na webe (Môj klub)
+    // Heslo je povinné - registrovaný si hneď založí účet na webe (Môj klub)
     const heslo = typeof b.heslo === 'string' && b.heslo ? b.heslo : null;
-    if (heslo) {
-      const chyby = overSiluHesla(heslo, { meno: `${meno} ${priezvisko}`, email });
-      if (chyby.length) {
-        res.status(400).json({ success: false, message: chyby[0], errors: chyby });
-        return;
-      }
+    if (!heslo) {
+      res.status(400).json({ success: false, message: 'Zadajte heslo do účtu Môj klub' });
+      return;
+    }
+    const chybyHesla = overSiluHesla(heslo, { meno: `${meno} ${priezvisko}`, email });
+    if (chybyHesla.length) {
+      res.status(400).json({ success: false, message: chybyHesla[0], errors: chybyHesla });
+      return;
     }
 
     // Už evidovaný e-mail neprezrádzame - odpoveď je rovnaká ako pri novej registrácii
@@ -433,19 +458,19 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
         meno,
         priezvisko,
         email,
-        telefon: text(b.telefon, 40) || null,
+        telefon: (pouzi('telefon') && text(b.telefon, 40)) || null,
         typ_clenstva: typ,
         datum_narodenia: datum,
-        adresa: text(b.adresa, 255) || null,
-        sprava: text(b.sprava, 2000) || null,
+        adresa: (pouzi('adresa') && text(b.adresa, 255)) || null,
+        sprava: (pouzi('sprava') && text(b.sprava, 2000)) || null,
         suhlas_oznamy: b.suhlas_oznamy === true,
         stav: 'ziadost',
         zdroj: 'web',
       });
-      if (heslo) await novy.nastavHeslo(heslo);
+      await novy.nastavHeslo(heslo);
       await novy.save();
 
-      const klub = await NastaveniaKlubu.nacitaj();
+      const klub = klubNastavenia;
       if (klub?.email) {
         void posliSablonu('fanusik_registracia_klub', klub.email, {
           meno,
@@ -461,10 +486,11 @@ router.post('/fans/registracia', registraciaLimit, async (req: Request, res: Res
 
     res.status(201).json({
       success: true,
-      data: { ucet: Boolean(heslo) },
+      data: { ucet: true },
+      // Vlastný text z nastavení registrácie, inak predvolený (prekladaný)
       message: typ === 'clen'
-        ? 'Ďakujeme, žiadosť o členstvo sme prijali. Klub sa vám ozve.'
-        : 'Ďakujeme za registráciu. Vitajte medzi fanúšikmi!',
+        ? reg.texty.hotovo_clen || 'Ďakujeme, žiadosť o členstvo sme prijali. Klub sa vám ozve.'
+        : reg.texty.hotovo_fanusik || 'Ďakujeme za registráciu. Vitajte medzi fanúšikmi!',
     });
   } catch (chyba) {
     console.error('Chyba pri registrácii fanúšika:', chyba);

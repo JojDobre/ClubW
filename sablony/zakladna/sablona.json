@@ -1,12 +1,63 @@
 {
   "slug": "zakladna",
   "nazov": "Základná",
-  "verzia": "1.0.2",
+  "verzia": "1.1.0",
   "autor": "ClubW",
-  "popis": "Pôvodný vzhľad webu - svetlá hlavička s menu, úvodná stránka s aktualitami, zápasmi a anketou. Farby a logo berie z Nastavení klubu. Ostatné šablóny (aj predvolená Klubová) z nej preberajú stránky, ktoré samy nenahradia.",
+  "popis": "Svetlý vzhľad vo farbách klubu - hlavička s hornou lištou, úvod s erbom a najbližším alebo živým zápasom, aktuality, program a výsledky, obchod a výzva na registráciu. Farby a logo berie z Nastavení klubu. Ostatné šablóny z nej preberajú stránky, ktoré samy nenahradia.",
   "api": 1,
   "nahlad": "nahlad.svg",
   "nastavenia": [
+    {
+      "kluc": "ukazat_listu",
+      "typ": "prepinac",
+      "menovka": "Horná lišta s kontaktom a sociálnymi sieťami",
+      "skupina": "Hlavička",
+      "predvolene": true
+    },
+    {
+      "kluc": "tlacidlo_text",
+      "typ": "text",
+      "menovka": "Text tlačidla v hlavičke",
+      "skupina": "Hlavička",
+      "napoveda": "Napríklad Vstupenky alebo Permanentky. Tlačidlo sa ukáže, keď vyplníte text aj odkaz.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "tlacidlo_odkaz",
+      "typ": "odkaz",
+      "menovka": "Odkaz tlačidla v hlavičke",
+      "skupina": "Hlavička",
+      "predvolene": ""
+    },
+    {
+      "kluc": "hero_stitok",
+      "typ": "text",
+      "menovka": "Text nad názvom klubu",
+      "skupina": "Úvod",
+      "napoveda": "Prázdne pole zobrazí rok založenia klubu.",
+      "predvolene": ""
+    },
+    {
+      "kluc": "uvod_fotka",
+      "typ": "obrazok",
+      "menovka": "Fotka v pozadí úvodného pásu",
+      "skupina": "Úvod",
+      "napoveda": "Bez fotky má pás farbu klubu."
+    },
+    {
+      "kluc": "ukazat_obchod",
+      "typ": "prepinac",
+      "menovka": "Produkty z obchodu na úvode",
+      "skupina": "Úvod",
+      "predvolene": true
+    },
+    {
+      "kluc": "ukazat_registraciu",
+      "typ": "prepinac",
+      "menovka": "Výzva na registráciu fanúšikov a členov",
+      "skupina": "Úvod",
+      "predvolene": true
+    },
     {
       "kluc": "sekcie_uvodu",
       "typ": "sekcie",
@@ -16,7 +67,11 @@
       "pozicie": [
         {
           "hodnota": "po_uvode",
-          "popis": "Pod uvítaním"
+          "popis": "Pod úvodným pásom"
+        },
+        {
+          "hodnota": "po_clankoch",
+          "popis": "Pod aktualitami"
         },
         {
           "hodnota": "koniec",
