@@ -1,9 +1,9 @@
 {
-  "slug": "arena",
-  "nazov": "Aréna",
-  "verzia": "1.0.10",
+  "slug": "pulz",
+  "nazov": "Pulz",
+  "verzia": "1.0.0",
   "autor": "ClubW",
-  "popis": "Moderná šablóna s plávajúcou navigáciou - zaoblený sklenený „ostrov“ s odstupom od vrchu, ktorý sa pri posúvaní zúži, rozbaľovacie menu ako plávajúca karta a menu cez celú obrazovku na mobile. Úvod: pohlcujúci hero v zaoblenom ráme s obrovským obrysovým nápisom a kartou zápasu s odpočtom, naklonený neónový pás výsledkov, karusel noviniek, zápasy s prilepeným nadpisom, sezóna v číslach na farebnom paneli, karusel kádra, médiá a výzva na členstvo. Podstránky s tmavou zaoblenou hlavičkou, pätička ako veľký panel s obrovským názvom klubu. Písma Unbounded a Manrope.",
+  "popis": "Nočná sestra Arény - celé tmavé rozhranie s neónovým svetlom a žiarou vo farbe klubu. Navigácia z troch plávajúcich ostrovov (erb, menu, akcie), ktoré sa pri posúvaní priblížia k sebe; na mobile menu cez celú obrazovku. Úvod otvára výsledková tabuľa najbližšieho zápasu s veľkým odpočtom a pásom najnovších správ, nasleduje neónový pás výsledkov, karusel noviniek, zápasy, sezóna v číslach, káder, médiá a výzva na členstvo. Písma Sora a Inter.",
   "api": 1,
   "nahlad": "nahlad.svg",
   "styl": "styl.css",
@@ -12,17 +12,17 @@
     {
       "kluc": "primarna",
       "typ": "farba",
-      "menovka": "Tmavá farba",
+      "menovka": "Najtmavšia farba",
       "skupina": "Farby a písmo",
-      "napoveda": "Plávajúca navigácia, hero, tmavé sekcie a pätička. Odporúčame takmer čiernu alebo veľmi tmavú farbu klubu.",
-      "predvolene": "#0E1116"
+      "napoveda": "Hlavička, pätička a najtmavšie panely. Odporúčame takmer čiernu.",
+      "predvolene": "#07090C"
     },
     {
       "kluc": "akcent",
       "typ": "farba",
       "menovka": "Farba klubu (zvýraznenie)",
       "skupina": "Farby a písmo",
-      "napoveda": "Tlačidlá, odkazy, štítky a panel sezóny v číslach.",
+      "napoveda": "Tlačidlá, odkazy, štítky a žiara v pozadí. Na tmavom pozadí sa ako text automaticky zosvetlí.",
       "predvolene": "#2F6BFF"
     },
     {
@@ -30,7 +30,7 @@
       "typ": "farba",
       "menovka": "Doplnková neónová farba",
       "skupina": "Farby a písmo",
-      "napoveda": "Bežiaci pás výsledkov, odpočet a drobné zvýraznenia na tmavom podklade. Má byť svetlá a výrazná.",
+      "napoveda": "Odpočet, výsledková tabuľa, pás výsledkov a drobné zvýraznenia. Má byť svetlá a výrazná.",
       "predvolene": "#C6F432"
     },
     {
@@ -38,27 +38,27 @@
       "typ": "farba",
       "menovka": "Farba podkladu",
       "skupina": "Farby a písmo",
-      "napoveda": "Svetlý podklad stránky, na ktorom ležia biele karty.",
-      "predvolene": "#F1F2F4"
+      "napoveda": "Tmavý podklad stránky. Karty a panely sa od neho odvodia o odtieň svetlejšie.",
+      "predvolene": "#0B0E13"
     },
     {
       "kluc": "pismo",
       "typ": "vyber",
       "menovka": "Písmo nadpisov",
       "skupina": "Farby a písmo",
-      "predvolene": "unbounded",
+      "predvolene": "sora",
       "moznosti": [
         {
-          "hodnota": "unbounded",
-          "popis": "Unbounded - široké, výrazné (predvolené)"
+          "hodnota": "sora",
+          "popis": "Sora - geometrické, moderné (predvolené)"
         },
         {
-          "hodnota": "manrope",
-          "popis": "Manrope - pokojnejšie, rovnaké ako text"
+          "hodnota": "inter",
+          "popis": "Inter - pokojnejšie, rovnaké ako text"
         },
         {
           "hodnota": "system",
-          "popis": "Systémové písma zariadenia"
+          "popis": "Systémové písmo zariadenia"
         }
       ]
     },
@@ -87,21 +87,21 @@
       "kluc": "ukazat_nazov",
       "typ": "prepinac",
       "menovka": "Skratka klubu vedľa erbu",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "predvolene": true
     },
     {
       "kluc": "ukazat_hladanie",
       "typ": "prepinac",
       "menovka": "Vyhľadávanie",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "predvolene": true
     },
     {
       "kluc": "tlacidlo_text",
       "typ": "text",
       "menovka": "Tlačidlo v navigácii: text",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "napoveda": "Prázdne = tlačidlo sa neukáže.",
       "predvolene": "Vstupenky"
     },
@@ -109,7 +109,7 @@
       "kluc": "tlacidlo_odkaz",
       "typ": "odkaz",
       "menovka": "Tlačidlo v navigácii: odkaz",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "napoveda": "Napr. /kontakt alebo https://... Prázdne = e-mail klubu.",
       "predvolene": ""
     },
@@ -117,7 +117,7 @@
       "kluc": "ukazat_kosik",
       "typ": "prepinac",
       "menovka": "Košík",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "predvolene": true,
       "napoveda": "Zobrazí sa, len keď je obchod zapnutý."
     },
@@ -125,7 +125,7 @@
       "kluc": "ukazat_ucet",
       "typ": "prepinac",
       "menovka": "Účet fanúšika (Môj klub)",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "predvolene": true,
       "napoveda": "Ikona s prihlásením fanúšikov a členov do sekcie Môj klub."
     },
@@ -133,81 +133,75 @@
       "kluc": "ukazat_admin",
       "typ": "prepinac",
       "menovka": "Odkaz do administrácie (prihláseným)",
-      "skupina": "Plávajúca navigácia",
+      "skupina": "Navigácia (ostrovy)",
       "predvolene": true
     },
     {
       "kluc": "ukazat_clanky",
       "typ": "prepinac",
-      "menovka": "Hero s hlavnými správami",
-      "skupina": "Úvod - hero",
+      "menovka": "Výsledková tabuľa so správami",
+      "skupina": "Úvod - výsledková tabuľa",
       "predvolene": true,
-      "napoveda": "Veľký zaoblený rám s fotkou, obrysovým nápisom a kartou zápasu."
+      "napoveda": "Hero úvodnej stránky: tabuľa najbližšieho zápasu a pod ňou pás najnovších správ."
     },
     {
       "kluc": "hero_pocet",
       "typ": "cislo",
-      "menovka": "Počet správ v hero",
-      "skupina": "Úvod - hero",
-      "napoveda": "1 až 5. Najprv zvýraznené články, potom najnovšie.",
+      "menovka": "Počet správ pod tabuľou",
+      "skupina": "Úvod - výsledková tabuľa",
+      "napoveda": "Zvýraznené články majú prednosť, zvyšok doplnia najnovšie.",
       "predvolene": 3
-    },
-    {
-      "kluc": "hero_cas",
-      "typ": "cislo",
-      "menovka": "Prepínanie správ (sekundy)",
-      "skupina": "Úvod - hero",
-      "napoveda": "0 = neprepínať automaticky.",
-      "predvolene": 7
     },
     {
       "kluc": "hero_obrys",
       "typ": "text",
       "menovka": "Obrysový nápis v pozadí",
-      "skupina": "Úvod - hero",
-      "napoveda": "Prázdne = skratka klubu.",
+      "skupina": "Úvod - výsledková tabuľa",
+      "napoveda": "Prázdne = skratka alebo názov klubu.",
       "predvolene": ""
     },
     {
       "kluc": "hero_tlacidlo",
       "typ": "text",
       "menovka": "Text odkazu na článok",
-      "skupina": "Úvod - hero",
-      "predvolene": "Čítať článok"
+      "skupina": "Úvod - výsledková tabuľa",
+      "predvolene": "Čítať článok",
+      "napoveda": "Keď nie je žiadny zápas, tabuľa ukáže hlavnú správu s týmto odkazom."
     },
     {
       "kluc": "uvod_fotka",
       "typ": "obrazok",
-      "menovka": "Náhradná fotka hlavnej správy",
-      "skupina": "Úvod - hero",
-      "napoveda": "Keď článok nemá obrázok."
+      "menovka": "Fotka v pozadí tabule",
+      "skupina": "Úvod - výsledková tabuľa",
+      "napoveda": "Stlmená fotka za tabuľou (napríklad štadión). Použije sa aj pri správach bez obrázka."
     },
     {
       "kluc": "ukazat_zapas_hero",
       "typ": "prepinac",
-      "menovka": "Karta najbližšieho zápasu v hero",
-      "skupina": "Úvod - hero",
-      "predvolene": true
+      "menovka": "Zápas na tabuli",
+      "skupina": "Úvod - výsledková tabuľa",
+      "predvolene": true,
+      "napoveda": "Najbližší zápas s odpočtom, počas zápasu skóre a po ňom posledný výsledok. Vypnuté = hlavná správa."
     },
     {
       "kluc": "ukazat_odpocet",
       "typ": "prepinac",
       "menovka": "Odpočet do výkopu",
-      "skupina": "Úvod - hero",
+      "skupina": "Úvod - výsledková tabuľa",
       "predvolene": true
     },
     {
       "kluc": "vstupenky_odkaz",
       "typ": "odkaz",
       "menovka": "Odkaz na vstupenky",
-      "skupina": "Úvod - hero",
+      "skupina": "Úvod - výsledková tabuľa",
       "predvolene": ""
     },
     {
       "kluc": "vstupenky_text",
       "typ": "text",
       "menovka": "Text tlačidla vstupeniek",
-      "skupina": "Úvod - hero",
+      "skupina": "Úvod - výsledková tabuľa",
       "predvolene": "Vstupenky"
     },
     {

@@ -66,7 +66,7 @@ describe('skupiny a odkazy v nastaveniach', () => {
   });
   it('vstavané šablóny majú platný manifest', () => {
     const korenRepo = path.resolve(__dirname, '../../../sablony');
-    for (const slug of ['arena', 'bento', 'derby', 'elita', 'klubova', 'kronika', 'moderna', 'stadion', 'tribuna', 'zakladna']) {
+    for (const slug of ['arena', 'bento', 'derby', 'elita', 'klubova', 'kronika', 'moderna', 'pulz', 'stadion', 'tribuna', 'zakladna']) {
       const surovy = JSON.parse(fs.readFileSync(path.join(korenRepo, slug, 'sablona.json'), 'utf8'));
       expect(() => overManifest(surovy, slug)).not.toThrow();
     }

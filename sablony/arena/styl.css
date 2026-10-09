@@ -2767,7 +2767,6 @@ td.ar-tabulka__body { font-weight: 700; font-size: 15px; }
   .ar:not(.ar--uvod) .ar-obsah:not(:has(.ar-hlava, .ar-profil-hero)) { padding-top: 88px; }
   .ar-partner, .ar-partner--velke, .ar-partner--velky, .ar-partner--male { background: #ffffff; }
 }
-}
 
 /* ===================================================================
    Úvod

@@ -10,6 +10,11 @@ sablony/
   zakladna/          pôvodný verejný web; ostatné šablóny z neho preberajú, čo nenahradia
   stadion/           tmavá športová šablóna (dodaná so systémom)
   moderna/           prémiový redakčný vzhľad, nahrádza všetky stránky (dodaná so systémom)
+  bento/, kronika/, elita/, tribuna/, derby/
+                     ďalšie dodané šablóny s vlastným dizajnom všetkých stránok
+  arena/             moderná šablóna s plávajúcou navigáciou a zaoblenými rámami
+  pulz/              nočná sestra Arény - tmavé rozhranie, neónové svetlo, navigácia
+                     z troch ostrovov a výsledková tabuľa najbližšieho zápasu na úvode
   README.md          tento návod
 backend/sablony/     šablóny nahraté v administrácii (nie sú v gite)
 ```
