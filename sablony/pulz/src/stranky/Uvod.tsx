@@ -78,6 +78,7 @@ const HlavaSekcie: React.FC<{ stitok?: string; nadpis: string; odkaz?: string | 
       {stitok && <span className="pz-stitok">{stitok}</span>}
       <h2 id={id}>{nadpis}</h2>
     </div>
+    <span className="pz-shlava__ciara" aria-hidden="true" />
     <div className="pz-shlava__akcie">
       {children}
       {odkaz && (
@@ -321,31 +322,46 @@ const Pas: React.FC<{ zapasy: Zapas[] }> = ({ zapasy }) => {
 
 const Novinky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
   const u = useUpravy();
-  const { pas, sipky } = useKarusel();
   if (clanky.length === 0) return null;
+  const [hlavna, ...dalsie] = clanky;
   return (
     <section className="pz-u-sekcia" aria-labelledby="pz-u-novinky">
       <div className="pz-kontajner">
-        <HlavaSekcie stitok={u.text('novinky_stitok', 'Najnovšie')} nadpis={u.text('novinky_nadpis', 'Novinky')} odkaz="/clanky" textOdkazu="Všetky novinky" id="pz-u-novinky">
-          {clanky.length > 3 && sipky}
-        </HlavaSekcie>
-      </div>
-      <div className="pz-karusel" ref={pas}>
-        {clanky.map((c, i) => (
-          <Link key={c.id} to={`/clanek/${c.slug}`} className={`pz-nkarta${i === 0 ? ' pz-nkarta--siroka' : ''}`}>
-            <Obrazok src={c.obrazok} className="pz-nkarta__obrazok" />
-            <span className="pz-nkarta__text">
-              <span className="pz-nkarta__hore">
-                <span className="pz-nkarta__rubrika">{c.kategoria?.nazov || 'Správy'}</span>
-                <span>{datum(c.publikovany_datum || c.vytvoreny)}</span>
+        <HlavaSekcie stitok={u.text('novinky_stitok', 'Najnovšie')} nadpis={u.text('novinky_nadpis', 'Novinky')} odkaz="/clanky" textOdkazu="Všetky novinky" id="pz-u-novinky" />
+        <div className={`pz-novinky${dalsie.length ? '' : ' pz-novinky--jedna'}`}>
+          <Link to={`/clanek/${hlavna.slug}`} className="pz-novinky__hlavna">
+            <Obrazok src={hlavna.obrazok} className="pz-novinky__obrazok" />
+            <span className="pz-novinky__text">
+              <span className="pz-novinky__meta">
+                <b>{hlavna.kategoria?.nazov || 'Správy'}</b>
+                {datum(hlavna.publikovany_datum || hlavna.vytvoreny)}
               </span>
-              <strong>{c.nazov}</strong>
+              <strong>{hlavna.nazov}</strong>
+              {hlavna.excerpt && <small>{hlavna.excerpt}</small>}
             </span>
-            <i className="pz-nkarta__sipka" aria-hidden="true">
-              <Ikona nazov="sipka" velkost={16} />
-            </i>
           </Link>
-        ))}
+          {dalsie.length > 0 && (
+            <ol className="pz-novinky__zoznam">
+              {dalsie.slice(0, 5).map((c, i) => (
+                <li key={c.id}>
+                  <Link to={`/clanek/${c.slug}`} className="pz-novinky__polozka">
+                    <span className="pz-novinky__poradie" aria-hidden="true">
+                      {String(i + 2).padStart(2, '0')}
+                    </span>
+                    <span className="pz-novinky__ptext">
+                      <span className="pz-novinky__meta">
+                        <b>{c.kategoria?.nazov || 'Správy'}</b>
+                        {datumKratky(c.publikovany_datum || c.vytvoreny)}
+                      </span>
+                      <strong>{c.nazov}</strong>
+                    </span>
+                    <Obrazok src={c.obrazok} className="pz-novinky__nahlad" />
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -353,69 +369,97 @@ const Novinky: React.FC<{ clanky: Clanok[] }> = ({ clanky }) => {
 
 // ===== 4. Zápasy =====
 
-const RiadokZapasu: React.FC<{ zapas: Zapas }> = ({ zapas: z }) => {
-  const stav = stavZapasu(z);
-  const skore = maVysledok(z) && stav !== 'naplanovany';
-  const v = skore ? vysledokKlubu(z) : null;
+/** Odohraný zápas ako malá výsledková tabuľa. */
+const MiniTabula: React.FC<{ zapas: Zapas }> = ({ zapas: z }) => {
+  const v = vysledokKlubu(z);
   return (
-    <Link to={`/matches/${z.id}`} className={`pz-zriadok${skore ? ' is-odohrany' : ''}`}>
-      <span className="pz-zriadok__kedy">
-        <strong>{datumKratky(z.datum_cas)}</strong>
-        <small>{skore ? 'Koniec' : `${denVTyzdni(z.datum_cas)} · ${cas(z.datum_cas)}`}</small>
+    <Link to={`/matches/${z.id}`} className={`pz-mtabula${v ? ` is-${v.toLowerCase()}` : ''}`}>
+      <span className="pz-mtabula__hlava">
+        <span>{datumKratky(z.datum_cas)}</span>
+        <span>{sutazZapasu(z) || 'Zápas'}</span>
       </span>
-      <span className="pz-zriadok__tim pz-zriadok__tim--domaci">
-        <strong>{nazovDomacich(z)}</strong>
-        <ErbStrany zapas={z} strana="domaci" />
+      <span className="pz-mtabula__duel">
+        <span className="pz-mtabula__tim">
+          <ErbStrany zapas={z} strana="domaci" />
+          <strong>{nazovDomacich(z)}</strong>
+        </span>
+        <span className="pz-mtabula__skore">
+          <b>{z.goly_domaci}</b>
+          <i>:</i>
+          <b>{z.goly_hostia}</b>
+        </span>
+        <span className="pz-mtabula__tim">
+          <ErbStrany zapas={z} strana="hostia" />
+          <strong>{nazovHosti(z)}</strong>
+        </span>
       </span>
-      <span className={`pz-zriadok__skore${v ? ` is-${v.toLowerCase()}` : ''}`}>{skore ? `${z.goly_domaci}:${z.goly_hostia}` : 'vs'}</span>
-      <span className="pz-zriadok__tim">
-        <ErbStrany zapas={z} strana="hostia" />
-        <strong>{nazovHosti(z)}</strong>
-      </span>
-      <span className="pz-zriadok__sutaz">{sutazZapasu(z) || 'Zápas'}</span>
-      <i className="pz-zriadok__sipka" aria-hidden="true">
-        <Ikona nazov="sipka" velkost={15} />
-      </i>
+      {v && <span className="pz-mtabula__vysledok">{v === 'V' ? 'Výhra' : v === 'R' ? 'Remíza' : 'Prehra'}</span>}
     </Link>
   );
 };
+
+/** Budúci zápas ako vstupenka - dátum na odtrhávacom kupóne. */
+const Vstupenka: React.FC<{ zapas: Zapas }> = ({ zapas: z }) => (
+  <Link to={`/matches/${z.id}`} className="pz-vstupenka">
+    <span className="pz-vstupenka__kupon">
+      <small>{denVTyzdni(z.datum_cas)}</small>
+      <strong>{datumKratky(z.datum_cas)}</strong>
+      <b>{cas(z.datum_cas)}</b>
+    </span>
+    <span className="pz-vstupenka__telo">
+      <span className="pz-vstupenka__sutaz">{sutazZapasu(z) || 'Zápas'}</span>
+      <span className="pz-vstupenka__duel">
+        <span className="pz-vstupenka__tim">
+          <ErbStrany zapas={z} strana="domaci" />
+          <strong>{nazovDomacich(z)}</strong>
+        </span>
+        <i>vs</i>
+        <span className="pz-vstupenka__tim">
+          <ErbStrany zapas={z} strana="hostia" />
+          <strong>{nazovHosti(z)}</strong>
+        </span>
+      </span>
+    </span>
+    <i className="pz-vstupenka__sipka" aria-hidden="true">
+      <Ikona nazov="sipka" velkost={15} />
+    </i>
+  </Link>
+);
 
 const Zapasy: React.FC<{ tim: Tim; minule: Zapas[]; dalsie: Zapas[]; riadok: RiadokTabulky | null; liga: Liga | null }> = ({ tim, minule, dalsie, riadok, liga }) => {
   const u = useUpravy();
   if (minule.length === 0 && dalsie.length === 0) return null;
   return (
     <section className="pz-u-sekcia pz-zapasy-u" aria-labelledby="pz-u-zapasy">
-      <div className="pz-kontajner pz-zapasy-u__mriezka">
-        <div className="pz-zapasy-u__bok">
-          <span className="pz-stitok">{tim.nazov}</span>
-          <h2 id="pz-u-zapasy">{u.text('zapasy_nadpis', 'Zápasy')}</h2>
+      <div className="pz-kontajner">
+        <HlavaSekcie stitok={tim.nazov} nadpis={u.text('zapasy_nadpis', 'Zápasy')} odkaz="/matches" textOdkazu="Celý program" id="pz-u-zapasy">
           {riadok && liga && (
-            <Link to={`/leagues/${liga.id}`} className="pz-zapasy-u__tabulka">
+            <Link to={`/leagues/${liga.id}`} className="pz-zapasy-u__pozicia" title={liga.nazov}>
               <strong>{riadok.pozicia}.</strong>
               <span>
-                miesto v tabuľke
-                <small>
-                  {liga.nazov} · {riadok.body} bodov
-                </small>
+                miesto
+                <small>{riadok.body} bodov</small>
               </span>
             </Link>
           )}
-          <Link to="/matches" className="pz-sipkovy">
-            <span>Celý program</span>
-            <i aria-hidden="true">
-              <Ikona nazov="sipka" velkost={14} />
-            </i>
-          </Link>
-        </div>
-        <div className="pz-zapasy-u__zoznam">
-          {minule.length > 0 && <span className="pz-zapasy-u__skupina">Posledné výsledky</span>}
-          {minule.map((z) => (
-            <RiadokZapasu key={z.id} zapas={z} />
-          ))}
-          {dalsie.length > 0 && <span className="pz-zapasy-u__skupina">Program</span>}
-          {dalsie.map((z) => (
-            <RiadokZapasu key={z.id} zapas={z} />
-          ))}
+        </HlavaSekcie>
+        <div className={`pz-zapasy-u__stlpce${minule.length && dalsie.length ? '' : ' pz-zapasy-u__stlpce--jeden'}`}>
+          {minule.length > 0 && (
+            <div className="pz-zapasy-u__stlpec">
+              <span className="pz-zapasy-u__skupina">Posledné výsledky</span>
+              {minule.map((z) => (
+                <MiniTabula key={z.id} zapas={z} />
+              ))}
+            </div>
+          )}
+          {dalsie.length > 0 && (
+            <div className="pz-zapasy-u__stlpec">
+              <span className="pz-zapasy-u__skupina">Program</span>
+              {dalsie.map((z) => (
+                <Vstupenka key={z.id} zapas={z} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -463,6 +507,10 @@ const Sezona: React.FC<{ tim: Tim }> = ({ tim }) => {
             );
           })}
         </div>
+      </div>
+      <div className="pz-cisla__kruh" style={{ '--podiel': `${Math.round((data.V / data.pocet) * 100)}%` } as React.CSSProperties} role="img" aria-label={`Úspešnosť ${Math.round((data.V / data.pocet) * 100)} %`}>
+        <strong>{Math.round((data.V / data.pocet) * 100)}%</strong>
+        <small>výhier</small>
       </div>
       <dl className="pz-cisla__mriezka">
         {cisla.map(([n, popis]) => (
