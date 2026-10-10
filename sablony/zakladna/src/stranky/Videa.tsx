@@ -60,19 +60,21 @@ const Videa: React.FC = () => {
 
   return (
     <div className="zs-stranka zs-videa-stranka">
-      <HlavickaStranky stitok={u.text('stranka_videa_stitok', 'Obsah')} nadpis={u.text('stranka_videa_nadpis', 'Videá')}>
+      <HlavickaStranky
+        stitok={u.text('stranka_videa_stitok', 'Obsah')}
+        nadpis={u.text('stranka_videa_nadpis', 'Videá')}
+        zalozky={
+          kategorie.length > 0 ? (
+            <Filtre popis="Kategórie videí" aktivna={kategoria} onZmena={zvolKategoriu} moznosti={[{ kluc: '', nazov: 'Všetko' }, ...kategorie]} />
+          ) : undefined
+        }
+      >
         {zapas && (
           <Link to="/videa" className="zs-hlava__odkaz">
             Videá zo zápasu · zobraziť všetky
           </Link>
         )}
       </HlavickaStranky>
-
-      {kategorie.length > 0 && (
-        <Sekcia className="zs-sekcia--filtre">
-          <Filtre popis="Kategórie videí" aktivna={kategoria} onZmena={zvolKategoriu} moznosti={[{ kluc: '', nazov: 'Všetko' }, ...kategorie]} />
-        </Sekcia>
-      )}
 
       {videa.nacitava ? (
         <Nacitava text="Načítavam videá…" />

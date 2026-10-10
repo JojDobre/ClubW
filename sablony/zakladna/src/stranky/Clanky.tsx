@@ -1,14 +1,13 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Clanky.tsx
-// Novinky ako časopis - nie mriežka kariet:
-//  - titulný článok cez celú šírku stĺpca (fotka, veľký nadpis, perex),
-//  - ďalšie články ako číslovaný zoznam riadkov (rubrika, dátum,
-//    nadpis, perex, fotka napravo),
-//  - prilepený bočný panel s hľadaním a rubrikami.
+// Novinky: hľadanie v hlavičke a rubriky ako jej záložky, pod nimi
+// titulný článok (fotka vľavo, text vpravo ako na úvode) a ďalšie
+// články v mriežke bielych kariet so žltou linkou pod fotkou.
 // Rubrika sa drží v adrese (?rubrika=slug), hľadanie v ?hladat=výraz.
 
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Chyba, HlavickaStranky, NacitatDalsie, Nacitava, Obrazok, Prazdne } from '../casti';
+import './Clanky.css';
 import { Ikona, datum, useApi, useStrankovanyZoznam, useTitulok, type Clanok, useUpravy } from '../spolocne';
 
 interface Rubrika {
@@ -49,89 +48,82 @@ const Clanky: React.FC = () => {
   const [titulny, ...ostatne] = zoznam.polozky;
 
   return (
-    <div className="zs-stranka zs-casopis">
-      <HlavickaStranky stitok={hladat ? 'Hľadanie' : u.text('stranka_clanky_stitok', 'Aktuality')} nadpis={hladat ? `„${hladat}"` : aktivna?.nazov || u.text('stranka_clanky_nadpis', 'Novinky')} />
+    <div className="zs-stranka zk-novinky">
+      <HlavickaStranky
+        stitok={hladat ? 'Hľadanie' : u.text('stranka_clanky_stitok', 'Aktuality')}
+        nadpis={hladat ? `„${hladat}"` : aktivna?.nazov || u.text('stranka_clanky_nadpis', 'Novinky')}
+        zalozky={[{ slug: '', nazov: 'Všetko' }, ...(rubriky.data ?? [])].map((r) => (
+          <button key={r.slug || 'vsetky'} type="button" className={!hladat && rubrika === r.slug ? 'is-aktivny' : undefined} aria-pressed={!hladat && rubrika === r.slug} onClick={() => nastav({ rubrika: r.slug, hladat: '' })}>
+            {r.nazov}
+          </button>
+        ))}
+      >
+        <form
+          className="zk-novinky__hladat"
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            nastav({ hladat: text.trim(), rubrika: '' });
+          }}
+        >
+          <Ikona nazov="hladat" velkost={17} />
+          <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hľadať v novinkách" aria-label="Hľadať v novinkách" maxLength={100} />
+        </form>
+      </HlavickaStranky>
 
-      <div className="zs-kontajner zs-casopis__mriezka">
-        <aside className="zs-casopis__bok" aria-label="Rubriky a hľadanie">
-          <form
-            className="zs-casopis__hladat"
-            role="search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              nastav({ hladat: text.trim(), rubrika: '' });
-            }}
-          >
-            <Ikona nazov="hladat" velkost={17} />
-            <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Hľadať v novinkách" aria-label="Hľadať v novinkách" maxLength={100} />
-          </form>
-          <nav className="zs-casopis__rubriky" aria-label="Rubriky">
-            <span>Rubriky</span>
-            {[{ slug: '', nazov: 'Všetky novinky' }, ...(rubriky.data ?? [])].map((r) => (
-              <button key={r.slug || 'vsetky'} type="button" className={!hladat && rubrika === r.slug ? 'is-aktivna' : ''} aria-pressed={!hladat && rubrika === r.slug} onClick={() => nastav({ rubrika: r.slug, hladat: '' })}>
-                {r.nazov}
-                <Ikona nazov="sipka" velkost={13} />
+      <div className="zs-kontajner zk-novinky__obsah">
+        {zoznam.chyba ? (
+          <Chyba text={zoznam.chyba} />
+        ) : zoznam.prvaNacitava ? (
+          <Nacitava text="Načítavam novinky…" />
+        ) : !titulny ? (
+          <Prazdne nadpis={hladat ? `Pre „${hladat}" sme nenašli žiadny článok` : 'Zatiaľ tu nie sú žiadne novinky'} text={rubrika || hladat ? 'Skúste inú rubriku.' : undefined}>
+            {(rubrika || hladat) && (
+              <button type="button" className="zs-tlacidlo-dalsie" onClick={() => nastav({ rubrika: '', hladat: '' })}>
+                Všetky novinky
               </button>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="zs-casopis__obsah">
-          {zoznam.chyba ? (
-            <Chyba text={zoznam.chyba} />
-          ) : zoznam.prvaNacitava ? (
-            <Nacitava text="Načítavam novinky…" />
-          ) : !titulny ? (
-            <Prazdne nadpis={hladat ? `Pre „${hladat}" sme nenašli žiadny článok` : 'Zatiaľ tu nie sú žiadne novinky'} text={rubrika || hladat ? 'Skúste inú rubriku.' : undefined}>
-              {(rubrika || hladat) && (
-                <button type="button" className="zs-tlacidlo-dalsie" onClick={() => nastav({ rubrika: '', hladat: '' })}>
-                  Všetky novinky
-                </button>
-              )}
-            </Prazdne>
-          ) : (
-            <>
-              <Link to={`/clanek/${titulny.slug}`} className="zs-titul">
-                <Obrazok src={titulny.obrazok} className="zs-titul__obrazok" />
-                <span className="zs-titul__text">
-                  <span className="zs-titul__meta">
-                    {titulny.kategoria && <b>{titulny.kategoria.nazov}</b>}
-                    {datum(titulny.publikovany_datum || titulny.vytvoreny)}
-                  </span>
-                  <strong>{titulny.nazov}</strong>
-                  {titulny.excerpt && <p>{titulny.excerpt}</p>}
+            )}
+          </Prazdne>
+        ) : (
+          <>
+            <Link to={`/clanek/${titulny.slug}`} className="zk-novinka zk-novinka--titulna">
+              <Obrazok src={titulny.obrazok} className="zk-novinka__obrazok" />
+              <span className="zk-novinka__telo">
+                <span className="zk-novinka__meta">
+                  {titulny.kategoria && <b>{titulny.kategoria.nazov}</b>}
+                  {datum(titulny.publikovany_datum || titulny.vytvoreny)}
                 </span>
-              </Link>
-              {ostatne.length > 0 && (
-                <ol className="zs-casopis__zoznam">
-                  {ostatne.map((c, i) => (
-                    <li key={c.id}>
-                      <Link to={`/clanek/${c.slug}`} className="zs-criadok">
-                        <span className="zs-criadok__cislo" aria-hidden="true">
-                          {String(i + 2).padStart(2, '0')}
-                        </span>
-                        <span className="zs-criadok__text">
-                          <span className="zs-criadok__meta">
-                            {c.kategoria && <b>{c.kategoria.nazov}</b>}
-                            {datum(c.publikovany_datum || c.vytvoreny)}
-                          </span>
-                          <strong>{c.nazov}</strong>
-                          {c.excerpt && <p>{c.excerpt}</p>}
-                        </span>
-                        <Obrazok src={c.obrazok} className="zs-criadok__obrazok" />
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
-              {zoznam.dalsie && (
-                <div className="zs-casopis__dalsie">
-                  <NacitatDalsie nacitava={zoznam.nacitava} onClick={zoznam.nacitajDalsie} />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                <strong>{titulny.nazov}</strong>
+                {titulny.excerpt && <p>{titulny.excerpt}</p>}
+                <span className="zk-novinka__viac">
+                  Čítať článok <Ikona nazov="sipka" velkost={15} />
+                </span>
+              </span>
+            </Link>
+            {ostatne.length > 0 && (
+              <div className="zk-novinky__mriezka">
+                {ostatne.map((c) => (
+                  <Link key={c.id} to={`/clanek/${c.slug}`} className="zk-novinka">
+                    <Obrazok src={c.obrazok} className="zk-novinka__obrazok" />
+                    <span className="zk-novinka__telo">
+                      <span className="zk-novinka__meta">
+                        {c.kategoria && <b>{c.kategoria.nazov}</b>}
+                        {datum(c.publikovany_datum || c.vytvoreny)}
+                      </span>
+                      <strong>{c.nazov}</strong>
+                      {c.excerpt && <p>{c.excerpt}</p>}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {zoznam.dalsie && (
+              <div className="zk-novinky__dalsie">
+                <NacitatDalsie nacitava={zoznam.nacitava} onClick={zoznam.nacitajDalsie} />
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

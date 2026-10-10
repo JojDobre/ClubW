@@ -60,7 +60,15 @@ const Dokumenty: React.FC = () => {
 
   return (
     <div className="zs-stranka zs-dokumenty-stranka">
-      <HlavickaStranky stitok={u.text('stranka_dokumenty_stitok', 'Na stiahnutie')} nadpis={u.text('stranka_dokumenty_nadpis', 'Dokumenty')}>
+      <HlavickaStranky
+        stitok={u.text('stranka_dokumenty_stitok', 'Na stiahnutie')}
+        nadpis={u.text('stranka_dokumenty_nadpis', 'Dokumenty')}
+        zalozky={
+          skupiny.length > 1 ? (
+            <Filtre popis="Kategórie dokumentov" aktivna={kategoria} onZmena={setKategoria} moznosti={[{ kluc: '', nazov: 'Všetko' }, ...skupiny.map((s) => ({ kluc: s.kluc, nazov: s.nazov }))]} />
+          ) : undefined
+        }
+      >
         {(dokumenty.data ?? []).length > 0 && (
           <label className="zs-hladat">
             <Ikona nazov="hladat" />
@@ -68,12 +76,6 @@ const Dokumenty: React.FC = () => {
           </label>
         )}
       </HlavickaStranky>
-
-      {skupiny.length > 1 && (
-        <Sekcia className="zs-sekcia--filtre">
-          <Filtre popis="Kategórie dokumentov" aktivna={kategoria} onZmena={setKategoria} moznosti={[{ kluc: '', nazov: 'Všetko' }, ...skupiny.map((s) => ({ kluc: s.kluc, nazov: s.nazov }))]} />
-        </Sekcia>
-      )}
 
       {dokumenty.nacitava ? (
         <Nacitava text="Načítavam dokumenty…" />

@@ -103,20 +103,22 @@ export const Obchod: React.FC = () => {
 
   return (
     <div className="zs-stranka zs-obchod">
-      <HlavickaStranky stitok={u.text('stranka_obchod_stitok', 'Fanshop')} nadpis={aktivna?.nazov ?? u.text('stranka_obchod_nadpis', 'Oficiálny fanshop')}>
+      <HlavickaStranky
+        stitok={u.text('stranka_obchod_stitok', 'Fanshop')}
+        nadpis={aktivna?.nazov ?? u.text('stranka_obchod_nadpis', 'Oficiálny fanshop')}
+        zalozky={
+          (kategorie.data?.length ?? 0) > 1 ? (
+            <Filtre
+              popis="Kategórie produktov"
+              aktivna={kategoria}
+              onZmena={(k) => setParametre(k ? { kategoria: k } : {})}
+              moznosti={[{ kluc: '', nazov: 'Všetko' }, ...kategorie.data!.map((k) => ({ kluc: k.slug, nazov: k.nazov }))]}
+            />
+          ) : undefined
+        }
+      >
         <p className="zs-hlava__popis">{aktivna?.popis || u.text('stranka_obchod_popis', 'Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub.')}</p>
       </HlavickaStranky>
-
-      {(kategorie.data?.length ?? 0) > 1 && (
-        <Sekcia className="zs-sekcia--filtre">
-          <Filtre
-            popis="Kategórie produktov"
-            aktivna={kategoria}
-            onZmena={(k) => setParametre(k ? { kategoria: k } : {})}
-            moznosti={[{ kluc: '', nazov: 'Všetko' }, ...kategorie.data!.map((k) => ({ kluc: k.slug, nazov: k.nazov }))]}
-          />
-        </Sekcia>
-      )}
 
       <Sekcia className={`zs-sekcia--mriezka${(kategorie.data?.length ?? 0) > 1 ? '' : ' zs-sekcia--hore'}`}>
         {produkty.nacitava && !produkty.data ? (
