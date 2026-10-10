@@ -294,6 +294,22 @@ describe('správa licencie', () => {
     expect(udalosti.some((u: any) => u.typ === 'licencia_predlzena')).toBe(true);
   });
 
+  it('funkcie licencie s dvojbodkou sa uložia a web ich dostane v podpísanom overení', async () => {
+    const r = await put(`/licencie/${licencia.id}`, { funkcie: ['sablona:arena', 'Sablony:Vsetky', 'sablona:arena'] });
+    expect(r.status).toBe(200);
+    expect(r.body.data.funkcie).toEqual(['sablona:arena', 'sablony:vsetky']);
+    expect((await get(`/licencie/${licencia.id}`)).body.data.funkcie).toEqual(['sablona:arena', 'sablony:vsetky']);
+    const overenie = await over(licencia.kluc, 'v1.0.0');
+    expect(overenie.body.data.funkcie).toEqual(['sablona:arena', 'sablony:vsetky']);
+    expect(podpisSedi(overenie.body)).toBe(true);
+    // Neplatná funkcia sa nezahodí potichu, ale vráti chybu
+    expect((await put(`/licencie/${licencia.id}`, { funkcie: ['sablona arena!'] })).status).toBe(400);
+    // Funkcie plánu prejdú rovnako
+    const plany = [{ kod: 'pro', nazov: 'Pro', mesiacov: 12, funkcie: ['sablona:klubova'] }, { kod: 'enterprise', nazov: 'Enterprise', mesiacov: 24, funkcie: ['sablony:vsetky'] }];
+    const p = await put(`/produkty/${produktId}`, { plany });
+    expect(p.body.data.plany.map((x: any) => x.funkcie)).toEqual([['sablona:klubova'], ['sablony:vsetky']]);
+  });
+
   it('nový kľúč: starý prestane platiť', async () => {
     const stary = licencia.kluc;
     const novy = (await post(`/licencie/${licencia.id}/novy-kluc`)).body.data.kluc;
