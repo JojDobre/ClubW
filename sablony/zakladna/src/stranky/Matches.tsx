@@ -1,7 +1,7 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Matches.tsx
 // Zoznam zápasov - program, výsledky a práve hrané zápasy po mesiacoch,
-// s filtrom podľa stavu a súťaže a vyhľadávaním. Na PC riadok ako
-// výsledková tabuľa, na mobile kompaktný zoznam v jednej karte mesiaca.
+// s filtrom podľa stavu a súťaže a vyhľadávaním. Jednoduchý zoznam v jednej
+// karte mesiaca - dátum, tímy so skóre a súťaž, nič navyše.
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,6 @@ import {
   type ZapasZakladny,
 } from '../zapasy';
 import { HlavickaStranky } from '../casti';
-import { zaKolko } from '../spolocne';
 import './Matches.css';
 
 type Filter = 'vsetky' | 'program' | 'vysledky' | 'zivo';
@@ -35,112 +34,45 @@ const FILTRE: Array<[Filter, string]> = [
 
 const mesiac = (d: string) => new Date(d).toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' });
 
-/** Spoločné údaje pre riadok zápasu: stav, skóre, výsledok z pohľadu klubu, minúta. */
-const infoZapasu = (z: ZapasZakladny, teraz: number) => {
+/** Riadok zápasu - rovnaký na PC aj mobile: dátum, tímy pod sebou so skóre, súťaž.
+    Žiadne štítky ani farebné pruhy - prehratý tím je len stlmený. */
+const RiadokZapasu: React.FC<{ z: ZapasZakladny; teraz: number }> = ({ z, teraz }) => {
   const stav = stavZapasu(z);
   const skore = maVysledok(z) && (stav === 'ukonceny' || stav === 'prebieha');
-  const nasDomaci = Boolean(z.domaci_tim_id);
-  const nasHostia = Boolean(z.hostujuci_tim_id);
-  let vysledok: 'V' | 'R' | 'P' | null = null;
-  if (skore && stav === 'ukonceny' && (nasDomaci || nasHostia) && !(nasDomaci && nasHostia)) {
-    const my = nasDomaci ? z.goly_domaci! : z.goly_hostia!;
-    const oni = nasDomaci ? z.goly_hostia! : z.goly_domaci!;
-    vysledok = my > oni ? 'V' : my < oni ? 'P' : 'R';
-  }
   const minuta = stav === 'prebieha' ? zivaMinuta(z, teraz) : null;
   const sutaz = nazovSutaze(z);
-  return { stav, skore, vysledok, minuta, sutaz };
-};
-
-const NAZVY_VYSLEDKOV = { V: 'Výhra', R: 'Remíza', P: 'Prehra' } as const;
-
-/** Štítok stavu len tam, kde nesie informáciu (naživo, odložený, zrušený). */
-const StavZapasu: React.FC<{ stav: string; minuta: string | null }> = ({ stav, minuta }) =>
-  stav === 'prebieha' ? (
-    <span className="zk-live">
-      <i aria-hidden="true" /> {minuta || 'Naživo'}
-    </span>
-  ) : stav === 'odlozeny' || stav === 'zruseny' ? (
-    <span className={`zk-stav zk-stav--${stav}`}>{STAVY[stav]}</span>
-  ) : null;
-
-/** Na PC: riadok ako výsledková tabuľa - dátum, domáci, skóre, hostia, súťaž a miesto. */
-const RiadokA: React.FC<{ z: ZapasZakladny; teraz: number }> = ({ z, teraz }) => {
-  const { stav, skore, vysledok, minuta, sutaz } = infoZapasu(z, teraz);
+  const goly = { domaci: z.goly_domaci, hostia: z.goly_hostia };
+  const prehral = (strana: 'domaci' | 'hostia') => {
+    if (!skore || stav !== 'ukonceny') return false;
+    const druha = strana === 'domaci' ? 'hostia' : 'domaci';
+    return (goly[strana] ?? 0) < (goly[druha] ?? 0);
+  };
   return (
-    <Link to={`/matches/${z.id}`} className={`zk-zr is-${stav}${vysledok ? ` je-${vysledok}` : ''}`}>
-      <span className="zk-zr__datum">
+    <Link to={`/matches/${z.id}`} className={`zk-zapas is-${stav}`}>
+      <span className="zk-zapas__kedy">
         <strong>
           {den(z.datum_cas)} {denCislo(z.datum_cas)}
         </strong>
-        <small>{cas(z.datum_cas)}</small>
-      </span>
-      <span className="zk-zr__tim zk-zr__tim--domaci">
-        <span className="zk-zr__nazov">{nazovStrany(z, 'domaci')}</span>
-        <ErbTimu z={z} strana="domaci" />
-      </span>
-      <span className="zk-zr__skore">
-        {skore ? (
-          <>
-            <b>{z.goly_domaci}</b>
-            <i>:</i>
-            <b>{z.goly_hostia}</b>
-          </>
-        ) : stav === 'ukonceny' ? (
-          <em>–:–</em>
-        ) : (
-          <em>{cas(z.datum_cas)}</em>
-        )}
-      </span>
-      <span className="zk-zr__tim zk-zr__tim--hostia">
-        <ErbTimu z={z} strana="hostia" />
-        <span className="zk-zr__nazov">{nazovStrany(z, 'hostia')}</span>
-      </span>
-      <span className="zk-zr__info">
-        <StavZapasu stav={stav} minuta={minuta} />
-        {vysledok && <span className={`zk-vrp zk-vrp--${vysledok}`} title={NAZVY_VYSLEDKOV[vysledok]}>{vysledok}</span>}
-        {sutaz && <span className="zk-zr__sutaz">{sutaz}</span>}
-        {z.miesto && (
-          <span className="zk-zr__miesto">
-            <Ikona nazov="miesto" /> {z.miesto}
+        {stav === 'prebieha' ? (
+          <span className="zk-zapas__zivo">
+            <i aria-hidden="true" /> {minuta || 'Naživo'}
           </span>
+        ) : stav === 'odlozeny' || stav === 'zruseny' ? (
+          <span>{STAVY[stav]}</span>
+        ) : (
+          <span>{cas(z.datum_cas)}</span>
         )}
       </span>
-    </Link>
-  );
-};
-
-/** Na mobile: kompaktný riadok v jednej karte mesiaca - tímy pod sebou, skóre vpravo. */
-const RiadokB: React.FC<{ z: ZapasZakladny; teraz: number }> = ({ z, teraz }) => {
-  const { stav, skore, vysledok, minuta, sutaz } = infoZapasu(z, teraz);
-  return (
-    <Link to={`/matches/${z.id}`} className={`zk-zk is-${stav}`}>
-      <span className="zk-zk__datum">
-        <small>{den(z.datum_cas)}</small>
-        <strong>{denCislo(z.datum_cas)}</strong>
-        <small>{cas(z.datum_cas)}</small>
-      </span>
-      <span className="zk-zk__timy">
+      <span className="zk-zapas__timy">
         {(['domaci', 'hostia'] as const).map((strana) => (
-          <span key={strana} className="zk-zk__tim">
+          <span key={strana} className={`zk-zapas__tim${prehral(strana) ? ' je-slabsi' : ''}`}>
             <ErbTimu z={z} strana={strana} />
-            <span className="zk-zk__nazov">{nazovStrany(z, strana)}</span>
-            <b className="zk-zk__gol">{skore ? (strana === 'domaci' ? z.goly_domaci : z.goly_hostia) : stav === 'ukonceny' ? '–' : ''}</b>
+            <span className="zk-zapas__nazov">{nazovStrany(z, strana)}</span>
+            <b>{skore ? goly[strana] : ''}</b>
           </span>
         ))}
-        {(sutaz || z.miesto) && <span className="zk-zk__sutaz">{[sutaz, z.miesto].filter(Boolean).join(' · ')}</span>}
       </span>
-      <span className="zk-zk__stav">
-        <StavZapasu stav={stav} minuta={minuta} />
-        {vysledok ? (
-          <span className={`zk-vrp zk-vrp--${vysledok}`} title={NAZVY_VYSLEDKOV[vysledok]}>
-            {vysledok}
-          </span>
-        ) : !skore && stav === 'naplanovany' ? (
-          <span className="zk-zk__za">{zaKolko(z.datum_cas) || cas(z.datum_cas)}</span>
-        ) : null}
-        <Ikona nazov="sipka" className="zk-zk__sipka" />
-      </span>
+      {sutaz && <span className="zk-zapas__sutaz">{sutaz}</span>}
     </Link>
   );
 };
@@ -211,7 +143,6 @@ const Matches: React.FC = () => {
             {FILTRE.filter(([k]) => k !== 'zivo' || pocty.zivo > 0).map(([k, nazov]) => (
               <button key={k} type="button" role="tab" aria-selected={filter === k} className={`zk-cip${filter === k ? ' is-aktivny' : ''}`} onClick={() => setFilter(k)}>
                 {nazov}
-                <span>{pocty[k]}</span>
               </button>
             ))}
           </div>
@@ -247,12 +178,8 @@ const Matches: React.FC = () => {
             <section key={sk.mesiac} className="zk-zapasy-mesiac">
               <h2>{sk.mesiac}</h2>
               <div className="zk-zapasy-zoznam">
-                {/* Riadok pre PC aj pre mobil - zobrazí sa len ten, ktorý sedí na šírku */}
                 {sk.zapasy.map((z) => (
-                  <React.Fragment key={z.id}>
-                    <RiadokA z={z} teraz={teraz} />
-                    <RiadokB z={z} teraz={teraz} />
-                  </React.Fragment>
+                  <RiadokZapasu key={z.id} z={z} teraz={teraz} />
                 ))}
               </div>
             </section>
