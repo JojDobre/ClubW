@@ -19,7 +19,7 @@
 .zk-tabula .zk-erb-timu--znak { background: #ffffff; }
 .zk-tabula__stred { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .zk-tabula__skore, .zk-tabula__cas { font-family: var(--zk-nadpisy); font-size: clamp(3rem, 8vw, 5rem); line-height: .95; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.zk-tabula__skore i { font-style: normal; margin: 0 10px; color: var(--zk-akcent); }
+.zk-tabula__skore i { font-style: normal; margin: 0 10px; color: rgba(255, 255, 255, .55); }
 .zk-tabula__stred small { font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, .82); text-align: center; }
 .zk-tabula.is-prebieha .zk-tabula__stred small { color: #ffffff; background: #e5303b; padding: 3px 12px; border-radius: 999px; font-weight: 800; }
 .zk-detail-zapasu__odpocet { margin-top: 26px; }

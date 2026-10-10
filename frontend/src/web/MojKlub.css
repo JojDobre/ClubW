@@ -11,7 +11,12 @@
   --mk-plocha: #ffffff;
   --mk-jemna: #f8fafc;
   --mk-r: 16px;
+  /* Farba klubu ako text na bielej - svetlé farby (žltá…) stmavená, aby bola čitateľná */
+  --mk-farba-text: var(--mk-farba);
   color: var(--mk-text);
+}
+@supports (color: oklch(from red l c h)) {
+  .mk, .mk-prihlasenie, .mk-overenie { --mk-farba-text: oklch(from var(--mk-farba) min(l, 0.55) c h); }
 }
 .mk { display: flex; flex-direction: column; gap: 24px; max-width: 1100px; margin: 0 auto; }
 .mk.mk h2, .mk-prihlasenie.mk-prihlasenie h2 { font-size: 1.35rem; margin: 0; color: var(--mk-text); font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; text-transform: none; }
@@ -36,10 +41,10 @@
 }
 .mk-tlacidlo.mk-tlacidlo:hover { filter: brightness(1.08); }
 .mk-tlacidlo.mk-tlacidlo:disabled { opacity: 0.6; cursor: wait; }
-.mk-tlacidlo.mk-tlacidlo--obrys { background: transparent; color: var(--mk-farba); }
+.mk-tlacidlo.mk-tlacidlo--obrys { background: transparent; color: var(--mk-farba-text); }
 .mk-tlacidlo.mk-tlacidlo--obrys:hover { background: var(--mk-farba); color: var(--club-primary-contrast, #fff); filter: none; }
 .mk-tlacidlo.mk-tlacidlo--nebezpecne { background: #b91c1c; border-color: #b91c1c; color: #fff; }
-.mk-odkaz.mk-odkaz { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--mk-farba); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.mk-odkaz.mk-odkaz { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--mk-farba-text); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .mk-sprava { margin: 0; padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 0.92rem; }
 .mk-sprava--chyba { background: #fef2f2; color: #b91c1c; }
 .mk-sprava--ok { background: #f0fdf4; color: #166534; }
@@ -49,7 +54,7 @@
 .mk-zoznam li::before {
   content: '✓'; position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border-radius: 50%;
   display: grid; place-items: center; font-size: 12px; font-weight: 800;
-  background: color-mix(in srgb, var(--mk-farba) 14%, #fff); color: var(--mk-farba);
+  background: color-mix(in srgb, var(--mk-farba) 14%, #fff); color: var(--mk-farba-text);
 }
 
 /* ===== Prihlásenie ===== */
@@ -87,7 +92,7 @@
 .mk-karta__hlava { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .mk-karta__hlava > div { display: flex; flex-direction: column; min-width: 0; }
 .mk-karta__logo { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; padding: 6px; border-radius: 14px; background: #fff; }
-.mk-karta__logo--znak { display: grid; place-items: center; color: var(--mk-farba); font-weight: 900; font-size: 22px; }
+.mk-karta__logo--znak { display: grid; place-items: center; color: var(--mk-farba-text); font-weight: 900; font-size: 22px; }
 .mk-karta__klub { font-weight: 800; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mk-karta__typ { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
 .mk-karta__meno { font-size: clamp(1.3rem, 3vw, 1.75rem); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
@@ -106,9 +111,9 @@
 .mk-vyhoda__obrazok img { width: 100%; height: 100%; object-fit: cover; }
 .mk-vyhoda__obrazok--logo { aspect-ratio: 3 / 1; }
 .mk-vyhoda__obrazok--logo img { width: 60%; height: 60%; object-fit: contain; }
-.mk-vyhoda__obrazok span { font-size: 40px; color: var(--mk-farba); }
+.mk-vyhoda__obrazok span { font-size: 40px; color: var(--mk-farba-text); }
 .mk-vyhoda__telo { display: flex; flex-direction: column; gap: 8px; padding: 18px; flex: 1; }
-.mk-vyhoda__partner { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mk-farba); }
+.mk-vyhoda__partner { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mk-farba-text); }
 .mk-vyhoda h3 { margin: 0; font-size: 1.1rem; color: var(--mk-text); }
 .mk-vyhoda p { margin: 0; color: var(--mk-tlmene); line-height: 1.5; font-size: 0.95rem; }
 .mk-vyhoda__akcie { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 6px; }

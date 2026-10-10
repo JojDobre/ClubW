@@ -12,7 +12,13 @@
 @font-face { font-family: 'ZK Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(./pisma/barlow-condensed-700-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
 :root {
-  --zk-farba: var(--club-primary, #1b5e20);
+  /* --zk-farba-ziva je farba klubu presne podľa nastavení - na plochách vždy
+     s kontrastnou farbou z nastavení (--zk-kontrast). --zk-farba je jej
+     čitateľná verzia: svetlé farby (žltá, oranžová, svetlozelená…) stmaví,
+     aby fungovali ako text na bielej aj ako plocha s bielym textom. Tmavé
+     farby klubu ostanú bez zmeny. */
+  --zk-farba-ziva: var(--club-primary, #1b5e20);
+  --zk-farba: var(--zk-farba-ziva);
   --zk-kontrast: var(--club-primary-contrast, #ffffff);
   --zk-akcent: var(--club-accent, #f9a825);
   --zk-akcent-kontrast: var(--club-accent-contrast, #1a1a1a);
@@ -28,6 +34,9 @@
   --zk-r: 16px;
   --zk-tien: 0 1px 2px rgba(15, 23, 42, .05), 0 10px 30px -18px rgba(15, 23, 42, .28);
   --zk-sirka: 1200px;
+}
+@supports (color: oklch(from red l c h)) {
+  :root { --zk-farba: oklch(from var(--zk-farba-ziva) min(l, 0.55) c h); }
 }
 /* Tokeny sú na :root, lebo stránky Základnej používajú aj iné šablóny
    (bez obalu .zk) - stránka tak má farby aj tam. */
@@ -45,7 +54,7 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 .zk-obsah h1, .zk-obsah h2, .zk-obsah h3 { font-family: var(--zk-nadpisy); letter-spacing: .005em; line-height: 1.12; }
 .zk-obsah h1 { text-transform: uppercase; }
 .zk-skryte { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.zk-preskocit { position: absolute; left: 12px; top: -60px; z-index: 1200; padding: 10px 16px; border-radius: 10px; background: var(--zk-farba); color: var(--zk-kontrast); font-weight: 700; }
+.zk-preskocit { position: absolute; left: 12px; top: -60px; z-index: 1200; padding: 10px 16px; border-radius: 10px; background: var(--zk-farba-ziva); color: var(--zk-kontrast); font-weight: 700; }
 .zk-preskocit:focus { top: 12px; }
 .zk :focus-visible { outline: 3px solid color-mix(in srgb, var(--zk-farba) 55%, transparent); outline-offset: 2px; }
 .zk-ikona { width: 20px; height: 20px; flex-shrink: 0; }
@@ -54,15 +63,15 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 .zk-erb { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
 .zk-erb--znak {
   display: inline-grid; place-items: center; border-radius: 50%;
-  background: var(--zk-farba); color: var(--zk-kontrast);
+  background: var(--zk-farba-ziva); color: var(--zk-kontrast);
   font-family: var(--zk-nadpisy); font-size: 17px; letter-spacing: .04em;
 }
 
 /* Tlačidlá */
 .zk-tlacidlo {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 0 20px; border: 2px solid var(--zk-farba); border-radius: 999px;
-  background: var(--zk-farba); color: var(--zk-kontrast);
+  min-height: 44px; padding: 0 20px; border: 2px solid var(--zk-farba-ziva); border-radius: 999px;
+  background: var(--zk-farba-ziva); color: var(--zk-kontrast);
   font: inherit; font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer;
   transition: transform .15s, filter .15s, background .15s;
 }
@@ -123,7 +132,7 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 }
 .zk-cip span { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--zk-plocha); color: var(--zk-tlmeny); font-size: 12px; text-align: center; box-sizing: border-box; }
 .zk-cip:hover { border-color: var(--zk-farba); }
-.zk-cip.is-aktivny { background: var(--zk-farba); border-color: var(--zk-farba); color: var(--zk-kontrast); }
+.zk-cip.is-aktivny { background: var(--zk-farba-ziva); border-color: var(--zk-farba-ziva); color: var(--zk-kontrast); }
 .zk-cip.is-aktivny span { background: rgba(255, 255, 255, .22); color: inherit; }
 .zk-pole {
   min-height: 42px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--zk-ciara); background: var(--zk-karta);
@@ -213,7 +222,7 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 .zk-akcia__pocet {
   position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; box-sizing: border-box;
   display: grid; place-items: center; font-size: 11px; font-weight: 800;
-  background: var(--zk-farba); color: var(--zk-kontrast);
+  background: var(--zk-farba-ziva); color: var(--zk-kontrast);
 }
 .zk-akcie__tlacidlo { min-height: 40px; margin-left: 6px; }
 .zk-menu-tlacidlo { display: none; }
@@ -312,6 +321,13 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
   /* Na mobile menu a odkazy pre fanúšikov vedľa seba, klub a kontakt cez celú šírku */
   .zk-paticka__vnutro { grid-template-columns: 1fr 1fr; gap: 28px 18px; padding-top: 44px; }
   .zk-paticka__vnutro > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 768px) {
+  /* Globálne pravidlo dotykových cieľov (44px) robilo z odkazov v pätičke riedky zoznam */
+  .zk-paticka__odkazy { gap: 0; }
+  .zk-paticka__odkazy a { min-height: 36px; display: flex; align-items: center; }
+  .zk-paticka__kontakt > a { min-height: 0; }
+  .zk-paticka__cookies { min-height: 0; min-width: 0; }
 }
 
 /* ===== Načítavanie ===== */

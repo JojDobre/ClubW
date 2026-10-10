@@ -224,7 +224,7 @@
 .zs .zs-tovar :is(.zs-produkt__nazov, .zs-produkt__spodok) { padding-inline: 18px; }
 .zs .zs-tovar .zs-produkt__nazov { padding-top: 14px; }
 .zs .zs-tovar .zs-produkt__spodok { padding-bottom: 16px; }
-.zs .zs-tovar__sipka { background: var(--zk-farba); color: var(--zk-kontrast); }
+.zs .zs-tovar__sipka { background: var(--zk-farba-ziva); color: var(--zk-kontrast); }
 .zs .zs-obchod__mriezka { gap: 22px; }
 .zs .zs-tovar .zs-produkt__nazov { font-size: 15px; font-weight: 800; line-height: 1.3; }
 
@@ -387,3 +387,62 @@
   .zs :is(.zs-clanok-detail, .zs-obsahova) .zs-clanok-detail__telo { width: calc(100% - 24px); margin: 22px auto 40px; padding: 24px 20px 28px; }
   .zs .zs-clanok-detail__perex { font-size: 17.5px; }
 }
+
+/* Riadkové karty (turnaje) - na tablete dve vedľa seba, tri by boli príliš úzke */
+@media (min-width: 561px) and (max-width: 1024px) {
+  .zs .zs-mriezka-riadkov { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+@media (min-width: 640px) and (max-width: 1024px) {
+  .zs .zs-cisla { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+}
+
+/* Košík: „Pokračovať v nákupe" ako obrysové tlačidlo - text v klubovej farbe na bielej, nie tmavý na akcente */
+.zs .zs-kosik-stranka .zs-spat--tmava, .zs a.zs-spat--tmava[href="/obchod"] {
+  background: var(--zk-karta, #ffffff); color: var(--zs-primarna); box-shadow: inset 0 0 0 2px var(--zs-primarna);
+}
+.zs .zs-kosik-stranka .zs-spat--tmava:hover, .zs a.zs-spat--tmava[href="/obchod"]:hover {
+  background: var(--zs-primarna); color: #ffffff; filter: none;
+}
+
+/* Tlačidlá na ploche vo farbe klubu (hlavičky, 404) - biele, inak splývajú s pozadím */
+.zs .zs-hlava .zs-tlacidlo--akcent { background: #ffffff; color: var(--zs-primarna); }
+.zs .zs-hlava .zs-tlacidlo--akcent:hover { background: var(--zk-akcent); color: var(--zk-akcent-kontrast); }
+
+/* Odkazy na tmavých plochách blokov - biele s podčiarknutím v akcente (červená/modrá na farbe klubu nemá kontrast) */
+.zs .zs-bloky :is(.blok--pozadie-tmave, .blok__karty--prekryv) .blok__odkaz { color: #ffffff; }
+.zs .zs-bloky .blok--pozadie-tmave :is(.blok__text, .zs-text, .blok__obsah) a:not([class]) {
+  color: #ffffff; text-decoration: underline; text-decoration-color: var(--zk-akcent); text-decoration-thickness: 2px; text-underline-offset: 3px;
+}
+
+/* Tabuľka v bloku: erb v riadku s názvom tímu (všeobecné .zs-bloky img je blokové) */
+.zs .zs-bloky .blok__tabulka-tim .blok__tabulka-logo { display: inline-block; }
+/* Cenník: zvýraznený balík je na farbe klubu - cena biela */
+.zs .zs-bloky .blok__balik.is-zvyraznene .blok__cena :is(strong, small) { color: #ffffff; }
+.zs .zs-bloky .blok__balik.is-zvyraznene .blok__cena small { opacity: 0.7; }
+
+/* Tmavé panely vo farbe klubu (2 %, zvýraznený balík, tmavé pozadie bloku): hlavné tlačidlo biele
+   a zvýraznené hodnoty biele - v klubovej farbe by na rovnakej ploche zmizli */
+.zs .zs-bloky :is(.blok--pozadie-tmave, .blok__dane, .blok__balik.is-zvyraznene, .blok__kontakt-udaje) .blok__tlacidlo--hlavne {
+  background: #ffffff; border-color: #ffffff; color: var(--zs-primarna);
+}
+.zs .zs-bloky :is(.blok--pozadie-tmave, .blok__dane, .blok__balik.is-zvyraznene, .blok__kontakt-udaje) .blok__tlacidlo--hlavne:hover {
+  background: var(--zk-akcent); border-color: var(--zk-akcent); color: var(--zk-akcent-kontrast);
+}
+.zs .zs-bloky .blok__dane-termin strong { color: #ffffff; }
+
+/* ===== Kontrast (automatická kontrola text/pozadie) ===== */
+/* Dnešný deň v kalendári: farba klubu s jej kontrastnou farbou (pri svetlých farbách tmavý text) */
+.zs .zs-kalendar__den.is-dnes .zs-kalendar__cislo { background: var(--zk-farba-ziva); color: var(--zk-kontrast); }
+/* Úspechy v bloku sú na ploche vo farbe klubu - rok svetlý */
+.zs .zs-bloky .blok__uspechy .blok__rok { color: rgba(255, 255, 255, 0.78); }
+/* Dĺžka videa na náhľade playlistu */
+.zs .zs-tv__nahlad small { color: #ffffff; }
+/* Remíza vo forme a stav „odohraný" - tmavšie, aby biely/zelený text čitateľný */
+.zs .zs-forma__znak--R { background: #64748b; }
+.zs .zs-zapas__stav.is-odohrany { color: #15803d; }
+/* Dátumy a vedľajšie údaje - tlmená sivá s dostatočným kontrastom na bielej */
+.zs :is(.zs-clanok__datum, .zs-karta .zs-clanok__datum) { color: var(--zk-tlmeny); }
+.zs .zs-tovar__cena s, .zs .zs-cena s { color: var(--zk-tlmeny); }
+.zs .zs-tabulka__hrac small { color: var(--zk-tlmeny); }
+.zs .zs-bloky .blok__dane-udaje dt { color: rgba(255, 255, 255, 0.75); }
+.zs .zs-vlastnost__nazov small { color: var(--zk-tlmeny); }

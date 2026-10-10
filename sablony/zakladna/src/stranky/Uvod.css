@@ -127,7 +127,7 @@
 .zk .aw__stitok { background: var(--zk-jemna); color: var(--zk-farba); letter-spacing: .1em; }
 .zk .aw__otazka { font-family: var(--zk-nadpisy); font-size: 1.35rem; line-height: 1.15; }
 .zk .aw__moznost input { accent-color: var(--zk-farba); }
-.zk .aw__hlasovat { border-radius: 999px; background: var(--zk-farba); color: var(--zk-kontrast); font-weight: 700; }
+.zk .aw__hlasovat { border-radius: 999px; background: var(--zk-farba-ziva); color: var(--zk-kontrast); font-weight: 700; }
 
 /* ===== Obchod ===== */
 .zk-produkty { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
@@ -154,7 +154,7 @@
   border: 2px solid rgba(255, 255, 255, .1); box-shadow: 0 0 0 40px rgba(255, 255, 255, .03);
 }
 .zk-vyzva > div { position: relative; z-index: 1; }
-.zk-vyzva .zk-u-hlava__stitok { color: var(--zk-akcent); }
+.zk-vyzva .zk-u-hlava__stitok { color: rgba(255, 255, 255, .85); }
 .zk-vyzva h2 { margin: 0; font-size: clamp(1.9rem, 3.4vw, 2.6rem); text-transform: uppercase; color: #ffffff; }
 .zk-vyzva p { margin: 10px 0 0; max-width: 560px; color: rgba(255, 255, 255, .8); }
 .zk-vyzva__tlacidla { display: flex; gap: 12px; flex-wrap: wrap; }

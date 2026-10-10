@@ -9,11 +9,12 @@ import { Sekcia } from '../casti';
 import { Ikona, obrazokUrl, useTitulok } from '../spolocne';
 
 const Vysledok: React.FC<{ v: VysledokHladania }> = ({ v }) => {
-  const obrazok = obrazokUrl(v.obrazok);
+  const [zlyhal, setZlyhal] = useState(false);
+  const obrazok = zlyhal ? null : obrazokUrl(v.obrazok);
   const obsah = (
     <>
       <span className={`zs-vysledok__obrazok${obrazok ? '' : ' is-prazdny'}`}>
-        {obrazok ? <img src={obrazok} alt="" loading="lazy" /> : <Ikona nazov={v.typ === 'hrac' || v.typ === 'tim' ? 'tim' : v.typ === 'video' ? 'play' : 'spravy'} velkost={20} />}
+        {obrazok ? <img src={obrazok} alt="" loading="lazy" onError={() => setZlyhal(true)} /> : <Ikona nazov={v.typ === 'hrac' || v.typ === 'tim' ? 'tim' : v.typ === 'video' ? 'play' : 'spravy'} velkost={20} />}
       </span>
       <span className="zs-vysledok__text">
         <strong>{v.nazov}</strong>
