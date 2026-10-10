@@ -1,14 +1,15 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Hrac.tsx
-// Profil hráča (podľa návrhu Profil hráča z Claude Design): tmavá
-// hlavička s číslom, menom a fotkou, „O hráčovi" s kartou údajov,
-// tabuľka sezóny podľa súťaží (zápasy, góly, asistencie, minúty)
-// a súvisiace novinky (články, v ktorých sa hráč spomína).
+// Profil hráča: hlavička vo farbe klubu s fotkou na karte, číslom,
+// menom a súhrnom sezóny, „O hráčovi" s kartou údajov, tabuľka sezóny
+// podľa súťaží (zápasy, góly, asistencie, minúty) a súvisiace novinky
+// (články, v ktorých sa hráč spomína).
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { NenajdenyObsah } from './Nenajdena';
 import { ChybaStranky, KartaClanku, Nacitava, Sekcia } from '../casti';
-import { NadpisSekcie, datumCiselny, obrazokUrl, pozicia, skryObrazok, useApi, useTitulok, type Clanok, type Hrac as TypHraca } from '../spolocne';
+import { NadpisSekcie, datumCiselny, obrazokUrl, pozicia, useApi, useTitulok, type Clanok, type Hrac as TypHraca } from '../spolocne';
+import { ProfilHlavicka, ProfilO } from '../profil';
 
 interface RiadokSezony {
   liga_id: number | null;
@@ -79,16 +80,18 @@ const Hrac: React.FC = () => {
   if (hrac.chyba || !h) return <ChybaStranky text={hrac.chyba || 'Hráča sa nepodarilo načítať.'} />;
 
   const fotka = obrazokUrl(h.fotka);
-  const udaje: Array<[string, string | number | null | undefined]> = [
-    ['Národnosť', h.narodnost],
-    ['Dátum narodenia', h.datum_narodenia ? datumCiselny(h.datum_narodenia) : null],
-    ['Vek', !h.datum_narodenia && h.vek ? `${h.vek} rokov` : null],
-    ['Výška', h.vyska ? `${h.vyska} cm` : null],
-    ['Váha', h.vaha ? `${Math.round(Number(h.vaha))} kg` : null],
-    ['Pozícia', pozicia(h.pozicia)],
-  ].filter(([, hodnota]) => hodnota !== null && hodnota !== undefined && hodnota !== '') as Array<[string, string | number]>;
+  const udaje = (
+    [
+      ['Národnosť', h.narodnost],
+      ['Dátum narodenia', h.datum_narodenia ? datumCiselny(h.datum_narodenia) : null],
+      ['Vek', !h.datum_narodenia && h.vek ? `${h.vek} rokov` : null],
+      ['Výška', h.vyska ? `${h.vyska} cm` : null],
+      ['Váha', h.vaha ? `${Math.round(Number(h.vaha))} kg` : null],
+      ['Pozícia', pozicia(h.pozicia)],
+    ] as Array<[string, string | number | null | undefined]>
+  ).filter(([, hodnota]) => hodnota !== null && hodnota !== undefined && hodnota !== '') as Array<[string, string | number]>;
   const sezony = podlaSezony(statistiky.data ?? []);
-  // Bez vlastného popisu z administrácie elátka veta z údajov hráča
+  // Bez vlastného popisu z administrácie zložíme vetu z údajov hráča
   const popis =
     h.poznamky ||
     [
@@ -100,52 +103,37 @@ const Hrac: React.FC = () => {
       .filter(Boolean)
       .join(' ') + '.';
   const suvisiace = clanky.data ?? [];
+  // Súhrn všetkých súťaží do hlavičky; brankár má namiesto gólov minúty
+  const spolu = (k: 'zapasy' | 'goly' | 'asistencie' | 'minuty' | 'zlte_karty') => (statistiky.data ?? []).reduce((n, r) => n + (Number(r[k]) || 0), 0);
+  const sucty: Array<[number, string]> = !statistiky.data?.length
+    ? []
+    : h.pozicia === 'brankar'
+      ? [
+          [spolu('zapasy'), 'Zápasy'],
+          [spolu('minuty'), 'Minúty'],
+          [spolu('zlte_karty'), 'Žlté karty'],
+        ]
+      : [
+          [spolu('zapasy'), 'Zápasy'],
+          [spolu('goly'), 'Góly'],
+          [spolu('asistencie'), 'Asistencie'],
+          [spolu('minuty'), 'Minúty'],
+        ];
 
   return (
-    <div className="zs-stranka zs-profil">
-      <header className="zs-profil-hero">
-        <div className="zs-kontajner zs-profil-hero__mriezka">
-          <div className="zs-profil-hero__text">
-            {h.tim && <span className="zs-hlava__stitok">{h.tim.nazov}</span>}
-            <div className="zs-profil-hero__meno">
-              {h.cislo_dresu !== null && h.cislo_dresu !== undefined && <span className="zs-profil-hero__cislo">{h.cislo_dresu}</span>}
-              <h1>
-                <span className="zs-profil-hero__krstne">{h.meno}</span>
-                <span className="zs-profil-hero__priezvisko">{h.priezvisko}</span>
-              </h1>
-            </div>
-            {h.pozicia && <span className="zs-profil-hero__pozicia">{pozicia(h.pozicia)}</span>}
-          </div>
-          <div className="zs-profil-hero__foto">
-            {fotka ? (
-              <img src={fotka} alt={`${h.meno} ${h.priezvisko}`} onError={skryObrazok} />
-            ) : (
-              <span className="zs-hrac__silueta" aria-hidden="true" />
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="zs-stranka zs-profil zk-profil-stranka">
+      <ProfilHlavicka
+        stitok={h.tim?.nazov}
+        meno={h.meno}
+        priezvisko={h.priezvisko}
+        rola={[pozicia(h.pozicia), h.narodnost].filter(Boolean).join(' · ')}
+        cislo={h.cislo_dresu}
+        fotka={fotka}
+        spat={{ odkaz: h.tim ? `/teams/${h.tim.id}` : '/teams', text: 'Súpiska' }}
+        staty={sucty}
+      />
 
-      <section className="zs-profil-o" aria-labelledby="zs-o-hracovi">
-          <div className={`zs-profil-o__mriezka${udaje.length ? '' : ' zs-profil-o__mriezka--bez-udajov'}`}>
-            <div>
-              <h2 id="zs-o-hracovi" className="zs-skupina__nadpis zs-skupina__nadpis--male">
-                O hráčovi
-              </h2>
-              <p className="zs-profil-o__text">{popis}</p>
-            </div>
-            {udaje.length > 0 && (
-              <dl className="zs-udaje" aria-label="Údaje o hráčovi">
-                {udaje.map(([nazov, hodnota]) => (
-                  <div key={nazov}>
-                    <dt>{nazov}</dt>
-                    <dd>{hodnota}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
-      </section>
+      <ProfilO nadpis="O hráčovi" id="zs-o-hracovi" text={popis} udaje={udaje} />
 
       {sezony.length > 0 && (
         <section className="zs-profil-sezona" aria-label="Štatistiky">

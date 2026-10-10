@@ -1,13 +1,14 @@
 // Umiestnenie: sablony/zakladna/src/stranky/ClenRealizacnehoTimu.tsx
 // Profil člena realizačného tímu - rovnaký tvar ako profil hráča:
-// tmavá hlavička s menom a fotkou, „O nás" s kartou údajov a kontaktom
-// a ostatní členovia realizačného tímu.
+// hlavička vo farbe klubu s fotkou na karte, profil s kartou údajov
+// a kontaktom a ostatní členovia realizačného tímu.
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { NenajdenyObsah } from './Nenajdena';
 import { ChybaStranky, KartaClena, Nacitava, Sekcia } from '../casti';
-import { Ikona, NadpisSekcie, datumCiselny, funkcia, obrazokUrl, skryObrazok, useApi, useTitulok, type ClenTimu } from '../spolocne';
+import { Ikona, NadpisSekcie, datumCiselny, funkcia, obrazokUrl, useApi, useTitulok, type ClenTimu } from '../spolocne';
+import { ProfilHlavicka, ProfilO } from '../profil';
 
 const ClenRealizacnehoTimu: React.FC = () => {
   const { id = '' } = useParams();
@@ -35,64 +36,37 @@ const ClenRealizacnehoTimu: React.FC = () => {
   const ostatni = (kolegovia.data?.realizacny_tim ?? []).filter((x) => x.id !== c.id);
 
   return (
-    <div className="zs-stranka zs-profil zs-profil--clen">
-      <header className="zs-profil-hero">
-        <div className="zs-kontajner zs-profil-hero__mriezka">
-          <div className="zs-profil-hero__text">
-            <span className="zs-hlava__stitok">{c.tim ? `Realizačný tím · ${c.tim.nazov}` : 'Realizačný tím'}</span>
-            <div className="zs-profil-hero__meno">
-              <h1>
-                <span className="zs-profil-hero__krstne">{c.meno}</span>
-                <span className="zs-profil-hero__priezvisko">{c.priezvisko}</span>
-              </h1>
-            </div>
-            <span className="zs-profil-hero__pozicia">{funkcia(c.funkcia)}</span>
-          </div>
-          <div className="zs-profil-hero__foto">
-            {fotka ? <img src={fotka} alt={`${c.meno} ${c.priezvisko}`} onError={skryObrazok} /> : <span className="zs-hrac__silueta" aria-hidden="true" />}
-          </div>
-        </div>
-      </header>
+    <div className="zs-stranka zs-profil zs-profil--clen zk-profil-stranka">
+      <ProfilHlavicka
+        stitok={c.tim ? `Realizačný tím · ${c.tim.nazov}` : 'Realizačný tím'}
+        meno={c.meno}
+        priezvisko={c.priezvisko}
+        rola={funkcia(c.funkcia)}
+        fotka={fotka}
+        spat={{ odkaz: c.tim_id ? `/teams/${c.tim_id}` : '/teams', text: 'Súpiska' }}
+      />
 
-      <section className="zs-profil-o" aria-labelledby="zs-o-clenovi">
-        <div className={`zs-profil-o__mriezka${udaje.length ? '' : ' zs-profil-o__mriezka--bez-udajov'}`}>
-          <div>
-            <h2 id="zs-o-clenovi" className="zs-skupina__nadpis zs-skupina__nadpis--male">
-              Profil
-            </h2>
-            <p className="zs-profil-o__text">{popis}</p>
-            {(c.email || c.telefon) && (
-              <div className="zs-kontakt-tlacidla">
-                {c.email && (
-                  <a href={`mailto:${c.email}`} className="zs-tlacidlo-obrys">
-                    <Ikona nazov="mail" velkost={15} /> {c.email}
-                  </a>
-                )}
-                {c.telefon && (
-                  <a href={`tel:${c.telefon.replace(/\s+/g, '')}`} className="zs-tlacidlo-obrys">
-                    <Ikona nazov="telefon" velkost={15} /> {c.telefon}
-                  </a>
-                )}
-              </div>
+      <ProfilO nadpis="O členovi tímu" id="zs-o-clenovi" text={popis} udaje={udaje}>
+        {(c.email || c.telefon) && (
+          <div className="zs-kontakt-tlacidla">
+            {c.email && (
+              <a href={`mailto:${c.email}`} className="zs-tlacidlo-obrys">
+                <Ikona nazov="mail" velkost={15} /> {c.email}
+              </a>
+            )}
+            {c.telefon && (
+              <a href={`tel:${c.telefon.replace(/\s+/g, '')}`} className="zs-tlacidlo-obrys">
+                <Ikona nazov="telefon" velkost={15} /> {c.telefon}
+              </a>
             )}
           </div>
-          {udaje.length > 0 && (
-            <dl className="zs-udaje" aria-label="Údaje">
-              {udaje.map(([nazov, hodnota]) => (
-                <div key={nazov}>
-                  <dt>{nazov}</dt>
-                  <dd>{hodnota}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </div>
-      </section>
+        )}
+      </ProfilO>
 
       {ostatni.length > 0 && (
         <Sekcia className="zs-sekcia--siva zs-sekcia--suvisiace">
           <NadpisSekcie nadpis="Realizačný tím" odkaz={c.tim_id ? `/teams/${c.tim_id}` : null} />
-          <div className="zs-mriezka-4 zs-mriezka-4--hraci">
+          <div className="zk-mriezka-clenov">
             {ostatni.map((x) => (
               <KartaClena key={x.id} clen={x} />
             ))}

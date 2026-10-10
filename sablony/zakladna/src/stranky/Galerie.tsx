@@ -63,18 +63,20 @@ const Galerie: React.FC = () => {
 
   return (
     <div className="zs-stranka zs-galerie">
-      <HlavickaStranky stitok={u.text('stranka_galerie_stitok', 'Médiá')} nadpis={u.text('stranka_galerie_nadpis', 'Fotogaléria')} />
-
-      {typy.length > 1 && (
-        <Sekcia className="zs-sekcia--filtre">
-          <Filtre<Typ>
-            popis="Druh galérie"
-            aktivna={typ}
-            onZmena={zvolTyp}
-            moznosti={[{ kluc: '', nazov: 'Všetko' }, ...typy.map((k) => ({ kluc: k, nazov: NAZVY[k] }))]}
-          />
-        </Sekcia>
-      )}
+      <HlavickaStranky
+        stitok={u.text('stranka_galerie_stitok', 'Médiá')}
+        nadpis={u.text('stranka_galerie_nadpis', 'Fotogaléria')}
+        zalozky={
+          typy.length > 1 ? (
+            <Filtre<Typ>
+              popis="Druh galérie"
+              aktivna={typ}
+              onZmena={zvolTyp}
+              moznosti={[{ kluc: '', nazov: 'Všetko' }, ...typy.map((k) => ({ kluc: k, nazov: NAZVY[k] }))]}
+            />
+          ) : undefined
+        }
+      />
 
       {zoznam.chyba ? (
         <Sekcia className="zs-sekcia--hore">

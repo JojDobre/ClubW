@@ -1,0 +1,78 @@
+/* Umiestnenie: sablony/zakladna/src/profil.css
+   Profil hráča a člena realizačného tímu v Základnej. */
+
+.zk-profil {
+  position: relative; isolation: isolate; overflow: hidden; margin-bottom: 40px; padding: 48px 0 52px; color: #ffffff;
+  background: var(--zk-plocha-klubu);
+}
+.zk-profil::before {
+  content: ''; position: absolute; z-index: -1; right: -140px; top: 50%; width: 560px; height: 560px; transform: translateY(-50%);
+  border: 2px solid rgba(255, 255, 255, 0.09); border-radius: 50%; box-shadow: 0 0 0 120px rgba(255, 255, 255, 0.025);
+}
+.zk-profil::after { content: ''; position: absolute; z-index: -1; right: 138px; top: 0; bottom: 0; width: 2px; background: rgba(255, 255, 255, 0.07); }
+.zk-profil__mriezka { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 48px; align-items: center; }
+
+.zk-profil__foto {
+  position: relative; overflow: hidden; isolation: isolate; aspect-ratio: 4 / 5; border-radius: 22px;
+  background: radial-gradient(80% 60% at 70% 0%, rgba(255, 255, 255, 0.25), transparent 70%), color-mix(in srgb, var(--zk-farba) 70%, #050a14);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.14), 0 30px 60px -30px rgba(0, 0, 0, 0.6);
+}
+.zk-profil__foto::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--zk-akcent); }
+.zk-profil__foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.zk-profil__silueta { position: absolute; left: 50%; bottom: 0; width: 76%; transform: translateX(-50%); fill: rgba(255, 255, 255, 0.18); }
+.zk-profil__cislo {
+  position: absolute; z-index: 1; top: 14px; left: 16px; color: #ffffff; font-family: var(--zk-nadpisy); font-weight: 700;
+  font-size: 64px; line-height: 1; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+
+.zk-profil__text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.zs .zk-profil__spat { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; color: rgba(255, 255, 255, 0.8); font-size: 14px; font-weight: 700; text-decoration: none; }
+.zs .zk-profil__spat:hover { color: #ffffff; }
+.zk-profil__stitok {
+  margin-bottom: 14px; padding: 5px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14);
+  font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.zs .zk-profil h1 { display: flex; flex-direction: column; max-width: 100%; color: #ffffff; font-family: var(--zk-nadpisy); font-weight: 700; text-transform: uppercase; }
+.zk-profil h1 small { font-size: clamp(1.5rem, 2.6vw, 2.1rem); line-height: 1; opacity: 0.85; }
+.zk-profil h1 span { overflow-wrap: anywhere; font-size: clamp(3.2rem, 7vw, 5.6rem); line-height: 0.92; }
+.zk-profil__rola { margin-top: 14px; color: rgba(255, 255, 255, 0.85); font-size: 17px; font-weight: 600; }
+.zk-profil__rola::before { content: ''; display: inline-block; width: 18px; height: 3px; margin: 0 10px 4px 0; border-radius: 2px; background: var(--zk-akcent); }
+
+.zk-profil__staty { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 0; }
+.zk-profil__staty > div {
+  display: flex; flex-direction: column; gap: 6px; min-width: 110px; padding: 14px 18px 12px; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.16); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.zk-profil__staty dd { order: -1; margin: 0; font-family: var(--zk-nadpisy); font-weight: 700; font-size: 38px; line-height: 1; }
+.zk-profil__staty dt { color: rgba(255, 255, 255, 0.72); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ===== O hráčovi + údaje ===== */
+.zk-profil-o { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 22px; align-items: start; margin-bottom: 48px; }
+.zk-profil-o:not(:has(.zk-profil-o__udaje)) { grid-template-columns: minmax(0, 1fr); }
+.zk-profil-o__karta, .zk-profil-o__udaje { padding: 26px 28px; border-radius: var(--zk-r); background: var(--zk-karta); box-shadow: var(--zk-tien); }
+.zk-profil-o__text { color: #334155; font-size: 16.5px; line-height: 1.7; }
+.zk-profil-o__udaje { margin: 0; border-top: 4px solid var(--zk-akcent); }
+.zk-profil-o__udaje > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px dashed var(--zk-ciara); }
+.zk-profil-o__udaje > div:last-child { border-bottom: 0; }
+.zk-profil-o__udaje dt { color: var(--zk-tlmeny); font-size: 13.5px; font-weight: 600; }
+.zk-profil-o__udaje dd { margin: 0; color: var(--zk-text); font-size: 14.5px; font-weight: 800; text-align: right; }
+.zk-profil-o .zs-kontakt-tlacidla { margin-top: 20px; }
+
+@media (max-width: 900px) {
+  .zk-profil__mriezka { grid-template-columns: 220px minmax(0, 1fr); gap: 28px; }
+  .zk-profil-o { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .zk-profil { padding: 24px 0 34px; margin-bottom: 26px; }
+  .zs .zk-profil__spat { margin-bottom: 16px; }
+  .zk-profil::after { display: none; }
+  .zk-profil__mriezka { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .zk-profil__foto { width: 62%; max-width: 240px; }
+  .zk-profil__cislo { font-size: 48px; }
+  .zk-profil h1 span { font-size: clamp(2.6rem, 13vw, 3.4rem); }
+  .zk-profil__staty { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 8px; }
+  .zk-profil__staty:has(> :nth-child(4)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .zk-profil__staty > div { min-width: 0; padding: 12px 14px 10px; }
+  .zk-profil__staty dd { font-size: 30px; }
+  .zk-profil-o__karta, .zk-profil-o__udaje { padding: 20px; }
+}

@@ -1,0 +1,65 @@
+/* Umiestnenie: sablony/zakladna/src/stranky/Clanky.css
+   Novinky Základnej: hľadanie v hlavičke, titulný článok a mriežka kariet. */
+
+.zk-novinky__hladat {
+  display: flex; align-items: center; gap: 10px; width: min(420px, 100%); margin-top: 22px; padding: 0 16px;
+  border-radius: 999px; background: #ffffff; color: var(--zk-tlmeny); box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.4);
+}
+.zs .zk-novinky__hladat input {
+  flex: 1; min-width: 0; height: 48px; padding: 0; border: 0; background: none; color: var(--zk-text); font: 600 15px var(--zk-font); box-shadow: none;
+}
+.zs .zk-novinky__hladat input:focus { box-shadow: none; }
+
+.zk-novinky__obsah { padding-bottom: 72px; }
+.zs .zk-novinky .zs-hlava--zalozky { margin-bottom: 0; }
+.zs .zk-novinky .zs-hlava--zalozky + .zk-novinky__obsah { padding-top: 36px; }
+
+.zs .zk-novinka {
+  display: flex; flex-direction: column; overflow: hidden; border-radius: var(--zk-r); background: var(--zk-karta);
+  color: var(--zk-text); text-decoration: none; box-shadow: var(--zk-tien); transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.zs .zk-novinka:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(15, 23, 42, 0.4); }
+.zk-novinka__obrazok { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--zk-plocha-klubu); }
+.zk-novinka__obrazok img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.zs .zk-novinka:hover .zk-novinka__obrazok img { transform: scale(1.04); }
+.zk-novinka__telo { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 18px 20px 22px; border-top: 3px solid var(--zk-akcent); }
+.zk-novinka__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--zk-tlmeny); font-size: 12.5px; font-weight: 600; }
+.zk-novinka__meta b {
+  display: inline-flex; align-items: center; gap: 7px; color: var(--zk-farba); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.zk-novinka__meta b::before { content: ''; width: 14px; height: 3px; border-radius: 2px; background: var(--zk-akcent); }
+.zk-novinka strong { font-size: 1.2rem; font-weight: 800; line-height: 1.22; }
+.zk-novinka p {
+  display: -webkit-box; overflow: hidden; color: #475569; font-size: 15px; line-height: 1.55; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+.zs .zk-novinka--titulna { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); margin-bottom: 26px; }
+.zk-novinka--titulna .zk-novinka__obrazok { aspect-ratio: auto; min-height: 340px; }
+.zk-novinka--titulna .zk-novinka__telo { justify-content: center; gap: 12px; padding: 32px 34px; border-top: 0; border-left: 4px solid var(--zk-akcent); }
+.zk-novinka--titulna strong { font-family: var(--zk-nadpisy); font-size: clamp(2rem, 3vw, 2.7rem); font-weight: 700; line-height: 1.02; }
+.zk-novinka--titulna p { -webkit-line-clamp: 4; font-size: 16px; }
+.zk-novinka__viac { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--zk-farba); font-size: 14px; font-weight: 800; }
+.zs .zk-novinka:hover .zk-novinka__viac svg { transform: translateX(3px); }
+.zk-novinka__viac svg { transition: transform 0.2s ease; }
+
+.zk-novinky__mriezka { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.zk-novinky__dalsie { display: flex; justify-content: center; margin-top: 32px; }
+
+@media (max-width: 1000px) {
+  .zk-novinky__mriezka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .zs .zk-novinka--titulna { grid-template-columns: minmax(0, 1fr); }
+  .zk-novinka--titulna .zk-novinka__obrazok { aspect-ratio: 16 / 9; min-height: 0; }
+  .zk-novinka--titulna .zk-novinka__telo { padding: 22px 22px 26px; border-left: 0; border-top: 4px solid var(--zk-akcent); }
+}
+@media (max-width: 640px) {
+  .zk-novinky__hladat { margin-top: 16px; }
+  .zs .zk-novinky__hladat input { height: 44px; }
+  .zs .zk-novinky .zs-hlava--zalozky + .zk-novinky__obsah { padding-top: 22px; }
+  .zk-novinky__mriezka { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .zs .zk-novinka:not(.zk-novinka--titulna) { display: grid; grid-template-columns: 120px minmax(0, 1fr); }
+  .zk-novinka:not(.zk-novinka--titulna) .zk-novinka__obrazok { aspect-ratio: auto; min-height: 100%; }
+  .zk-novinka:not(.zk-novinka--titulna) .zk-novinka__telo { gap: 5px; padding: 12px 14px; border-top: 0; border-left: 3px solid var(--zk-akcent); }
+  .zk-novinka:not(.zk-novinka--titulna) strong { font-size: 1.02rem; }
+  .zk-novinka:not(.zk-novinka--titulna) p { display: none; }
+  .zk-novinka--titulna strong { font-size: 1.9rem; }
+}

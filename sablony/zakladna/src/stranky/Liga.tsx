@@ -83,13 +83,12 @@ const Liga: React.FC = () => {
         stitok={[TYPY_SUTAZI[l.typ ?? ''] ?? l.typ_name, l.sezona ? `Sezóna ${l.sezona}` : null].filter(Boolean).join(' · ')}
         nadpis={l.nazov}
         spat={{ odkaz: '/leagues', text: 'Všetky súťaže' }}
+        zalozky={
+          <Filtre<Cast> popis="Časti súťaže" aktivna={cast} onZmena={setCast} moznosti={moznosti} />
+        }
       >
         {l.popis && <p className="zs-hlava__popis">{l.popis}</p>}
       </HlavickaStranky>
-
-      <Sekcia className="zs-sekcia--filtre">
-        <Filtre<Cast> popis="Časti súťaže" aktivna={cast} onZmena={setCast} moznosti={moznosti} />
-      </Sekcia>
 
       {cast === 'tabulka' && (
         <Sekcia className="zs-sekcia--mriezka">

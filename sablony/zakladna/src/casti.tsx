@@ -5,7 +5,7 @@
 // Rozmery a písma zodpovedajú návrhom z Claude Design (News, Videá,
 // Fotogaléria, Súpiska, Profil hráča).
 
-import React, { useMemo, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useNastavenia, useNastaveniaSablony } from '@clubw/jadro';
 import {
@@ -26,6 +26,7 @@ import {
   obrazokUrl,
   pozicia,
   skryObrazok,
+  sklon,
   stavZapasu,
   vysledokKlubu,
   zaKolko,
@@ -41,6 +42,7 @@ import {
   type Zapas,
 } from './spolocne';
 import './stranky.css';
+import './identita.css';
 
 // ===== Hlavička podstránky =====
 
@@ -51,20 +53,36 @@ export const HlavickaStranky: React.FC<{
   spat?: { odkaz: string; text: string };
   children?: ReactNode;
   className?: string;
-}> = ({ stitok, nadpis, spat, children, className = '' }) => (
-  <header className={`zs-hlava ${className}`}>
-    <div className="zs-kontajner">
-      {spat && (
-        <Link to={spat.odkaz} className="zs-spat">
-          <Ikona nazov="vlavo" velkost={14} /> {spat.text}
-        </Link>
-      )}
-      {stitok && <span className="zs-hlava__stitok">{stitok}</span>}
-      <h1>{nadpis}</h1>
-      {children}
-    </div>
-  </header>
-);
+  /** Záložky na spodku hlavičky (rubriky, tímy, kategórie) - napájajú sa na obsah. */
+  zalozky?: ReactNode;
+}> = ({ stitok, nadpis, spat, children, className = '', zalozky }) => {
+  const pas = useRef<HTMLDivElement>(null);
+  // Aktívna záložka má byť viditeľná aj pri mnohých položkách
+  useEffect(() => {
+    const el = pas.current;
+    const aktivna = el?.querySelector<HTMLElement>('.is-aktivny, [aria-current="page"]');
+    if (el && aktivna) el.scrollLeft = aktivna.offsetLeft - el.offsetLeft - (el.clientWidth - aktivna.offsetWidth) / 2;
+  });
+  return (
+    <header className={`zs-hlava${zalozky ? ' zs-hlava--zalozky' : ''} ${className}`}>
+      <div className="zs-kontajner">
+        {spat && (
+          <Link to={spat.odkaz} className="zs-spat">
+            <Ikona nazov="vlavo" velkost={14} /> {spat.text}
+          </Link>
+        )}
+        {stitok && <span className="zs-hlava__stitok">{stitok}</span>}
+        <h1>{nadpis}</h1>
+        {children}
+        {zalozky && (
+          <div className="zk-zalozky" ref={pas}>
+            {zalozky}
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
 
 // ===== Filtre (pilulky) =====
 
@@ -249,54 +267,65 @@ export const statyHraca = (h: Hrac, st?: StatistikaHraca | null): Array<[number,
         [st?.asistencie ?? 0, 'Asist.'],
       ];
 
+/** Obrys postavy namiesto chýbajúcej fotky. */
+export const Silueta: React.FC<{ className: string }> = ({ className }) => (
+  <svg className={className} viewBox="0 0 120 140" aria-hidden="true">
+    <circle cx="60" cy="46" r="24" />
+    <path d="M14 140c0-30 20-50 46-50s46 20 46 50z" />
+  </svg>
+);
+
+/** Karta hráča: fotka na podklade vo farbe klubu s číslom, meno, pozícia a vek, štatistiky. */
 export const KartaHraca: React.FC<{ hrac: Hrac; statistika?: StatistikaHraca | null; karty?: boolean }> = ({ hrac: h, statistika: st, karty = false }) => {
   const fotka = obrazokUrl(h.fotka);
   const staty: Array<[number, string]> = [
     ...statyHraca(h, st),
     ...(karty ? ([[st?.zlte_karty ?? 0, 'Karty']] as Array<[number, string]>) : []),
   ];
+  const meta = [pozicia(h.pozicia), h.vek ? `${h.vek} ${sklon(h.vek, 'rok', 'roky', 'rokov')}` : null].filter(Boolean).join(' · ');
   return (
-    <Link to={`/players/${h.id}`} className="zs-hrac">
-      {fotka ? <img src={fotka} alt="" loading="lazy" className="zs-hrac__fotka" onError={skryObrazok} /> : <span className="zs-hrac__silueta" aria-hidden="true" />}
-      <span className="zs-hrac__prechod" aria-hidden="true" />
-      {h.narodnost && <span className="zs-hrac__narodnost">{h.narodnost}</span>}
-      <div className="zs-hrac__spodok">
-        <div className="zs-hrac__meno">
-          {h.cislo_dresu !== null && h.cislo_dresu !== undefined && <span className="zs-hrac__cislo">{h.cislo_dresu}</span>}
-          <div>
-            <span className="zs-hrac__krstne">{h.meno}</span>
-            <span className="zs-hrac__priezvisko">{h.priezvisko}</span>
-          </div>
-        </div>
-        <span className="zs-hrac__pozicia">{pozicia(h.pozicia) || ' '}</span>
-        <div className={`zs-hrac__staty${karty ? '' : ' zs-hrac__staty--3'}`}>
-          {staty.map(([hodnota, nazov]) => (
-            <div key={nazov}>
-              <strong>{hodnota}</strong>
-              <span>{nazov}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+    <Link to={`/players/${h.id}`} className="zk-osoba">
+      <span className="zk-osoba__foto">
+        {h.cislo_dresu !== null && h.cislo_dresu !== undefined && (
+          <span className="zk-osoba__cislo" aria-label={`Číslo ${h.cislo_dresu}`}>
+            {h.cislo_dresu}
+          </span>
+        )}
+        {fotka ? <img src={fotka} alt="" loading="lazy" onError={skryObrazok} /> : <Silueta className="zk-osoba__silueta" />}
+        {h.narodnost && <span className="zk-osoba__krajina">{h.narodnost}</span>}
+      </span>
+      <span className="zk-osoba__telo">
+        <span className="zk-osoba__meno">
+          <small>{h.meno}</small>
+          <strong>{h.priezvisko}</strong>
+        </span>
+        {meta && <span className="zk-osoba__meta">{meta}</span>}
+      </span>
+      <span className={`zk-osoba__staty${karty ? ' zk-osoba__staty--4' : ''}`}>
+        {staty.map(([hodnota, nazov]) => (
+          <span key={nazov}>
+            <strong>{hodnota}</strong>
+            <small>{nazov}</small>
+          </span>
+        ))}
+      </span>
     </Link>
   );
 };
 
+/** Člen realizačného tímu: okrúhla fotka, funkcia a meno. */
 export const KartaClena: React.FC<{ clen: ClenTimu }> = ({ clen: c }) => {
   const fotka = obrazokUrl(c.fotka);
   return (
-    <Link to={`/staff/${c.id}`} className="zs-hrac zs-hrac--clen">
-      {fotka ? <img src={fotka} alt="" loading="lazy" className="zs-hrac__fotka" onError={skryObrazok} /> : <span className="zs-hrac__silueta" aria-hidden="true" />}
-      <span className="zs-hrac__prechod" aria-hidden="true" />
-      <div className="zs-hrac__spodok">
-        <div className="zs-hrac__meno">
-          <div>
-            <span className="zs-hrac__krstne">{c.meno}</span>
-            <span className="zs-hrac__priezvisko">{c.priezvisko}</span>
-          </div>
-        </div>
-        <span className="zs-hrac__pozicia zs-hrac__pozicia--posledna">{funkcia(c.funkcia)}</span>
-      </div>
+    <Link to={`/staff/${c.id}`} className="zk-clen">
+      <span className="zk-clen__foto">{fotka ? <img src={fotka} alt="" loading="lazy" onError={skryObrazok} /> : <Silueta className="zk-clen__silueta" />}</span>
+      <span className="zk-clen__text">
+        <small>{funkcia(c.funkcia)}</small>
+        <strong>
+          {c.meno} {c.priezvisko}
+        </strong>
+      </span>
+      <Ikona nazov="sipka" velkost={15} className="zk-clen__sipka" />
     </Link>
   );
 };
