@@ -11,6 +11,8 @@ Poradie krokov je dôležité:
 5. aktualizovať jeden testovací web a skontrolovať ho,
 6. aktualizovať ostatné weby.
 
+> **Vydanie 1.6.1** (opravné, nadväzuje na 1.6.0) má vlastný skrátený postup v časti [Vydanie 1.6.1](#vydanie-161) nižšie. Ak weby ešte bežia na 1.5.x, najprv prejdite kroky pre 1.6.0 (hlavne krok 2 – funkcie licencií) a potom aktualizujte rovno na 1.6.1.
+
 ---
 
 ## 1. Aktualizácia licenčného servera
@@ -143,6 +145,64 @@ Zmeny, ktoré si správcovia webov všimnú:
 
 - **Web klubu:** neúspešná automatická aktualizácia sa vráti sama. Pri problémoch zistených neskôr nastavte v licenčnom serveri pri licencii **Pripnutú verziu** 1.5.2. Na serveri webu obnovte zálohu z priečinka `zalohy/` alebo nasaďte ručne `git checkout v1.5.2` a príkazy z kroku 5. Migrácie 1.6.0 len pridávajú stĺpce, staršia verzia s nimi funguje.
 - **Licenčný server:** na VPS `git checkout <predchádzajúci commit>` a `docker compose up -d --build`. Databázu obnovíte zo zálohy, ktorú pred aktualizáciou vytvoril `aktualizuj.sh` (príkaz je v NASADENIE.md, časť Zálohy).
+
+---
+
+## Vydanie 1.6.1
+
+Opravné vydanie bez migrácií databázy a bez nových závislostí. Obsahuje:
+
+- **Licenčný server:** funkcie s dvojbodkou (`sablona:arena`, `sablony:vsetky`) sa pri úprave licencie a plánu ukladajú. Doteraz ich server potichu zahodil a pole zostalo prázdne. Neplatná hodnota teraz vypíše chybu namiesto ticha.
+- **Šablóna Základná 1.3.0:** všetky podstránky a bloky v novom vzhľade. Súpiska s kartami hráčov a súhrnom kádra, novinky s hľadaním v hlavičke, profil hráča a člena realizačného tímu, článok s fotkou presahujúcou do hlavičky, filtre ako záložky v hlavičke. Nový vzhľad majú aj šablóny, ktoré si stránky od Základnej požičiavajú (napr. Štadión).
+
+Postup:
+
+1. **Licenčný server** – na VPS `./aktualizuj.sh` (krok 1). Potom v licenčnom serveri otvorte licencie, ktorým ste funkcie zadali pred opravou, a skontrolujte, či ich pole **Funkcie** nie je prázdne. Ak je, zadajte ich znova (napr. `sablony:vsetky`) a uložte. V detaile licencie sa musia zobraziť ako štítky.
+2. **Vydanie CMS** – v `package.json` je už verzia `1.6.1`. Tag a release:
+
+   ```bash
+   git checkout main && git pull
+   node -p "require('./package.json').version"     # 1.6.1
+   git tag v1.6.1
+   git push origin v1.6.1
+   ```
+
+   Na GitHube **Releases → Draft a new release** → tag `v1.6.1` → názov `1.6.1` → poznámky z časti [Poznámky k vydaniu 1.6.1](#poznámky-k-vydaniu-161) → **Publish release**.
+3. **Aktuálna verzia** – v licenčnom serveri **Načítať verzie z GitHubu** → pri `1.6.1` **Nastaviť ako aktuálnu** a počkať na **Pripravený** (krok 4).
+4. **Testovací web** – aktualizovať jeden web (krok 5). Kontrola:
+   - [ ] V administrácii (Licencia) je verzia **1.6.1** a aktívna šablóna sa nezmenila.
+   - [ ] Pri webe so Základnou (alebo Štadiónom): `/teams`, `/clanky`, profil hráča, článok, `/obchod` – nový vzhľad. Ak sa ukazuje starý, obnovte stránku cez Ctrl+F5.
+   - [ ] Na mobile sa záložky v hlavičke (rubriky, tímy, kategórie) dajú posúvať do strany.
+5. **Ostatné weby** – hromadne alebo po jednom (krok 6).
+
+Návrat späť: pripnúť verziu 1.6.0 pri licencii. 1.6.1 nemení databázu, takže 1.6.0 s ňou funguje bez zásahu.
+
+---
+
+## Poznámky k vydaniu 1.6.1
+
+Predloha pre GitHub Release:
+
+```markdown
+## Opravy
+
+- **Licenčný server:** funkcie licencie s dvojbodkou (`sablona:arena`, `sablony:vsetky`) sa pri úprave licencie a plánu správne uložia. Neplatná hodnota vypíše chybu.
+
+## Šablóna Základná 1.3.0
+
+- Všetky podstránky a bloky majú vlastný vzhľad Základnej: plochy vo farbe klubu, biele karty so žltou linkou, nadpisy so žltou čiarou a tabuľky s hlavičkou v odtieni farby klubu.
+- Súpiska: karty hráčov s fotkou, číslom a štatistikami, súhrn kádra (počet hráčov, priemerný vek, realizačný tím), výber tímu záložkami a rýchly skok na pozíciu.
+- Novinky: hľadanie v hlavičke, rubriky ako záložky, titulný článok a mriežka kariet.
+- Profil hráča a člena realizačného tímu: fotka na karte s číslom dresu a súhrn sezóny.
+- Článok a obsahové stránky: fotka presahuje do hlavičky, text je na bielom liste.
+- Kategórie videí, obchodu, galérií a dokumentov a časti súťaže sú záložky v hlavičke.
+- Fotogalérie a produkty v obchode sú v kartách.
+
+## Pri aktualizácii
+
+- Žiadne migrácie databázy ani nové nastavenia.
+- Najprv aktualizujte licenčný server a skontrolujte funkcie licencií.
+```
 
 ---
 
