@@ -100,6 +100,7 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 /* ===== Podstránky (spoločný základ) ===== */
 .zk-stranka { max-width: var(--zk-sirka); margin: 0 auto; padding: 44px 20px 0; box-sizing: border-box; font-family: var(--zk-font); color: var(--zk-text); }
 .zk-stranka__hlava { margin-bottom: 28px; }
+.zk-stranka--pod-hlavou { padding-top: 0; }
 .zk-stranka__stitok, .zk-stitok {
   display: inline-flex; align-items: center; gap: 8px; margin-bottom: 6px;
   color: var(--zk-farba); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
@@ -112,13 +113,6 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 .zk-spat:hover { color: var(--zk-farba); }
 .zk-karta-obsah { background: var(--zk-karta); border-radius: var(--zk-r); box-shadow: var(--zk-tien); padding: 22px 24px; }
 .zk-prazdne { padding: 40px 20px; border-radius: var(--zk-r); background: var(--zk-karta); box-shadow: var(--zk-tien); text-align: center; color: var(--zk-tlmeny); }
-
-/* Stránka nenájdená */
-.zk-nenajdena { text-align: center; padding-top: 72px; max-width: 640px; }
-.zk-nenajdena__kod { display: block; font-family: var(--zk-nadpisy); font-size: clamp(6rem, 18vw, 10rem); line-height: .9; color: var(--zk-farba); opacity: .18; }
-.zk-nenajdena h1 { margin: -12px 0 12px; font-family: var(--zk-nadpisy); font-size: clamp(2rem, 5vw, 2.8rem); text-transform: uppercase; }
-.zk-nenajdena p { color: var(--zk-tlmeny); }
-.zk-nenajdena__tlacidla { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
 
 /* Prepínače (čipy) a polia filtrov */
 .zk-cipy { display: flex; flex-wrap: wrap; gap: 8px; }

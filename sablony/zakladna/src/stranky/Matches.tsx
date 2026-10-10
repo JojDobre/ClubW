@@ -19,6 +19,7 @@ import {
   useTitulok,
   type ZapasZakladny,
 } from '../zapasy';
+import { HlavickaStranky } from '../casti';
 import './Matches.css';
 
 type Filter = 'vsetky' | 'program' | 'vysledky' | 'zivo';
@@ -140,62 +141,61 @@ const Matches: React.FC = () => {
   });
 
   return (
-    <div className="zk-stranka">
-      <header className="zk-stranka__hlava">
-        <span className="zk-stranka__stitok">Sezóna</span>
-        <h1>Zápasy</h1>
-        <p>Program, výsledky a zápasy, ktoré sa práve hrajú.</p>
-      </header>
+    <>
+      <HlavickaStranky stitok="Sezóna" nadpis="Zápasy">
+        <p className="zs-hlava__popis">Program, výsledky a zápasy, ktoré sa práve hrajú.</p>
+      </HlavickaStranky>
+      <div className="zk-stranka zk-stranka--pod-hlavou">
+        <div className="zk-zapasy-filtre">
+          <div className="zk-cipy" role="tablist" aria-label="Zobraziť zápasy">
+            {FILTRE.filter(([k]) => k !== 'zivo' || pocty.zivo > 0).map(([k, nazov]) => (
+              <button key={k} type="button" role="tab" aria-selected={filter === k} className={`zk-cip${filter === k ? ' is-aktivny' : ''}`} onClick={() => setFilter(k)}>
+                {nazov}
+                <span>{pocty[k]}</span>
+              </button>
+            ))}
+          </div>
+          <div className="zk-zapasy-filtre__polia">
+            {sutaze.length > 1 && (
+              <select value={liga} onChange={(e) => setLiga(e.target.value)} className="zk-pole" aria-label="Súťaž">
+                <option value="">Všetky súťaže</option>
+                {sutaze.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            )}
+            <label className="zk-pole zk-pole--hladat">
+              <Ikona nazov="hladat" />
+              <input type="search" value={hladat} onChange={(e) => setHladat(e.target.value)} placeholder="Hľadať tím alebo miesto" aria-label="Hľadať zápas" />
+            </label>
+          </div>
+        </div>
 
-      <div className="zk-zapasy-filtre">
-        <div className="zk-cipy" role="tablist" aria-label="Zobraziť zápasy">
-          {FILTRE.filter(([k]) => k !== 'zivo' || pocty.zivo > 0).map(([k, nazov]) => (
-            <button key={k} type="button" role="tab" aria-selected={filter === k} className={`zk-cip${filter === k ? ' is-aktivny' : ''}`} onClick={() => setFilter(k)}>
-              {nazov}
-              <span>{pocty[k]}</span>
-            </button>
-          ))}
-        </div>
-        <div className="zk-zapasy-filtre__polia">
-          {sutaze.length > 1 && (
-            <select value={liga} onChange={(e) => setLiga(e.target.value)} className="zk-pole" aria-label="Súťaž">
-              <option value="">Všetky súťaže</option>
-              {sutaze.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          )}
-          <label className="zk-pole zk-pole--hladat">
-            <Ikona nazov="hladat" />
-            <input type="search" value={hladat} onChange={(e) => setHladat(e.target.value)} placeholder="Hľadať tím alebo miesto" aria-label="Hľadať zápas" />
-          </label>
-        </div>
+        {zapasy.nacitava && !zapasy.data ? (
+          <div className="zk-nacitavanie" role="status">
+            <span className="zk-nacitavanie__kruh" aria-hidden="true" />
+            Načítavam zápasy...
+          </div>
+        ) : zapasy.chyba ? (
+          <p className="zk-prazdne">Zápasy sa nepodarilo načítať. Skúste obnoviť stránku.</p>
+        ) : vybrane.length === 0 ? (
+          <p className="zk-prazdne">Žiadne zápasy nezodpovedajú výberu.</p>
+        ) : (
+          skupiny.map((sk) => (
+            <section key={sk.mesiac} className="zk-zapasy-mesiac">
+              <h2>{sk.mesiac}</h2>
+              <div className="zk-zapasy-zoznam">
+                {sk.zapasy.map((z) => (
+                  <RiadokZapasuZoznamu key={z.id} z={z} />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
       </div>
-
-      {zapasy.nacitava && !zapasy.data ? (
-        <div className="zk-nacitavanie" role="status">
-          <span className="zk-nacitavanie__kruh" aria-hidden="true" />
-          Načítavam zápasy...
-        </div>
-      ) : zapasy.chyba ? (
-        <p className="zk-prazdne">Zápasy sa nepodarilo načítať. Skúste obnoviť stránku.</p>
-      ) : vybrane.length === 0 ? (
-        <p className="zk-prazdne">Žiadne zápasy nezodpovedajú výberu.</p>
-      ) : (
-        skupiny.map((sk) => (
-          <section key={sk.mesiac} className="zk-zapasy-mesiac">
-            <h2>{sk.mesiac}</h2>
-            <div className="zk-zapasy-zoznam">
-              {sk.zapasy.map((z) => (
-                <RiadokZapasuZoznamu key={z.id} z={z} />
-              ))}
-            </div>
-          </section>
-        ))
-      )}
-    </div>
+    </>
   );
 };
 

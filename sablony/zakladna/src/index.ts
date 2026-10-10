@@ -5,51 +5,64 @@
 // ako záloha: čo iná šablóna nenahradí, zobrazí sa odtiaľto. Stránky sa
 // načítavajú až pri prvej návšteve (lazy), úvodná stránka tak nenesie
 // kód kalendára či turnajov.
+//
+// Každá podstránka je zabalená v <div class="zs">, pod ktorým platí jej
+// vzhľad (stranky.css, načíta ho casti.tsx spolu s prvou podstránkou).
+// Stránka si tak drží vzhľad Základnej aj vtedy,
+// keď ju zobrazí iná šablóna, ktorá ju sama nenahradila.
 
-import { lazy } from 'react';
-
-const obchod = () => import('./stranky/Obchod');
-const ligy = () => import('./stranky/Ligy');
-const mojKlub = () => import('./stranky/MojKlub');
+import { createElement, lazy, type ComponentType } from 'react';
 import type { CastiSablony } from '@clubw/jadro';
 import { Rozlozenie, Hlavicka, Paticka, Nacitavanie } from './Rozlozenie';
+
+type Modul = Record<string, unknown>;
+
+/** Lazy stránka z modulu (predvolený alebo pomenovaný export) v obale .zs. */
+const stranka = (nacitaj: () => Promise<Modul>, nazov = 'default') =>
+  lazy(async () => {
+    const Komponent = (await nacitaj())[nazov] as ComponentType;
+    return { default: () => createElement('div', { className: 'zs' }, createElement(Komponent)) };
+  });
+
+const obchod = () => import('./stranky/Obchod');
+const mojKlub = () => import('./stranky/MojKlub');
 
 export const casti: CastiSablony = {
   Rozlozenie,
   Hlavicka,
   Paticka,
   Nacitavanie,
-  Uvod: lazy(() => import('./stranky/Uvod')),
-  Clanky: lazy(() => import('./stranky/ArticlesPage')),
-  Clanok: lazy(() => import('./stranky/ArticleDetailPage')),
-  Stranka: lazy(() => import('./stranky/Stranka')),
-  Timy: lazy(() => import('./stranky/Teams')),
-  Tim: lazy(() => import('./stranky/TeamDetail')),
-  Hrac: lazy(() => import('./stranky/PlayerDetail')),
-  ClenRealizacnehoTimu: lazy(() => import('./stranky/StaffDetail')),
-  Ligy: lazy(() => ligy().then((m) => ({ default: m.Ligy }))),
-  Liga: lazy(() => ligy().then((m) => ({ default: m.Liga }))),
-  Zapasy: lazy(() => import('./stranky/Matches')),
-  Zapas: lazy(() => import('./stranky/MatchDetail')),
-  Kalendar: lazy(() => import('./stranky/CalendarPage')),
-  Galerie: lazy(() => import('./stranky/Galleries')),
-  Galeria: lazy(() => import('./stranky/GalleryDetail')),
-  Videa: lazy(() => import('./stranky/Videos')),
-  Turnaje: lazy(() => import('./stranky/Turnaje')),
-  Dokumenty: lazy(() => import('./stranky/Dokumenty')),
-  Sponzori: lazy(() => import('./stranky/SponzoriVerejne')),
-  Formular: lazy(() => import('./stranky/FormularStranka')),
-  Statistiky: lazy(() => import('./stranky/Stats')),
-  Obchod: lazy(() => obchod().then((m) => ({ default: m.Obchod }))),
-  Produkt: lazy(() => obchod().then((m) => ({ default: m.Produkt }))),
-  Kosik: lazy(() => obchod().then((m) => ({ default: m.Kosik }))),
-  Pokladna: lazy(() => obchod().then((m) => ({ default: m.Pokladna }))),
-  Objednavka: lazy(() => obchod().then((m) => ({ default: m.Objednavka }))),
-  Registracia: lazy(() => import('./stranky/Registracia')),
-  Hladanie: lazy(() => import('./stranky/Hladanie')),
-  MojKlub: lazy(() => mojKlub().then((m) => ({ default: m.MojKlub }))),
-  OverenieKarty: lazy(() => mojKlub().then((m) => ({ default: m.OverenieKarty }))),
-  Nenajdena: lazy(() => import('./stranky/Nenajdena')),
+  Uvod: stranka(() => import('./stranky/Uvod')),
+  Clanky: stranka(() => import('./stranky/Clanky')),
+  Clanok: stranka(() => import('./stranky/Clanok')),
+  Stranka: stranka(() => import('./stranky/Stranka')),
+  Timy: stranka(() => import('./stranky/Supiska')),
+  Tim: stranka(() => import('./stranky/Supiska')),
+  Hrac: stranka(() => import('./stranky/Hrac')),
+  ClenRealizacnehoTimu: stranka(() => import('./stranky/ClenRealizacnehoTimu')),
+  Ligy: stranka(() => import('./stranky/Ligy')),
+  Liga: stranka(() => import('./stranky/Liga')),
+  Zapasy: stranka(() => import('./stranky/Matches')),
+  Zapas: stranka(() => import('./stranky/MatchDetail')),
+  Kalendar: stranka(() => import('./stranky/Kalendar')),
+  Galerie: stranka(() => import('./stranky/Galerie')),
+  Galeria: stranka(() => import('./stranky/Galeria')),
+  Videa: stranka(() => import('./stranky/Videa')),
+  Turnaje: stranka(() => import('./stranky/Turnaje')),
+  Dokumenty: stranka(() => import('./stranky/Dokumenty')),
+  Sponzori: stranka(() => import('./stranky/Sponzori')),
+  Formular: stranka(() => import('./stranky/Formular')),
+  Statistiky: stranka(() => import('./stranky/Statistiky')),
+  Obchod: stranka(obchod, 'Obchod'),
+  Produkt: stranka(obchod, 'Produkt'),
+  Kosik: stranka(obchod, 'Kosik'),
+  Pokladna: stranka(obchod, 'Pokladna'),
+  Objednavka: stranka(obchod, 'Objednavka'),
+  Registracia: stranka(() => import('./stranky/Registracia')),
+  Hladanie: stranka(() => import('./stranky/Hladanie')),
+  MojKlub: stranka(mojKlub, 'MojKlub'),
+  OverenieKarty: stranka(mojKlub, 'OverenieKarty'),
+  Nenajdena: stranka(() => import('./stranky/Nenajdena')),
 };
 
 export default casti;

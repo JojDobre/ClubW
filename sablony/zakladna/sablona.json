@@ -1,7 +1,7 @@
 {
   "slug": "zakladna",
   "nazov": "Základná",
-  "verzia": "1.1.0",
+  "verzia": "1.2.0",
   "autor": "ClubW",
   "popis": "Svetlý vzhľad vo farbách klubu - hlavička s hornou lištou, úvod s erbom a najbližším alebo živým zápasom, aktuality, program a výsledky, obchod a výzva na registráciu. Farby a logo berie z Nastavení klubu. Ostatné šablóny z nej preberajú stránky, ktoré samy nenahradia.",
   "api": 1,

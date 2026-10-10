@@ -7,7 +7,6 @@ import React, { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AnketaWeb,
-  SekcieUvodu,
   ZivyPrenos,
   cenaText,
   souborUrl,
@@ -23,6 +22,7 @@ import {
   type VlastnostiHlavickyBloku,
 } from '@clubw/jadro';
 import { ErbKlubu, OdkazAleboOdkazVon, zapnute } from '../Rozlozenie';
+import { Sekcie as SekcieSablony } from '../bloky';
 import { Ikona } from '../ikony';
 import { ErbTimu, cas, datum, den, denCislo, nazovStrany, nazovSutaze, type ZapasZakladny } from '../zapasy';
 import './Uvod.css';
@@ -60,7 +60,8 @@ const HlavickaSekcie: React.FC<VlastnostiHlavickyBloku & { stitok?: string; id?:
     </>
   );
 };
-const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieUvodu pozicia={p} className="zk-u-sekcie" hlavicka={HlavickaSekcie} />;
+/** Vlastné sekcie úvodu - bloky v dizajne podstránok Základnej (bloky.tsx). */
+const Sekcie: React.FC<{ p: string }> = ({ p }) => <SekcieSablony p={p} hlavicka={HlavickaSekcie} />;
 
 /** Odpočet do výkopu (dni, hodiny, minúty). */
 const Odpocet: React.FC<{ kedy: string }> = ({ kedy }) => {

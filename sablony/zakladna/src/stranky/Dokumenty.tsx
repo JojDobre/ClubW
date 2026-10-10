@@ -1,10 +1,12 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Dokumenty.tsx
-// Verejné dokumenty klubu (/dokumenty) - zoskupené podľa kategórií,
-// s odkazom na stiahnutie cez počítadlo stiahnutí.
+// Dokumenty klubu na stiahnutie: vyhľadávanie, pilulky kategórií
+// a zoznam súborov v zaoblených riadkoch. Stiahnutie ide cez počítadlo
+// (/documents/:id/download).
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { apiUrl } from '@clubw/jadro';
-import './Dokumenty.css';
+import { Chyba, Filtre, HlavickaStranky, Nacitava, Prazdne, Sekcia } from '../casti';
+import { Ikona, datum, useApi, useTitulok, useUpravy } from '../spolocne';
 
 interface Dokument {
   id: number;
@@ -14,6 +16,7 @@ interface Dokument {
   kategoria_id: number | null;
   typ_suboru: string | null;
   velkost_kb: number | null;
+  subor_url?: string | null;
   vytvoreny: string;
 }
 
@@ -23,99 +26,95 @@ interface Kategoria {
   popis: string | null;
 }
 
-const velkost = (kb: number | null) =>
-  !kb ? '' : kb >= 1024 ? `${(kb / 1024).toFixed(1).replace('.', ',')} MB` : `${kb} kB`;
-
-const nacitaj = async <T,>(cesta: string): Promise<T[]> => {
-  const odpoved = await fetch(apiUrl(cesta));
-  if (!odpoved.ok) throw new Error(`Chyba servera (${odpoved.status})`);
-  const obsah = await odpoved.json();
-  return Array.isArray(obsah?.data) ? obsah.data : [];
-};
+const velkost = (kb: number | null) => (!kb ? null : kb >= 1024 ? `${(kb / 1024).toFixed(1).replace('.', ',')} MB` : `${kb} kB`);
+const typ = (d: Dokument) => (d.typ_suboru || d.subor_url?.split('.').pop() || 'súbor').toUpperCase().slice(0, 4);
 
 const Dokumenty: React.FC = () => {
-  const [dokumenty, setDokumenty] = useState<Dokument[] | null>(null);
-  const [kategorie, setKategorie] = useState<Kategoria[]>([]);
-  const [chyba, setChyba] = useState<string | null>(null);
+  const u = useUpravy();
+  const dokumenty = useApi<Dokument[]>('/documents?limit=500');
+  const kategorie = useApi<Kategoria[]>('/document-categories');
   const [hladat, setHladat] = useState('');
+  const [kategoria, setKategoria] = useState('');
+  useTitulok('Dokumenty');
 
-  useEffect(() => {
-    document.title = 'Dokumenty';
-    Promise.all([nacitaj<Dokument>('/documents?limit=500'), nacitaj<Kategoria>('/document-categories')])
-      .then(([d, k]) => {
-        setDokumenty(d);
-        setKategorie(k);
-      })
-      .catch((e) => setChyba(e?.message || 'Dokumenty sa nepodarilo načítať'));
-  }, []);
-
-  // Skupiny v poradí kategórií, dokumenty bez kategórie na koniec
   const skupiny = useMemo(() => {
     const text = hladat.trim().toLowerCase();
-    const vybrane = (dokumenty ?? []).filter(
-      (d) => !text || d.nazov.toLowerCase().includes(text) || (d.popis ?? '').toLowerCase().includes(text)
-    );
+    const vybrane = (dokumenty.data ?? []).filter((d) => !text || `${d.nazov} ${d.popis ?? ''}`.toLowerCase().includes(text));
+    const zoznamKategorii = kategorie.data ?? [];
     const vysledok: Array<{ kluc: string; nazov: string; popis: string | null; polozky: Dokument[] }> = [];
-    for (const k of kategorie) {
+    for (const k of zoznamKategorii) {
       const polozky = vybrane.filter((d) => d.kategoria_id === k.id);
       if (polozky.length) vysledok.push({ kluc: `k${k.id}`, nazov: k.nazov, popis: k.popis, polozky });
     }
     // Staršie dokumenty môžu mať kategóriu len ako text
-    const zvysne = vybrane.filter((d) => !d.kategoria_id || !kategorie.some((k) => k.id === d.kategoria_id));
-    const podlaTextu = new Map<string, Dokument[]>();
-    for (const d of zvysne) {
+    const zvysne = new Map<string, Dokument[]>();
+    for (const d of vybrane.filter((d) => !d.kategoria_id || !zoznamKategorii.some((k) => k.id === d.kategoria_id))) {
       const nazov = d.kategoria?.trim() || 'Ostatné';
-      podlaTextu.set(nazov, [...(podlaTextu.get(nazov) ?? []), d]);
+      zvysne.set(nazov, [...(zvysne.get(nazov) ?? []), d]);
     }
-    for (const [nazov, polozky] of podlaTextu) {
-      vysledok.push({ kluc: `t${nazov}`, nazov, popis: null, polozky });
-    }
+    for (const [nazov, polozky] of zvysne) vysledok.push({ kluc: `t${nazov}`, nazov, popis: null, polozky });
     return vysledok;
-  }, [dokumenty, kategorie, hladat]);
+  }, [dokumenty.data, kategorie.data, hladat]);
+
+  const zobrazene = skupiny.filter((s) => !kategoria || s.kluc === kategoria);
 
   return (
-    <div className="dp">
-      <h1>Dokumenty</h1>
-      <p className="dp__uvod">Tlačivá, stanovy a ďalšie dokumenty klubu na stiahnutie.</p>
+    <div className="zs-stranka zs-dokumenty-stranka">
+      <HlavickaStranky stitok={u.text('stranka_dokumenty_stitok', 'Na stiahnutie')} nadpis={u.text('stranka_dokumenty_nadpis', 'Dokumenty')}>
+        {(dokumenty.data ?? []).length > 0 && (
+          <label className="zs-hladat">
+            <Ikona nazov="hladat" />
+            <input type="search" value={hladat} onChange={(e) => setHladat(e.target.value)} placeholder="Hľadať dokument" aria-label="Hľadať dokument" />
+          </label>
+        )}
+      </HlavickaStranky>
 
-      {chyba ? (
-        <p className="dp__stav">{chyba}</p>
-      ) : dokumenty === null ? (
-        <p className="dp__stav">Načítavam dokumenty...</p>
-      ) : dokumenty.length === 0 ? (
-        <p className="dp__stav">Zatiaľ tu nie sú žiadne dokumenty.</p>
+      {skupiny.length > 1 && (
+        <Sekcia className="zs-sekcia--filtre">
+          <Filtre popis="Kategórie dokumentov" aktivna={kategoria} onZmena={setKategoria} moznosti={[{ kluc: '', nazov: 'Všetko' }, ...skupiny.map((s) => ({ kluc: s.kluc, nazov: s.nazov }))]} />
+        </Sekcia>
+      )}
+
+      {dokumenty.nacitava ? (
+        <Nacitava text="Načítavam dokumenty…" />
+      ) : dokumenty.chyba ? (
+        <Sekcia className="zs-sekcia--hore">
+          <Chyba text={dokumenty.chyba} />
+        </Sekcia>
+      ) : (dokumenty.data ?? []).length === 0 ? (
+        <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+          <Prazdne nadpis="Zatiaľ tu nie sú žiadne dokumenty" />
+        </Sekcia>
+      ) : zobrazene.length === 0 ? (
+        <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+          <Prazdne nadpis={`Pre „${hladat.trim()}" sme nič nenašli`} />
+        </Sekcia>
       ) : (
-        <>
-          <input
-            className="dp__hladat"
-            type="search"
-            placeholder="Hľadať dokument..."
-            value={hladat}
-            onChange={(e) => setHladat(e.target.value)}
-            aria-label="Hľadať dokument"
-          />
-          {skupiny.length === 0 && <p className="dp__stav">Nič sa nenašlo.</p>}
-          {skupiny.map((s) => (
-            <section key={s.kluc} className="dp__skupina">
-              <h2>{s.nazov}</h2>
-              {s.popis && <p className="dp__popis-kat">{s.popis}</p>}
-              <ul>
-                {s.polozky.map((d) => (
-                  <li key={d.id}>
-                    <span className="dp__typ">{(d.typ_suboru || 'súbor').toUpperCase()}</span>
-                    <div className="dp__text">
+        zobrazene.map((s, i) => (
+          <Sekcia key={s.kluc} className={`zs-skupina${i === 0 && skupiny.length <= 1 ? ' zs-sekcia--hore' : ''}`} ariaLabel={s.nazov}>
+            <h2 className="zs-skupina__nadpis zs-skupina__nadpis--male">{s.nazov}</h2>
+            {s.popis && <p className="zs-skupina__popis">{s.popis}</p>}
+            <ul className="zs-dokumenty">
+              {s.polozky.map((d) => (
+                <li key={d.id}>
+                  <a href={apiUrl(`/documents/${d.id}/download`)} target="_blank" rel="noopener noreferrer" className="zs-dokument">
+                    <span className="zs-dokument__typ" aria-hidden="true">
+                      {typ(d)}
+                    </span>
+                    <span className="zs-dokument__text">
                       <strong>{d.nazov}</strong>
-                      {d.popis && <span>{d.popis}</span>}
-                    </div>
-                    <a className="dp__stiahnut" href={apiUrl(`/documents/${d.id}/download`)} target="_blank" rel="noreferrer">
-                      Stiahnuť{d.velkost_kb ? ` (${velkost(d.velkost_kb)})` : ''}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </>
+                      <small>{[d.popis, velkost(d.velkost_kb), datum(d.vytvoreny)].filter(Boolean).join(' · ')}</small>
+                    </span>
+                    <span className="zs-dokument__stiahnut">
+                      <Ikona nazov="stiahnut" velkost={18} />
+                      <span className="zs-skryte">Stiahnuť</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Sekcia>
+        ))
       )}
     </div>
   );

@@ -1,82 +1,119 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Hladanie.tsx
-// Vyhľadávanie na webe - predvolená stránka /hladat?q=….
+// Vyhľadávanie na webe (/hladat?q=…): veľké pole v tmavej hlavičke,
+// výsledky sa zobrazujú počas písania, zoskupené podľa typu.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SKUPINY_HLADANIA, apiUrl, souborUrl, useHladanie, useNastavenia } from '@clubw/jadro';
+import { SKUPINY_HLADANIA, apiUrl, useHladanie, type VysledokHladania } from '@clubw/jadro';
+import { Sekcia } from '../casti';
+import { Ikona, obrazokUrl, useTitulok } from '../spolocne';
+
+const Vysledok: React.FC<{ v: VysledokHladania }> = ({ v }) => {
+  const obrazok = obrazokUrl(v.obrazok);
+  const obsah = (
+    <>
+      <span className={`zs-vysledok__obrazok${obrazok ? '' : ' is-prazdny'}`}>
+        {obrazok ? <img src={obrazok} alt="" loading="lazy" /> : <Ikona nazov={v.typ === 'hrac' || v.typ === 'tim' ? 'tim' : v.typ === 'video' ? 'play' : 'spravy'} velkost={20} />}
+      </span>
+      <span className="zs-vysledok__text">
+        <strong>{v.nazov}</strong>
+        {v.popis && <small>{v.popis}</small>}
+      </span>
+      <Ikona nazov="sipka" velkost={16} className="zs-vysledok__sipka" />
+    </>
+  );
+  if (v.odkaz.startsWith('/api/')) {
+    return (
+      <a href={apiUrl(v.odkaz.replace(/^\/api/, ''))} className="zs-vysledok" target="_blank" rel="noopener noreferrer">
+        {obsah}
+      </a>
+    );
+  }
+  return v.odkaz.startsWith('/') ? (
+    <Link to={v.odkaz} className="zs-vysledok">
+      {obsah}
+    </Link>
+  ) : (
+    <a href={v.odkaz} className="zs-vysledok" target="_blank" rel="noopener noreferrer">
+      {obsah}
+    </a>
+  );
+};
 
 const Hladanie: React.FC = () => {
-  const { nastavenia } = useNastavenia();
+  useTitulok('Hľadať');
   const [parametre, setParametre] = useSearchParams();
   const [text, setText] = useState(parametre.get('q') ?? '');
-  const { vysledky, nacitava, chyba } = useHladanie(text, 10);
+  const pole = useRef<HTMLInputElement>(null);
+  const { vysledky, nacitava, chyba } = useHladanie(text, 8);
+  const dotaz = text.trim();
 
   useEffect(() => {
-    document.title = `Hľadať | ${nastavenia.nazov}`;
-  }, [nastavenia.nazov]);
+    pole.current?.focus();
+  }, []);
+  // Hľadaný text sa drží v adrese (dá sa zdieľať a vrátiť späť)
   useEffect(() => {
     const nove = new URLSearchParams(parametre);
-    if (text.trim()) nove.set('q', text.trim());
+    if (dotaz) nove.set('q', dotaz);
     else nove.delete('q');
     setParametre(nove, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [dotaz]);
 
   return (
-    <div className="bloky bloky--zakladne">
-      <section className="blok">
-        <div className="blok__vnutro" style={{ maxWidth: 860 }}>
-          <h1 className="blok__nadpis blok__nadpis--velky">Hľadať na webe</h1>
-          <input
-            type="search"
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Článok, hráč, tím, stránka…"
-            aria-label="Hľadaný text"
-            style={{ width: '100%', padding: '14px 16px', fontSize: '1.1rem', borderRadius: 10, border: '1px solid #cbd5e1', margin: '12px 0 24px' }}
-          />
-          {nacitava && <p>Hľadám…</p>}
-          {chyba && <p role="alert">{chyba}</p>}
-          {!nacitava && text.trim().length >= 2 && vysledky.length === 0 && !chyba && <p>Pre „{text.trim()}" sme nič nenašli.</p>}
-          {SKUPINY_HLADANIA.map((sk) => {
-            const vSkupine = vysledky.filter((v) => v.typ === sk.typ);
-            if (vSkupine.length === 0) return null;
-            return (
-              <div key={sk.typ} style={{ marginBottom: 28 }}>
-                <h2 className="blok__stitok">{sk.nazov}</h2>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
-                  {vSkupine.map((v) => {
-                    const obsah = (
-                      <>
-                        {v.obrazok && <img src={/^https?:/.test(v.obrazok) ? v.obrazok : souborUrl(v.obrazok)} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />}
-                        <span>
-                          <strong style={{ display: 'block' }}>{v.nazov}</strong>
-                          {v.popis && <small style={{ color: '#64748b' }}>{v.popis}</small>}
-                        </span>
-                      </>
-                    );
-                    const styl = { display: 'flex', gap: 12, alignItems: 'center', padding: 12, border: '1px solid #e2e8f0', borderRadius: 10, color: 'inherit', textDecoration: 'none' };
-                    return (
-                      <li key={`${v.typ}-${v.id}`}>
-                        {v.odkaz.startsWith('/') && !v.odkaz.startsWith('/api/') ? (
-                          <Link to={v.odkaz} style={styl}>
-                            {obsah}
-                          </Link>
-                        ) : (
-                          <a href={v.odkaz.startsWith('/api/') ? apiUrl(v.odkaz.replace(/^\/api/, '')) : v.odkaz} target="_blank" rel="noopener noreferrer" style={styl}>
-                            {obsah}
-                          </a>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
+    <div className="zs-stranka zs-hladanie">
+      <header className="zs-hlava zs-hlava--hladanie">
+        <div className="zs-kontajner">
+          <span className="zs-hlava__stitok">Hľadať na webe</span>
+          <form className="zs-hladanie__pole" role="search" onSubmit={(e) => e.preventDefault()}>
+            <Ikona nazov="hladat" velkost={24} />
+            <input ref={pole} type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Článok, hráč, tím, stránka…" aria-label="Hľadaný text" />
+            {text && (
+              <button type="button" onClick={() => setText('')} aria-label="Vymazať">
+                <Ikona nazov="zavriet" velkost={18} />
+              </button>
+            )}
+          </form>
         </div>
-      </section>
+      </header>
+      <Sekcia className="zs-sekcia--hore">
+        {dotaz.length < 2 ? (
+          <p className="zs-hladanie__info">Zadajte aspoň 2 znaky - hľadáme v článkoch, stránkach, tímoch, hráčoch, videách, galériách, dokumentoch aj vo fanshope.</p>
+        ) : nacitava && vysledky.length === 0 ? (
+          <p className="zs-hladanie__info">Hľadám…</p>
+        ) : chyba ? (
+          <p className="zs-hladanie__info" role="alert">
+            {chyba}
+          </p>
+        ) : vysledky.length === 0 ? (
+          <div className="zs-hladanie__prazdne">
+            <strong>Pre „{dotaz}" sme nič nenašli</strong>
+            <p>Skúste iné slovo alebo kratší výraz.</p>
+          </div>
+        ) : (
+          <div className="zs-hladanie__skupiny" aria-live="polite">
+            <p className="zs-hladanie__info">
+              Nájdené výsledky pre „{dotaz}": <strong>{vysledky.length}</strong>
+            </p>
+            {SKUPINY_HLADANIA.map((sk) => {
+              const vSkupine = vysledky.filter((v) => v.typ === sk.typ);
+              if (vSkupine.length === 0) return null;
+              return (
+                <section key={sk.typ} className="zs-hladanie__skupina" aria-label={sk.nazov}>
+                  <h2 className="zs-skupina__nadpis zs-skupina__nadpis--male">
+                    {sk.nazov} <span>{vSkupine.length}</span>
+                  </h2>
+                  <div className="zs-hladanie__zoznam">
+                    {vSkupine.map((v) => (
+                      <Vysledok key={`${v.typ}-${v.id}`} v={v} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )}
+      </Sekcia>
     </div>
   );
 };

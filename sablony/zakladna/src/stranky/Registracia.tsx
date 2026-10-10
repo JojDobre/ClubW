@@ -1,27 +1,51 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Registracia.tsx
-// Registrácia fanúšika alebo člena - predvolená stránka /registracia.
+// Registrácia fanúšika alebo člena - tmavá hlavička, formulár v karte
+// a vedľa neho výhody členstva. Žiadosť schvaľuje klub v administrácii.
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { FormularRegistracie, useNastavenia, useRegistracia } from '@clubw/jadro';
+import { HlavickaStranky, Sekcia } from '../casti';
+import { useTitulok, useUpravy } from '../spolocne';
+
+const VYHODY = [
+  ['Novinky ako prví', 'Pozvánky na zápasy, akcie klubu a výsledky priamo do e-mailu.'],
+  ['Zľavy vo fanshope', 'Členovia a registrovaní fanúšikovia dostávajú zvýhodnené ponuky.'],
+  ['Hlas v klube', 'Členovia sa zúčastňujú na členskej schôdzi a rozhodovaní klubu.'],
+];
 
 const Registracia: React.FC = () => {
+  const u = useUpravy();
   const { nastavenia } = useNastavenia();
+  // Texty a výhody z nastavení registrácie klubu majú prednosť pred textami šablóny
   const reg = useRegistracia();
-  useEffect(() => {
-    document.title = `Registrácia | ${nastavenia.nazov}`;
-  }, [nastavenia.nazov]);
+  const vyhody = reg.vyhody.length ? reg.vyhody.map((v) => [v.nadpis, v.text] as const) : VYHODY;
+  useTitulok('Registrácia');
   return (
-    <div className="bloky bloky--zakladne">
-      <section className="blok">
-        <div className="blok__vnutro" style={{ maxWidth: 760 }}>
-          <header className="blok__hlavicka">
-            <span className="blok__stitok">{nastavenia.nazov}</span>
-            <h1 className="blok__nadpis blok__nadpis--velky">{reg.texty.nadpis || 'Staňte sa súčasťou klubu'}</h1>
-            <p className="blok__uvod">{reg.texty.uvod || 'Zaregistrujte sa ako fanúšik alebo požiadajte o členstvo. Žiadosť posúdime a ozveme sa vám.'}</p>
-          </header>
-          <FormularRegistracie />
+    <div className="zs-stranka zs-registracia">
+      <HlavickaStranky stitok={u.text('stranka_registracia_stitok', '') || nastavenia.nazov} nadpis={reg.texty.nadpis || u.text('stranka_registracia_nadpis', 'Staňte sa súčasťou klubu')}>
+        {reg.texty.uvod && <p className="zs-hlava__popis">{reg.texty.uvod}</p>}
+      </HlavickaStranky>
+      <Sekcia className="zs-sekcia--hore">
+        <div className="zs-registracia__mriezka">
+          <div className="zs-registracia__karta">
+            <FormularRegistracie className="zs-formular-registracie" />
+          </div>
+          <aside className="zs-registracia__vyhody" aria-label="Výhody">
+            <h2>{reg.texty.vyhody_nadpis || u.text('registracia_vyhody_nadpis', 'Prečo sa registrovať')}</h2>
+            <ul>
+              {vyhody.map(([nadpis, text]) => (
+                <li key={nadpis}>
+                  <span aria-hidden="true">✓</span>
+                  <div>
+                    <strong>{nadpis}</strong>
+                    <p>{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
-      </section>
+      </Sekcia>
     </div>
   );
 };
