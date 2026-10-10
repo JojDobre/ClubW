@@ -187,7 +187,7 @@
   .zk-clanok:not(.zk-clanok--hlavny) .zk-clanok__obrazok { aspect-ratio: auto; min-height: 92px; }
   .zk-clanok:not(.zk-clanok--hlavny) .zk-clanok__telo { padding: 12px 14px; justify-content: center; }
   .zk-clanok:not(.zk-clanok--hlavny) h3 { font-size: 1.1rem; }
-  .zk-uvod__bok { display: flex; }
+  .zk-uvod__bok { display: flex; flex-direction: column; align-items: stretch; }
   .zk-vyzva { padding: 30px 24px; }
   .zk-uvod__mriezka { margin-top: 40px; }
   .zk-u-blok { margin-top: 48px; }

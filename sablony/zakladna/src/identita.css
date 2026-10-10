@@ -13,6 +13,10 @@
   --zs-primarna: color-mix(in srgb, var(--zk-farba) 82%, #04101a);
   --zs-tmava: var(--zs-primarna);
   --zs-hlboka: color-mix(in srgb, var(--zk-farba) 55%, #04101a);
+  /* Významové farby hlášok - nezávislé od farieb klubu */
+  --zk-chyba: #dc2626; --zk-chyba-pozadie: #fef2f2; --zk-chyba-text: #b91c1c;
+  --zk-uspech: #16a34a; --zk-uspech-pozadie: #f0fdf4; --zk-uspech-text: #166534;
+  --zk-varovanie: #d97706; --zk-varovanie-pozadie: #fffbeb; --zk-varovanie-text: #92400e;
   --zk-plocha-klubu:
     radial-gradient(70% 60% at 85% 0%, rgba(255, 255, 255, 0.16), transparent 70%),
     linear-gradient(150deg, var(--zk-farba), color-mix(in srgb, var(--zk-farba) 52%, #050a14));
@@ -191,7 +195,7 @@
 /* ===================================================================
    Plochy vo farbe klubu (namiesto tmavých panelov)
    =================================================================== */
-.zs :is(.zs-registracia__vyhody, .zs-bilancia, .zs-tv__playlist) {
+.zs :is(.zs-registracia__vyhody, .zs-bilancia) {
   position: relative; isolation: isolate; overflow: hidden; background: var(--zk-plocha-klubu);
 }
 .zs :is(.zs-registracia__vyhody, .zs-bilancia)::before {
@@ -267,6 +271,70 @@
 
 /* 404: veľký kód ako obrys v hlavičke */
 .zs .zs-nenajdena__kod { color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, 0.22); }
+
+/* Prehliadače fotiek a okno videa sú nad hlavičkou webu (z-index 1000) aj mobilným menu */
+.zs .zs-prehliadac, .zs .zs-okno, body:has(.zs) .blok__lightbox { z-index: 1300; }
+
+/* ===================================================================
+   Hlásenia: chyba červená, úspech zelený, upozornenie oranžové
+   =================================================================== */
+.zs :is(.zs-suhrn__chyba, .fw__chyby, .registracia__chyba:not(:empty)) {
+  padding: 12px 14px; border-radius: 12px; border-left: 4px solid var(--zk-chyba);
+  background: var(--zk-chyba-pozadie); color: var(--zk-chyba-text); font-size: 14px; font-weight: 700;
+}
+.zs .zs-vlastnost__chyba { color: var(--zk-chyba-text); font-weight: 700; }
+.zs .zs-vlastnost.is-chyba :is(input, select, .zs-moznost) { border-color: var(--zk-chyba); }
+.zs :is(.zs-pridane, .fw--hotovo) {
+  border-left: 4px solid var(--zk-uspech); background: var(--zk-uspech-pozadie); color: var(--zk-uspech-text);
+}
+.zs .zs-suhrn__tip { border-left: 4px solid var(--zk-akcent); }
+.zs .zs-tovar__stitok { background: var(--zk-chyba); color: #ffffff; border-radius: 999px; }
+.zs .zs-tovar__stitok--tmavy { background: #334155; }
+.zs .zs-odznak { border-radius: 999px; background: var(--zk-jemna); color: var(--zk-farba); }
+.zs .zs-odznak--uhradena { background: var(--zk-uspech-pozadie); color: var(--zk-uspech-text); }
+.zs .zs-odznak--zrusena { background: var(--zk-chyba-pozadie); color: var(--zk-chyba-text); }
+
+/* Súhrn objednávky na ploche klubu: tlačidlo biele, aby nesplývalo s pozadím */
+.zs .zs-suhrn { background: var(--zk-plocha-klubu); }
+.zs .zs-suhrn .zs-tlacidlo--akcent { background: #ffffff; color: var(--zk-farba); }
+.zs .zs-suhrn .zs-tlacidlo--akcent:hover { background: var(--zk-akcent); color: var(--zk-akcent-kontrast); }
+.zs .zs-suhrn :is(input, textarea) { background: #ffffff; color: var(--zk-text); }
+
+/* ===================================================================
+   Videá: prehrávač vľavo, playlist ako biela karta rovnako vysoká
+   =================================================================== */
+.zs .zs-tv { align-items: stretch; }
+.zs .zs-tv__hlavne .zs-hlavne-video { border-radius: 22px; background: var(--zk-plocha-klubu); box-shadow: var(--zk-tien); }
+.zs .zs-hlavne-video__play {
+  background: #ffffff; color: var(--zk-farba); box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.45);
+}
+.zs .zs-tv__meta b {
+  display: inline-flex; align-items: center; gap: 7px; padding: 0; border-radius: 0; background: none; color: var(--zk-farba);
+  font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.zs .zs-tv__meta b::before { content: ''; width: 14px; height: 3px; border-radius: 2px; background: var(--zk-akcent); }
+.zs .zs-tv__info h2 { font-family: var(--zk-nadpisy); font-weight: 700; letter-spacing: 0; line-height: 1.05; }
+.zs .zs-tv__playlist {
+  position: relative; top: auto; height: 0; min-height: 100%; max-height: none; overflow: hidden; padding: 0;
+  border-radius: var(--zk-r); background: var(--zk-karta); color: var(--zk-text); box-shadow: var(--zk-tien);
+}
+.zs .zs-tv__hlava { flex: none; padding: 16px 18px 14px; border-bottom: 3px solid var(--zk-akcent); }
+.zs .zs-tv__hlava strong { font-family: var(--zk-nadpisy); font-size: 22px; letter-spacing: 0; }
+.zs .zs-tv__hlava small { color: var(--zk-tlmeny); }
+.zs .zs-tv__playlist ol { flex: 1; min-height: 0; padding: 8px; scrollbar-color: var(--zk-ciara) transparent; }
+.zs .zs-tv__polozka { color: var(--zk-text); border-radius: 12px; }
+.zs .zs-tv__polozka:hover { background: var(--zk-plocha); }
+.zs .zs-tv__polozka.is-aktivna { background: var(--zk-jemna); box-shadow: inset 3px 0 0 var(--zk-akcent); }
+.zs .zs-tv__poradie { color: var(--zk-tlmeny); }
+.zs .zs-tv__polozka.is-aktivna .zs-tv__poradie { color: var(--zk-farba); }
+.zs .zs-tv__nahlad { background: var(--zk-plocha-klubu); }
+.zs .zs-tv__nazov small { color: var(--zk-tlmeny); }
+@media (max-width: 1100px) {
+  .zs .zs-tv__playlist { height: auto; min-height: 0; max-height: 520px; }
+}
+@media (max-width: 640px) {
+  .zs .zs-tv__polozka { grid-template-columns: 22px 96px minmax(0, 1fr); gap: 10px; }
+}
 
 /* ===================================================================
    Menšie obrazovky

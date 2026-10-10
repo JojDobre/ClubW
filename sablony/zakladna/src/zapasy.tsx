@@ -41,7 +41,7 @@ export interface ZapasZakladny {
 }
 
 export const STAVY: Record<string, string> = {
-  naplanovany: 'Pripravuje sa',
+  naplanovany: 'Naplánovaný',
   prebieha: 'Naživo',
   ukonceny: 'Odohraný',
   odlozeny: 'Odložený',
