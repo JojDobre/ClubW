@@ -57,10 +57,20 @@ export const cislo = (hodnota: unknown, pole: string, min: number, max: number):
   return n;
 };
 
+/**
+ * Zoznam kódov (funkcie plánu a licencie), napríklad sablony:vsetky alebo
+ * sablona:arena. Neplatná položka vráti chybu - potichu zahodená funkcia
+ * by sa po uložení len stratila.
+ */
 export const zoznamTextov = (hodnota: unknown, pole: string): string[] => {
   if (hodnota === undefined || hodnota === null) return [];
   if (!Array.isArray(hodnota) || hodnota.length > 100) throw new ChybaVstupu(`${pole} musí byť zoznam`);
-  return [...new Set(hodnota.map((x) => String(x).trim()).filter((x) => /^[a-z0-9_-]{1,40}$/i.test(x)))];
+  const polozky = hodnota.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+  const neplatne = polozky.filter((x) => !/^[a-z0-9][a-z0-9_:.-]{0,59}$/.test(x));
+  if (neplatne.length) {
+    throw new ChybaVstupu(`${pole}: neplatná hodnota ${neplatne.join(', ')} (povolené sú písmená, číslice a znaky : . _ -)`);
+  }
+  return [...new Set(polozky)];
 };
 
 export const strankovanie = (req: Request, predvolene = 50) => {
