@@ -1,23 +1,27 @@
 // Umiestnenie: sablony/zakladna/src/stranky/MojKlub.tsx
 // Účet fanúšika (/moj-klub) a overenie členskej karty (/overenie/:kod).
-// Obsah aj správanie sú v jadre, šablóna dodá len rám stránky.
+// Prihlásenie, členskú kartu s QR kódom, výhody a údaje dodá jadro,
+// šablóna k nim pridá svoju hlavičku stránky.
 
-import React, { useEffect } from 'react';
-import { MojKlubObsah, OverenieKartyObsah, useFanusik } from '@clubw/jadro';
-
-const useTitulok = (text: string) => {
-  useEffect(() => {
-    document.title = text;
-  }, [text]);
-};
+import React from 'react';
+import { MojKlubObsah, OverenieKartyObsah, useFanusik, useNastavenia } from '@clubw/jadro';
+import { HlavickaStranky, Sekcia } from '../casti';
+import { useTitulok, useUpravy } from '../spolocne';
 
 export const MojKlub: React.FC = () => {
+  const u = useUpravy();
+  const { nastavenia } = useNastavenia();
   const { fanusik } = useFanusik();
   useTitulok('Môj klub');
   return (
-    <div className="zk-moj-klub" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 16px 56px' }}>
-      <h1 style={{ fontSize: '2rem', margin: '0 0 24px' }}>{fanusik ? 'Môj klub' : 'Prihlásenie do klubu'}</h1>
-      <MojKlubObsah />
+    <div className="zs-stranka zs-moj-klub">
+      <HlavickaStranky
+        stitok={u.text('stranka_moj_klub_stitok', '') || nastavenia.nazov}
+        nadpis={fanusik ? `Ahoj, ${fanusik.meno}` : u.text('stranka_moj_klub_nadpis', 'Môj klub')}
+      />
+      <Sekcia className="zs-sekcia--hore">
+        <MojKlubObsah />
+      </Sekcia>
     </div>
   );
 };
@@ -25,8 +29,10 @@ export const MojKlub: React.FC = () => {
 export const OverenieKarty: React.FC = () => {
   useTitulok('Overenie karty');
   return (
-    <div style={{ padding: '40px 16px 64px' }}>
-      <OverenieKartyObsah />
+    <div className="zs-stranka zs-overenie">
+      <Sekcia className="zs-sekcia--hore">
+        <OverenieKartyObsah />
+      </Sekcia>
     </div>
   );
 };

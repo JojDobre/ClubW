@@ -1,112 +1,139 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Obchod.tsx
-// Stránky obchodu základnej šablóny: zoznam produktov (/obchod), produkt
-// (/obchod/:slug), košík (/kosik), pokladňa (/pokladna) a stav objednávky
-// (/objednavka/:token). Správanie (košík, ceny, odoslanie) je v jadre,
-// tu je len jednoduchý vzhľad - iné šablóny ho môžu nahradiť.
+// Fanshop: zoznam produktov s kategóriami, detail produktu s výberom
+// vlastností (veľkosť, meno na dres...), košík, pokladňa a stav
+// objednávky s pokynmi k platbe alebo platobnou bránou.
+//
+// Košík, ceny a odoslanie objednávky rieši jadro (useKosik, usePokladna),
+// tu je len vzhľad. Na mobile sa obchod správa ako aplikácia: mriežka
+// po dvoch, lišta „Do košíka" nad spodnými záložkami.
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
-  NAZVY_STAVOV_OBJEDNAVKY,
-  infoPlatby,
-  kartaStavuObjednavky,
   PlatobnaBrana,
   cenaSVolbami,
   cenaText,
   hodnotaVypredana,
-  sanitizedHtmlProps,
-  souborUrl,
-  useData,
+  sanitizeHtml,
   useKosik,
   useObchod,
   useObjednavka,
+  krokyObjednavky,
+  infoPlatby,
+  kartaStavuObjednavky,
   usePokladna,
   type KategoriaObchodu,
+  type ObjednavkaZakaznika,
   type ProduktObchodu,
+  type UdajeZakaznika,
 } from '@clubw/jadro';
-import './Obchod.css';
+import { Chyba, ChybaStranky, Filtre, HlavickaStranky, Nacitava, Obrazok, Prazdne, Sekcia } from '../casti';
+import { Ikona, obrazokUrl, useApi, useTitulok, useUpravy } from '../spolocne';
 
-const useTitulok = (text: string) => {
-  useEffect(() => {
-    document.title = text;
-  }, [text]);
-};
+// ===== Spoločné =====
 
-/** Obchod je vypnutý - návštevník vidí len oznam. */
-const ObchodZatvoreny: React.FC = () => (
-  <div className="ob">
-    <h1>Obchod</h1>
-    <p className="ob__stav">Obchod je momentálne zatvorený.</p>
+const Cena: React.FC<{ cena: number; povodna?: number | null; mena: string; className?: string }> = ({ cena, povodna, mena, className = '' }) => (
+  <span className={`zs-cena ${className}`}>
+    <strong>{cenaText(cena, mena)}</strong>
+    {povodna && povodna > cena && <s>{cenaText(povodna, mena)}</s>}
+  </span>
+);
+
+/** Plus/mínus s počtom kusov. */
+const Pocitadlo: React.FC<{ pocet: number; onZmena: (n: number) => void; min?: number; male?: boolean }> = ({ pocet, onZmena, min = 1, male = false }) => (
+  <span className={`zs-pocitadlo${male ? ' zs-pocitadlo--male' : ''}`}>
+    <button type="button" onClick={() => onZmena(pocet - 1)} disabled={pocet <= min} aria-label="Menej kusov">
+      −
+    </button>
+    <span aria-live="polite">{pocet}</span>
+    <button type="button" onClick={() => onZmena(Math.min(99, pocet + 1))} disabled={pocet >= 99} aria-label="Viac kusov">
+      +
+    </button>
+  </span>
+);
+
+const Zatvorene: React.FC = () => (
+  <div className="zs-stranka">
+    <HlavickaStranky stitok="Fanshop" nadpis="Obchod" />
+    <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+      <Prazdne nadpis="Obchod je momentálne zatvorený" text="Skúste to prosím neskôr." />
+    </Sekcia>
   </div>
 );
 
-const Obrazok: React.FC<{ src: string | null; alt: string }> = ({ src, alt }) =>
-  src ? <img src={souborUrl(src)} alt={alt} loading="lazy" /> : <span className="ob__bez-obrazka" aria-hidden="true">🛍</span>;
+// ===== Karta produktu =====
+
+/** Karta produktu - rovnaká ako vo Fanshope na úvode, namiesto tlačidla šípka. */
+export const KartaProduktu: React.FC<{ produkt: ProduktObchodu; mena: string }> = ({ produkt: p, mena }) => (
+  <Link to={`/obchod/${p.slug}`} className={`zs-produkt zs-tovar${p.vypredany ? ' is-vypredany' : ''}`}>
+    <span className="zs-tovar__foto">
+      <Obrazok src={p.obrazok} className="zs-produkt__obrazok zs-tovar__obrazok" alt={p.nazov} />
+      {p.vypredany ? (
+        <span className="zs-tovar__stitok zs-tovar__stitok--tmavy">Vypredané</span>
+      ) : p.povodna_cena && p.povodna_cena > p.cena ? (
+        <span className="zs-tovar__stitok">−{Math.round((1 - p.cena / p.povodna_cena) * 100)} %</span>
+      ) : null}
+    </span>
+    <span className="zs-produkt__nazov">{p.nazov}</span>
+    <span className="zs-produkt__spodok">
+      <Cena cena={p.cena} povodna={p.povodna_cena} mena={mena} className="zs-produkt__cena" />
+      <span className="zs-tovar__sipka" aria-hidden="true">
+        <Ikona nazov="sipka" velkost={16} />
+      </span>
+    </span>
+  </Link>
+);
 
 // ===== /obchod =====
 
 export const Obchod: React.FC = () => {
-  useTitulok('Obchod');
-  const { obchod, nacitava } = useObchod();
+  const u = useUpravy();
+  useTitulok('Fanshop');
+  const { obchod, nacitava: nacitavaObchod } = useObchod();
   const [parametre, setParametre] = useSearchParams();
   const kategoria = parametre.get('kategoria') || '';
-  const kategorie = useData<KategoriaObchodu[]>('/eshop/kategorie');
-  const produkty = useData<ProduktObchodu[]>(`/eshop/produkty?limit=60${kategoria ? `&kategoria=${encodeURIComponent(kategoria)}` : ''}`);
+  const kategorie = useApi<KategoriaObchodu[]>('/eshop/kategorie');
+  const produkty = useApi<ProduktObchodu[]>(`/eshop/produkty?limit=60${kategoria ? `&kategoria=${encodeURIComponent(kategoria)}` : ''}`);
   const mena = obchod?.mena ?? 'EUR';
 
-  if (!nacitava && !obchod?.zapnuty && !produkty.data?.length) return <ObchodZatvoreny />;
+  // Správca vidí obchod aj pred zapnutím (náhľad), návštevník oznam
+  if (!nacitavaObchod && !obchod?.zapnuty && !produkty.nacitava && !produkty.data?.length) return <Zatvorene />;
+
+  const aktivna = kategorie.data?.find((k) => k.slug === kategoria);
 
   return (
-    <div className="ob">
-      <div className="ob__hlava">
-        <h1>Obchod</h1>
-        <OdkazKosika />
-      </div>
-      {(kategorie.data?.length ?? 0) > 0 && (
-        <div className="ob__kategorie">
-          <button type="button" className={!kategoria ? 'is-aktivna' : ''} onClick={() => setParametre({})}>
-            Všetko
-          </button>
-          {kategorie.data!.map((k) => (
-            <button key={k.id} type="button" className={kategoria === k.slug ? 'is-aktivna' : ''} onClick={() => setParametre({ kategoria: k.slug })}>
-              {k.nazov}
-            </button>
-          ))}
-        </div>
+    <div className="zs-stranka zs-obchod">
+      <HlavickaStranky stitok={u.text('stranka_obchod_stitok', 'Fanshop')} nadpis={aktivna?.nazov ?? u.text('stranka_obchod_nadpis', 'Oficiálny fanshop')}>
+        <p className="zs-hlava__popis">{aktivna?.popis || u.text('stranka_obchod_popis', 'Dresy, šály a doplnky pre všetkých fanúšikov. Každým nákupom podporujete klub.')}</p>
+      </HlavickaStranky>
+
+      {(kategorie.data?.length ?? 0) > 1 && (
+        <Sekcia className="zs-sekcia--filtre">
+          <Filtre
+            popis="Kategórie produktov"
+            aktivna={kategoria}
+            onZmena={(k) => setParametre(k ? { kategoria: k } : {})}
+            moznosti={[{ kluc: '', nazov: 'Všetko' }, ...kategorie.data!.map((k) => ({ kluc: k.slug, nazov: k.nazov }))]}
+          />
+        </Sekcia>
       )}
-      {produkty.chyba ? (
-        <p className="ob__stav">{produkty.chyba}</p>
-      ) : produkty.nacitava && !produkty.data ? (
-        <p className="ob__stav">Načítavam produkty...</p>
-      ) : !produkty.data?.length ? (
-        <p className="ob__stav">Zatiaľ tu nie sú žiadne produkty.</p>
-      ) : (
-        <div className="ob__mriezka">
-          {produkty.data.map((p) => (
-            <Link key={p.id} to={`/obchod/${p.slug}`} className="ob__karta">
-              <span className="ob__foto">
-                <Obrazok src={p.obrazok} alt={p.nazov} />
-                {p.vypredany && <span className="ob__stitok">Vypredané</span>}
-              </span>
-              <span className="ob__nazov">{p.nazov}</span>
-              <span className="ob__cena">
-                {cenaText(p.cena, mena)}
-                {p.povodna_cena && p.povodna_cena > p.cena && <s>{cenaText(p.povodna_cena, mena)}</s>}
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
+
+      <Sekcia className={`zs-sekcia--mriezka${(kategorie.data?.length ?? 0) > 1 ? '' : ' zs-sekcia--hore'}`}>
+        {produkty.nacitava && !produkty.data ? (
+          <Nacitava text="Načítavam produkty…" />
+        ) : produkty.chyba ? (
+          <Chyba text={produkty.chyba} />
+        ) : !produkty.data?.length ? (
+          <Prazdne nadpis="Zatiaľ tu nie sú žiadne produkty" text="Nové produkty pripravujeme." />
+        ) : (
+          <div className="zs-obchod__mriezka">
+            {produkty.data.map((p) => (
+              <KartaProduktu key={p.id} produkt={p} mena={mena} />
+            ))}
+          </div>
+        )}
+      </Sekcia>
     </div>
-  );
-};
-
-const OdkazKosika: React.FC = () => {
-  const { pocet } = useKosik();
-  return (
-    <Link to="/kosik" className="ob__odkaz-kosika">
-      Košík{pocet > 0 ? ` (${pocet})` : ''}
-    </Link>
   );
 };
 
@@ -115,126 +142,184 @@ const OdkazKosika: React.FC = () => {
 export const Produkt: React.FC = () => {
   const { slug = '' } = useParams();
   const { obchod } = useObchod();
-  const { data: produkt, nacitava, chyba } = useData<ProduktObchodu>(`/eshop/produkty/${encodeURIComponent(slug)}`);
+  const { data: produkt, nacitava, chyba } = useApi<ProduktObchodu>(`/eshop/produkty/${encodeURIComponent(slug)}`);
   const { pridaj } = useKosik();
   const [volby, setVolby] = useState<Record<string, string>>({});
   const [pocet, setPocet] = useState(1);
   const [foto, setFoto] = useState(0);
   const [pridane, setPridane] = useState(false);
-  const [skusilPridat, setSkusilPridat] = useState(false);
-  useTitulok(produkt?.nazov ?? 'Obchod');
+  const [skusil, setSkusil] = useState(false);
+  useTitulok(produkt?.nazov ?? 'Fanshop');
   const mena = obchod?.mena ?? 'EUR';
 
-  if (chyba) {
+  if (nacitava) return <Nacitava />;
+  if (chyba || !produkt) {
     return (
-      <div className="ob">
-        <p className="ob__stav">{chyba}</p>
-        <p className="ob__stav">
-          <Link to="/obchod">Späť do obchodu</Link>
-        </p>
+      <div className="zs-stranka">
+        <HlavickaStranky stitok="Fanshop" nadpis="Produkt sa nenašiel" spat={{ odkaz: '/obchod', text: 'Späť do obchodu' }} />
+        <ChybaStranky text={chyba || 'Produkt neexistuje alebo už nie je v predaji.'} />
       </div>
     );
   }
-  if (nacitava || !produkt) return <div className="ob"><p className="ob__stav">Načítavam...</p></div>;
 
   const fotky = [produkt.obrazok, ...(produkt.obrazky || [])].filter((x): x is string => Boolean(x));
   const { cena, chybajuce } = cenaSVolbami(produkt, volby);
-  const moze = !produkt.vypredany && chybajuce.length === 0;
+  const dorucenia = obchod?.dorucenia ?? [];
+  const najlacnejsia = dorucenia.length ? Math.min(...dorucenia.map((d) => d.cena)) : null;
+  const zadarmoOd = dorucenia.map((d) => d.zadarmo_od).filter((x): x is number => x !== null);
+
+  const zvol = (id: string, hodnota: string) => {
+    setVolby((v) => ({ ...v, [id]: hodnota }));
+    setPridane(false);
+  };
 
   const doKosika = () => {
-    setSkusilPridat(true);
-    if (!moze) return;
+    setSkusil(true);
+    if (produkt.vypredany || chybajuce.length) return;
     pridaj(produkt, volby, pocet);
     setPridane(true);
   };
 
   return (
-    <div className="ob">
-      <p className="ob__drobcek">
-        <Link to="/obchod">Obchod</Link>
-        {produkt.kategoria && (
-          <>
-            {' / '}
-            <Link to={`/obchod?kategoria=${produkt.kategoria.slug}`}>{produkt.kategoria.nazov}</Link>
-          </>
-        )}
-      </p>
-      <div className="ob__produkt">
-        <div>
-          <div className="ob__hlavne-foto">
-            <Obrazok src={fotky[foto] ?? null} alt={produkt.nazov} />
+    <div className="zs-stranka zs-produkt-stranka">
+      <Sekcia className="zs-sekcia--produkt">
+        <nav className="zs-drobceky" aria-label="Umiestnenie">
+          <Link to="/obchod">Fanshop</Link>
+          {produkt.kategoria && (
+            <>
+              <Ikona nazov="vpravo" velkost={12} />
+              <Link to={`/obchod?kategoria=${produkt.kategoria.slug}`}>{produkt.kategoria.nazov}</Link>
+            </>
+          )}
+        </nav>
+
+        <div className="zs-produkt-detail">
+          <div className="zs-galeria-produktu">
+            <div className="zs-galeria-produktu__hlavna">
+              <Obrazok src={fotky[foto] ?? null} className="zs-galeria-produktu__obrazok" alt={produkt.nazov} />
+            </div>
+            {fotky.length > 1 && (
+              <div className="zs-galeria-produktu__nahlady">
+                {fotky.map((f, i) => (
+                  <button key={f + i} type="button" className={i === foto ? 'is-aktivny' : ''} onClick={() => setFoto(i)} aria-label={`Fotografia ${i + 1}`}>
+                    <img src={obrazokUrl(f) ?? ''} alt="" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          {fotky.length > 1 && (
-            <div className="ob__nahlady">
-              {fotky.map((f, i) => (
-                <button key={f + i} type="button" className={i === foto ? 'is-aktivny' : ''} onClick={() => setFoto(i)} aria-label={`Fotografia ${i + 1}`}>
-                  <img src={souborUrl(f)} alt="" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div>
-          <h1>{produkt.nazov}</h1>
-          <p className="ob__cena ob__cena--velka">
-            {cenaText(cena, mena)}
-            {produkt.povodna_cena && produkt.povodna_cena > produkt.cena && <s>{cenaText(produkt.povodna_cena, mena)}</s>}
-          </p>
-          {produkt.kratky_popis && <p className="ob__kratky">{produkt.kratky_popis}</p>}
 
-          {produkt.vlastnosti.map((v) => (
-            <div key={v.id} className="ob__vlastnost">
-              <span className="ob__menovka">
-                {v.nazov}
-                {v.povinna && ' *'}
-                {v.typ === 'text' && v.priplatok > 0 && <small> +{cenaText(v.priplatok, mena)}</small>}
-              </span>
-              {v.typ === 'vyber' ? (
-                <div className="ob__hodnoty">
-                  {v.hodnoty.map((h) => (
-                    <button
-                      key={h.id}
-                      type="button"
-                      disabled={hodnotaVypredana(h)}
-                      className={volby[v.id] === h.id ? 'is-zvolena' : ''}
-                      onClick={() => setVolby({ ...volby, [v.id]: h.id })}
-                    >
-                      {h.nazov}
-                      {h.priplatok > 0 && <small> +{cenaText(h.priplatok, mena)}</small>}
-                    </button>
-                  ))}
+          <div className="zs-produkt-info">
+            {produkt.kategoria && <span className="zs-hlava__stitok">{produkt.kategoria.nazov}</span>}
+            <h1>{produkt.nazov}</h1>
+            <Cena cena={cena} povodna={produkt.povodna_cena && produkt.povodna_cena > produkt.cena ? produkt.povodna_cena + (cena - produkt.cena) : null} mena={mena} className="zs-cena--velka" />
+            {produkt.kratky_popis && <p className="zs-produkt-info__popis">{produkt.kratky_popis}</p>}
+
+            {produkt.vlastnosti.map((v) => {
+              const chyba = skusil && chybajuce.includes(v.nazov);
+              return (
+                <div key={v.id} className={`zs-vlastnost${chyba ? ' is-chyba' : ''}`}>
+                  <span className="zs-vlastnost__nazov">
+                    {v.nazov}
+                    {!v.povinna && v.typ === 'text' && <small> (nepovinné)</small>}
+                    {v.typ === 'text' && v.priplatok > 0 && <small> +{cenaText(v.priplatok, mena)}</small>}
+                  </span>
+                  {v.typ === 'vyber' ? (
+                    <div className="zs-vlastnost__hodnoty" role="radiogroup" aria-label={v.nazov}>
+                      {v.hodnoty.map((h) => (
+                        <button
+                          key={h.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={volby[v.id] === h.id}
+                          disabled={hodnotaVypredana(h)}
+                          className={`zs-volba${volby[v.id] === h.id ? ' is-zvolena' : ''}`}
+                          onClick={() => zvol(v.id, h.id)}
+                          title={hodnotaVypredana(h) ? 'Vypredané' : undefined}
+                        >
+                          {h.nazov}
+                          {h.priplatok > 0 && <small>+{cenaText(h.priplatok, mena)}</small>}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <input
+                      className="zs-pole__vstup"
+                      type="text"
+                      value={volby[v.id] ?? ''}
+                      maxLength={v.max_dlzka ?? 60}
+                      onChange={(e) => zvol(v.id, e.target.value)}
+                      aria-label={v.nazov}
+                    />
+                  )}
+                  {chyba && <span className="zs-vlastnost__chyba">{v.typ === 'vyber' ? 'Vyberte možnosť' : 'Vyplňte pole'}</span>}
                 </div>
-              ) : (
-                <input
-                  type="text"
-                  value={volby[v.id] ?? ''}
-                  maxLength={v.max_dlzka ?? 60}
-                  onChange={(e) => setVolby({ ...volby, [v.id]: e.target.value })}
-                />
-              )}
-            </div>
-          ))}
+              );
+            })}
 
-          {produkt.vypredany ? (
-            <p className="ob__chyba">Produkt je vypredaný.</p>
-          ) : (
-            <div className="ob__pridat">
-              <input type="number" min={1} max={99} value={pocet} onChange={(e) => setPocet(Math.min(99, Math.max(1, Number(e.target.value) || 1)))} aria-label="Počet kusov" />
-              <button type="button" className="ob__tlacidlo" onClick={doKosika}>
-                Pridať do košíka
-              </button>
-            </div>
-          )}
-          {skusilPridat && chybajuce.length > 0 && <p className="ob__chyba">Vyberte: {chybajuce.join(', ')}</p>}
-          {pridane && (
-            <p className="ob__ok">
-              Pridané do košíka. <Link to="/kosik">Zobraziť košík</Link>
-            </p>
-          )}
-          {produkt.sklad !== null && produkt.sklad > 0 && produkt.sklad <= 5 && <p className="ob__tlmene">Posledné kusy na sklade ({produkt.sklad})</p>}
-          {produkt.popis && <div className="ob__popis" {...sanitizedHtmlProps(produkt.popis)} />}
+            {produkt.vypredany ? (
+              <p className="zs-produkt-info__vypredane">Produkt je momentálne vypredaný.</p>
+            ) : (
+              <div className="zs-produkt-info__kupit">
+                <Pocitadlo pocet={pocet} onZmena={setPocet} />
+                <button type="button" className="zs-tlacidlo zs-tlacidlo--akcent zs-produkt-info__tlacidlo" onClick={doKosika}>
+                  Pridať do košíka
+                </button>
+              </div>
+            )}
+            {pridane && (
+              <div className="zs-pridane" role="status">
+                <span>
+                  <Ikona nazov="kosik" velkost={18} /> Pridané do košíka
+                </span>
+                <Link to="/kosik" className="zs-tlacidlo zs-tlacidlo--tmave">
+                  Do košíka
+                </Link>
+              </div>
+            )}
+
+            <ul className="zs-produkt-info__vyhody">
+              {produkt.sklad !== null && produkt.sklad > 0 && produkt.sklad <= 5 && (
+                <li>
+                  <Ikona nazov="hodiny" /> Posledné kusy na sklade
+                </li>
+              )}
+              {najlacnejsia !== null && (
+                <li>
+                  <Ikona nazov="doprava" /> {najlacnejsia === 0 ? 'Doprava od 0 € (osobný odber)' : `Doprava od ${cenaText(najlacnejsia, mena)}`}
+                  {zadarmoOd.length > 0 && `, zadarmo od ${cenaText(Math.min(...zadarmoOd), mena)}`}
+                </li>
+              )}
+              <li>
+                <Ikona nazov="srdce" /> Nákupom podporujete klub
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+
+        {produkt.popis && (
+          <div className="zs-produkt-popis">
+            <h2>Popis produktu</h2>
+            <div className="zs-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(produkt.popis) }} />
+          </div>
+        )}
+      </Sekcia>
+
+      {/* Mobil: cena a tlačidlo stále po ruke nad spodnými záložkami */}
+      {!produkt.vypredany && (
+        <div className="zs-lista-kupit">
+          <Cena cena={cena * pocet} mena={mena} />
+          {pridane ? (
+            <Link to="/kosik" className="zs-tlacidlo zs-tlacidlo--tmave">
+              Do košíka
+            </Link>
+          ) : (
+            <button type="button" className="zs-tlacidlo zs-tlacidlo--akcent" onClick={doKosika}>
+              Pridať do košíka
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -244,57 +329,78 @@ export const Produkt: React.FC = () => {
 export const Kosik: React.FC = () => {
   useTitulok('Košík');
   const { obchod } = useObchod();
-  const { polozky, medzisucet, zmenPocet, odstran } = useKosik();
+  const { polozky, pocet, medzisucet, zmenPocet, odstran } = useKosik();
   const mena = obchod?.mena ?? 'EUR';
+  const dorucenia = obchod?.dorucenia ?? [];
+  const zadarmoOd = dorucenia.map((d) => d.zadarmo_od).filter((x): x is number => x !== null);
+  const doZadarmo = zadarmoOd.length ? Math.min(...zadarmoOd) - medzisucet : null;
 
   return (
-    <div className="ob ob--uzke">
-      <h1>Košík</h1>
-      {polozky.length === 0 ? (
-        <p className="ob__stav">
-          Košík je prázdny. <Link to="/obchod">Pokračovať v nákupe</Link>
-        </p>
-      ) : (
-        <>
-          <ul className="ob__polozky">
-            {polozky.map((p) => (
-              <li key={p.kluc}>
-                <span className="ob__mini-foto">
-                  <Obrazok src={p.obrazok} alt="" />
-                </span>
-                <span className="ob__polozka-text">
-                  <Link to={`/obchod/${p.slug}`}>{p.nazov}</Link>
-                  {p.popis_volieb.length > 0 && <small>{p.popis_volieb.join(' · ')}</small>}
-                  <small>{cenaText(p.cena_za_kus, mena)} / ks</small>
-                </span>
-                <span className="ob__pocet">
-                  <button type="button" onClick={() => zmenPocet(p.kluc, p.pocet - 1)} aria-label="Menej">
-                    −
-                  </button>
-                  <span>{p.pocet}</span>
-                  <button type="button" onClick={() => zmenPocet(p.kluc, p.pocet + 1)} aria-label="Viac">
-                    +
-                  </button>
-                </span>
-                <strong>{cenaText(p.cena_za_kus * p.pocet, mena)}</strong>
-                <button type="button" className="ob__odstranit" onClick={() => odstran(p.kluc)} aria-label="Odstrániť">
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="ob__suhrn">
-            <span>Medzisúčet</span>
-            <strong>{cenaText(medzisucet, mena)}</strong>
-          </div>
-          <div className="ob__akcie">
-            <Link to="/obchod">Pokračovať v nákupe</Link>
-            <Link to="/pokladna" className="ob__tlacidlo">
-              Pokračovať k objednávke
+    <div className="zs-stranka zs-kosik-stranka">
+      <HlavickaStranky stitok="Fanshop" nadpis="Košík">
+        {pocet > 0 && <p className="zs-hlava__popis">{pocet === 1 ? '1 kus' : pocet < 5 ? `${pocet} kusy` : `${pocet} kusov`}</p>}
+      </HlavickaStranky>
+      <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+        {polozky.length === 0 ? (
+          <Prazdne nadpis="Košík je prázdny" text="Vyberte si niečo z nášho fanshopu.">
+            <Link to="/obchod" className="zs-tlacidlo-dalsie">
+              Do obchodu
             </Link>
+          </Prazdne>
+        ) : (
+          <div className="zs-pokladna">
+            <div>
+              <ul className="zs-kosik">
+                {polozky.map((p) => (
+                  <li key={p.kluc} className="zs-kosik__polozka">
+                    <Link to={`/obchod/${p.slug}`} className="zs-kosik__foto" tabIndex={-1} aria-hidden="true">
+                      <Obrazok src={p.obrazok} className="zs-kosik__obrazok" />
+                    </Link>
+                    <div className="zs-kosik__text">
+                      <Link to={`/obchod/${p.slug}`}>{p.nazov}</Link>
+                      {p.popis_volieb.map((x) => (
+                        <small key={x}>{x}</small>
+                      ))}
+                      <small>{cenaText(p.cena_za_kus, mena)} / ks</small>
+                    </div>
+                    <Pocitadlo pocet={p.pocet} onZmena={(n) => zmenPocet(p.kluc, n)} min={1} male />
+                    <strong className="zs-kosik__spolu">{cenaText(p.cena_za_kus * p.pocet, mena)}</strong>
+                    <button type="button" className="zs-kosik__odstranit" onClick={() => odstran(p.kluc)} aria-label={`Odstrániť ${p.nazov}`}>
+                      <Ikona nazov="zavriet" velkost={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/obchod" className="zs-spat zs-spat--tmava">
+                <Ikona nazov="vlavo" velkost={14} /> Pokračovať v nákupe
+              </Link>
+            </div>
+            <aside className="zs-suhrn">
+              <h2>Súhrn</h2>
+              <div className="zs-suhrn__riadok">
+                <span>Tovar</span>
+                <span>{cenaText(medzisucet, mena)}</span>
+              </div>
+              <div className="zs-suhrn__riadok zs-suhrn__riadok--tlmeny">
+                <span>Doprava</span>
+                <span>vyberiete v ďalšom kroku</span>
+              </div>
+              {doZadarmo !== null && doZadarmo > 0 && (
+                <p className="zs-suhrn__tip">
+                  Nakúpte ešte za <strong>{cenaText(doZadarmo, mena)}</strong> a doprava je zadarmo.
+                </p>
+              )}
+              <div className="zs-suhrn__spolu">
+                <span>Spolu</span>
+                <strong>{cenaText(medzisucet, mena)}</strong>
+              </div>
+              <Link to="/pokladna" className="zs-tlacidlo zs-tlacidlo--akcent zs-suhrn__tlacidlo">
+                Pokračovať k objednávke
+              </Link>
+            </aside>
           </div>
-        </>
-      )}
+        )}
+      </Sekcia>
     </div>
   );
 };
@@ -307,14 +413,19 @@ export const Pokladna: React.FC = () => {
   const navigate = useNavigate();
   const mena = p.obchod?.mena ?? 'EUR';
 
-  if (!p.nacitava && !p.obchod?.zapnuty) return <ObchodZatvoreny />;
+  if (p.nacitava) return <Nacitava />;
+  if (!p.obchod?.zapnuty) return <Zatvorene />;
   if (p.kosik.polozky.length === 0) {
     return (
-      <div className="ob ob--uzke">
-        <h1>Objednávka</h1>
-        <p className="ob__stav">
-          Košík je prázdny. <Link to="/obchod">Späť do obchodu</Link>
-        </p>
+      <div className="zs-stranka">
+        <HlavickaStranky stitok="Fanshop" nadpis="Objednávka" />
+        <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+          <Prazdne nadpis="Košík je prázdny" text="Najprv si vyberte tovar.">
+            <Link to="/obchod" className="zs-tlacidlo-dalsie">
+              Do obchodu
+            </Link>
+          </Prazdne>
+        </Sekcia>
       </div>
     );
   }
@@ -325,179 +436,298 @@ export const Pokladna: React.FC = () => {
     if (token) navigate(`/objednavka/${token}`);
   };
 
-  const pole = (kluc: keyof typeof p.udaje, menovka: string, typ = 'text', povinne = false) => (
-    <label className="ob__pole">
-      <span>
+  const pole = (kluc: keyof UdajeZakaznika, menovka: string, vlastnosti: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+    <label className="zs-pole">
+      <span className="zs-pole__menovka">
         {menovka}
-        {povinne && ' *'}
+        {vlastnosti.required && <em aria-hidden="true"> *</em>}
       </span>
-      <input type={typ} value={p.udaje[kluc]} required={povinne} onChange={(e) => p.nastav({ [kluc]: e.target.value })} />
+      <input className="zs-pole__vstup" value={p.udaje[kluc]} onChange={(e) => p.nastav({ [kluc]: e.target.value })} {...vlastnosti} />
     </label>
   );
 
-  return (
-    <form className="ob ob__pokladna" onSubmit={odosli}>
-      <div>
-        <h1>Objednávka</h1>
-        <fieldset>
-          <legend>Kontaktné údaje</legend>
-          {pole('meno', 'Meno a priezvisko', 'text', true)}
-          <div className="ob__dve">
-            {pole('email', 'E-mail', 'email', true)}
-            {pole('telefon', 'Telefón', 'tel', p.potrebnaAdresa)}
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Doručenie</legend>
-          {p.dorucenia.map((d) => (
-            <label key={d.id} className={`ob__volba${p.dorucenie?.id === d.id ? ' is-zvolena' : ''}`}>
-              <input type="radio" name="dorucenie" checked={p.dorucenie?.id === d.id} onChange={() => p.setDorucenieId(d.id)} />
-              <span>
-                <strong>{d.nazov}</strong>
-                {d.popis && <small>{d.popis}</small>}
-                {d.zadarmo_od !== null && <small>Zadarmo od {cenaText(d.zadarmo_od, mena)}</small>}
-              </span>
-              <em>{d.cena > 0 && !(d.zadarmo_od !== null && p.kosik.medzisucet >= d.zadarmo_od) ? cenaText(d.cena, mena) : 'Zadarmo'}</em>
-            </label>
-          ))}
-        </fieldset>
-        {p.potrebnaAdresa && (
-          <fieldset>
-            <legend>Adresa doručenia</legend>
-            {pole('ulica', 'Ulica a číslo', 'text', true)}
-            <div className="ob__dve">
-              {pole('mesto', 'Mesto', 'text', true)}
-              {pole('psc', 'PSČ', 'text', true)}
-            </div>
-            {pole('krajina', 'Krajina')}
-          </fieldset>
-        )}
-        <fieldset>
-          <legend>Platba</legend>
-          {p.platby.map((pl) => (
-            <label key={pl.id} className={`ob__volba${p.platba?.id === pl.id ? ' is-zvolena' : ''}`}>
-              <input type="radio" name="platba" checked={p.platba?.id === pl.id} onChange={() => p.setPlatbaId(pl.id)} />
-              <span>
-                <strong>{pl.nazov}</strong>
-                {pl.popis && <small>{pl.popis}</small>}
-              </span>
-              <em>{pl.poplatok > 0 ? `+${cenaText(pl.poplatok, mena)}` : ''}</em>
-            </label>
-          ))}
-          {p.platby.length === 0 && <p className="ob__tlmene">K zvolenému doručeniu nie je dostupná žiadna platba.</p>}
-        </fieldset>
-        <label className="ob__pole">
-          <span>Poznámka</span>
-          <textarea rows={3} value={p.udaje.poznamka} onChange={(e) => p.nastav({ poznamka: e.target.value })} />
-        </label>
-      </div>
+  let krok = 0;
+  const cislo = () => ++krok;
 
-      <aside className="ob__zhrnutie">
-        <h2>Zhrnutie</h2>
-        <ul>
-          {p.kosik.polozky.map((x) => (
-            <li key={x.kluc}>
-              <span>
-                {x.pocet}× {x.nazov}
-                {x.popis_volieb.length > 0 && <small>{x.popis_volieb.join(' · ')}</small>}
-              </span>
-              <span>{cenaText(x.cena_za_kus * x.pocet, mena)}</span>
-            </li>
-          ))}
-          <li>
-            <span>Doručenie</span>
-            <span>{cenaText(p.cenaDorucenia, mena)}</span>
-          </li>
-          {p.poplatok > 0 && (
-            <li>
-              <span>Poplatok za platbu</span>
-              <span>{cenaText(p.poplatok, mena)}</span>
-            </li>
-          )}
-        </ul>
-        <p className="ob__spolu">
-          <span>Spolu</span>
-          <strong>{cenaText(p.spolu, mena)}</strong>
-        </p>
-        {p.obchod?.podmienky_url && (
-          <label className="ob__suhlas">
-            <input type="checkbox" checked={p.suhlas} onChange={(e) => p.setSuhlas(e.target.checked)} />
-            <span>
-              Súhlasím s{' '}
-              <a href={p.obchod.podmienky_url} target="_blank" rel="noopener noreferrer">
-                obchodnými podmienkami
-              </a>
-            </span>
-          </label>
-        )}
-        {p.chybaMinimum !== null && <p className="ob__chyba">Najnižšia objednávka je {cenaText(p.chybaMinimum, mena)}.</p>}
-        {p.chyba && <p className="ob__chyba">{p.chyba}</p>}
-        <button type="submit" className="ob__tlacidlo" disabled={p.odosiela || p.chybaMinimum !== null}>
-          {p.odosiela ? 'Odosielam...' : 'Odoslať objednávku'}
-        </button>
-      </aside>
-    </form>
+  return (
+    <div className="zs-stranka zs-pokladna-stranka">
+      <HlavickaStranky stitok="Fanshop" nadpis="Objednávka" spat={{ odkaz: '/kosik', text: 'Späť do košíka' }} />
+      <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+        <form className="zs-pokladna" onSubmit={odosli} noValidate>
+          <div className="zs-pokladna__kroky">
+            <fieldset className="zs-krok">
+              <legend>
+                <span>{cislo()}</span> Kontaktné údaje
+              </legend>
+              {pole('meno', 'Meno a priezvisko', { required: true, autoComplete: 'name' })}
+              <div className="zs-pole__dve">
+                {pole('email', 'E-mail', { required: true, type: 'email', autoComplete: 'email', inputMode: 'email' })}
+                {pole('telefon', 'Telefón', { required: p.potrebnaAdresa, type: 'tel', autoComplete: 'tel', inputMode: 'tel' })}
+              </div>
+            </fieldset>
+
+            <fieldset className="zs-krok">
+              <legend>
+                <span>{cislo()}</span> Doručenie
+              </legend>
+              <div className="zs-moznosti">
+                {p.dorucenia.map((d) => {
+                  const zadarmo = d.cena === 0 || (d.zadarmo_od !== null && p.kosik.medzisucet >= d.zadarmo_od);
+                  return (
+                    <label key={d.id} className={`zs-moznost${p.dorucenie?.id === d.id ? ' is-zvolena' : ''}`}>
+                      <input type="radio" name="dorucenie" checked={p.dorucenie?.id === d.id} onChange={() => p.setDorucenieId(d.id)} />
+                      <span className="zs-moznost__text">
+                        <strong>{d.nazov}</strong>
+                        {d.popis && <small>{d.popis}</small>}
+                        {!zadarmo && d.zadarmo_od !== null && <small>Zadarmo od {cenaText(d.zadarmo_od, mena)}</small>}
+                      </span>
+                      <span className="zs-moznost__cena">{zadarmo ? 'Zadarmo' : cenaText(d.cena, mena)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {p.potrebnaAdresa && (
+              <fieldset className="zs-krok">
+                <legend>
+                  <span>{cislo()}</span> Adresa doručenia
+                </legend>
+                {pole('ulica', 'Ulica a číslo', { required: true, autoComplete: 'street-address' })}
+                <div className="zs-pole__dve zs-pole__dve--psc">
+                  {pole('psc', 'PSČ', { required: true, autoComplete: 'postal-code', inputMode: 'numeric' })}
+                  {pole('mesto', 'Mesto', { required: true, autoComplete: 'address-level2' })}
+                </div>
+                {pole('krajina', 'Krajina', { autoComplete: 'country-name' })}
+              </fieldset>
+            )}
+
+            <fieldset className="zs-krok">
+              <legend>
+                <span>{cislo()}</span> Platba
+              </legend>
+              {p.platby.length === 0 ? (
+                <p className="zs-krok__pozn">K zvolenému doručeniu nie je dostupná žiadna platba.</p>
+              ) : (
+                <div className="zs-moznosti">
+                  {p.platby.map((pl) => (
+                    <label key={pl.id} className={`zs-moznost${p.platba?.id === pl.id ? ' is-zvolena' : ''}`}>
+                      <input type="radio" name="platba" checked={p.platba?.id === pl.id} onChange={() => p.setPlatbaId(pl.id)} />
+                      <span className="zs-moznost__text">
+                        <strong>{pl.nazov}</strong>
+                        {pl.popis && <small>{pl.popis}</small>}
+                      </span>
+                      <span className="zs-moznost__cena">{pl.poplatok > 0 ? `+${cenaText(pl.poplatok, mena)}` : ''}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </fieldset>
+
+            <label className="zs-pole">
+              <span className="zs-pole__menovka">Poznámka k objednávke</span>
+              <textarea className="zs-pole__vstup" rows={3} value={p.udaje.poznamka} onChange={(e) => p.nastav({ poznamka: e.target.value })} />
+            </label>
+          </div>
+
+          <aside className="zs-suhrn">
+            <h2>Vaša objednávka</h2>
+            <ul className="zs-suhrn__polozky">
+              {p.kosik.polozky.map((x) => (
+                <li key={x.kluc}>
+                  <Obrazok src={x.obrazok} className="zs-suhrn__obrazok" />
+                  <span>
+                    <strong>{x.nazov}</strong>
+                    <small>{[`${x.pocet} ks`, ...x.popis_volieb].join(' · ')}</small>
+                  </span>
+                  <span>{cenaText(x.cena_za_kus * x.pocet, mena)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="zs-suhrn__riadok">
+              <span>Tovar</span>
+              <span>{cenaText(p.kosik.medzisucet, mena)}</span>
+            </div>
+            <div className="zs-suhrn__riadok">
+              <span>Doručenie</span>
+              <span>{p.cenaDorucenia ? cenaText(p.cenaDorucenia, mena) : 'Zadarmo'}</span>
+            </div>
+            {p.poplatok > 0 && (
+              <div className="zs-suhrn__riadok">
+                <span>Platba</span>
+                <span>{cenaText(p.poplatok, mena)}</span>
+              </div>
+            )}
+            <div className="zs-suhrn__spolu">
+              <span>Spolu</span>
+              <strong>{cenaText(p.spolu, mena)}</strong>
+            </div>
+            {p.obchod.podmienky_url && (
+              <label className="zs-suhlas">
+                <input type="checkbox" checked={p.suhlas} onChange={(e) => p.setSuhlas(e.target.checked)} />
+                <span>
+                  Súhlasím s{' '}
+                  <a href={p.obchod.podmienky_url} target="_blank" rel="noopener noreferrer">
+                    obchodnými podmienkami
+                  </a>
+                </span>
+              </label>
+            )}
+            {p.chybaMinimum !== null && <p className="zs-suhrn__chyba">Najnižšia objednávka je {cenaText(p.chybaMinimum, mena)}.</p>}
+            {p.chyba && (
+              <p className="zs-suhrn__chyba" role="alert">
+                {p.chyba}
+              </p>
+            )}
+            <button type="submit" className="zs-tlacidlo zs-tlacidlo--akcent zs-suhrn__tlacidlo" disabled={p.odosiela || p.chybaMinimum !== null}>
+              {p.odosiela ? 'Odosielam…' : `Objednať za ${cenaText(p.spolu, mena)}`}
+            </button>
+            <p className="zs-suhrn__pozn">Potvrdenie objednávky vám pošleme e-mailom.</p>
+          </aside>
+        </form>
+      </Sekcia>
+    </div>
   );
 };
 
 // ===== /objednavka/:token =====
+
+const PriebehObjednavky: React.FC<{ o: ObjednavkaZakaznika }> = ({ o }) => {
+  const kroky = krokyObjednavky(o);
+  if (!kroky.length) return null;
+  return (
+    <ol className="zs-postup-objednavky">
+      {kroky.map((k, i) => (
+        <li key={k.kluc} className={k.stav === 'hotovy' ? 'is-hotovy' : k.stav === 'aktualny' ? 'is-aktualny' : ''}>
+          <span aria-hidden="true">{i + 1}</span>
+          {k.nazov}
+        </li>
+      ))}
+    </ol>
+  );
+};
 
 export const Objednavka: React.FC = () => {
   const { token = '' } = useParams();
   const { objednavka: o, chyba, overuje } = useObjednavka(token);
   useTitulok(o ? `Objednávka ${o.cislo}` : 'Objednávka');
 
-  if (chyba) return <div className="ob ob--uzke"><p className="ob__stav">{chyba}</p></div>;
-  if (!o) return <div className="ob ob--uzke"><p className="ob__stav">Načítavam objednávku...</p></div>;
+  if (chyba) {
+    return (
+      <div className="zs-stranka">
+        <HlavickaStranky stitok="Fanshop" nadpis="Objednávka sa nenašla" />
+        <ChybaStranky text={chyba} />
+      </div>
+    );
+  }
+  if (!o) return <Nacitava text="Načítavam objednávku…" />;
+
+  const zrusena = o.stav === 'zrusena';
+  const uhradena = o.stav_platby === 'uhradena';
+  const platba = infoPlatby(o);
+  const stavKarta = kartaStavuObjednavky(o);
 
   return (
-    <div className="ob ob--uzke">
-      <h1>Objednávka {o.cislo}</h1>
-      <p className="ob__stavy">
-        <span className={`ob__odznak ob__odznak--${o.stav}`}>{NAZVY_STAVOV_OBJEDNAVKY[o.stav] ?? o.stav}</span>
-        <span className={`ob__odznak ob__odznak--${infoPlatby(o).ton}`}>{infoPlatby(o).odznak}</span>
-      </p>
-      {infoPlatby(o).text && <p className="ob__tlmene">{infoPlatby(o).text}</p>}
-      {kartaStavuObjednavky(o) && <p className="ob__ok">{kartaStavuObjednavky(o)!.nadpis}. {kartaStavuObjednavky(o)!.text}</p>}
-      {o.stav !== 'zrusena' && <p className="ob__ok">{o.text_potvrdenia || `Ďakujeme za objednávku. Potvrdenie sme poslali na ${o.email}.`}</p>}
-      {overuje && <p className="ob__tlmene">Overujeme platbu...</p>}
-      {o.pokyny && <div className="ob__pokyny">{o.pokyny}</div>}
-      {o.brana_html && (
-        <div className="ob__brana">
-          <PlatobnaBrana html={o.brana_html} />
+    <div className="zs-stranka zs-objednavka-stranka">
+      <HlavickaStranky stitok={`Objednávka č. ${o.cislo}`} nadpis={zrusena ? 'Objednávka bola zrušená' : 'Ďakujeme za objednávku'}>
+        {!zrusena && <p className="zs-hlava__popis">{o.text_potvrdenia || `Potvrdenie sme poslali na ${o.email}. O ďalšom postupe vás budeme informovať.`}</p>}
+      </HlavickaStranky>
+      <Sekcia className="zs-sekcia--hore zs-sekcia--mriezka">
+        <PriebehObjednavky o={o} />
+        <div className="zs-pokladna">
+          <div className="zs-pokladna__kroky">
+            {!zrusena && (
+              <div className={`zs-platba-box${uhradena ? ' is-uhradena' : ''}`}>
+                <div className="zs-platba-box__hlava">
+                  <Ikona nazov="platba" velkost={20} />
+                  <strong>{platba.nadpis}</strong>
+                  <span className={`zs-odznak zs-odznak--${platba.ton}`}>{platba.odznak}</span>
+                </div>
+                {platba.text && <p className="zs-platba-box__text">{platba.text}</p>}
+                {overuje && !uhradena && <p className="zs-platba-box__text">Overujeme platbu…</p>}
+                {o.pokyny && <p className="zs-platba-box__text zs-platba-box__pokyny">{o.pokyny}</p>}
+                {o.brana_html && <PlatobnaBrana html={o.brana_html} className="zs-platba-box__brana" />}
+                {platba.udajeNaPlatbu && (
+                  <dl className="zs-platba-box__udaje">
+                    <div>
+                      <dt>Suma</dt>
+                      <dd>{cenaText(o.spolu, o.mena)}</dd>
+                    </div>
+                    <div>
+                      <dt>Variabilný symbol</dt>
+                      <dd>{o.variabilny_symbol}</dd>
+                    </div>
+                  </dl>
+                )}
+              </div>
+            )}
+            {!zrusena && stavKarta && (
+              <div className="zs-platba-box is-uhradena zs-platba-box--stav">
+                <div className="zs-platba-box__hlava">
+                  <Ikona nazov="doprava" velkost={20} />
+                  <strong>{stavKarta.nadpis}</strong>
+                  <span className="zs-odznak zs-odznak--uhradena">{stavKarta.odznak}</span>
+                </div>
+                <p className="zs-platba-box__text">{stavKarta.text}</p>
+              </div>
+            )}
+
+            <div className="zs-krok">
+              <h2 className="zs-krok__nadpis">Doručenie</h2>
+              <p className="zs-krok__pozn">
+                <strong>{o.dorucenie_nazov}</strong>
+                <br />
+                {o.meno} · {o.email}
+                {o.telefon && ` · ${o.telefon}`}
+                {o.ulica && (
+                  <>
+                    <br />
+                    {o.ulica}, {o.psc} {o.mesto}
+                    {o.krajina ? `, ${o.krajina}` : ''}
+                  </>
+                )}
+              </p>
+              {o.poznamka && <p className="zs-krok__pozn">Poznámka: {o.poznamka}</p>}
+            </div>
+          </div>
+
+          <aside className="zs-suhrn">
+            <h2>Položky</h2>
+            <ul className="zs-suhrn__polozky zs-suhrn__polozky--bez-foto">
+              {o.polozky.map((x) => (
+                <li key={x.id}>
+                  <span>
+                    <strong>{x.nazov}</strong>
+                    <small>{[`${x.pocet} ks`, ...x.vlastnosti.map((v) => `${v.nazov}: ${v.hodnota}`)].join(' · ')}</small>
+                  </span>
+                  <span>{cenaText(x.spolu, o.mena)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="zs-suhrn__riadok">
+              <span>Tovar</span>
+              <span>{cenaText(o.medzisucet, o.mena)}</span>
+            </div>
+            <div className="zs-suhrn__riadok">
+              <span>{o.dorucenie_nazov}</span>
+              <span>{o.dorucenie_cena ? cenaText(o.dorucenie_cena, o.mena) : 'Zadarmo'}</span>
+            </div>
+            {o.platba_poplatok > 0 && (
+              <div className="zs-suhrn__riadok">
+                <span>{o.platba_nazov}</span>
+                <span>{cenaText(o.platba_poplatok, o.mena)}</span>
+              </div>
+            )}
+            <div className="zs-suhrn__spolu">
+              <span>Spolu</span>
+              <strong>{cenaText(o.spolu, o.mena)}</strong>
+            </div>
+            <Link to="/obchod" className="zs-tlacidlo zs-tlacidlo--tmave zs-suhrn__tlacidlo">
+              Späť do obchodu
+            </Link>
+          </aside>
         </div>
-      )}
-      <ul className="ob__polozky ob__polozky--suhrn">
-        {o.polozky.map((x) => (
-          <li key={x.id}>
-            <span className="ob__polozka-text">
-              {x.pocet}× {x.nazov}
-              {x.vlastnosti.length > 0 && <small>{x.vlastnosti.map((v) => `${v.nazov}: ${v.hodnota}`).join(' · ')}</small>}
-            </span>
-            <strong>{cenaText(x.spolu, o.mena)}</strong>
-          </li>
-        ))}
-        <li>
-          <span className="ob__polozka-text">{o.dorucenie_nazov}</span>
-          <strong>{cenaText(o.dorucenie_cena, o.mena)}</strong>
-        </li>
-        <li>
-          <span className="ob__polozka-text">{o.platba_nazov}</span>
-          <strong>{cenaText(o.platba_poplatok, o.mena)}</strong>
-        </li>
-      </ul>
-      <div className="ob__suhrn">
-        <span>Spolu</span>
-        <strong>{cenaText(o.spolu, o.mena)}</strong>
-      </div>
-      <p className="ob__tlmene">
-        {o.meno} · {o.email}
-        {o.telefon && ` · ${o.telefon}`}
-        {o.ulica && <><br />{o.ulica}, {o.psc} {o.mesto}{o.krajina ? `, ${o.krajina}` : ''}</>}
-      </p>
-      <p>
-        <Link to="/obchod">Späť do obchodu</Link>
-      </p>
+      </Sekcia>
     </div>
   );
 };

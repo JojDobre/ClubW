@@ -1,43 +1,60 @@
 // Umiestnenie: sablony/zakladna/src/stranky/Nenajdena.tsx
-// Stránka nenájdená - najprv skúsi presmerovanie starého odkazu.
+// Stránka nenájdená. Najprv sa skúsi presmerovanie starého odkazu
+// (Presmerovania v administrácii), až potom sa ukáže oznámenie
+// v tmavej hlavičke s veľkým červeným 404.
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { skusPresmerovat } from '@clubw/jadro';
+import { Nacitava } from '../casti';
+import { Ikona, useTitulok } from '../spolocne';
 
-const NenajdenaStranka: React.FC = () => {
-  const [overuje, setOveruje] = useState(true);
-
-  useEffect(() => {
-    void skusPresmerovat().then((presmeruje) => !presmeruje && setOveruje(false));
-  }, []);
-
-  if (overuje) {
-    return (
-      <div className="zk-nacitavanie" role="status">
-        <span className="zk-nacitavanie__kruh" aria-hidden="true" />
-        Načítavam...
-      </div>
-    );
-  }
-
+/** Oznámenie „nenájdené" - použijú ho aj detaily (článok, hráč...), keď záznam neexistuje. */
+export const NenajdenyObsah: React.FC<{ nadpis?: string; text?: string; spat?: { odkaz: string; text: string } }> = ({
+  nadpis = 'Túto stránku sme nenašli',
+  text = 'Odkaz je možno starý alebo stránka bola presunutá. Skúste začať na úvodnej stránke.',
+  spat,
+}) => {
+  useTitulok('Stránka nenájdená');
   return (
-    <div className="zk-stranka zk-nenajdena">
-      <span className="zk-nenajdena__kod" aria-hidden="true">
-        404
-      </span>
-      <h1>Stránku sme nenašli</h1>
-      <p>Stránka, ktorú hľadáte, neexistuje alebo bola presunutá. Skúste ju vyhľadať alebo pokračujte na úvod.</p>
-      <div className="zk-nenajdena__tlacidla">
-        <Link to="/" className="zk-tlacidlo">
-          Na úvod
-        </Link>
-        <Link to="/hladat" className="zk-tlacidlo zk-tlacidlo--obrys">
-          Hľadať na webe
-        </Link>
-      </div>
+    <div className="zs-stranka">
+      <header className="zs-hlava zs-nenajdena">
+        <div className="zs-kontajner">
+          <span className="zs-nenajdena__kod" aria-hidden="true">
+            404
+          </span>
+          <span className="zs-hlava__stitok">Nenájdené</span>
+          <h1>{nadpis}</h1>
+          <p className="zs-hlava__popis">{text}</p>
+          <div className="zs-nenajdena__akcie">
+            <Link to="/" className="zs-tlacidlo zs-tlacidlo--akcent">
+              Na úvodnú stránku
+            </Link>
+            {spat && (
+              <Link to={spat.odkaz} className="zs-tlacidlo zs-tlacidlo--obrys-svetle">
+                <Ikona nazov="vlavo" velkost={14} />
+                {spat.text}
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
     </div>
   );
 };
 
-export default NenajdenaStranka;
+const Nenajdena: React.FC = () => {
+  const [overuje, setOveruje] = useState(true);
+
+  useEffect(() => {
+    let zruseny = false;
+    void skusPresmerovat().then((presmeruje) => !presmeruje && !zruseny && setOveruje(false));
+    return () => {
+      zruseny = true;
+    };
+  }, []);
+
+  return overuje ? <Nacitava /> : <NenajdenyObsah />;
+};
+
+export default Nenajdena;
