@@ -199,6 +199,8 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
 .zk-menu__pododkaz:hover { background: var(--zk-jemna); color: var(--zk-farba); }
 .zk-menu__kategoria { padding: 10px 12px 4px; color: var(--zk-tlmeny); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .zk-menu__mobil { display: none; }
+.zk-menu__rozbalit { display: none; }
+.zk-menu__odkaz--skupina { border: 0; background: none; font-family: inherit; cursor: pointer; text-align: left; }
 
 .zk-akcie { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .zk-menu + .zk-akcie { padding-left: 12px; border-left: 1px solid var(--zk-ciara); }
@@ -247,6 +249,17 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
   }
   .zk-menu__podmenu::before { display: none; }
   .zk-menu__mobil { display: grid; gap: 10px; margin-top: 20px; }
+  /* Podmenu ako rozbaľovacie skupiny: šípka vedľa položky, otvorená len jedna */
+  .zk-menu__polozka.ma-podmenu { display: grid; grid-template-columns: minmax(0, 1fr) 48px; }
+  .zk-menu__polozka.ma-podmenu > .zk-menu__podmenu { grid-column: 1 / -1; display: none; }
+  .zk-menu__polozka.is-rozbalene > .zk-menu__podmenu { display: flex; }
+  .zk-menu__rozbalit {
+    display: grid; place-items: center; width: 48px; height: 100%; min-height: 48px; padding: 0; border: 0; background: none;
+    color: var(--zk-tlmeny); cursor: pointer;
+  }
+  .zk-menu__rozbalit .zk-ikona { width: 20px; height: 20px; transition: transform .2s; }
+  .zk-menu__polozka.is-rozbalene .zk-menu__rozbalit { color: var(--zk-farba); }
+  .zk-menu__polozka.is-rozbalene .zk-menu__rozbalit .zk-ikona { transform: rotate(180deg); }
 }
 
 @media (max-width: 560px) {
@@ -296,7 +309,9 @@ html:has(.zk-hlavicka) { scroll-padding-top: 96px; }
   .zk-paticka__klub { grid-column: 1 / -1; }
 }
 @media (max-width: 520px) {
-  .zk-paticka__vnutro { grid-template-columns: 1fr; gap: 28px; padding-top: 44px; }
+  /* Na mobile menu a odkazy pre fanúšikov vedľa seba, klub a kontakt cez celú šírku */
+  .zk-paticka__vnutro { grid-template-columns: 1fr 1fr; gap: 28px 18px; padding-top: 44px; }
+  .zk-paticka__vnutro > :last-child { grid-column: 1 / -1; }
 }
 
 /* ===== Načítavanie ===== */

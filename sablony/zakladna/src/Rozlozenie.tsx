@@ -75,6 +75,8 @@ export const Hlavicka: React.FC = () => {
   const { polozky } = useMenuWebu();
   const siete = useSiete();
   const [otvorene, setOtvorene] = useState(false);
+  // Na mobile je rozbalená najviac jedna skupina podmenu
+  const [rozbalene, setRozbalene] = useState<string | number | null>(null);
   const [posunute, setPosunute] = useState(false);
   const hlavickaRef = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
@@ -151,8 +153,26 @@ export const Hlavicka: React.FC = () => {
 
           <nav id="zk-menu" className={`zk-menu${otvorene ? ' is-otvorene' : ''}`} aria-label="Hlavné menu">
             {polozky.map((p) => (
-              <div key={p.id} className={`zk-menu__polozka${(p.deti?.length ?? 0) > 0 ? ' ma-podmenu' : ''}`}>
-                <OdkazMenu polozka={p} className={`zk-menu__odkaz${aktivny(p.odkaz) ? ' is-aktivny' : ''}`} />
+              <div key={p.id} className={`zk-menu__polozka${(p.deti?.length ?? 0) > 0 ? ' ma-podmenu' : ''}${rozbalene === p.id ? ' is-rozbalene' : ''}`}>
+                {!p.odkaz && (p.deti?.length ?? 0) > 0 ? (
+                  // Skupina bez vlastnej stránky - ťuknutie na názov ju na mobile rozbalí
+                  <button type="button" className="zk-menu__odkaz zk-menu__odkaz--skupina" onClick={() => setRozbalene((r) => (r === p.id ? null : p.id))}>
+                    {p.nazov}
+                  </button>
+                ) : (
+                  <OdkazMenu polozka={p} className={`zk-menu__odkaz${aktivny(p.odkaz) ? ' is-aktivny' : ''}`} />
+                )}
+                {(p.deti?.length ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    className="zk-menu__rozbalit"
+                    aria-expanded={rozbalene === p.id}
+                    aria-label={`${rozbalene === p.id ? 'Zbaliť' : 'Rozbaliť'} ${p.nazov}`}
+                    onClick={() => setRozbalene((r) => (r === p.id ? null : p.id))}
+                  >
+                    <Ikona nazov="dole" />
+                  </button>
+                )}
                 {(p.deti?.length ?? 0) > 0 && (
                   <div className="zk-menu__podmenu">
                     {p.deti!.flatMap((d) => [d, ...(d.deti ?? [])]).map((d) => (

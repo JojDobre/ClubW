@@ -38,6 +38,7 @@ const CESTY: Record<string, React.ReactNode> = {
     </>
   ),
   sipka: <path d="M5 12h14m-5-5 5 5-5 5" />,
+  dole: <path d="m6 9 6 6 6-6" />,
   kalendar: (
     <>
       <rect x="4" y="5.5" width="16" height="14.5" rx="2" />

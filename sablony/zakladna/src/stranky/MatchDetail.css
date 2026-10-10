@@ -29,6 +29,10 @@
 
 .zk-detail-zapasu__mriezka { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; margin-top: 24px; }
 .zk-detail-zapasu__hlavny, .zk-detail-zapasu__bok { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+/* Pred zápasom nie je priebeh ani poznámky - údaje o zápase idú na celú šírku vedľa seba */
+.zk-detail-zapasu__mriezka:has(> .zk-detail-zapasu__hlavny:empty) { grid-template-columns: minmax(0, 1fr); }
+.zk-detail-zapasu__mriezka:has(> .zk-detail-zapasu__hlavny:empty) > .zk-detail-zapasu__hlavny { display: none; }
+.zk-detail-zapasu__mriezka:has(> .zk-detail-zapasu__hlavny:empty) .zk-detail-zapasu__bok { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
 /* Priebeh a zostava z jadra majú vlastné karty - zjednotíme ich s kartami šablóny */
 .zk-detail-zapasu__hlavny > div { margin: 0 !important; border: 0 !important; border-radius: var(--zk-r) !important; box-shadow: var(--zk-tien) !important; }
 .zk-detail-zapasu__hlavny h2 { font-family: var(--zk-nadpisy); text-transform: uppercase; }

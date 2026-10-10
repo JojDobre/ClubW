@@ -156,7 +156,7 @@
 }
 .zs .zs-tabulka tbody tr { border-color: var(--zk-ciara); }
 .zs .zs-tabulka tbody tr:hover { background: color-mix(in srgb, var(--zk-farba) 4%, #ffffff); }
-.zs .zs-tabulka tr.is-nas td { background: color-mix(in srgb, var(--zk-akcent) 13%, #ffffff); font-weight: 800; }
+.zs .zs-tabulka tr.is-nas td { background: color-mix(in srgb, var(--zk-farba) 8%, #ffffff); font-weight: 800; }
 .zs .zs-tabulka tr.is-nas td.zs-tabulka__poz { color: var(--zk-text); box-shadow: inset 4px 0 0 var(--zk-akcent); }
 .zs .zs-tabulka td { font-variant-numeric: tabular-nums; }
 
@@ -224,7 +224,9 @@
 .zs .zs-tovar :is(.zs-produkt__nazov, .zs-produkt__spodok) { padding-inline: 18px; }
 .zs .zs-tovar .zs-produkt__nazov { padding-top: 14px; }
 .zs .zs-tovar .zs-produkt__spodok { padding-bottom: 16px; }
-.zs .zs-tovar__sipka { background: var(--zk-farba); }
+.zs .zs-tovar__sipka { background: var(--zk-farba); color: var(--zk-kontrast); }
+.zs .zs-obchod__mriezka { gap: 22px; }
+.zs .zs-tovar .zs-produkt__nazov { font-size: 15px; font-weight: 800; line-height: 1.3; }
 
 /* Partneri, dokumenty, výsledky hľadania, súťaže: biele karty s jemným tieňom */
 .zs :is(.zs-partner-karta, .zs-dokument, .zs-vysledok, .zs-liga-karta, .zs-riadok-karta, .zs-registracia__karta) {
@@ -240,6 +242,14 @@
 .zs :is(input:not([type='checkbox'], [type='radio']), select, textarea):focus {
   border-color: var(--zk-farba); box-shadow: 0 0 0 3px color-mix(in srgb, var(--zk-farba) 16%, transparent); outline: none;
 }
+
+/* Bloky stránok: tabuľky ako na podstránkach - biela karta, hlavička v odtieni klubu */
+.zs .zs-bloky .blok__tabulka-obal { border: 0; border-radius: var(--zk-r); background: var(--zk-karta); box-shadow: var(--zk-tien); }
+.zs .zs-bloky .blok__tabulka th {
+  background: var(--zk-jemna); color: var(--zk-farba); font-family: var(--zk-font); font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+}
+.zs .zs-bloky .blok__tabulka td { color: var(--zk-text); }
+.zs .zs-bloky .blok__tabulka tbody tr:hover { background: color-mix(in srgb, var(--zk-farba) 4%, #ffffff); }
 
 /* Bloky stránok: karty so žltou linkou, tmavé plochy vo farbe klubu */
 .zs .zs-bloky .blok--pozadie-tmave { background: var(--zk-plocha-klubu); }
@@ -368,6 +378,9 @@
   .zk-clen__foto { width: 54px; height: 54px; }
   .zs .zs-mozaika { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .zs .zs-cislo strong { font-size: 40px; }
+  .zs .zs-obchod__mriezka { gap: 12px; }
+  .zs .zs-tabulka--sezona :is(th, td) { padding-left: 8px; padding-right: 8px; }
+  .zs .zs-tabulka--sezona th { font-size: 10px; letter-spacing: 0.04em; }
   .zs .zs-clanok-detail .zs-hlava--clanok:has(+ .zs-clanok-detail__fotka) { padding-bottom: 90px; }
   .zs .zs-clanok-detail__fotka { margin-top: -70px; padding: 0 16px; }
   .zs .zs-clanok-detail__obrazok { border-radius: 16px; box-shadow: 0 0 0 4px var(--zk-karta), 0 20px 40px -24px rgba(15, 23, 42, 0.5); }

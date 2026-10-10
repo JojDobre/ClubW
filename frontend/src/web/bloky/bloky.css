@@ -269,9 +269,10 @@
    prerásť riadok, tlačidlo „Zobraziť všetko" pod blokom) */
 /* Karta bez obrázka (napr. galéria bez titulnej fotky) - jemná plocha namiesto diery */
 .blok__karta-obrazok--prazdne { background: linear-gradient(135deg, rgba(127, 127, 127, 0.2), rgba(127, 127, 127, 0.06)); }
-.blok__tabulka-tim { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.blok__tabulka-tim > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.blok__tabulka-logo { flex-shrink: 0; width: 22px !important; height: 22px !important; max-width: none; object-fit: contain; display: block; }
+/* Bunka tímu ostáva bunkou tabuľky (display: flex by jej zobral zvyšnú šírku stĺpca) */
+.blok__tabulka-tim { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blok__tabulka-tim > span { vertical-align: middle; }
+.blok__tabulka-logo { display: inline-block; vertical-align: middle; width: 22px !important; height: 22px !important; max-width: none; margin-right: 10px; object-fit: contain; }
 .blok__tabulka--liga td:first-child, .blok__tabulka--strelci td:first-child { width: 1%; white-space: nowrap; }
 .blok__tabulka--liga td:not(:nth-child(2)), .blok__tabulka--liga th:not(:nth-child(2)) { text-align: center; }
 .blok__tabulka--liga td:nth-child(2), .blok__tabulka--strelci td:nth-child(2) { width: 100%; max-width: 0; min-width: 110px; }
